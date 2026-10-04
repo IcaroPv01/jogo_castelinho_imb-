@@ -90,6 +90,8 @@ func carregar_mundo(caminho: String, spawn := "Spawn") -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if not GameState.jogando:
 		return
+	if GameState.flag("ui_aberta"):
+		return
 	if e is InputEventMouseButton and e.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		get_viewport().set_input_as_handled()
@@ -101,7 +103,8 @@ func _process(_dt: float) -> void:
 	# Esc/Alt-Tab soltam o mouse no navegador: tratamos como pausa.
 	if not GameState.jogando or DisplayServer.get_name() == "headless":
 		return
-	var pausado := Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
+	# Telas de leitura/quiz soltam o mouse de propósito: não contam como pausa.
+	var pausado: bool = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not GameState.flag("ui_aberta")
 	if get_tree().paused != pausado:
 		get_tree().paused = pausado
 		hud.mostrar_pausa(pausado)
@@ -114,5 +117,7 @@ func _on_morte(_causa: String) -> void:
 		nivel.ao_morrer()
 		return
 	await Transicao.fade_out(0.2, Color(0.4, 0, 0))
+	var tela := Morte.mostrar(_causa)
+	await tela.terminou
 	await carregar_mundo(nivel_atual, "Checkpoint_%d" % GameState.checkpoint_sala)
 	await Transicao.fade_in(1.0)

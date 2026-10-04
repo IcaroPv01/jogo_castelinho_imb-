@@ -8,6 +8,7 @@ var lbl_aviso: Label
 var mira: Label
 var barra_stamina: ProgressBar
 var lbl_pausa: Label
+var _t_glitch := 0.0
 
 
 func _ready() -> void:
@@ -15,14 +16,16 @@ func _ready() -> void:
 	lbl_sala = Label.new()
 	lbl_sala.name = "Sala"
 	lbl_sala.position = Vector2(24, 18)
-	lbl_sala.add_theme_font_size_override("font_size", 30)
-	lbl_sala.add_theme_color_override("font_outline_color", Color.BLACK)
-	lbl_sala.add_theme_constant_override("outline_size", 8)
+	lbl_sala.add_theme_font_override("font", Flash.fonte_titulo())
+	lbl_sala.add_theme_font_size_override("font_size", 36)
+	lbl_sala.add_theme_color_override("font_outline_color", Flash.NAVY)
+	lbl_sala.add_theme_constant_override("outline_size", 10)
 	add_child(lbl_sala)
 
 	mira = Label.new()
 	mira.text = "·"
 	mira.add_theme_font_size_override("font_size", 40)
+	mira.add_theme_constant_override("outline_size", 3)
 	mira.set_anchors_preset(Control.PRESET_CENTER)
 	mira.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mira.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -35,8 +38,10 @@ func _ready() -> void:
 	lbl_aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_aviso.position = Vector2(-300, -170)
 	lbl_aviso.size = Vector2(600, 40)
-	lbl_aviso.add_theme_color_override("font_outline_color", Color.BLACK)
-	lbl_aviso.add_theme_constant_override("outline_size", 6)
+	lbl_aviso.add_theme_font_override("font", Flash.fonte_texto())
+	lbl_aviso.add_theme_font_size_override("font_size", 26)
+	lbl_aviso.add_theme_color_override("font_outline_color", Flash.NAVY)
+	lbl_aviso.add_theme_constant_override("outline_size", 8)
 	add_child(lbl_aviso)
 
 	barra_stamina = ProgressBar.new()
@@ -54,9 +59,10 @@ func _ready() -> void:
 	lbl_pausa.set_anchors_preset(Control.PRESET_FULL_RECT)
 	lbl_pausa.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_pausa.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl_pausa.add_theme_font_size_override("font_size", 40)
-	lbl_pausa.add_theme_color_override("font_outline_color", Color.BLACK)
-	lbl_pausa.add_theme_constant_override("outline_size", 10)
+	lbl_pausa.add_theme_font_override("font", Flash.fonte_titulo())
+	lbl_pausa.add_theme_font_size_override("font_size", 52)
+	lbl_pausa.add_theme_color_override("font_outline_color", Flash.NAVY)
+	lbl_pausa.add_theme_constant_override("outline_size", 14)
 	lbl_pausa.visible = false
 	add_child(lbl_pausa)
 
@@ -74,6 +80,23 @@ func conectar_player(p: Player) -> void:
 
 func _on_sala(n: int) -> void:
 	lbl_sala.text = "SALA %02d" % n if n > 0 else ""
+	_t_glitch = 0.0
+
+
+## Corrupção alta: de vez em quando o contador de salas mostra um número errado por um instante
+## (a interface "mente sobre o progresso", PLANO §7.4).
+func _process(dt: float) -> void:
+	if GameState.sala_atual <= 0 or not visible:
+		return
+	if _t_glitch > 0.0:
+		_t_glitch -= dt
+		if _t_glitch <= 0.0:
+			lbl_sala.text = "SALA %02d" % GameState.sala_atual
+		return
+	var c := GameState.corruption
+	if c > 0.35 and randf() < dt * remap(c, 0.35, 1.0, 0.03, 0.4):
+		_t_glitch = randf_range(0.08, 0.25)
+		lbl_sala.text = "SALA %02d" % randi_range(1, 99)
 
 
 func mostrar_pausa(v: bool) -> void:
