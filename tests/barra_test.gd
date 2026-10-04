@@ -127,10 +127,11 @@ func _passada_completa() -> void:
 
 	# tremida do contador
 	var base: Vector2 = nivel._hud_pos
+	nivel._prox_pulso = 999.0   # sem tremidas aleatórias novas durante a conferência
 	nivel._tremer_contador()
 	_checar(Ef._pulso > 0.1, "o contador treme com pulso de glitch")
+	# confere no mesmo quadro em que a tremida acaba (a cada 5-9 s o nível sorteia outra)
 	await _ate(func(): return not nivel._shake_ativo, 600)
-	await _frames(5)
 	_checar(main.hud.lbl_sala.position.distance_to(base) < 0.5, "contador volta à posição")
 
 	# fala final da Tainá e volta ao Castelinho (aqui: nível de teste)
