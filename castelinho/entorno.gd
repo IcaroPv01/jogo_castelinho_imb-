@@ -32,9 +32,10 @@ static func construir(raiz: Node3D, c: Castelinho) -> Dictionary:
 	_corredor_1975(c, g_cor)
 	for g in [g_cid, g_cerca_n, g_areia, g_cor]:
 		g.finalizar(raiz)
-	var mm_pinus := _pinheiros(raiz, c)
+	var arvores: Array = []
+	var mm_pinus := _pinheiros(raiz, c, arvores)
 	_barreiras(raiz)
-	return {"cidade": g_cid, "areia": g_areia, "corredor": g_cor, "pinheiros": mm_pinus}
+	return {"cidade": g_cid, "areia": g_areia, "corredor": g_cor, "pinheiros": mm_pinus, "arvores": arvores}
 
 
 # ------------------------------------------------------------------ terreno
@@ -52,8 +53,62 @@ static func _chao(raiz: Node3D, c: Castelinho, g_cid: Castelinho.Grupo, g_areia:
 	raiz.add_child(corpo)
 	var grama: Material = Castelinho.mat_tri("grama", Vector3(2.5, 2.5, 2.5))
 	var areia: Material = Castelinho.mat_tri("areia_1950", Vector3(2.5, 2.5, 2.5))
-	g_cid.ext.quad(grama, Vector3(-300, 0, -340), Vector3(270, 0, -340), Vector3(270, 0, 260), Vector3(-300, 0, 260), Vector3.UP)
+	# perto do lote, o gramado é uma grade com cor de vértice: manchas mais secas/mais verdes e trilhas de grama
+	# pisada (o tile único repetia demais visto do alto); longe, quatro quadriláteros grandes em volta da grade
+	_gramado(g_cid.ext, grama, GX0, GX1, GZ0, GZ1)
+	for r in [[-300, 270, -340, GZ0], [-300, 270, GZ1, 260], [-300, GX0, GZ0, GZ1], [GX1, 270, GZ0, GZ1]]:
+		g_cid.ext.quad(grama, Vector3(r[0], 0, r[2]), Vector3(r[1], 0, r[2]), Vector3(r[1], 0, r[3]), Vector3(r[0], 0, r[3]), Vector3.UP)
 	g_areia.ext.quad(areia, Vector3(-300, 0, -340), Vector3(270, 0, -340), Vector3(270, 0, 260), Vector3(-300, 0, 260), Vector3.UP)
+
+
+const GX0 := -45.0
+const GX1 := 9.0
+const GZ0 := -48.0
+const GZ1 := 12.0
+## Trilhas de grama pisada (pares de pontos x,z): calçada -> painéis -> lateral da torre -> deck -> arcada.
+const TRILHAS := [
+	[Vector2(-23.0, 0.5), Vector2(-23.5, -3.5)], [Vector2(-23.5, -3.5), Vector2(-23.0, -8.0)],
+	[Vector2(-23.0, -8.0), Vector2(-12.5, -5.5)], [Vector2(-12.5, -5.5), Vector2(-8.5, -8.6)],
+	[Vector2(-17.0, 0.5), Vector2(-21.5, -2.5)],
+]
+
+
+static func _gramado(m: Malha, mat: Material, x0: float, x1: float, z0: float, z1: float) -> void:
+	var ruido := FastNoiseLite.new()
+	ruido.seed = 1950
+	ruido.frequency = 0.07
+	var passo := 1.5
+	var nx := int(round((x1 - x0) / passo))
+	var nz := int(round((z1 - z0) / passo))
+	var cor := func(x: float, z: float) -> Color:
+		var v := ruido.get_noise_2d(x, z)            # -1..1
+		var c := Color(0.92, 0.95, 0.9).lerp(Color(1.04, 0.95, 0.66), clampf(v * 1.8, 0.0, 1.0))
+		c = c.lerp(Color(0.72, 0.84, 0.72), clampf(-v * 1.6, 0.0, 1.0))
+		var p := Vector2(x, z)
+		for t in TRILHAS:
+			var a: Vector2 = t[0]
+			var b: Vector2 = t[1]
+			var q := Geometry2D.get_closest_point_to_segment(p, a, b)
+			var d := p.distance_to(q)
+			if d < 1.5:
+				c = c.lerp(Color(1.0, 0.82, 0.55), (1.0 - d / 1.5) * 0.85)
+		return c
+	for j in nz:
+		for i in nx:
+			var xa := x0 + i * passo
+			var xb := xa + passo
+			var za := z0 + j * passo
+			var zb := za + passo
+			var a := Vector3(xa, 0, za)
+			var b := Vector3(xb, 0, za)
+			var c := Vector3(xb, 0, zb)
+			var d := Vector3(xa, 0, zb)
+			var ca: Color = cor.call(xa, za)
+			var cb: Color = cor.call(xb, za)
+			var cc: Color = cor.call(xb, zb)
+			var cd: Color = cor.call(xa, zb)
+			m.tri_cores(mat, a, b, c, Vector3.UP, ca, cb, cc)
+			m.tri_cores(mat, a, c, d, Vector3.UP, ca, cc, cd)
 
 
 static func _plano(m: Malha, mat: Material, x0: float, x1: float, z0: float, z1: float, y: float) -> void:
@@ -63,7 +118,7 @@ static func _plano(m: Malha, mat: Material, x0: float, x1: float, z0: float, z1:
 static func _ruas(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var m := g.ext
 	var asfalto: Material = Castelinho.mat_tri("asfalto", Vector3(2, 2, 2))
-	var calc: Material = Castelinho.mat_tri("calcada_lajotas", Vector3(2, 2, 2))
+	var calc: Material = Castelinho.mat_tri("calcada_lajotas", Vector3(1.3, 1.3, 1.3))
 	var meio_fio: Material = Castelinho.mat_cor(Color(0.62, 0.62, 0.6), 0.9)
 	var faixa: Material = Castelinho.mat_cor(Color(0.92, 0.92, 0.86), 0.9)
 	var amarela: Material = Castelinho.mat_cor(Color(0.9, 0.75, 0.15), 0.9)
@@ -99,7 +154,7 @@ static func _ruas(c: Castelinho, g: Castelinho.Grupo) -> void:
 ## Caminho de lajotas até a porta de entrada, cascalho do lado leste, canteiros.
 static func _lote(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var m := g.ext
-	var calc: Material = Castelinho.mat_tri("calcada_lajotas", Vector3(2, 2, 2))
+	var calc: Material = Castelinho.mat_tri("calcada_lajotas", Vector3(1.3, 1.3, 1.3))
 	var areia: Material = Castelinho.mat_tri("areia", Vector3(2, 2, 2), Color(0.85, 0.82, 0.78))
 	_plano(m, calc, -5.2, -3.6, -10.95, 0.0, 0.03)
 	_plano(m, calc, -7.0, -3.6, -10.95, -9.7, 0.03)
@@ -107,16 +162,28 @@ static func _lote(c: Castelinho, g: Castelinho.Grupo) -> void:
 	_plano(m, areia, -4.9, -0.3, -24.0, -9.2, 0.015)
 	# caminho de lajotas irregulares que contorna a lateral oeste até o jardim
 	_plano(m, calc, -23.0, -9.0, -9.4, -8.9, 0.03)
-	# árvore retorcida na frente (foto frontal 2026): tronco inclinado, galhos finos e copa rala cinza-esverdeada
+	# árvore retorcida na frente (foto frontal 2026): tronco inclinado e torto, galhos finos em leque e copa rala
+	# cinza-esverdeada em guarda-chuva
 	var tronco: Material = Castelinho.mat_tri("casca", Vector3(1, 1, 1), Color(0.8, 0.78, 0.72))
-	var verde: Material = Castelinho.mat_cor(Color(0.5, 0.58, 0.46), 1.0)
-	m.caixa(tronco, Vector3(-17.4, 0, -6.2), Vector3(-17.2, 1.4, -6.0), Malha.F_SEM_BASE)
-	m.caixa(tronco, Vector3(-17.5, 1.4, -6.3), Vector3(-17.3, 2.2, -6.1), Malha.F_SEM_BASE)
-	for gl in [[-18.4, 2.0, -6.4, -17.4, 2.12, -6.2], [-17.3, 2.1, -6.3, -16.2, 2.22, -6.1], [-17.4, 2.2, -6.9, -17.2, 2.32, -5.6], [-17.9, 2.4, -6.2, -16.8, 2.5, -6.0]]:
-		m.caixa(tronco, Vector3(gl[0], gl[1], gl[2]), Vector3(gl[3], gl[4], gl[5]), Malha.F_SEM_BASE)
-	for p in [[-18.7, 2.3, -6.9, 0.7], [-17.5, 2.7, -6.6, 0.8], [-16.4, 2.3, -6.2, 0.7], [-17.9, 2.2, -5.9, 0.6], [-16.8, 2.9, -5.9, 0.6], [-18.2, 2.8, -6.3, 0.6]]:
-		m.caixa(verde, Vector3(p[0], p[1], p[2]), Vector3(p[0] + p[3], p[1] + p[3] * 0.7, p[2] + p[3] * 0.8), Malha.F_SEM_BASE)
-	m.col(Vector3(-17.5, 0, -6.4), Vector3(-17.1, 2.0, -5.8))
+	var folha: Material = Castelinho.mat_tri("folhagem", Vector3(1, 1, 1), Color(1.0, 1.0, 1.0))
+	var rnd := RandomNumberGenerator.new()
+	rnd.seed = 2026
+	var base := Vector3(-17.3, 0, -6.1)
+	prisma(m, tronco, base, 1.3, 0.13, 0.1, 5, Vector3(-0.25, 0, -0.1))
+	var forq := base + Vector3(-0.25, 1.3, -0.1)
+	var copa_c := Vector3(-17.4, 2.6, -6.2)
+	for k in 6:
+		var ang := TAU * float(k) / 6.0 + 0.3
+		var ponta := copa_c + Vector3(cos(ang) * 1.5, rnd.randf_range(-0.1, 0.5), sin(ang) * 1.2)
+		_galho(m, tronco, forq, ponta, 0.05)
+	var cinza := Color(0.78, 0.86, 0.74)
+	for k in 7:
+		var ang := TAU * float(k) / 7.0 + rnd.randf_range(-0.3, 0.3)
+		var rr := rnd.randf_range(0.6, 1.5)
+		m.bolha(folha, copa_c + Vector3(cos(ang) * rr, rnd.randf_range(0.0, 0.6), sin(ang) * rr * 0.8),
+			Vector3(rnd.randf_range(0.7, 1.0), rnd.randf_range(0.35, 0.5), rnd.randf_range(0.6, 0.85)), rnd, 6, 2, 0.2,
+			cinza, Color(0.34, 0.38, 0.33))
+	m.col(Vector3(-17.6, 0, -6.4), Vector3(-17.0, 2.0, -5.8))
 	# lixeira de madeira e vaso (cantinhos do jardim)
 	m.caixa(Castelinho.mat_tri("madeira_escura", Vector3(1, 1, 1)), Vector3(-3.0, 0, -9.8), Vector3(-2.4, 0.7, -9.2), Malha.F_SEM_BASE)
 
@@ -143,14 +210,32 @@ static func _casas(c: Castelinho, g: Castelinho.Grupo) -> void:
 		[-48, -10, 9, 9, 3.2, 4, "l"], [-49, -25, 9, 9, 3.0, 2, "l"], [-48, -42, 8, 9, 3.1, 1, "l"],
 		[-24, -46, 9, 8, 3.2, 3, "s"], [-8, -47, 10, 8, 3.0, 0, "s"], [10, -48, 9, 8, 3.1, 4, "s"],
 	]
+	var fibro: Material = Castelinho.mat_uv("fibrocimento", Color(0.95, 0.95, 0.95))
+	var branco: Material = Castelinho.mat_cor(Color(0.94, 0.94, 0.92), 0.9)
+	var muro: Material = Castelinho.mat_tri("reboco", Vector3(2, 2, 2), Color(0.86, 0.84, 0.8))
+	var idx := 0
 	for h in lista:
 		var cx_: float = h[0]
 		var cz: float = h[1]
 		var w: float = h[2]
 		var d: float = h[3]
 		var alt: float = h[4]
+		var tipo := idx % 4
+		idx += 1
 		m.caixa(mats[h[5]], Vector3(cx_ - w * 0.5, 0, cz - d * 0.5), Vector3(cx_ + w * 0.5, alt, cz + d * 0.5), Malha.F_SEM_BASE - Malha.F_PY)
-		m.piramide(telha, Vector3(cx_, alt, cz), w + 1.0, d + 1.0, 1.8, 1.0)
+		# telhados variados (casas de praia do litoral norte): 4 águas de cerâmica, 2 águas, fibrocimento,
+		# e sobrado com segundo pavimento recuado
+		match tipo:
+			0:
+				m.piramide(telha, Vector3(cx_, alt, cz), w + 1.0, d + 1.0, 1.8, 1.0)
+			1:
+				_duas_aguas(m, telha, mats[h[5]], cx_, cz, w + 0.8, d + 0.8, alt, 1.6, h[6] == "n" or h[6] == "s")
+			2:
+				_duas_aguas(m, fibro, mats[h[5]], cx_, cz, w + 0.6, d + 0.6, alt, 0.9, h[6] == "n" or h[6] == "s")
+			_:
+				m.caixa(mats[(int(h[5]) + 2) % mats.size()], Vector3(cx_ - w * 0.3, alt, cz - d * 0.3), Vector3(cx_ + w * 0.3, alt + 2.6, cz + d * 0.3), Malha.F_SEM_BASE)
+				m.piramide(telha, Vector3(cx_, alt + 2.6, cz), w * 0.6 + 0.8, d * 0.6 + 0.8, 1.4, 1.0)
+				m.caixa(branco, Vector3(cx_ - w * 0.5, alt, cz - d * 0.5), Vector3(cx_ + w * 0.5, alt + 0.15, cz + d * 0.5), Malha.F_SEM_BASE)
 		# porta e duas janelas na face voltada para a rua
 		var face := Vector3.ZERO
 		var fo := Vector3.ZERO
@@ -175,7 +260,35 @@ static func _casas(c: Castelinho, g: Castelinho.Grupo) -> void:
 		m.caixa(porta, fo - lado * 0.5, fo + lado * 0.5 + face * 0.05 + Vector3(0, 2.1, 0), Malha.F_TODAS)
 		for k in [-1, 1]:
 			var p: Vector3 = fo + lado * (2.4 * k)
-			m.caixa(vid, p - lado * 0.6 + Vector3(0, 1.0, 0), p + lado * 0.6 + face * 0.05 + Vector3(0, 2.0, 0), Malha.F_TODAS)
+			# moldura branca + vidro
+			m.caixa(branco, p - lado * 0.68 + Vector3(0, 0.92, 0), p + lado * 0.68 + face * 0.04 + Vector3(0, 2.08, 0), Malha.F_TODAS)
+			m.caixa(vid, p - lado * 0.6 + Vector3(0, 1.0, 0), p + lado * 0.6 + face * 0.07 + Vector3(0, 2.0, 0), Malha.F_TODAS)
+		# muro baixo de frente (casas de praia), com vão do portão
+		if tipo != 2:
+			var fm: Vector3 = fo + face * 2.2
+			var meia: float = (w if h[6] == "n" or h[6] == "s" else d) * 0.5
+			for sgn in [-1.0, 1.0]:
+				var a: Vector3 = fm + lado * (0.8 * sgn)
+				var b: Vector3 = fm + lado * (meia * sgn)
+				m.caixa(muro, Vector3(minf(a.x, b.x) - 0.08, 0, minf(a.z, b.z) - 0.08), Vector3(maxf(a.x, b.x) + 0.08, 0.9, maxf(a.z, b.z) + 0.08), Malha.F_SEM_BASE)
+
+
+## Telhado de duas águas com oitões (cumeeira ao longo de x se `ao_longo_x`).
+static func _duas_aguas(m: Malha, mat: Material, mat_oitao: Material, cx_: float, cz: float, w: float, d: float, y: float, h: float, ao_longo_x: bool) -> void:
+	var x0 := cx_ - w * 0.5
+	var x1 := cx_ + w * 0.5
+	var z0 := cz - d * 0.5
+	var z1 := cz + d * 0.5
+	if ao_longo_x:
+		m.quad_auto(mat, Vector3(x0, y, z0), Vector3(x1, y, z0), Vector3(x1, y + h, cz), Vector3(x0, y + h, cz), Vector3(0, 1, -1), Vector2(1.0, 1.0))
+		m.quad_auto(mat, Vector3(x0, y, z1), Vector3(x1, y, z1), Vector3(x1, y + h, cz), Vector3(x0, y + h, cz), Vector3(0, 1, 1), Vector2(1.0, 1.0))
+		for x in [x0 + 0.5, x1 - 0.5]:
+			m.tri(mat_oitao, Vector3(x, y, z0 + 0.5), Vector3(x, y, z1 - 0.5), Vector3(x, y + h - 0.05, cz), Vector3(signf(x - cx_), 0, 0))
+	else:
+		m.quad_auto(mat, Vector3(x0, y, z0), Vector3(x0, y, z1), Vector3(cx_, y + h, z1), Vector3(cx_, y + h, z0), Vector3(-1, 1, 0), Vector2(1.0, 1.0))
+		m.quad_auto(mat, Vector3(x1, y, z0), Vector3(x1, y, z1), Vector3(cx_, y + h, z1), Vector3(cx_, y + h, z0), Vector3(1, 1, 0), Vector2(1.0, 1.0))
+		for z in [z0 + 0.5, z1 - 0.5]:
+			m.tri(mat_oitao, Vector3(x0 + 0.5, y, z), Vector3(x1 - 0.5, y, z), Vector3(cx_, y + h - 0.05, z), Vector3(0, 0, signf(z - cz)))
 
 
 # ------------------------------------------------------------------ postes
@@ -207,10 +320,20 @@ static func _cercas(c: Castelinho, g: Castelinho.Grupo, g_n: Castelinho.Grupo) -
 	# norte (z = -34): cerca e cerca-viva; some em 1975 para o corredor passar
 	g_n.ext.caixa(tab, Vector3(-30.0, 0, -34.12), Vector3(0.0, 1.7, -34.0), Malha.F_SEM_BASE, 1.0)
 	g_n.ext.col(Vector3(-30.0, 0, -34.3), Vector3(0.0, 2.0, -34.0))
-	g.ext.caixa(verde, Vector3(-30.0, 0, -34.6), Vector3(0.0, 1.4, -33.4), Malha.F_SEM_BASE - Malha.F_NZ)
+	# a cerca-viva tem um vão no eixo do corredor de 1975 (antes ela atravessava o corredor na sala 25);
+	# fora de 1975 o vão é fechado por um trecho que existe só em 2019/2020
+	var xa := X_CORREDOR - L_CORREDOR * 0.5 - 0.4
+	var xb := X_CORREDOR + L_CORREDOR * 0.5 + 0.4
+	_cerca_viva(g.ext, verde, -30.0, xa, -34.0)
+	_cerca_viva(g.ext, verde, xb, 0.0, -34.0)
+	_cerca_viva(g_n.ext, verde, xa, xb, -34.0)
 	# cerca-viva baixa ao longo da Nilza (leste do lote): moitas espaçadas
+	var rnd := RandomNumberGenerator.new()
+	rnd.seed = 44
 	for zz in [-30.0, -26.0, -22.5, -9.0, -6.0, -3.0]:
-		g.ext.caixa(verde, Vector3(-0.8, 0, zz - 0.65), Vector3(-0.2, 0.6, zz + 0.65), Malha.F_SEM_BASE)
+		for k in 2:
+			g.ext.bolha(verde, Vector3(-0.5, 0.3, zz - 0.3 + k * 0.6), Vector3(0.38, 0.34, 0.42), rnd, 7, 3, 0.15,
+				Color(1.0, 1.0, 1.0), Color(0.5, 0.55, 0.48))
 
 
 ## Dunas baixas de areia (só E1950): colinas de baixo poligonagem ao redor.
@@ -248,32 +371,92 @@ static func _duna(m: Malha, mat: Material, c: Vector3, rx: float, rz: float, h: 
 			m.quad_auto(mat, a, b, cc, d, Vector3.UP, Vector2(2.5, 2.5))
 
 
-# ------------------------------------------------------------------ pinheiros (MultiMesh: tronco + copa em blocos)
-## Três variantes de silhueta (copa irregular); cada uma é um MultiMesh (2 superfícies: tronco e copa).
+# ------------------------------------------------------------------ pinheiros (MultiMesh: tronco + copa em tufos)
+## Pinus (elliottii/taeda) como nas fotos: tronco alto, reto e nu até a metade, copa escura e irregular feita de
+## tufos achatados no terço superior, com galhos aparentes por baixo. Três variantes de silhueta; cada uma é um
+## MultiMesh com 2 superfícies (casca e folhagem). Sombreado por cor de vértice: tufo claro em cima, escuro embaixo.
 static func _pinus_mesh(var_: int) -> ArrayMesh:
 	var m := Malha.new()
 	var casca: Material = Castelinho.mat_tri("casca", Vector3(1, 1, 1))
-	var folha: Material = Castelinho.mat_tri("folhagem", Vector3(1, 1, 1))
-	var alt := 10.0 + float(var_) * 0.8
-	m.caixa(casca, Vector3(-0.16, 0, -0.16), Vector3(0.16, alt, 0.16), Malha.F_SEM_BASE)
+	var folha: Material = Castelinho.mat_tri("folhagem", Vector3(1.3, 1.3, 1.3))
 	var rnd := RandomNumberGenerator.new()
-	rnd.seed = 31 + var_
-	var y := 5.6 + float(var_) * 0.3
-	var w := 2.9 - float(var_) * 0.2
-	while y < alt - 0.8:
-		var ox := rnd.randf_range(-0.35, 0.35)
-		var oz := rnd.randf_range(-0.35, 0.35)
-		var h := rnd.randf_range(0.7, 1.0)
-		m.caixa(folha, Vector3(ox - w * 0.5, y, oz - w * 0.5), Vector3(ox + w * 0.5, y + h, oz + w * 0.5), Malha.F_SEM_BASE)
-		y += h + rnd.randf_range(0.05, 0.3)
-		w = maxf(1.1, w - rnd.randf_range(0.3, 0.55))
-	m.piramide(folha, Vector3(0, alt - 0.7, 0), w, w, 1.7, 1.0)
-	# galho baixo
-	m.caixa(folha, Vector3(-1.0, 5.0 + var_ * 0.3, -0.2), Vector3(1.0, 5.5 + var_ * 0.3, 0.2), Malha.F_SEM_BASE)
+	rnd.seed = 31 + var_ * 17
+	var alt: float = [14.5, 16.0, 12.8][var_]
+	prisma(m, casca, Vector3.ZERO, alt - 0.4, 0.22, 0.07, 6)
+	# copa: largura máxima perto da base da copa, afinando para o topo (irregular, com vazios)
+	var y0: float = alt * [0.52, 0.58, 0.5][var_]
+	var n: int = [9, 10, 8][var_]
+	var topo := Color(0.74, 0.8, 0.78)
+	var baixo := Color(0.26, 0.3, 0.34)
+	for i in n:
+		var t := float(i) / float(n - 1)
+		var y := lerpf(y0, alt - 1.0, pow(t, 0.85)) + rnd.randf_range(-0.3, 0.3)
+		var raio := lerpf(2.4, 1.0, t) * rnd.randf_range(0.8, 1.15)
+		var ang := rnd.randf_range(0.0, TAU)
+		var desloc := raio * rnd.randf_range(0.45, 0.95) * (1.0 - t * 0.55)
+		var cc := Vector3(cos(ang) * desloc, y, sin(ang) * desloc)
+		# galho do tronco até o tufo (só nos tufos afastados)
+		if desloc > 0.6:
+			var dirg := Vector3(cc.x, 0, cc.z).normalized()
+			_galho(m, casca, Vector3(0, y - 0.6, 0), cc - dirg * 0.3 - Vector3(0, 0.2, 0), 0.06)
+		m.bolha(folha, cc, Vector3(raio * rnd.randf_range(0.6, 0.85), rnd.randf_range(0.55, 0.85), raio * rnd.randf_range(0.6, 0.85)),
+			rnd, 6, 2, 0.25, topo, baixo)
+	# ponta
+	m.bolha(folha, Vector3(rnd.randf_range(-0.2, 0.2), alt - 0.3, rnd.randf_range(-0.2, 0.2)), Vector3(0.7, 0.75, 0.7), rnd, 5, 2, 0.2, topo, baixo)
+	# tocos de galhos secos no tronco nu (como os pinus de beira de praia)
+	for k in 3:
+		var yk := y0 * rnd.randf_range(0.45, 0.9)
+		var ak := rnd.randf_range(0.0, TAU)
+		_galho(m, casca, Vector3(0, yk, 0), Vector3(cos(ak) * 0.8, yk + 0.35, sin(ak) * 0.8), 0.035)
 	return m.construir_malha()
 
 
-static func _pinheiros(raiz: Node3D, c: Castelinho) -> MultiMeshInstance3D:
+## Prisma cônico de `lados` faces (tronco), da base `b` até a altura `h`, raio r0 embaixo e r1 em cima.
+static func prisma(m: Malha, mat: Material, b: Vector3, h: float, r0: float, r1: float, lados := 6, topo_inclinado := Vector3.ZERO) -> void:
+	for k in lados:
+		var a0 := TAU * float(k) / lados
+		var a1 := TAU * float(k + 1) / lados
+		var p0 := b + Vector3(cos(a0) * r0, 0, sin(a0) * r0)
+		var p1 := b + Vector3(cos(a1) * r0, 0, sin(a1) * r0)
+		var q1 := b + topo_inclinado + Vector3(cos(a1) * r1, h, sin(a1) * r1)
+		var q0 := b + topo_inclinado + Vector3(cos(a0) * r1, h, sin(a0) * r1)
+		var meio := Vector3(cos((a0 + a1) * 0.5), 0, sin((a0 + a1) * 0.5))
+		m.quad_auto(mat, p0, p1, q1, q0, meio, Vector2(1.0, 1.0))
+
+
+## Galho fino (prisma de 4 lados) entre dois pontos.
+static func _galho(m: Malha, mat: Material, a: Vector3, b: Vector3, r: float) -> void:
+	var eixo := (b - a)
+	var L := eixo.length()
+	if L < 0.01:
+		return
+	var d := eixo / L
+	var lado := d.cross(Vector3.UP)
+	if lado.length() < 0.01:
+		lado = Vector3.RIGHT
+	lado = lado.normalized() * r
+	var cima := d.cross(lado).normalized() * r
+	var cantos := [lado + cima, -lado + cima, -lado - cima, lado - cima]
+	for k in 4:
+		var c0: Vector3 = cantos[k]
+		var c1: Vector3 = cantos[(k + 1) % 4]
+		m.quad_auto(mat, a + c0, a + c1, b + c1 * 0.5, b + c0 * 0.5, (c0 + c1), Vector2(1.0, 1.0))
+
+
+## Cerca-viva de arbustos arredondados ao longo de x (z fixo), de x0 a x1.
+static func _cerca_viva(m: Malha, mat: Material, x0: float, x1: float, z: float, alt := 1.35, seed_ := 7) -> void:
+	var rnd := RandomNumberGenerator.new()
+	rnd.seed = seed_ + int(absf(x0) * 10.0)
+	var x := x0 + 0.45
+	while x < x1 - 0.3:
+		var h := alt * rnd.randf_range(0.85, 1.05)
+		m.bolha(mat, Vector3(x, h * 0.5, z + rnd.randf_range(-0.12, 0.12)), Vector3(0.62, h * 0.55, 0.6), rnd, 6, 2, 0.15,
+			Color(1.0, 1.0, 1.0), Color(0.42, 0.45, 0.42))
+		x += rnd.randf_range(0.7, 0.95)
+
+
+## `arvores` recebe [posição, raio da copa, altura da base da copa, altura do topo] de cada pinheiro (sombras).
+static func _pinheiros(raiz: Node3D, c: Castelinho, arvores: Array = []) -> MultiMeshInstance3D:
 	var rnd := RandomNumberGenerator.new()
 	rnd.seed = 1975
 	var lugares: Array = []
@@ -282,6 +465,8 @@ static func _pinheiros(raiz: Node3D, c: Castelinho) -> MultiMeshInstance3D:
 		var x := -33.0 + float(i) * 1.6 + rnd.randf_range(-0.7, 0.7)
 		if x > -14.5 and x < -6.0:
 			continue
+		if x > -6.0 and i % 2 == 1:
+			continue          # a leste, só alguns: nas fotos se vê o céu atrás do corpo principal
 		lugares.append(Vector3(x, 0, -36.0 + rnd.randf_range(-3.0, 1.0)))
 	for i in 12:
 		lugares.append(Vector3(-32.5 + rnd.randf_range(-2.0, 1.0), 0, -4.0 - float(i) * 2.6 + rnd.randf_range(-1.0, 1.0)))
@@ -299,10 +484,14 @@ static func _pinheiros(raiz: Node3D, c: Castelinho) -> MultiMeshInstance3D:
 			if i % 3 == v:
 				meus.append(lugares[i])
 		mm.instance_count = meus.size()
+		var alt: float = [14.5, 16.0, 12.8][v]
+		var base_copa: float = alt * [0.52, 0.58, 0.5][v]
 		for i in meus.size():
-			var s := rnd.randf_range(0.85, 1.25)
-			var b := Basis(Vector3.UP, rnd.randf_range(0.0, TAU)).scaled(Vector3(s, s * rnd.randf_range(0.9, 1.2), s))
+			var s := rnd.randf_range(0.85, 1.2)
+			var sy := s * rnd.randf_range(0.9, 1.15)
+			var b := Basis(Vector3.UP, rnd.randf_range(0.0, TAU)).scaled(Vector3(s, sy, s))
 			mm.set_instance_transform(i, Transform3D(b, meus[i]))
+			arvores.append([meus[i], 2.2 * s, base_copa * sy, alt * sy])
 		var mmi := MultiMeshInstance3D.new()
 		mmi.name = "Pinheiros_%d" % v
 		mmi.multimesh = mm

@@ -15,7 +15,8 @@ mudar uma medida e recarregar o nível basta. Fontes: `docs/pesquisa/geometria_e
 | `extras.gd` | Camadas de tempo: museu (2020), ruína (2019), núcleo (1950). |
 | `mobilia.gd` | Cavaletes, vitrines, lareira, tronos, mural, móveis de 1975; pinguim, armadura, telefone e a textura dos recortes de papelão (desenhada com `Image`). |
 | `entorno.gd` | Lote, calçadas, avenidas, casas vizinhas, pinheiros, postes, cercas, dunas de 1950, barreiras e o corredor de 1975. |
-| `malha.gd` | `Malha`: junta a geometria por material (uma `ArrayMesh`, uma superfície por material) e as caixas de colisão. |
+| `malha.gd` | `Malha`: junta a geometria por material (uma `ArrayMesh`, uma superfície por material) e as caixas de colisão. `bolha` (elipsoide low-poly com cor de vértice) faz tufos de pinheiro, arbustos, hortênsias e peças do acervo. |
+| `sombras.gd` | `SombrasChao`: sombras pintadas no chão, com uma imagem por época (sombra projetada pelo Sol da época, oclusão no pé dos volumes e copas), num quadrilátero em modo MULTIPLICAR. Custa 1 draw call. |
 | `muros.gd` | `Muros`: parede reta com aberturas (arco abatido, ogival, retangular) gerada por código, sem CSG. |
 | `../world/niveis/castelinho.gd/.tscn` | O nível: céu, luzes, marcadores, `SalaTrigger`, painéis, eventos. |
 | `../tools/gerar_texturas.py` | Texturas PNG próprias em `assets/textures/` (numpy + Pillow). |
@@ -44,8 +45,14 @@ Capturas de comparação (rodar `tests/captura_cam.gd`): `build/capturas/cmp2_dr
 * **Torre B**: 3,2 m de lado, quarto pequeno sobre a laje; torreta no canto, apice a 8,5 m.
 * **Ameias**: 0,37 x 0,40 m a cada 0,62 m, com capa; **cornija de mísulas**: 3 fiadas (0,405 m) projetando 0,13 m,
   com o fundo entre as mísulas mais escuro (sem sombras dinâmicas na web, isso faz a faixa "ler" como na foto).
-* **Cor da parede**: blocos 35 x 11,5 cm, junta de 2 cm, #B0614A a #D08C76 (um pouco mais claros que o par da
-  pesquisa, porque a luz de nuvem das fotos escurece o tom).
+* **Cor da parede** (revisão gráfica, `docs/REVISAO_GRAFICA.md`): blocos de 35 x 11,5 cm, junta de 2 cm, de #A35E4A a
+  #C98A74, com junta clara #C7BBA6 de pouco contraste e sem "poros" de alto contraste. Medido nas fotos: média de
+  #C6AC95 ao sol e #A88C7C à sombra. **Interior:** `parede_interna`, mais clara e rosada, com junta cinza grossa,
+  como nas fotos de dentro. **Núcleo de 1950:** `parede_nucleo`, pálida e arenosa, como na foto antiga. A parede usa
+  `shaders/parede_tri.gdshader` (triplanar com oclusão falsa no pé).
+* **Torretas** (revisão gráfica): a Torre A tem fuste até 9,2 m e ápice a 10,3 m; a Torre B, fuste até 8,0 m e ápice
+  a 8,9 m. Nas fotos de 2026 a torreta passa ~1,4 m das ameias e a pirâmide é baixa (~40°).
+* **Cornija**: arquinhos (arcuação) entre as mísulas, como nas fotos.
 
 ## Camadas de tempo (`Epocas.marcar`)
 
@@ -107,13 +114,18 @@ controlador real (portas, escadas, terraços, torres).
 * Colisão separada da malha, em caixas e prismas convexos (rampas). Nada de CSG.
 * Malhas internas na camada visual 2 (o Sol tem `light_cull_mask = 1`): o interior não recebe Sol através do telhado
   e fica mais escuro, só com luz ambiente e as luzes quentes. No máximo 5 `OmniLight3D` ligadas (as mais próximas).
-* Sem sombras dinâmicas. Decalques colados em parede precisam de pelo menos 3 cm de folga (2 cm ainda brigam com a
-  profundidade em `inte`).
+* Sem sombras dinâmicas: as sombras no chão são pintadas (`sombras.gd`) e o pé das paredes escurece no shader.
+  Decalques colados em parede precisam de pelo menos 3 cm de folga (2 cm ainda brigam com a profundidade em `inte`).
+* Painéis: `Painel3D.alcance` (9 m dentro, 13 m fora) é reaplicado quando a placa se reconstrói por `corruption`.
+  Sem isso, o nível passava de 300 draw calls assim que a corruption subia. A moldura de cada placa é uma malha só.
+* Medido depois da revisão gráfica: **66 a 100 draw calls** por vista em 2020 (até 134 com corruption 0,3 no Salão
+  de Arte) e ~39 mil triângulos, quase todos dos pinheiros.
 
 ## Como regenerar
 
 ```
 python3 tools/gerar_texturas.py                 # texturas (opcional: nomes das funções)
+python3 tools/comparar_fotos.py build/capturas build/capturas/cmp   # foto real x jogo, lado a lado
 python3 tools/gerar_medidas_embutidas.py        # depois de editar castelinho/medidas.json
 godot --headless --import
 bash tools/testar.sh

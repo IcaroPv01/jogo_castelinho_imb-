@@ -6,11 +6,11 @@ extends RefCounted
 const DADOS := {
 	"_comentario": "Medidas do Castelinho JÁ NO SISTEMA DO GODOT (x = leste, z = sul, y = altura; origem = esquina Garibaldi x Nilza). Convertidas de docs/pesquisa/medidas_estimadas.json por pos = (-X, Z, -Y) e CORRIGIDAS pelas fotos (ver castelinho/LEIAME.md). Retângulos são [min, max]. Unidades em metros.",
 	"_correcoes_pelas_fotos": [
-		"Torre A: o relatório dava ~5 m até as ameias; no drone/frontal ela passa 2 pavimentos acima do parapeito da arcada (4,4 m). Adotado: ameias a 7,8 m, torreta com ápice a 9,9 m (conferido contra as capturas de drone e frontal).",
+		"Torre A: o relatório dava ~5 m até as ameias; no drone/frontal ela passa 2 pavimentos acima do parapeito da arcada (4,4 m). Adotado: ameias a 7,8 m, torreta com fuste até 9,2 m e ápice a 10,3 m (revisão gráfica: medido nas fotos frontal 2026 e esquina 2026, a torreta passa ~1,4 m das ameias e a pirâmide é baixa, ~40°).",
 		"A arcada começa na esquina da fachada leste (arco de entrada colado no canto) e segue para oeste até a Torre A: 5 arcos (1 de entrada com 1,9 m + 4 de 1,3 m), 10,8 m no total. O croqui a punha atrás da torre.",
 		"A torreta (cobertura piramidal) é a quina SE da Torre A, ~2,1 m de seção, e não uma torre à parte: sobe ~2 m acima das ameias da torre.",
 		"Anexo ameado (2 pares de janelas geminadas) e pavilhão de canto a oeste da Torre A, na mesma linha da fachada sul (fotos 2019 e hibisco 2026).",
-		"Alturas da Torre B ~0,85 x a da Torre A (drone): ameias a 6,5 m, ápice da torreta a 8,5 m."
+		"Alturas da Torre B ~0,85 x a da Torre A (drone): ameias a 6,5 m. A torreta passa ~1 m do parapeito (drone 2021): fuste até 8,0 m, ápice a 8,9 m."
 	],
 	"lote": {
 		"x": [
@@ -77,8 +77,8 @@ const DADOS := {
 					-13.1,
 					-11.0
 				],
-				"topo_fuste": 8.4,
-				"apice": 9.9
+				"topo_fuste": 9.2,
+				"apice": 10.3
 			}
 		},
 		"anexo": {
@@ -156,8 +156,8 @@ const DADOS := {
 					-25.1,
 					-23.5
 				],
-				"topo_fuste": 7.0,
-				"apice": 8.5
+				"topo_fuste": 8.0,
+				"apice": 8.9
 			}
 		}
 	},

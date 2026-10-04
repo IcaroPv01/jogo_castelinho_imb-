@@ -31,10 +31,11 @@ const VEL_FIGURA_ARCADA := 4.0
 const AMBIENTES := {
 	"hall": {"bg": Color(0.04, 0.035, 0.04), "amb": Color(0.62, 0.48, 0.40), "amb_e": 0.7,
 		"fog": Color(0.07, 0.06, 0.06), "fb": 6.0, "fe": 45.0, "sol": 0.0},
-	"hall_aberto": {"bg": Color(0.5, 0.51, 0.53), "amb": Color(0.66, 0.58, 0.52), "amb_e": 0.8,
-		"fog": Color(0.5, 0.51, 0.53), "fb": 18.0, "fe": 95.0, "sol": 0.2},
-	"dunas": {"bg": Color(0.62, 0.63, 0.65), "amb": Color(0.72, 0.73, 0.76), "amb_e": 0.95,
-		"fog": Color(0.62, 0.63, 0.65), "fb": 25.0, "fe": 105.0, "sol": 0.4},
+	"hall_aberto": {"bg": Color(0.42, 0.43, 0.44), "amb": Color(0.62, 0.56, 0.52), "amb_e": 0.75,
+		"fog": Color(0.42, 0.43, 0.44), "fb": 14.0, "fe": 80.0, "sol": 0.15},
+	# dunas de 1950 no Ato II: céu baixo cinza-esverdeado, luz fraca e névoa mais perto (mais escuro que o Ato I)
+	"dunas": {"bg": Color(0.44, 0.46, 0.45), "amb": Color(0.6, 0.62, 0.62), "amb_e": 0.72,
+		"fog": Color(0.44, 0.46, 0.45), "fb": 16.0, "fe": 80.0, "sol": 0.22},
 	"casa": {"bg": Color(0.06, 0.06, 0.08), "amb": Color(0.40, 0.42, 0.50), "amb_e": 0.55,
 		"fog": Color(0.07, 0.07, 0.09), "fb": 4.0, "fe": 34.0, "sol": 0.0},
 	"arcada": {"bg": Color(0.08, 0.03, 0.03), "amb": Color(0.52, 0.34, 0.30), "amb_e": 0.6,
@@ -78,6 +79,8 @@ var m_pedra_cinza: StandardMaterial3D
 var m_piso: StandardMaterial3D
 var m_madeira: StandardMaterial3D
 var m_reboco: StandardMaterial3D
+var m_pedra_int: StandardMaterial3D
+var m_pedra_nucleo: StandardMaterial3D
 var m_areia: StandardMaterial3D
 var m_telha: StandardMaterial3D
 var m_ferro: StandardMaterial3D
@@ -98,6 +101,26 @@ func _ready() -> void:
 	_marcadores()
 	_criar_figura()
 	_criar_vento()
+	_limitar_alcances()
+
+
+## Orçamento de draw calls (web): o Ato II é feito de muitos nós soltos e, sem oclusão, a casa, a arcada e a Sala
+## Medieval (60 a 120 m adiante, atrás de portas fechadas) eram desenhadas já no hall: ~240 draw calls.
+## Alcance de visibilidade só de renderização (não mexe em `visible`, colisão nem lógica): a casa aparece a 70 m
+## (das dunas ela é vista de longe; do hall, não), a arcada e o que vem depois só a 46 m (a névoa da arcada fecha
+## em 42 m). Medido: hall ~80 draw calls, dunas ~110, arcada ~120.
+func _limitar_alcances() -> void:
+	for par in [["Casa1950", 70.0], ["Arcada", 46.0], ["PortaFinal", 46.0], ["SalaMedieval", 46.0]]:
+		var no := get_node_or_null(par[0])
+		if no:
+			_alcance(no, par[1])
+
+
+func _alcance(no: Node, d: float) -> void:
+	if no is GeometryInstance3D and (no as GeometryInstance3D).visibility_range_end <= 0.0:
+		(no as GeometryInstance3D).visibility_range_end = d
+	for c in no.get_children():
+		_alcance(c, d)
 
 
 # ============================================================================ contrato com o Main
@@ -187,6 +210,13 @@ func _materiais() -> void:
 	m_piso = Ato2Pecas.mat_tri("piso", Color.WHITE, t_piso if t_piso else Ato2Pecas.tex_piso_pedra(), 0.5 if t_piso else 0.35)
 	m_madeira = Ato2Pecas.mat_tri("madeira", Color.WHITE, Ato2Pecas.tex_madeira(), 0.7)
 	m_reboco = Ato2Pecas.mat_tri("reboco", Color.WHITE, Ato2Pecas.tex_reboco(), 0.4)
+	# o hall "errado" usa os MESMOS blocos internos do hall da sala 7: o lugar precisa ser reconhecível para o
+	# "errado" (grande demais, portas repetidas, lambri que não existia) funcionar
+	# o núcleo de 1950 (salas 27-28) usa a mesma pedra pálida do núcleo do Castelinho (foto antiga)
+	var t_nuc := Ato2Pecas.externa("parede_nucleo")
+	m_pedra_nucleo = Ato2Pecas.mat_tri("pedra_nucleo", Color.WHITE, t_nuc, 1.0 / 1.48) if t_nuc else m_pedra
+	var t_int := Ato2Pecas.externa("parede_interna")
+	m_pedra_int = Ato2Pecas.mat_tri("pedra_int", Color(0.95, 0.9, 0.86), t_int, 1.0 / 1.48) if t_int else m_reboco
 	m_areia = Ato2Pecas.mat_tri("areia", Color.WHITE, t_areia if t_areia else Ato2Pecas.tex_areia(), 0.5 if t_areia else 0.18, 1.0)
 	m_telha = Ato2Pecas.mat_tri("telha", Color.WHITE, t_telha if t_telha else Ato2Pecas.tex_telha(), 1.0 / 1.416 if t_telha else 1.2)
 	m_ferro = Ato2Pecas.mat_cor(Color(0.1, 0.1, 0.11))
@@ -367,11 +397,11 @@ func _hall() -> void:
 	var alt := 5.2
 	_bloco(_raiz_hall, -5.5, 5.5, -0.3, 0.0, -14.5, 2.5, m_piso)                  # piso
 	_bloco(_raiz_hall, -5.5, 5.5, alt, alt + 0.3, -14.5, 2.5, m_madeira)          # teto
-	_bloco(_raiz_hall, -5.5, -5.0, 0.0, alt, -14.5, 2.5, m_reboco)                # parede esquerda
-	_bloco(_raiz_hall, 5.0, 5.5, 0.0, alt, -14.5, 2.5, m_reboco)                  # parede direita
-	_bloco(_raiz_hall, -5.5, 5.5, 0.0, alt, 2.0, 2.5, m_reboco)                   # parede de trás (atrás do jogador)
+	_bloco(_raiz_hall, -5.5, -5.0, 0.0, alt, -14.5, 2.5, m_pedra_int)             # parede esquerda
+	_bloco(_raiz_hall, 5.0, 5.5, 0.0, alt, -14.5, 2.5, m_pedra_int)               # parede direita
+	_bloco(_raiz_hall, -5.5, 5.5, 0.0, alt, 2.0, 2.5, m_pedra_int)                # parede de trás (atrás do jogador)
 	# parede do fundo com a porta (vão em arco)
-	var fundo := _parede_vao(_raiz_hall, 11.0, alt, 0.5, [Vector4(0.0, 2.4, 2.6, 0.4)], m_reboco)
+	var fundo := _parede_vao(_raiz_hall, 11.0, alt, 0.5, [Vector4(0.0, 2.4, 2.6, 0.4)], m_pedra_int)
 	fundo.position = Vector3(0, 0, Z_PORTA_HALL)
 	# lambri de madeira nas laterais e vigas no teto
 	_bloco(_raiz_hall, -5.0, -4.94, 0.0, 1.2, -14.0, 2.0, m_madeira, false)
@@ -473,25 +503,25 @@ func _casa() -> void:
 
 	# paredes do volume principal (7 x 5 m): frente com a porta, fundo com a porta dos fundos,
 	# esquerda com a passagem para o anexo, direita com a chaminé
-	var frente := _parede_vao(casa, 7.4, h, esp, [Vector4(0.0, 1.2, 2.1, 0.35)], m_pedra)
+	var frente := _parede_vao(casa, 7.4, h, esp, [Vector4(0.0, 1.2, 2.1, 0.35)], m_pedra_nucleo)
 	frente.position = Vector3(0, 0, CASA_Z_FRENTE)
 	frente.name = "ParedeFrente"
-	var fundo := _parede_vao(casa, 7.4, h, esp, [Vector4(-2.0, 1.2, 2.1, 0.35)], m_pedra)
+	var fundo := _parede_vao(casa, 7.4, h, esp, [Vector4(-2.0, 1.2, 2.1, 0.35)], m_pedra_nucleo)
 	fundo.position = Vector3(0, 0, CASA_Z_FUNDO)
 	fundo.name = "ParedeFundo"
-	var esq := _parede_vao(casa, 5.0, h, esp, [Vector4(0.0, 1.2, 2.1, 0.35)], m_pedra)
+	var esq := _parede_vao(casa, 5.0, h, esp, [Vector4(0.0, 1.2, 2.1, 0.35)], m_pedra_nucleo)
 	esq.position = Vector3(-3.5, 0, -75.0)
 	esq.rotation_degrees.y = 90
 	esq.name = "ParedeAnexo"
-	var dir := _parede_vao(casa, 5.0, h, esp, [], m_pedra)
+	var dir := _parede_vao(casa, 5.0, h, esp, [], m_pedra_nucleo)
 	dir.position = Vector3(3.5, 0, -75.0)
 	dir.rotation_degrees.y = 90
 
 	# anexo (segundo volume, mais baixo e mais estreito)
 	var ha := 2.6
-	_parede_vao(casa, 4.4, ha, esp, [], m_pedra).position = Vector3(-5.7, 0, -73.0)
-	_parede_vao(casa, 4.4, ha, esp, [], m_pedra).position = Vector3(-5.7, 0, -77.0)
-	var oeste := _parede_vao(casa, 4.0, ha, esp, [], m_pedra)
+	_parede_vao(casa, 4.4, ha, esp, [], m_pedra_nucleo).position = Vector3(-5.7, 0, -73.0)
+	_parede_vao(casa, 4.4, ha, esp, [], m_pedra_nucleo).position = Vector3(-5.7, 0, -77.0)
+	var oeste := _parede_vao(casa, 4.0, ha, esp, [], m_pedra_nucleo)
 	oeste.position = Vector3(-7.7, 0, -75.0)
 	oeste.rotation_degrees.y = 90
 	# janelinha gradeada no alto (anexo): vidro pálido por dentro + grades
@@ -511,15 +541,15 @@ func _casa() -> void:
 		placa.rotation_degrees.x = ang * lado
 	Construtor.caixa(casa, Vector3(7.9, 0.14, 0.3), Vector3(0, 4.52, -75.0), m_pedra_cinza, false)
 	for x in [-3.5, 3.5]:
-		Ato2Pecas.malha(casa, Ato2Pecas.empena(5.0, 1.5, 0.4), Vector3(x, 3.0, -75.0), m_pedra)
+		Ato2Pecas.malha(casa, Ato2Pecas.empena(5.0, 1.5, 0.4), Vector3(x, 3.0, -75.0), m_pedra_nucleo)
 	# telhado do anexo (uma água)
 	var placa_a := Construtor.caixa(casa, Vector3(5.0, 0.12, 5.0), Vector3(-5.7, 2.75, -75.0), m_telha, false)
 	placa_a.rotation_degrees.z = 7
 
 	# chaminé grande saliente (por fora) + lareira (por dentro)
-	_bloco(casa, 3.5, 4.5, 0.0, 6.0, -76.1, -73.9, m_pedra)
+	_bloco(casa, 3.5, 4.5, 0.0, 6.0, -76.1, -73.9, m_pedra_nucleo)
 	_bloco(casa, 3.4, 4.6, 6.0, 6.3, -76.2, -73.8, m_pedra_cinza)
-	_bloco(casa, 2.5, 3.3, 0.0, 1.5, -76.1, -73.9, m_pedra)
+	_bloco(casa, 2.5, 3.3, 0.0, 1.5, -76.1, -73.9, m_pedra_nucleo)
 	Construtor.caixa(casa, Vector3(0.05, 0.9, 1.0), Vector3(2.48, 0.5, -75.0), Ato2Pecas.mat_cor(Color(0.02, 0.01, 0.01)), false)
 
 	# janelas de venezianas na frente (decoração; uma de cada lado da porta)

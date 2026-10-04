@@ -20,6 +20,8 @@ Modificação: Baloo 2, VT323 e Arimo foram reduzidas ao subconjunto **Latin** (
 - **Mascotes** (`assets/ui/mascotes/*.svg`: Bentinho, Tainá, Quico e as variantes `_corrompido`) e **ícones dos painéis** (`assets/ui/icones/*.svg`): desenhos **originais** do projeto, escritos em SVG pelo script `tools/gerar_mascotes.py`. Não derivam de nenhum personagem ou marca existente. A "Turma da Memória" é fictícia.
 - Nenhum brasão, logotipo ou marca da Prefeitura de Imbé, nem de qualquer outra instituição, foi usado. O emblema da tela de título é uma estrela genérica.
 - O cenário da tela de título (castelo, nuvens, morros) é desenhado por código (`ui/tela_titulo.gd`).
+- **Texturas do mundo 3D** (`assets/textures/*.png`): todas **geradas por código** pelo script `tools/gerar_texturas.py` (numpy + Pillow), sem fotos nem texturas de terceiros. Inclui as da revisão gráfica: `parede_interna`, `parede_nucleo`, `tabuas_claras`, `nuvens` e `banner_ambiental` (um banner genérico, sem marca real). As cores da pedra foram medidas nas fotos de referência, que servem só de consulta (não entram no jogo).
+- **Shaders** (`shaders/*.gdshader`: céu com nuvens, parede triplanar com oclusão falsa, moldura das placas, pós-processamento, água, PSX): escritos para o projeto.
 
 ## Áudio
 

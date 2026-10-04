@@ -39,5 +39,7 @@ func _rodar() -> void:
 		var img := root.get_texture().get_image()
 		var arq := "%s_%s.png" % [saida, str(y).replace("-", "m")]
 		img.save_png(arq)
-		print("captura: ", arq)
+		var dc := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)
+		var prim := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)
+		print("captura: ", arq, "  draw calls: ", dc, "  triangulos: ", prim)
 	quit()

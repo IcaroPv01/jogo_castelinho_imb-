@@ -175,17 +175,30 @@ static func _hortensias(c: Castelinho, g: Castelinho.Grupo) -> void:
 		Vector3(-17.6, 0, -10.2), Vector3(-19.2, 0, -10.4), Vector3(-23.0, 0, -10.2), Vector3(-25.0, 0, -10.3),
 		Vector3(-4.3, 0, -12.0), Vector3(-4.3, 0, -15.0), Vector3(-4.3, 0, -18.0), Vector3(-4.3, 0, -20.0),
 		Vector3(-26.8, 0, -9.5), Vector3(-27.6, 0, -11.0),
+		# maciço contínuo diante do anexo e da torre (fotos "torres" e "hibisco" de 2026)
+		Vector3(-20.6, 0, -10.25), Vector3(-21.8, 0, -10.3), Vector3(-24.0, 0, -10.25), Vector3(-26.0, 0, -10.3),
+		Vector3(-18.4, 0, -10.3), Vector3(-16.4, 0, -10.25),
 	]
-	var flores := [c.m.flor_azul, c.m.flor_branca, c.m.flor_rosa, c.m.flor_azul]
+	# arbusto arredondado + cachos (bolinhas) de flor por cima, como nas fotos de 2026 (azul, lilás, branco, rosa)
+	var paleta := [Color(0.5, 0.62, 0.95), Color(0.72, 0.7, 0.95), Color(0.93, 0.94, 0.97), Color(0.6, 0.72, 0.98),
+		Color(0.92, 0.66, 0.84)]
+	var flor: Material = Castelinho.mat_cor(Color.WHITE, 1.0)
+	var folha: Material = Castelinho.mat_tri("folhagem", Vector3(0.8, 0.8, 0.8), Color(0.82, 1.0, 0.72))
+	var rnd := RandomNumberGenerator.new()
+	rnd.seed = 1975
 	for i in pos.size():
 		var p: Vector3 = pos[i]
-		var s := 0.8 + 0.25 * float((i * 7) % 5) / 4.0
-		g.ext.caixa(c.m.verde_folha, p + Vector3(-0.45 * s, 0, -0.35 * s), p + Vector3(0.45 * s, 0.7 * s, 0.35 * s), Malha.F_SEM_BASE)
-		for k in 5:
-			var dx := (float((i * 3 + k * 5) % 7) / 6.0 - 0.5) * 0.7 * s
-			var dz := (float((i * 5 + k * 3) % 7) / 6.0 - 0.5) * 0.45 * s
-			var fm: Material = flores[(i + k) % flores.size()]
-			g.ext.caixa(fm, p + Vector3(dx - 0.13, 0.62 * s, dz - 0.13), p + Vector3(dx + 0.13, 0.62 * s + 0.2, dz + 0.13), Malha.F_SEM_BASE)
+		var s := 0.95 + 0.35 * float((i * 7) % 5) / 4.0
+		g.ext.bolha(folha, p + Vector3(0, 0.38 * s, 0), Vector3(0.6 * s, 0.42 * s, 0.42 * s), rnd, 7, 2, 0.15,
+			Color(1.0, 1.0, 1.0), Color(0.4, 0.45, 0.4))
+		var cor_mae: Color = paleta[(i * 3) % paleta.size()]
+		for k in 7:
+			var ang := TAU * float(k) / 7.0 + rnd.randf_range(-0.3, 0.3)
+			var rr := rnd.randf_range(0.15, 0.48) * s
+			var cp := p + Vector3(cos(ang) * rr * 1.15, 0.62 * s + rnd.randf_range(-0.12, 0.08), sin(ang) * rr * 0.75)
+			var tom: Color = cor_mae.lerp(paleta[rnd.randi() % paleta.size()], 0.3) * rnd.randf_range(0.9, 1.05)
+			tom.a = 1.0
+			g.ext.bolha(flor, cp, Vector3(0.17, 0.14, 0.17) * s, rnd, 5, 2, 0.15, tom, tom * Color(0.62, 0.62, 0.7))
 
 
 ## Letreiros genéricos (sem brasão nem marca real): "Castelinho" (leste) e a placa da Casa de Cultura (sul).
@@ -244,17 +257,33 @@ static func _ruina(c: Castelinho) -> void:
 		Vector3(-4.4, 0, -13.0), Vector3(-4.4, 0, -17.0), Vector3(-4.4, 0, -21.0), Vector3(-26.0, 0, -12.0), Vector3(-25.5, 0, -17.0),
 		Vector3(-18.0, 0, -24.0), Vector3(-16.0, 0, -30.5), Vector3(-9.0, 0, -30.4), Vector3(-4.4, 0, -28.0),
 	]
+	# capim alto em touceiras: lâminas finas (triângulos de dupla face) do pé escuro à ponta seca/clara
+	var capim: Material = Castelinho.mat_cor(Color.WHITE, 1.0, true)
+	var rnd := RandomNumberGenerator.new()
+	rnd.seed = 2019
 	for i in tufos.size():
 		var p: Vector3 = tufos[i]
-		for j in 6:
-			var dx := (float((i * 3 + j * 5) % 9) / 8.0 - 0.5) * 1.2
+		for j in 4:
+			var dx := (float((i * 3 + j * 5) % 9) / 8.0 - 0.5) * 1.3
 			var dz := (float((i * 7 + j * 3) % 9) / 8.0 - 0.5) * 0.7
-			var hh := 0.6 + 0.7 * float((i + j * 2) % 5) / 4.0
-			e.caixa(c.m.verde_folha, p + Vector3(dx - 0.07, 0, dz - 0.07), p + Vector3(dx + 0.07, hh, dz + 0.07), Malha.F_SEM_BASE)
-	# erva-de-passarinho/mato nas ameias da Torre A
+			_touceira(e, capim, p + Vector3(dx, 0, dz), 0.5 + 0.6 * float((i + j * 2) % 5) / 4.0, rnd)
+	# mato nascendo nas ameias da Torre A
 	for i in 9:
-		var x := -22.4 + i * 0.6
-		e.caixa(c.m.verde_folha, Vector3(x, 7.8, -14.95), Vector3(x + 0.35, 8.1 + 0.1 * float(i % 3), -14.55), Malha.F_SEM_BASE)
+		var x := -22.2 + i * 0.6
+		_touceira(e, capim, Vector3(x, 7.8, -14.75), 0.35 + 0.1 * float(i % 3), rnd)
+
+
+## Touceira de capim: ~9 lâminas inclinadas em leque (cor de vértice: verde-escuro no pé, palha na ponta).
+static func _touceira(m: Malha, mat: Material, base: Vector3, alt: float, rnd: RandomNumberGenerator) -> void:
+	var pe := Color(0.16, 0.24, 0.12)
+	var ponta := Color(0.62, 0.62, 0.36) if rnd.randf() < 0.5 else Color(0.42, 0.55, 0.26)
+	for k in 9:
+		var a := TAU * float(k) / 9.0 + rnd.randf_range(-0.3, 0.3)
+		var d := Vector3(cos(a), 0, sin(a))
+		var lado := Vector3(-d.z, 0, d.x) * 0.045
+		var h := alt * rnd.randf_range(0.6, 1.1)
+		var topo := base + d * h * rnd.randf_range(0.25, 0.55) + Vector3(0, h, 0)
+		m.tri_cores(mat, base - lado, base + lado, topo, d, pe, pe, ponta)
 
 
 # ------------------------------------------------------------------ E1950: núcleo original
@@ -294,8 +323,16 @@ static func _nucleo_1950(c: Castelinho) -> void:
 	# janelas com veneziana fechada no leste (volume B) e janela alta sobre a porta
 	var o := Vector3(x1, 0, 0)
 	for zz in [-12.3, -14.1]:
-		c.veneziana_fechada(g, o, U_Z, N_L, zz, 0.7, 1.0, 1.25)
-	c.veneziana_fechada(g, o, U_Z, N_L, -18.2, 0.7, 3.5, 1.0)
+		c.veneziana_fechada(g, o, U_Z, N_L, zz, 0.7, 1.0, 1.25, c.m.tabuas)
+	c.veneziana_fechada(g, o, U_Z, N_L, -18.2, 0.7, 3.5, 1.0, c.m.tabuas)
+	# janelas de tábua também no sul (volume B) e no oeste, como na foto antiga
+	c.veneziana_fechada(g, Vector3(0, 0, -11.0), U_X, N_S, -10.4, 0.7, 1.0, 1.25, c.m.tabuas)
+	c.veneziana_fechada(g, Vector3(0, 0, -11.0), U_X, N_S, -7.1, 0.7, 1.0, 1.25, c.m.tabuas)
+	c.veneziana_fechada(g, Vector3(x0, 0, 0), U_Z, N_O, -13.2, 0.7, 1.0, 1.25, c.m.tabuas)
+	c.veneziana_fechada(g, Vector3(x0, 0, 0), U_Z, N_O, -18.0, 0.7, 1.0, 1.25, c.m.tabuas)
+	# folha da porta arqueada, aberta para dentro (encostada no vão)
+	me.quad(c.m.tabuas, Vector3(x1 - 0.4, 0.0, -18.95), Vector3(x1 - 1.3, 0.0, -18.95), Vector3(x1 - 1.3, 1.7, -18.95), Vector3(x1 - 0.4, 1.7, -18.95), Vector3(0, 0, 1), Vector2(1.0, 1.0))
+	me.quad(c.m.tabuas, Vector3(x1 - 0.4, 0.0, -18.99), Vector3(x1 - 1.3, 0.0, -18.99), Vector3(x1 - 1.3, 1.7, -18.99), Vector3(x1 - 0.4, 1.7, -18.99), Vector3(0, 0, -1), Vector2(1.0, 1.0))
 	# janela gradeada alta na face norte de A (foto antiga)
 	var on := Vector3(0, 0, -20.5)
 	c.decalque_vao(me, c.m.escuro, on, U_X, N_N, -10.3, 0.75, 3.7, 4.1, 4.1, "ret")

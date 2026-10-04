@@ -16,10 +16,23 @@ const E2020 := 3
 
 const AMBIENTES := {
 	# época: [céu topo, céu horizonte, cor do Sol, energia do Sol, pitch, yaw, cor ambiente, energia amb., cor névoa, densidade névoa]
-	E2020: [Color(0.52, 0.65, 0.84), Color(0.84, 0.89, 0.95), Color(1.0, 0.97, 0.9), 1.2, -52.0, 40.0, Color(0.78, 0.8, 0.86), 0.55, Color(0.84, 0.88, 0.93), 0.0022],
-	E1975: [Color(0.5, 0.45, 0.58), Color(1.0, 0.68, 0.42), Color(1.0, 0.6, 0.28), 1.25, -16.0, 110.0, Color(0.95, 0.7, 0.52), 0.55, Color(0.96, 0.7, 0.5), 0.006],
+	# 2020: manhã clara, Sol alto do sul-sudeste (fachada sul bem iluminada, leste a meia-luz, oeste na sombra)
+	E2020: [Color(0.4, 0.6, 0.88), Color(0.8, 0.88, 0.96), Color(1.0, 0.96, 0.88), 1.25, -48.0, 25.0, Color(0.8, 0.78, 0.8), 0.56, Color(0.82, 0.87, 0.94), 0.0022],
+	# 1975: fim de tarde de verdade, Sol baixo a oés-noroeste (sombras longas para o leste)
+	E1975: [Color(0.42, 0.38, 0.58), Color(1.0, 0.66, 0.4), Color(1.0, 0.6, 0.3), 1.3, -16.0, -110.0, Color(0.86, 0.66, 0.6), 0.5, Color(0.96, 0.7, 0.5), 0.006],
 	E1950: [Color(0.52, 0.52, 0.56), Color(0.76, 0.73, 0.68), Color(0.88, 0.84, 0.78), 0.55, -40.0, 40.0, Color(0.66, 0.64, 0.62), 0.7, Color(0.74, 0.71, 0.66), 0.012],
-	E2019: [Color(0.46, 0.52, 0.54), Color(0.68, 0.72, 0.7), Color(0.8, 0.86, 0.82), 0.6, -50.0, 40.0, Color(0.62, 0.68, 0.66), 0.6, Color(0.66, 0.72, 0.7), 0.009],
+	# 2019: nublado e úmido (a aérea de 2019 não tem neblina: névoa só para o fundo ficar cinza)
+	E2019: [Color(0.5, 0.54, 0.56), Color(0.72, 0.74, 0.73), Color(0.86, 0.88, 0.86), 0.55, -50.0, 40.0, Color(0.64, 0.67, 0.67), 0.62, Color(0.7, 0.73, 0.72), 0.0055],
+}
+
+## Nuvens por época (shaders/ceu_nuvens.gdshader): [cor da nuvem, cor da sombra da nuvem, cobertura (menor = mais
+## nuvem), deslocamento da textura]. 2020: cúmulos soltos (fotos de 2026); 1975: nuvens acesas pelo pôr do sol;
+## 1950 e 2019: céu fechado.
+const CEUS := {
+	E2020: [Color(1.0, 1.0, 1.0), Color(0.7, 0.76, 0.88), 0.6, Vector2(0.0, 0.0)],
+	E1975: [Color(1.0, 0.8, 0.6), Color(0.62, 0.42, 0.5), 0.6, Vector2(0.37, 0.11)],
+	E1950: [Color(0.82, 0.8, 0.76), Color(0.62, 0.61, 0.6), 0.2, Vector2(0.61, 0.43)],
+	E2019: [Color(0.74, 0.77, 0.76), Color(0.54, 0.58, 0.58), 0.2, Vector2(0.2, 0.71)],
 }
 
 const MAX_LUZES_ATIVAS := 5
@@ -31,9 +44,10 @@ var entorno: Dictionary
 var player: Player
 var sol: DirectionalLight3D
 var ambiente: Environment
-var ceu: ProceduralSkyMaterial
+var ceu: ShaderMaterial
 var vento: CPUParticles3D
 
+var _sombras: SombrasChao            # sombras pintadas no chão (uma imagem por época)
 var _luzes: Array = []                # [{no: OmniLight3D, pos: Vector3}]
 var _t_luzes := 0.0
 var _paineis: Dictionary = {}
@@ -57,6 +71,7 @@ func _ready() -> void:
 	castelo.name = "Predio"
 	add_child(castelo)
 	entorno = EntornoCastelinho.construir(self, castelo)
+	_montar_sombras()
 	_marcadores()
 	_criar_luzes()
 	_montar_triggers()
@@ -89,11 +104,14 @@ func iniciar(p: Player) -> void:
 func _montar_ambiente() -> void:
 	var we := WorldEnvironment.new()
 	ambiente = Environment.new()
-	ceu = ProceduralSkyMaterial.new()
-	ceu.sun_angle_max = 1.0
-	ceu.sky_curve = 0.25
+	ceu = ShaderMaterial.new()
+	ceu.shader = preload("res://shaders/ceu_nuvens.gdshader")
+	var tn := Castelinho._tex("nuvens")
+	if tn:
+		ceu.set_shader_parameter("nuvens", tn)
 	var sky := Sky.new()
 	sky.sky_material = ceu
+	sky.radiance_size = Sky.RADIANCE_SIZE_32
 	ambiente.background_mode = Environment.BG_SKY
 	ambiente.sky = sky
 	ambiente.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
@@ -132,10 +150,15 @@ func _montar_vento() -> void:
 
 func _on_epoca(e: int) -> void:
 	var a: Array = AMBIENTES.get(e, AMBIENTES[E2020])
-	ceu.sky_top_color = a[0]
-	ceu.sky_horizon_color = a[1]
-	ceu.ground_horizon_color = a[1]
-	ceu.ground_bottom_color = (a[1] as Color).darkened(0.25)
+	var cn: Array = CEUS.get(e, CEUS[E2020])
+	ceu.set_shader_parameter("cor_topo", a[0])
+	ceu.set_shader_parameter("cor_horizonte", a[1])
+	ceu.set_shader_parameter("cor_chao", (a[1] as Color).darkened(0.25))
+	ceu.set_shader_parameter("cor_nuvem", cn[0])
+	ceu.set_shader_parameter("cor_nuvem_sombra", cn[1])
+	ceu.set_shader_parameter("cobertura", cn[2])
+	ceu.set_shader_parameter("deslocamento", cn[3])
+	ceu.set_shader_parameter("sol_forca", 0.0 if e == E1950 or e == E2019 else 1.0)
 	sol.light_color = a[2]
 	sol.light_energy = a[3]
 	sol.rotation_degrees = Vector3(a[4], a[5], 0)
@@ -143,12 +166,69 @@ func _on_epoca(e: int) -> void:
 	ambiente.ambient_light_energy = a[7]
 	ambiente.fog_light_color = a[8]
 	ambiente.fog_density = a[9]
+	if _sombras:
+		_sombras.trocar(e)
 	if e == E1950:
 		Audio.ambiente("vento")
 	else:
 		Audio.ambiente("")
 	_atualizar_luzes()
 	_checar_sala24()
+
+
+# ================================================================== sombras pintadas no chão
+## Volumes simplificados do prédio (planta + altura do topo, ameias incluídas) para as sombras de SombrasChao.
+## O Sol de cada época vem de AMBIENTES (mesma direção da DirectionalLight3D); 1950 e 2019 são nublados.
+func _montar_sombras() -> void:
+	var vol: Dictionary = Castelinho.medidas.get("volumes", {})
+	var ta: Dictionary = vol.get("torre_a", {})
+	var tb: Dictionary = vol.get("torre_b", {})
+	var tta: Dictionary = ta.get("torreta", {})
+	var ttb: Dictionary = tb.get("torreta", {})
+	var casa := [
+		[-15.8, -5.0, -14.2, -11.0, 4.4],                         # galeria da arcada (com ameias)
+		[-12.5, -5.0, -20.5, -14.0, 4.9],                         # corpo principal (telhado de 4,2 a 5,5)
+		[-22.6, -15.8, -15.0, -11.0, 7.8],                        # Torre A
+		[tta.x[0], tta.x[1], tta.z[0], tta.z[1], float(tta.get("apice", 10.3)) - 0.4],
+		[-26.8, -22.6, -15.0, -11.0, 4.4],                        # anexo
+		[-28.6, -26.8, -13.0, -11.0, 5.2],                        # pavilhão de canto
+		[-25.0, -12.5, -20.5, -15.0, 3.9],                        # bloco do pátio
+		[-25.0, -5.0, -23.5, -20.5, 4.0],                         # corredor
+		[-17.0, -8.2, -29.5, -23.5, 4.4],                         # ala dos fundos
+		[-8.2, -5.0, -26.7, -23.1, 7.2],                          # Torre B
+		[ttb.x[0], ttb.x[1], ttb.z[0], ttb.z[1], float(ttb.get("apice", 8.9)) - 0.3],
+	]
+	for ch in Castelinho.medidas.get("chamines", []):
+		var w: float = ch["w"]
+		casa.append([ch["x"] - w * 0.5, ch["x"] + w * 0.5, ch["z"] - w * 0.5, ch["z"] + w * 0.5, ch["topo"]])
+	var nucleo := [
+		[-12.5, -5.0, -20.5, -15.5, 5.6],                         # volume A (alto)
+		[-12.5, -5.0, -15.5, -11.0, 3.9],                         # volume B (baixo)
+		[-7.1, -6.0, -21.2, -20.5, 7.1],                          # chaminé saliente
+	]
+	# por dentro das plantas: branco (o piso interno não recebe sombra de fora)
+	var dentro: Array = []
+	for i in [0, 1, 2, 4, 6, 7, 8]:
+		var v: Array = casa[i]
+		dentro.append([v[0] + 0.25, v[1] - 0.25, v[2] + 0.25, v[3] - 0.25])
+	var dentro_1975 := dentro.duplicate()
+	dentro_1975.append([X_COR - EntornoCastelinho.L_CORREDOR * 0.5, X_COR + EntornoCastelinho.L_CORREDOR * 0.5, Z_COR_FIM, -29.4])
+	var arv: Array = entorno.get("arvores", [])
+	var sois := {}
+	for e in [E2020, E1975, E2019, E1950]:
+		var a: Array = AMBIENTES[e]
+		var d := Basis.from_euler(Vector3(deg_to_rad(a[4]), deg_to_rad(a[5]), 0.0)) * Vector3.FORWARD
+		match e:
+			E2020:
+				sois[e] = {"dir": d, "sombra": 0.6, "ao": 0.74}
+			E1975:
+				sois[e] = {"dir": d, "sombra": 0.6, "ao": 0.76}
+			_:
+				sois[e] = {"dir": Vector3.ZERO, "ao": 0.72}     # nublado: só oclusão
+	_sombras = SombrasChao.new()
+	_sombras.construir(self, {E2020: casa, E1975: casa, E2019: casa, E1950: nucleo},
+		{E2020: arv, E1975: arv, E2019: arv}, sois,
+		{E2020: dentro, E1975: dentro_1975, E2019: dentro, E1950: [[-12.25, -5.25, -20.25, -11.25]]})
 
 
 # ================================================================== marcadores
@@ -192,7 +272,7 @@ func _marcadores() -> void:
 	_cam("Cam_hall", Vector3(-5.7, 1.55, -12.6), Vector3(-15.0, 1.5, -12.6), 72.0)
 	_cam("Cam_medieval", Vector3(-12.0, 2.6, -23.7), Vector3(-13.0, 1.3, -29.0), 78.0)
 	_cam("Cam_nucleo1950", Vector3(8.0, 2.2, -2.0), Vector3(-9.0, 2.6, -16.0), 66.0)
-	_cam("Cam_topo_torre", Vector3(-19.5, 8.3, -12.2), Vector3(-6.0, 4.0, -12.0), 80.0)
+	_cam("Cam_topo_torre", Vector3(-21.6, 8.35, -13.9), Vector3(-6.0, 4.6, -15.0), 80.0)
 	_cam("Cam_pescador", Vector3(-8.7, 1.55, -15.9), Vector3(-8.7, 1.35, -14.2), 74.0)
 	_cam("Cam_pescador2", Vector3(-6.0, 1.55, -15.6), Vector3(-9.5, 1.3, -14.2), 80.0)
 	_cam("Cam_corredor", Vector3(-23.5, 1.55, -21.8), Vector3(-6.0, 1.5, -21.8), 72.0)
@@ -204,7 +284,7 @@ func _marcadores() -> void:
 	_cam("Cam_medieval2", Vector3(-12.6, 1.55, -23.8), Vector3(-13.5, 1.4, -29.0), 78.0)
 	_cam("Cam_torreb", Vector3(-7.6, 3.5, -23.7), Vector3(-6.6, 4.5, -26.0), 80.0)
 	_cam("Cam_spawn", Vector3(-23.0, 1.55, 1.5), Vector3(-12.0, 2.5, -11.0), 72.0)
-	_cam("Cam_deck", Vector3(-10.7, 1.55, -2.5), Vector3(-10.7, 2.5, -11.0), 72.0)
+	_cam("Cam_deck", Vector3(-14.0, 1.55, -1.6), Vector3(-9.0, 2.0, -9.5), 72.0)
 	_cam("Cam_corredor1975", Vector3(X_COR, 1.55, -31.0), Vector3(X_COR, 1.5, -60.0), 72.0)
 
 
@@ -213,10 +293,11 @@ func _criar_luzes() -> void:
 	for l in castelo.luzes:
 		var o := OmniLight3D.new()
 		o.position = l["pos"]
-		o.light_color = Color(1.0, 0.82, 0.55)
-		o.light_energy = 1.4
-		o.omni_range = 7.0
-		o.omni_attenuation = 1.2
+		# lâmpadas quentes com queda mais rápida: fazem "poças" de luz visíveis sob os lustres
+		o.light_color = Color(1.0, 0.8, 0.52)
+		o.light_energy = 2.1
+		o.omni_range = 7.5
+		o.omni_attenuation = 1.7
 		o.shadow_enabled = false
 		o.visible = false
 		add_child(o)
@@ -234,8 +315,12 @@ func _atualizar_luzes() -> void:
 			ref = cam.global_position
 	var cand: Array = []
 	for l in _luzes:
+		var no: OmniLight3D = l["no"]
+		if not _luz_existe(l["sala"], GameState.epoca):
+			no.visible = false
+			continue
 		var d: float = (l["pos"] as Vector3).distance_to(ref)
-		cand.append([d, l["no"]])
+		cand.append([d, no])
 	cand.sort_custom(func(a, b): return a[0] < b[0])
 	var i := 0
 	for par in cand:
@@ -243,6 +328,18 @@ func _atualizar_luzes() -> void:
 		no.visible = i < MAX_LUZES_ATIVAS and par[0] < 16.0
 		if no.visible:
 			i += 1
+
+
+## A luz só existe na época do objeto que a "acende": nada do prédio em 1950 (sem isso a areia ficava com uma
+## mancha laranja onde hoje é o hall), o corredor de 1975 só em 1975 e as tochas do museu só em 2020.
+func _luz_existe(sala: String, e: int) -> bool:
+	if e == E1950:
+		return false
+	if sala == "corredor1975":
+		return e == E1975
+	if sala.begins_with("medieval_tocha"):
+		return e == E2020
+	return true
 
 
 # ================================================================== SalaTrigger de cada sala
@@ -300,6 +397,7 @@ func _painel(id: String, pos: Vector3, yaw := 0.0, epocas: Array = [E2020], post
 	var p := Painel3D.new(id)
 	p.position = pos
 	p.rotation_degrees.y = yaw
+	p.alcance = 13.0 if poste else 9.0     # vale também quando a placa se reconstrói (corruption)
 	add_child(p)
 	_paineis[id] = p
 	if not epocas.is_empty():
@@ -427,6 +525,7 @@ func _montar_objetos() -> void:
 	add_child(_armadura)
 	# recortes de papelão
 	_recortes["visitante"] = _recorte("visitante", Vector3(-17.0, 0, -9.6), 0.0, true)    # virado para a parede
+	Epocas.marcar(_recortes["visitante"], [E2020])     # é um objeto do museu: não fica sozinho nas dunas de 1950
 	_recortes["pescador"] = _recorte("pescador", Vector3(-6.4, 0, -17.55), 180.0, false)
 	_recortes["pescador"].visible = false
 	_recortes["quico"] = _recorte("quico", Vector3(-7.2, 3.5, -24.2), 180.0, false)
@@ -476,6 +575,10 @@ func _recorte(tipo: String, pos: Vector3, yaw: float, de_costas: bool) -> Node3D
 	pe.position = Vector3(0, 0.025, 0)
 	raiz.add_child(pe)
 	add_child(raiz)
+	if pos.x < -5.0 and pos.z < -11.0:
+		# dentro do prédio: camada 2 (o Sol não atravessa o telhado), como o resto do interior
+		for f in [frente, verso, pe]:
+			f.layers = 2
 	if de_costas:
 		raiz.rotation_degrees.y = 180.0 + yaw        # a frente (desenho) vira para a parede
 	return raiz

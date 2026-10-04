@@ -61,36 +61,105 @@ class Cenario extends Control:
 		contorno.append(pts[0])
 		draw_polyline(contorno, Flash.NAVY, 4.0)
 
+	## Polígono chapado com contorno grosso (estilo Flash).
+	func _poli(pts: PackedVector2Array, cor: Color, borda := 4.0) -> void:
+		draw_colored_polygon(pts, cor)
+		var c := PackedVector2Array(pts)
+		c.append(pts[0])
+		draw_polyline(c, Flash.NAVY, borda)
+
+	## Faixa de mísulas com arquinhos + ameias sobre o topo [x0, x1] em y (como no prédio de verdade).
+	func _coroa(x0: float, x1: float, y: float, cor: Color, esc: float) -> void:
+		var faixa := 9.0 * esc
+		draw_rect(Rect2(x0, y, x1 - x0, faixa), Color("5A2E25"))
+		var passo := 11.0 * esc
+		var x := x0 + 2.0
+		while x + passo * 0.5 < x1:
+			draw_rect(Rect2(x, y, 4.0 * esc, faixa), cor)
+			draw_circle(Vector2(x + passo * 0.5 + 2.0 * esc, y + 2.0 * esc), passo * 0.32, cor)
+			x += passo
+		draw_rect(Rect2(x0, y, x1 - x0, 3.0 * esc), cor)
+		draw_rect(Rect2(x0, y, x1 - x0, faixa), Flash.NAVY, false, 3.0)
+		var m := 7.0 * esc
+		var xm := x0
+		while xm + m <= x1 + 0.5:
+			_contorno_rect(Rect2(xm, y - 9.0 * esc, m, 9.0 * esc), cor, 3.0)
+			xm += m * 1.75
+
+	## Pirâmide (cobertura das torretas) sobre o topo [x0, x1] em y.
+	func _piramide(x0: float, x1: float, y: float, alt: float) -> void:
+		_poli(PackedVector2Array([Vector2(x0 - 4, y), Vector2(x1 + 4, y), Vector2((x0 + x1) * 0.5, y - alt)]), Color("5E4B42"))
+
+	## Janela estreita em arco (escura).
+	func _janela(x: float, y: float, w: float, h: float) -> void:
+		var pts := PackedVector2Array([Vector2(x, y + h), Vector2(x, y + w * 0.5)])
+		for i in range(1, 8):
+			var a := PI + PI * i / 8.0
+			pts.append(Vector2(x + w * 0.5 + cos(a) * w * 0.5, y + w * 0.5 + sin(a) * w * 0.5))
+		pts.append(Vector2(x + w, y + w * 0.5))
+		pts.append(Vector2(x + w, y + h))
+		_poli(pts, Color("3A2420"), 2.5)
+
+	## O Castelinho visto da Av. Garibaldi (foto frontal de 2026), simplificado: pavilhão, anexo ameado, Torre A com a
+	## torreta esbelta de cobertura piramidal, arcada de 5 arcos e, atrás, o corpo do letreiro com telhado e a Torre B.
 	func _castelo(cx: float, base: float, esc: float) -> void:
 		var pedra := Flash.PEDRA
-		var pedra_e := Color("A8583F")
-		# corpo (arcada de 4 arcos)
-		var corpo := Rect2(cx - 190 * esc, base - 118 * esc, 380 * esc, 118 * esc)
-		_contorno_rect(corpo, pedra)
-		for i in 9:
-			_contorno_rect(Rect2(corpo.position.x + i * 42 * esc + 2, corpo.position.y - 16 * esc, 26 * esc, 16 * esc), pedra, 4.0)
-		# torre grande (esquerda) e torre menor (direita)
-		var torre1 := Rect2(cx - 215 * esc, base - 235 * esc, 96 * esc, 235 * esc)
-		var torre2 := Rect2(cx + 130 * esc, base - 178 * esc, 80 * esc, 178 * esc)
-		_contorno_rect(torre1, pedra_e)
-		_contorno_rect(torre2, pedra_e)
-		for i in 3:
-			_contorno_rect(Rect2(torre1.position.x + 4 + i * 34 * esc, torre1.position.y - 20 * esc, 24 * esc, 20 * esc), pedra_e, 4.0)
-		for i in 2:
-			_contorno_rect(Rect2(torre2.position.x + 4 + i * 38 * esc, torre2.position.y - 18 * esc, 26 * esc, 18 * esc), pedra_e, 4.0)
-		# janelas gradeadas
-		for tr in [torre1, torre2]:
-			var j := Rect2(tr.position.x + tr.size.x * 0.32, tr.position.y + tr.size.y * 0.2, tr.size.x * 0.36, tr.size.y * 0.16)
-			_contorno_rect(j, Color("4A2A22"), 4.0)
-			draw_line(j.position + Vector2(j.size.x / 2.0, 0), j.position + Vector2(j.size.x / 2.0, j.size.y), Flash.NAVY, 3.0)
-		# arcada
+		var pedra_e := Color("B66A55")
+		var fundo := Color("A55C49")
+		var hx := 17.0 * esc            # px por metro (horizontal, comprimido como desenho)
+		var vy := 21.5 * esc            # px por metro (vertical)
+		var x0 := cx - 200.0 * esc
+		var X := func(mx: float) -> float: return x0 + mx * hx
+		var Y := func(my: float) -> float: return base - my * vy
+		# --- atrás: Torre B (com torreta) e corpo do letreiro com telhado de uma água e chaminé
+		var tb0: float = X.call(20.2)
+		var tb1: float = X.call(23.6)
+		_contorno_rect(Rect2(tb0, Y.call(7.2), tb1 - tb0, base - Y.call(7.2)), fundo)
+		_coroa(tb0, tb1, Y.call(7.2), fundo, esc)
+		var tt0: float = X.call(22.0)
+		_contorno_rect(Rect2(tt0, Y.call(8.0), tb1 - tt0, Y.call(7.2) - Y.call(8.0)), fundo)
+		_piramide(tt0, tb1, Y.call(8.0), 0.9 * vy)
+		_janela(X.call(21.0), Y.call(6.4), 0.4 * hx * 2.0, 1.0 * vy)
+		var ch: float = X.call(15.9)
+		_contorno_rect(Rect2(ch, Y.call(7.0), 1.0 * hx, Y.call(5.0) - Y.call(7.0)), fundo)
+		_piramide(ch - 2, ch + 1.0 * hx + 2, Y.call(7.0), 0.5 * vy)
+		_poli(PackedVector2Array([Vector2(X.call(16.0), Y.call(5.5)), Vector2(X.call(24.0), Y.call(4.4)), Vector2(X.call(24.0), base),
+			Vector2(X.call(16.0), base)]), fundo)
+		_poli(PackedVector2Array([Vector2(X.call(15.6), Y.call(5.75)), Vector2(X.call(24.6), Y.call(4.5)), Vector2(X.call(24.6), Y.call(4.25)),
+			Vector2(X.call(15.6), Y.call(5.5))]), Color("8C8C88"), 3.0)
+		# --- pavilhão de canto (torreta baixa) e anexo ameado com dois pares de janelas em arco
+		var pv1: float = X.call(1.8)
+		_contorno_rect(Rect2(X.call(0.0), Y.call(4.5), pv1 - X.call(0.0), base - Y.call(4.5)), pedra_e)
+		_piramide(X.call(0.0), pv1, Y.call(4.5), 1.3 * vy)
+		var an1: float = X.call(6.0)
+		_contorno_rect(Rect2(pv1, Y.call(4.0), an1 - pv1, base - Y.call(4.0)), pedra)
+		_coroa(pv1, an1, Y.call(4.0), pedra, esc)
+		for jx in [2.4, 3.2, 4.4, 5.2]:
+			_janela(X.call(jx), Y.call(2.4), 0.5 * hx, 1.5 * vy)
+		# --- Torre A + torreta esbelta na quina
+		var ta1: float = X.call(12.8)
+		_contorno_rect(Rect2(an1, Y.call(7.4), ta1 - an1, base - Y.call(7.4)), pedra)
+		_coroa(an1, X.call(10.7), Y.call(7.4), pedra, esc)
+		var tor0: float = X.call(10.7)
+		_contorno_rect(Rect2(tor0, Y.call(9.2), ta1 - tor0, base - Y.call(9.2)), pedra_e)
+		_coroa(tor0, ta1, Y.call(9.2), pedra_e, esc)
+		_piramide(tor0, ta1, Y.call(9.2) - 9.0 * esc, 1.1 * vy)
+		_janela(X.call(11.5), Y.call(8.6), 0.4 * hx * 1.6, 0.9 * vy)
+		_janela(X.call(8.0), Y.call(5.8), 0.45 * hx * 1.6, 1.4 * vy)
+		_janela(X.call(8.8), Y.call(5.8), 0.45 * hx * 1.6, 1.4 * vy)
+		_janela(X.call(7.0), Y.call(2.4), 0.3 * hx * 1.6, 0.9 * vy)
+		# bandeirinha na ponta da torreta
+		var topo := Vector2((tor0 + ta1) * 0.5, Y.call(9.2) - 9.0 * esc - 1.1 * vy)
+		draw_line(topo, topo + Vector2(0, -30 * esc), Flash.NAVY, 4.0)
+		var bw := sin(t * 7.0) * 3.0
+		draw_colored_polygon(PackedVector2Array([topo + Vector2(2, -30 * esc), topo + Vector2(30 * esc, -23 * esc + bw), topo + Vector2(2, -15 * esc)]), Flash.VERMELHO)
+		# --- arcada de 5 arcos (o de entrada, no canto leste, é mais largo) com parapeito ameado
+		var ar1: float = X.call(23.6)
+		_contorno_rect(Rect2(ta1, Y.call(4.0), ar1 - ta1, base - Y.call(4.0)), pedra)
+		_coroa(ta1, ar1, Y.call(4.0), pedra, esc)
 		for i in 4:
-			_arco(corpo.position.x + 36 * esc + i * 82 * esc, base, 54 * esc, 78 * esc)
-		# bandeirinha
-		var topo := torre1.position + Vector2(torre1.size.x / 2.0, -20 * esc)
-		draw_line(topo, topo + Vector2(0, -48 * esc), Flash.NAVY, 5.0)
-		var bw := sin(t * 7.0) * 4.0
-		draw_colored_polygon(PackedVector2Array([topo + Vector2(2, -48 * esc), topo + Vector2(44 * esc, -38 * esc + bw), topo + Vector2(2, -26 * esc)]), Flash.VERMELHO)
+			_arco(X.call(13.5 + i * 2.05), base, 1.3 * hx, 2.4 * vy)
+		_arco(X.call(21.4), base, 1.9 * hx, 2.4 * vy)
 
 	func _hortensias(x: float, y: float) -> void:
 		for i in 5:

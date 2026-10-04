@@ -124,9 +124,12 @@ func _on_epoca(e: int) -> void:
 	var ruina: bool = e == GameState.Epoca.E2019
 	for par in [[g_base.mi_ext, g_base.idx_ext], [g_base.mi_int, g_base.idx_int], [g_1950.mi_ext, g_1950.idx_ext]]:
 		var mi: MeshInstance3D = par[0]
-		if mi == null or not par[1].has(m.parede_base):
+		if mi == null:
 			continue
-		mi.mesh.surface_set_material(par[1][m.parede_base], m.parede_musgo if ruina else m.parede_base)
+		if par[1].has(m.parede_base):
+			mi.mesh.surface_set_material(par[1][m.parede_base], m.parede_musgo if ruina else m.parede_base)
+		if par[1].has(m.parede_int_base):
+			mi.mesh.surface_set_material(par[1][m.parede_int_base], m.parede_int_musgo if ruina else m.parede_int_base)
 
 
 # ---------------------------------------------------------------- materiais
@@ -161,6 +164,36 @@ static func mat_tri(nome: String, tam: Vector3, cor := Color.WHITE, rug := 0.95)
 		return _cache[k2]
 	var v := base.duplicate() as StandardMaterial3D
 	v.albedo_color = cor
+	v.set_meta("vc_base", base)
+	v.set_meta("vc", cor)
+	_cache[k2] = v
+	return v
+
+
+## Parede de blocos (shaders/parede_tri.gdshader): triplanar de mundo + oclusão falsa no pé da parede.
+## Mesma convenção de mat_tri: com `cor` diferente de branco devolve uma variante fundida por cor de vértice.
+static func mat_parede(nome: String, tam: Vector3, cor := Color.WHITE, ao_forca := 0.36, ao_altura := 1.5) -> Material:
+	var chave := "parede|%s|%s|%s|%s" % [nome, tam, ao_forca, ao_altura]
+	var base: ShaderMaterial
+	if _cache.has(chave):
+		base = _cache[chave]
+	else:
+		base = ShaderMaterial.new()
+		base.shader = preload("res://shaders/parede_tri.gdshader")
+		var t := _tex(nome)
+		if t:
+			base.set_shader_parameter("textura", t)
+		base.set_shader_parameter("escala", Vector3(1.0 / tam.x, 1.0 / tam.y, 1.0 / tam.z))
+		base.set_shader_parameter("ao_forca", ao_forca)
+		base.set_shader_parameter("ao_altura", ao_altura)
+		_cache[chave] = base
+	if cor == Color.WHITE:
+		return base
+	var k2 := "%s|%s" % [chave, cor.to_html()]
+	if _cache.has(k2):
+		return _cache[k2]
+	var v := base.duplicate() as ShaderMaterial
+	v.set_shader_parameter("tom", cor)
 	v.set_meta("vc_base", base)
 	v.set_meta("vc", cor)
 	_cache[k2] = v
@@ -241,14 +274,18 @@ static func mat_luz(cor: Color, _energia := 1.6) -> StandardMaterial3D:
 func _criar_materiais() -> void:
 	m = {
 		# todas as variantes da parede compartilham UMA superfície (cor de vértice); em 2019 a base troca por musgo
-		"parede_base": mat_tri("parede_castelinho", TAMANHO_TEXTURA_PAREDE),
-		"parede_musgo": mat_tri("parede_castelinho_musgo", TAMANHO_TEXTURA_PAREDE),
-		"parede": mat_tri("parede_castelinho", TAMANHO_TEXTURA_PAREDE, Color(0.94, 0.94, 0.94)),
-		"parede_int": mat_tri("parede_castelinho", TAMANHO_TEXTURA_PAREDE, Color(0.8, 0.77, 0.75)),
-		"parede_1950": mat_tri("parede_castelinho", TAMANHO_TEXTURA_PAREDE, Color(0.75, 0.95, 1.0)),
-		"parede_sombra": mat_tri("parede_castelinho", TAMANHO_TEXTURA_PAREDE, Color(0.45, 0.38, 0.36)),
-		"parede_clara": mat_tri("parede_castelinho", TAMANHO_TEXTURA_PAREDE),
-		"piso": mat_tri("piso_pedra", Vector3(2.0, 2.0, 2.0), Color(0.92, 0.92, 0.95)),
+		# interior: textura própria (blocos mais claros, junta cinza grossa, como nas fotos de dentro)
+		"parede_base": mat_parede("parede_castelinho", TAMANHO_TEXTURA_PAREDE),
+		"parede_musgo": mat_parede("parede_castelinho_musgo", TAMANHO_TEXTURA_PAREDE),
+		"parede_int_base": mat_parede("parede_interna", TAMANHO_TEXTURA_PAREDE, Color.WHITE, 0.3, 1.0),
+		"parede_int_musgo": mat_parede("parede_castelinho_musgo", TAMANHO_TEXTURA_PAREDE, Color.WHITE, 0.3, 1.0),
+		"parede": mat_parede("parede_castelinho", TAMANHO_TEXTURA_PAREDE, Color(0.97, 0.97, 0.97)),
+		"parede_int": mat_parede("parede_interna", TAMANHO_TEXTURA_PAREDE, Color(1.0, 0.94, 0.88), 0.3, 1.0),
+		"parede_1950": mat_parede("parede_nucleo", TAMANHO_TEXTURA_PAREDE, Color(0.97, 0.97, 0.97)),
+		"tabuas": mat_uv("tabuas_claras"),
+		"parede_sombra": mat_parede("parede_castelinho", TAMANHO_TEXTURA_PAREDE, Color(0.36, 0.3, 0.29)),
+		"parede_clara": mat_parede("parede_castelinho", TAMANHO_TEXTURA_PAREDE),
+		"piso": mat_tri("piso_pedra", Vector3(2.0, 2.0, 2.0), Color(1.0, 0.96, 0.92)),
 		"reboco": mat_tri("reboco", Vector3(2.0, 2.0, 2.0)),
 		"laje": mat_tri("reboco", Vector3(2.0, 2.0, 2.0), Color(0.72, 0.72, 0.7)),
 		"madeira": mat_tri("madeira_escura", Vector3(1.0, 1.0, 1.0)),
@@ -333,6 +370,32 @@ func cornija(g: Grupo, o: Vector3, u: Vector3, n: Vector3, L: float, topo: float
 	for i in nm:
 		var c := ini + i * passo
 		caixa_u(g.ext, m.parede_clara, o, u, n, c - larg * 0.5, c + larg * 0.5, 0.0, proj, y_a, y_b)
+	# arcuação: entre duas mísulas, um arquinho (o vão escuro fica com topo em arco, como nas fotos)
+	for i in nm - 1:
+		var esq := ini + i * passo + larg * 0.5
+		var dir := ini + (i + 1) * passo - larg * 0.5
+		_arquinho(g.ext, o, u, n, esq, dir, y_b, proj)
+
+
+## Tímpano claro de um arquinho entre mísulas, no plano da frente das mísulas (`proj` para fora da parede).
+func _arquinho(ma: Malha, o: Vector3, u: Vector3, n: Vector3, esq: float, dir: float, y_topo: float, proj: float) -> void:
+	var r := (dir - esq) * 0.5
+	if r <= 0.01:
+		return
+	var xm := (esq + dir) * 0.5
+	var ys := y_topo - r - 0.025
+	var mat: Material = m.parede_clara
+	var pts: Array = []
+	for k in 5:
+		var a := PI - PI * float(k) / 4.0
+		pts.append(pt(o, u, n, xm + cos(a) * r, ys + sin(a) * r, -proj))
+	var tl := pt(o, u, n, esq, y_topo, -proj)
+	var tr := pt(o, u, n, dir, y_topo, -proj)
+	ma.tri(mat, tl, pts[0], pts[1], n)
+	ma.tri(mat, tl, pts[1], pts[2], n)
+	ma.tri(mat, tl, pts[2], tr, n)
+	ma.tri(mat, tr, pts[2], pts[3], n)
+	ma.tri(mat, tr, pts[3], pts[4], n)
 
 
 ## Arquivolta: faixa saliente em torno de um arco (aduelas), mais clara que a parede.
@@ -458,11 +521,18 @@ func janela_grade(g: Grupo, o: Vector3, u: Vector3, n: Vector3, uc: float, w: fl
 
 
 ## Folha de veneziana fechada (quadro de madeira com ripas) sobre a parede, sem abertura.
-func veneziana_fechada(g: Grupo, o: Vector3, u: Vector3, n: Vector3, uc: float, w: float, v0: float, h: float) -> void:
+func veneziana_fechada(g: Grupo, o: Vector3, u: Vector3, n: Vector3, uc: float, w: float, v0: float, h: float, mat_folha: Material = null) -> void:
 	var q0 := pt(o, u, n, uc - w * 0.5, v0, -0.03)
 	var q1 := pt(o, u, n, uc + w * 0.5, v0, -0.03)
 	var q2 := pt(o, u, n, uc + w * 0.5, v0 + h, -0.03)
 	var q3 := pt(o, u, n, uc - w * 0.5, v0 + h, -0.03)
+	if mat_folha:
+		# folhas de tábua (núcleo de 1950): duas folhas com fresta e verga de pedra clara
+		g.ext.quad(mat_folha, q0, q1, q2, q3, n, Vector2(1.0, 1.0))
+		caixa_u(g.ext, m.escuro, o, u, n, uc - 0.012, uc + 0.012, 0.0, 0.035, v0, v0 + h)
+		caixa_u(g.ext, m.parede_clara, o, u, n, uc - w * 0.5 - 0.1, uc + w * 0.5 + 0.1, 0.0, 0.06, v0 + h, v0 + h + 0.14)
+		caixa_u(g.ext, m.parede, o, u, n, uc - w * 0.5 - 0.06, uc + w * 0.5 + 0.06, 0.0, 0.12, v0 - 0.06, v0)
+		return
 	g.ext.quad(m.veneziana, q0, q1, q2, q3, n, Vector2(w * 0.5, h))
 	# fundo escuro (a veneziana tem recorte em losango)
 	var r0 := pt(o, u, n, uc - w * 0.5, v0, -0.015)

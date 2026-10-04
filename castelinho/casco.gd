@@ -186,6 +186,10 @@ static func _torre_a(c: Castelinho) -> void:
 	var cz := (tz0 + tz1) * 0.5
 	g.ext.piramide(c.m.telha, Vector3(cx, yf, cz), Lt + 0.3, tz1 - tz0 + 0.3, ya - yf, 1.0, c.m.madeira)
 	g.ext.col(Vector3(tx0, yf, tz0), Vector3(tx1, ya, tz1))
+	# fresta em arco no alto do fuste da torreta (sul e leste), como nas fotos
+	var yj := yf - 1.15
+	c.decalque_vao(g.ext, c.m.escuro, oz(tz1), U_X, N_S, cx, 0.24, yj, yj + 0.5, yj + 0.66, "arco")
+	c.decalque_vao(g.ext, c.m.escuro, ox(tx1), U_Z, N_L, cz, 0.24, yj, yj + 0.5, yj + 0.66, "arco")
 
 
 # ------------------------------------------------------------------ anexo ameado + pavilhão de canto
@@ -332,6 +336,9 @@ static func _torre_b(c: Castelinho) -> void:
 	c.cornija(g, Vector3(tx0, 0, tz0), U_X, N_N, tx1 - tx0, yf)
 	c.cornija(g, Vector3(tx0, 0, tz0), U_Z, N_O, tz1 - tz0, yf)
 	g.ext.piramide(c.m.telha, Vector3((tx0 + tx1) * 0.5, yf, (tz0 + tz1) * 0.5), tx1 - tx0 + 0.3, tz1 - tz0 + 0.3, ya - yf, 1.0, c.m.madeira)
+	var yjb := yf - 1.0
+	c.decalque_vao(g.ext, c.m.escuro, oz(tz1), U_X, N_S, (tx0 + tx1) * 0.5, 0.2, yjb, yjb + 0.42, yjb + 0.56, "arco")
+	c.decalque_vao(g.ext, c.m.escuro, ox(tx1), U_Z, N_L, (tz0 + tz1) * 0.5, 0.2, yjb, yjb + 0.42, yjb + 0.56, "arco")
 	# laje do teto e piso do quarto
 	g.ext.caixa(c.m.laje, Vector3(-8.2, 5.9, -26.7), Vector3(-5.0, 6.2, -23.1), Malha.F_PY)
 	g.inte.caixa(c.m.forro, Vector3(-8.2, 5.9, -26.7), Vector3(-5.0, 6.2, -23.1), Malha.F_NY, 1.5)

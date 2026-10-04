@@ -81,7 +81,26 @@
 
 ### Limites conhecidos
 - Fotos só cobrem fachadas sul e leste; norte, oeste, telhados por dentro e escadas das torres são invenção plausível (documentado).
-- Pinheiros são blocos simples (3 variantes em `MultiMeshInstance3D`); sem sombras dinâmicas (web); letreiro em fonte serifada comum, sem brasão da prefeitura.
+- Pinheiros em 3 variantes de `MultiMeshInstance3D` (tronco nu e copa em tufos, revisão gráfica); sem sombras dinâmicas (web), só sombras pintadas no chão; letreiro em fonte serifada comum, sem brasão da prefeitura.
 - Decalques em parede interna precisam de >= 3 cm de folga (1 a 2 cm somem por profundidade).
 - Em 1950, soltar Q com a cápsula dentro de onde uma parede reaparece prende o jogador por instantes; ele se desprende sozinho.
 - Desempenho no navegador e áudio não foram testados (só Mesa/llvmpipe e testes headless).
+
+## Revisão gráfica (diretor de arte técnico)
+
+Relatório completo em `docs/REVISAO_GRAFICA.md`. Arquivos de outras divisões que mudaram, sem mudar nenhuma API pública:
+
+- **`world/painel_3d.gd`** (UI): ganhou a propriedade opcional `alcance`. Se for maior que 0, aplica
+  `visibility_range_end` a todas as peças a cada reconstrução por corruption. As 6 a 7 caixas da moldura viraram uma
+  malha só (`shaders/placa_cor.gdshader`), com resultado idêntico pixel a pixel. Motivo: com corruption > 0 o Ato I
+  passava de 300 draw calls.
+- **`world/niveis/ato2.gd`** (Efeitos):
+  - `_limitar_alcances()`: alcance só de renderização. A casa aparece a 70 m; a arcada, a porta final e a Sala
+    Medieval, a 46 m. O hall caiu de 249 para 84 draw calls.
+  - O hall da sala 26 usa os blocos internos do Castelinho (`parede_interna`) e o núcleo usa `parede_nucleo`.
+  - Os presets "dunas" e "hall_aberto" ficaram mais escuros.
+- **`ui/tela_titulo.gd`** (UI): o castelo do cenário foi redesenhado com a silhueta real (torreta esbelta, arcada de
+  5 arcos, anexo ameado).
+- **`tests/captura.gd`** (integrador): agora imprime draw calls e triângulos, como `captura_cam.gd`.
+- **Para quem cuida da Barra:** a vista `barra_m70` tem ~69 mil triângulos, provavelmente da água ou dos molhes. Os
+  prédios do horizonte (vista de costas) são caixas sem janela.

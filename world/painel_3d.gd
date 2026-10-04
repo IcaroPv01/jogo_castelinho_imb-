@@ -22,6 +22,12 @@ var id := ""
 var _visual: Node3D
 var _check: Sprite3D
 var _estrelas: Array[Sprite3D] = []
+## > 0: a placa some a mais de `alcance` metros (visibility_range_end em todas as peças, reaplicado a cada
+## reconstrução por corruption). Cada placa tem ~12 superfícies: sem isso, um nível com 25 painéis passa de 300
+## draw calls assim que a corruption muda (a placa se reconstrói e as peças novas não tinham alcance).
+var alcance := 0.0
+var _st: SurfaceTool
+static var _MAT_PLACA: ShaderMaterial = null
 var _foi_lido := false
 var _t := 0.0
 var _tem_quiz := false
@@ -50,23 +56,32 @@ func _ao_mudar_corruption(_v: float) -> void:
 
 
 # ---------------------------------------------------------------- visual
-func _mat(cor: Color, brilho := 0.3) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.albedo_color = cor
-	m.roughness = 0.8
-	m.emission_enabled = true
-	m.emission = cor
-	m.emission_energy_multiplier = brilho
-	return m
-
-
+## As caixas da moldura vão para uma só malha (_st, cor de vértice + brilho no alfa, shaders/placa_cor.gdshader):
+## 1 draw call por placa em vez de 7. Interiores com 6 a 8 placas por perto ficavam acima de 150 draw calls.
 func _caixa(tam: Vector3, pos: Vector3, cor: Color, brilho := 0.3) -> void:
+	var h := tam * 0.5
+	var c := Color(cor.r, cor.g, cor.b, brilho)
+	_st.set_color(c)
+	# 6 faces: [normal, eixo u, eixo v]
+	for f in [[Vector3.BACK, Vector3.RIGHT, Vector3.UP], [Vector3.FORWARD, Vector3.LEFT, Vector3.UP],
+			[Vector3.RIGHT, Vector3.FORWARD, Vector3.UP], [Vector3.LEFT, Vector3.BACK, Vector3.UP],
+			[Vector3.UP, Vector3.RIGHT, Vector3.FORWARD], [Vector3.DOWN, Vector3.RIGHT, Vector3.BACK]]:
+		var n: Vector3 = f[0]
+		var u: Vector3 = f[1] * h
+		var v: Vector3 = f[2] * h
+		var o: Vector3 = pos + n * h
+		var q := [o - u - v, o + u - v, o + u + v, o - u + v]
+		_st.set_normal(n)
+		for i in [0, 2, 1, 0, 3, 2]:
+			_st.add_vertex(q[i])
+
+
+func _fechar_caixas() -> void:
 	var mi := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = tam
-	mi.mesh = bm
-	mi.material_override = _mat(cor, brilho)
-	mi.position = pos
+	mi.name = "Moldura"
+	mi.mesh = _st.commit()
+	mi.material_override = _MAT_PLACA
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_visual.add_child(mi)
 
 
@@ -113,6 +128,11 @@ func _construir() -> void:
 	_visual.name = "Visual"
 	add_child(_visual)
 	_estrelas.clear()
+	if _MAT_PLACA == null:
+		_MAT_PLACA = ShaderMaterial.new()
+		_MAT_PLACA.shader = preload("res://shaders/placa_cor.gdshader")
+	_st = SurfaceTool.new()
+	_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
 	var d := PainelUI.dados(id)
 	var corr := GameState.corruption
@@ -164,9 +184,19 @@ func _construir() -> void:
 			e.modulate = Color.WHITE.lerp(Color(0.6, 0.6, 0.6), t)
 			_estrelas.append(e)
 
+	_fechar_caixas()
 	_check = _sprite(Flash.icone("check"), Vector3(0.62, -0.38, 0.075), 0.2)
 	_check.visible = _foi_lido
 	set_process(not _seco)
+	if alcance > 0.0:
+		_aplicar_alcance(_visual)
+
+
+func _aplicar_alcance(no: Node) -> void:
+	if no is GeometryInstance3D:
+		(no as GeometryInstance3D).visibility_range_end = alcance
+	for c in no.get_children():
+		_aplicar_alcance(c)
 
 
 func _process(dt: float) -> void:

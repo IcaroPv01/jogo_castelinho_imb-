@@ -65,6 +65,75 @@ func tri(mat: Material, a: Vector3, b: Vector3, c: Vector3, n: Vector3, uva := V
 	triangulos += 1
 
 
+## Triângulo com cor por vértice (sombreado de Gouraud "de PS1": oclusão falsa em tufos e arbustos).
+## A normal é a da face (facetado low-poly) e é orientada para `dica`.
+func tri_cores(mat: Material, a: Vector3, b: Vector3, c: Vector3, dica: Vector3, ca: Color, cb: Color, cc: Color) -> void:
+	var rr := _resolver(mat, Color.WHITE)
+	mat = rr[0]
+	var tom: Color = rr[1]
+	var n := (b - a).cross(c - a)
+	if n.length_squared() < 1e-12:
+		return
+	n = n.normalized()
+	if n.dot(dica) < 0.0:
+		n = -n
+		var t := b
+		b = c
+		c = t
+		var tc := cb
+		cb = cc
+		cc = tc
+	var s := _s(mat)
+	for p in [[a, ca], [c, cc], [b, cb]]:
+		s["v"].append(p[0])
+		s["n"].append(n)
+		s["uv"].append(Vector2.ZERO)
+		s["c"].append((p[1] as Color) * tom)
+	triangulos += 1
+
+
+## Elipsoide low-poly irregular ("bolha"): tufo de pinheiro, arbusto, copa, cacho de hortênsia.
+## `seg` lados x `aneis` anéis; os vértices são sacudidos por `jit` (fração do raio) com `rnd`.
+## A cor de vértice vai de `cor_base` (embaixo, escuro: oclusão falsa) a `cor_topo` (em cima). Facetado.
+func bolha(mat: Material, c: Vector3, r: Vector3, rnd: RandomNumberGenerator, seg := 6, aneis := 2, jit := 0.18,
+		cor_topo := Color.WHITE, cor_base := Color(0.55, 0.55, 0.55)) -> void:
+	var anel: Array = []
+	var giro := rnd.randf_range(0.0, TAU)
+	for i in aneis:
+		var th := PI * float(i + 1) / float(aneis + 1)
+		var pts: Array = []
+		for k in seg:
+			var ph := giro + TAU * (float(k) + 0.5 * float(i % 2)) / float(seg)
+			var j := 1.0 + rnd.randf_range(-jit, jit)
+			pts.append(c + Vector3(r.x * sin(th) * cos(ph) * j, r.y * cos(th) * (1.0 + rnd.randf_range(-jit, jit) * 0.5), r.z * sin(th) * sin(ph) * j))
+		anel.append(pts)
+	var topo := c + Vector3(rnd.randf_range(-jit, jit) * r.x * 0.5, r.y * (1.0 + rnd.randf_range(-jit, jit) * 0.4), rnd.randf_range(-jit, jit) * r.z * 0.5)
+	var base := c - Vector3(0, r.y * 0.85, 0)
+	var cor := func(p: Vector3) -> Color:
+		var t := clampf((p.y - (c.y - r.y)) / (2.0 * r.y), 0.0, 1.0)
+		return cor_base.lerp(cor_topo, t)
+	for k in seg:
+		var k1 := (k + 1) % seg
+		var a: Vector3 = anel[0][k]
+		var b: Vector3 = anel[0][k1]
+		tri_cores(mat, topo, a, b, (a + b) * 0.5 + topo - c * 2.0, cor.call(topo), cor.call(a), cor.call(b))
+	for i in aneis - 1:
+		for k in seg:
+			var k1 := (k + 1) % seg
+			var a: Vector3 = anel[i][k]
+			var b: Vector3 = anel[i][k1]
+			var d: Vector3 = anel[i + 1][k]
+			var e: Vector3 = anel[i + 1][k1]
+			var fora := (a + b + d + e) * 0.25 - c
+			tri_cores(mat, a, d, b, fora, cor.call(a), cor.call(d), cor.call(b))
+			tri_cores(mat, b, d, e, fora, cor.call(b), cor.call(d), cor.call(e))
+	for k in seg:
+		var k1 := (k + 1) % seg
+		var a: Vector3 = anel[aneis - 1][k]
+		var b: Vector3 = anel[aneis - 1][k1]
+		tri_cores(mat, base, a, b, (a + b) * 0.5 - c, cor.call(base), cor.call(a), cor.call(b))
+
+
 ## Quadrilátero a,b,c,d (laço em torno da face). uv_tam > 0 liga UV por metros (a->b = u, a->d = v).
 func quad(mat: Material, a: Vector3, b: Vector3, c: Vector3, d: Vector3, n: Vector3, uv_tam := Vector2.ZERO, cor := Color.WHITE) -> void:
 	var ua := Vector2.ZERO

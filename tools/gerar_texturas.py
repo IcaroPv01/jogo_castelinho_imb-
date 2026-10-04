@@ -6,6 +6,7 @@ Saída: assets/textures/*.png   (256x256 ou 512x512, tileáveis, estilo low-poly
 
 Escala física (para o jogo, uv1_scale = 1 / tamanho_em_metros):
   parede_castelinho*.png  1,48 m (largura) x 1,485 m (altura): 4 blocos de 35 cm (+2 cm de junta) x 11 fiadas de 13,5 cm
+  parede_interna.png      idem (blocos mais claros e rosados, junta cinza grossa: fotos do interior)
   piso_pedra.png          2,0 m x 2,0 m    (cacos de pedra de ~35-45 cm)
   fibrocimento.png        1,416 m x 1,416 m (8 ondas de 17,7 cm)
   grama / areia / asfalto 2,0 m
@@ -104,18 +105,18 @@ def voronoi(w, h, nx, ny, r, jitter=0.85):
 
 
 # ------------------------------------------------------------------ parede de blocos
-def _parede_base(seed, w=256, h=256, fiadas=11, blocos=4):
+# Cores medidas nas fotos (docs/pesquisa/refs): parede ao sol ~#C6AC95, à sombra/nublado ~#A88C7C (média com as
+# juntas). O par da pesquisa (#A8583F a #C9806A) é o tom do bloco limpo; aqui os blocos ficam entre os dois
+# (salmão-terroso, um pouco menos saturado que o tijolo de olaria) e a junta é clara e pouco contrastada.
+def _parede_base(seed, w=256, h=256, fiadas=11, blocos=4, cor_a="#A35E4A", cor_b="#C98A74", cor_junta="#C7BBA6",
+                 jh=3, jv=4, var_bloco=1.0):
     """Camada de blocos. Retorna (rgb, mascara_junta, indice_bloco) sem envelhecimento."""
     r = rng(seed)
-    cor_a, cor_b = hexa("#B0614A"), hexa("#D08C76")
-    cor_junta = hexa("#BDB099")
+    cor_a, cor_b = hexa(cor_a), hexa(cor_b)
+    cor_junta = hexa(cor_junta)
     img = np.zeros((h, w, 3))
     junta = np.zeros((h, w), dtype=bool)
     bid = np.zeros((h, w), dtype=np.int32)
-    ruido_fino = ruido(w, h, 2, r)            # poros (pixels de 2x2)
-    ruido_med = fbm(w, h, r, (32, 16, 8), suave=True)
-    jh = 3                                     # junta horizontal em px (2 cm ~ 3,5 px)
-    jv = 4
     lb = w // blocos
     n = 0
     for f in range(fiadas):
@@ -125,14 +126,14 @@ def _parede_base(seed, w=256, h=256, fiadas=11, blocos=4):
         for k in range(blocos + 1):
             x0 = k * lb + off - lb
             x1 = x0 + lb
-            # bloco ocupa [x0+jv/2, x1-jv/2] x [y0+jh/2, y1-jh/2]
-            t = 0.18 + 0.82 * r.random() ** 0.8
+            t = 0.12 + 0.88 * r.random() ** 0.9
             base = cor_a * (1 - t) + cor_b * t
-            base = base * (0.94 + 0.12 * r.random())
-            if r.random() < 0.08:
-                base = base * 0.82            # bloco mais queimado
-            if r.random() < 0.06:
-                base = base * np.array([0.95, 1.0, 1.04])   # bloco mais frio
+            base = base * (1.0 + var_bloco * (r.random() - 0.5) * 0.10)
+            sorte = r.random()
+            if sorte < 0.07:
+                base = base * np.array([0.86, 0.84, 0.84])     # bloco mais queimado
+            elif sorte < 0.13:
+                base = base * np.array([1.04, 1.08, 1.1])      # bloco mais pálido (arenoso)
             n += 1
             for y in range(y0, y1):
                 for xx in range(x0, x1):
@@ -143,68 +144,76 @@ def _parede_base(seed, w=256, h=256, fiadas=11, blocos=4):
                         junta[y % h, xm] = True
                     else:
                         bid[y % h, xm] = n
-                        # relevo: topo claro, base escura, esquerda clara
+                        # relevo suave: aresta de cima clara, de baixo escura
                         rel = 1.0
-                        if y - y0 <= jh // 2 + 2:
-                            rel += 0.07
-                        if y1 - 1 - y <= jh // 2 + 2:
-                            rel -= 0.12
-                        if xx - x0 <= jv // 2 + 2:
-                            rel += 0.04
-                        if x1 - 1 - xx <= jv // 2 + 2:
-                            rel -= 0.06
+                        if y - y0 == jh // 2 + 1:
+                            rel += 0.06
+                        if y1 - 1 - y == jh // 2 + 1:
+                            rel -= 0.08
                         img[y % h, xm] = base * rel
-    # face rústica: poros e granulado
-    poro = (ruido_fino < 0.08)[..., None]
-    claro = (ruido_fino > 0.93)[..., None]
-    gr = (0.92 + 0.16 * ruido_med)[..., None]
-    img = np.where(junta[..., None], 0, img * gr)
-    img = np.where(poro & ~junta[..., None], img * 0.78, img)
-    img = np.where(claro & ~junta[..., None], img * 1.15, img)
-    # junta clara com ruído
+    # face rústica: manchas suaves (sem os "poros" de alto contraste, que viravam ruído na tela)
+    manchas = fbm(w, h, r, (16, 8, 4), suave=True)
+    grao = ruido(w, h, 1, r)
+    img = img * (0.92 + 0.14 * manchas)[..., None]
+    img = img * (0.96 + 0.08 * grao)[..., None]
+    # pequenas cavidades da face rústica (poucas e de baixo contraste)
+    cav = (ruido(w, h, 1, r) > 0.965)[..., None]
+    img = np.where(cav, img * 0.88, img)
+    # junta clara com pouco ruído e uma sombrinha sob o bloco
     jr = ruido(w, h, 2, r)
-    cj = cor_junta[None, None, :] * (0.88 + 0.22 * jr[..., None])
+    cj = cor_junta[None, None, :] * (0.93 + 0.1 * jr[..., None])
     sombra = np.zeros((h, w))
-    sombra[1:, :] = np.where(~junta[:-1, :] & junta[1:, :], 1.0, 0.0)  # sombra sob o bloco
-    cj = cj * (1 - 0.22 * sombra[..., None])
+    sombra[1:, :] = np.where(~junta[:-1, :] & junta[1:, :], 1.0, 0.0)
+    cj = cj * (1 - 0.16 * sombra[..., None])
     img = np.where(junta[..., None], cj, img)
     return img, junta, bid
 
 
 def parede_castelinho():
     img, _, _ = _parede_base(11)
-    salvar("parede_castelinho.png", quant(img, 32))
+    salvar("parede_castelinho.png", quant(img, 40))
+
+
+def parede_interna():
+    """Paredes internas: os mesmos blocos, mais claros e rosados, com junta cinza grossa (fotos do interior)."""
+    img, _, _ = _parede_base(13, cor_a="#B98877", cor_b="#D7AE9C", cor_junta="#A39B90", jh=4, jv=5, var_bloco=0.8)
+    salvar("parede_interna.png", quant(img, 40))
+
+
+def parede_nucleo():
+    """Núcleo de 1950 (foto antiga): os mesmos blocos, recém-assentados, mais pálidos e arenosos."""
+    img, _, _ = _parede_base(17, cor_a="#A98A74", cor_b="#CDB39C", cor_junta="#D3CAB8", var_bloco=1.2)
+    salvar("parede_nucleo.png", quant(img, 40))
 
 
 def parede_musgo():
-    """Versão 2019 (ruína): mais escura, suja, com musgo e manchas de umidade."""
+    """Versão 2019 (ruína): o mesmo bloco avermelhado, encardido, com escorridos, musgo no pé e líquen."""
     img, junta, _ = _parede_base(11)
     r = rng(77)
     h, w, _ = img.shape
     cinza = img.mean(axis=2, keepdims=True)
-    img = img * 0.55 + cinza * 0.45             # dessatura
-    img = img * 0.78
+    img = img * 0.8 + cinza * 0.2               # dessatura pouco: o prédio continua vermelho na aérea de 2019
+    img = img * 0.8
     # manchas escuras de umidade (escorridos verticais)
     esc = np.kron(r.random((1, w // 4)), np.ones((h, 4)))
     esc = esc * fbm(w, h, r, (64, 32), suave=True)
-    mancha = (esc > 0.5)[..., None]
-    img = np.where(mancha, img * 0.7, img)
-    # musgo verde: mais forte embaixo e nas juntas
+    img = img * (1.0 - 0.18 * np.clip((esc - 0.35) * 3.0, 0.0, 1.0))[..., None]
+    # musgo verde-oliva: só em manchas, mais forte embaixo e nas juntas
     m = fbm(w, h, r, (48, 24, 12, 6))
     grad = np.linspace(0.0, 1.0, h)[:, None]
     grad = np.maximum(grad ** 3, (1 - grad) ** 6 * 0.7)
-    mm = (m + grad * 0.28 + junta * 0.10) > 0.80
-    verde = np.array([62, 84, 40]) * (0.8 + 0.5 * ruido(w, h, 2, r)[..., None])
-    img = np.where(mm[..., None], verde, img)
+    mm = (m + grad * 0.22 + junta * 0.08) > 0.84
+    verde = np.array([70, 82, 44]) * (0.85 + 0.35 * ruido(w, h, 2, r)[..., None])
+    img = np.where(mm[..., None], img * 0.4 + verde * 0.6, img)
     # líquen claro
-    liq = (ruido(w, h, 3, r) > 0.965)[..., None]
+    liq = (ruido(w, h, 3, r) > 0.975)[..., None]
     img = np.where(liq, np.array([168, 172, 140]), img)
-    salvar("parede_castelinho_musgo.png", quant(img, 28))
+    salvar("parede_castelinho_musgo.png", quant(img, 32))
 
 
 # ------------------------------------------------------------------ pisos
 def piso_pedra():
-    """Cacos de pedra cinza-escura com juntas largas (piso interno). Tile = 2,0 m."""
+    """Cacos de pedra (laje cinza-clara, levemente quente) com juntas claras: piso interno das fotos. Tile = 2,0 m."""
     r = rng(5)
     w = h = 256
     d1, d2, idx = voronoi(w, h, 6, 6, r)
@@ -212,20 +221,23 @@ def piso_pedra():
     cores = []
     for _ in range(36 + 1):
         t = r.random()
-        base = np.array([74, 74, 82]) * (1 - t) + np.array([98, 92, 90]) * t
-        if r.random() < 0.18:
-            base = base * np.array([1.0, 0.96, 0.9])   # ferrugem leve
-        cores.append(base * (0.9 + 0.2 * r.random()))
+        base = np.array([128, 124, 120]) * (1 - t) + np.array([164, 156, 146]) * t
+        sorte = r.random()
+        if sorte < 0.2:
+            base = base * np.array([1.04, 0.98, 0.9])   # caco ferrugem
+        elif sorte < 0.32:
+            base = base * np.array([0.95, 0.97, 1.0])   # caco ardósia
+        cores.append(base * (0.92 + 0.16 * r.random()))
     cores = np.array(cores)
     img = cores[idx]
-    gr = (0.9 + 0.2 * fbm(w, h, r, (32, 8, 4), suave=False))[..., None]
+    gr = (0.93 + 0.14 * fbm(w, h, r, (32, 8, 4), suave=True))[..., None]
     img = img * gr
-    # relevo: borda do caco mais clara (laje levantada), meio plano
-    img = np.where((borda < 7)[..., None], img * (0.78 + 0.28 * (borda / 7)[..., None]), img)
-    junta = borda < 3.2
-    cj = np.array([128, 124, 108])[None, None, :] * (0.8 + 0.3 * ruido(w, h, 2, r)[..., None])
+    # relevo: borda do caco um pouco mais escura (laje assentada), meio plano
+    img = np.where((borda < 6)[..., None], img * (0.86 + 0.14 * (borda / 6)[..., None]), img)
+    junta = borda < 2.6
+    cj = np.array([180, 174, 162])[None, None, :] * (0.88 + 0.16 * ruido(w, h, 2, r)[..., None])
     img = np.where(junta[..., None], cj, img)
-    salvar("piso_pedra.png", quant(img, 28))
+    salvar("piso_pedra.png", quant(img, 32))
 
 
 def calcada_lajotas():
@@ -237,15 +249,15 @@ def calcada_lajotas():
     cores = []
     for _ in range(17):
         t = r.random()
-        base = np.array([170, 164, 152]) * (1 - t) + np.array([192, 176, 160]) * t
+        base = np.array([156, 150, 140]) * (1 - t) + np.array([176, 164, 150]) * t
         cores.append(base * (0.92 + 0.16 * r.random()))
     img = np.array(cores)[idx]
     img = img * (0.93 + 0.14 * fbm(w, h, r, (32, 8), suave=False))[..., None]
     img = np.where((borda < 6)[..., None], img * 0.9, img)
     junta = borda < 3.0
     mato = (ruido(w, h, 3, r) > 0.82) & (borda < 5)
-    cj = np.array([84, 80, 72])[None, None, :] * (0.8 + 0.4 * ruido(w, h, 2, r)[..., None])
-    cj = np.where(mato[..., None], np.array([66, 104, 46]), cj)
+    cj = np.array([112, 106, 96])[None, None, :] * (0.85 + 0.3 * ruido(w, h, 2, r)[..., None])
+    cj = np.where(mato[..., None], np.array([76, 110, 52]), cj)
     img = np.where((junta | mato)[..., None], cj, img)
     salvar("calcada_lajotas.png", quant(img, 28))
 
@@ -296,6 +308,17 @@ def madeira_porta():
     for cy in (40, 216):
         img[cy:cy + 6, :] = img[cy:cy + 6, :] * 0.8 + np.array([20, 14, 10])
     salvar("madeira_porta.png", quant(img, 24))
+
+
+def tabuas_claras():
+    """Tábuas verticais de madeira mais clara (venezianas e porta do núcleo de 1950, foto antiga). Tile = 1,0 m."""
+    r = rng(25)
+    w = h = 128
+    img, gap, idx = _tabuas(w, h, 6, True, hexa("#6B4A30"), hexa("#8C6544"), r, gap=2, grao=0.16)
+    img = np.where(gap[..., None], np.array([36, 24, 16]), img)
+    for cy in (12, h - 16):
+        img[cy:cy + 5, :] = img[cy:cy + 5, :] * 0.82
+    salvar("tabuas_claras.png", quant(img, 24))
 
 
 def madeira_escura():
@@ -457,12 +480,18 @@ def asfalto():
 
 
 def folhagem():
-    """Folhagem escura dos pinheiros (agulhas). Tile = 1,0 m."""
+    """Folhagem (agulhas de pinus em tufos; também arbustos, tingida por cor de vértice). Tile = 1,3 m."""
     r = rng(91)
     w = h = 128
-    img = hexa("#2A4A2C")[None, None, :] * (0.65 + 0.7 * fbm(w, h, r, (32, 8, 4), suave=False))[..., None]
-    img = np.where((ruido(w, h, 2, r) > 0.86)[..., None], img * 1.35, img)
-    salvar("folhagem.png", quant(img, 22))
+    img = hexa("#3C5E42")[None, None, :] * (0.7 + 0.5 * fbm(w, h, r, (16, 8, 4), suave=False))[..., None]
+    # tufos de agulhas: traços curtos claros e escuros
+    for _ in range(420):
+        x, y = int(r.integers(0, w)), int(r.integers(0, h))
+        dx, dy = (1, 0) if r.random() < 0.5 else (1, 1 if r.random() < 0.5 else -1)
+        cor = np.array([96, 130, 88]) if r.random() < 0.55 else np.array([26, 44, 32])
+        for k in range(int(r.integers(2, 5))):
+            img[(y + dy * k) % h, (x + dx * k) % w] = cor * (0.9 + 0.2 * r.random())
+    salvar("folhagem.png", quant(img, 24))
 
 
 def casca():
@@ -531,6 +560,13 @@ def letreiro_castelinho():
     for caminho in ("/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf", "/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf"):
         if os.path.exists(caminho):
             fonte = ImageFont.truetype(caminho, 92)
+            # maior fonte que cabe em 96% da largura (na foto as letras ocupam a placa toda)
+            for tam in range(130, 60, -2):
+                f2 = ImageFont.truetype(caminho, tam)
+                bb2 = d.textbbox((0, 0), "Castelinho", font=f2)
+                if bb2[2] - bb2[0] <= w * 0.96 and bb2[3] - bb2[1] <= h * 0.86:
+                    fonte = f2
+                    break
             break
     if fonte is None:
         fonte = ImageFont.load_default(size=80)
@@ -538,7 +574,7 @@ def letreiro_castelinho():
     bb = d.textbbox((0, 0), texto, font=fonte)
     x = (w - (bb[2] - bb[0])) // 2 - bb[0]
     y = (h - (bb[3] - bb[1])) // 2 - bb[1]
-    d.text((x + 4, y + 4), texto, font=fonte, fill=(30, 30, 30, 200))   # sombra
+    d.text((x + 5, y + 5), texto, font=fonte, fill=(40, 30, 28, 220))   # sombra (letras de metal afastadas da parede)
     d.text((x, y), texto, font=fonte, fill=(244, 244, 238, 255))
     # pixelização leve: reduz e amplia
     im = im.resize((w // 2, h // 2), Image.NEAREST).resize((w, h), Image.NEAREST)
@@ -597,10 +633,65 @@ def mural_pescador():
     print("  gerada: mural_pescador.png 512 x 256")
 
 
+def banner_ambiental():
+    """Banner enrolável genérico de educação ambiental (Meio Ambiente): céu, sol, folha, ondas e faixas de
+    texto (sem texto legível nem marcas reais). 64x128, pixels visíveis."""
+    w, h = 64, 128
+    im = Image.new("RGB", (w, h), (236, 244, 250))
+    d = ImageDraw.Draw(im)
+    for y in range(0, 56):
+        t = y / 56
+        d.line([(0, y), (w, y)], fill=(int(150 + 80 * t), int(205 + 30 * t), int(240 + 10 * t)))
+    d.ellipse((14, 14, 50, 50), fill=(250, 250, 245), outline=(40, 120, 70), width=3)
+    d.polygon([(32, 20), (44, 32), (32, 44), (20, 32)], fill=(70, 170, 80))
+    d.line([(32, 22), (32, 42)], fill=(30, 100, 50), width=1)
+    for k, cor in enumerate([(60, 140, 220), (40, 110, 200), (30, 80, 170)]):
+        y0 = 58 + k * 8
+        for x in range(0, w, 2):
+            yy = y0 + int(2.5 * math.sin(x / 6.0 + k))
+            d.line([(x, yy), (x, yy + 6)], fill=cor)
+    for k in range(5):
+        y = 90 + k * 6
+        d.rectangle((8, y, 8 + (48 if k % 2 == 0 else 36), y + 2), fill=(70, 80, 100))
+    d.rectangle((0, 0, w - 1, h - 1), outline=(200, 205, 210))
+    os.makedirs(SAIDA, exist_ok=True)
+    im.save(os.path.join(SAIDA, "banner_ambiental.png"))
+    print("  gerada: banner_ambiental.png 64 x 128")
+
+
+# ------------------------------------------------------------------ céu
+def nuvens():
+    """Nuvens de desenho para o céu (shaders/ceu_nuvens.gdshader). Tileável 256x256.
+    R = densidade (o shader corta num limiar: borda dura), G = luz (núcleo claro, borda escura). Tons chapados."""
+    r = rng(101)
+    w = h = 256
+    ys, xs = np.mgrid[0:h, 0:w].astype(np.float64)
+    campo = np.zeros((h, w))
+    for _ in range(16):
+        cx, cy = r.random() * w, r.random() * h
+        larg = r.uniform(18, 40)
+        for _ in range(int(r.integers(4, 8))):
+            px = cx + r.normal(0, larg * 0.6)
+            py = cy + r.normal(0, larg * 0.25)
+            rad = r.uniform(9, 24)
+            dx = np.abs(xs - px)
+            dx = np.minimum(dx, w - dx)
+            dy = np.abs(ys - py)
+            dy = np.minimum(dy, h - dy)
+            v = np.clip(1.0 - (dx * dx + dy * dy) / (rad * rad), 0.0, 1.0)
+            campo = np.maximum(campo, v)
+    ru = fbm(w, h, r, (32, 16, 8), suave=True)
+    dens = np.clip(campo * 0.85 + (ru - 0.5) * 0.3 + 0.12, 0.0, 1.0)
+    luz = np.clip((dens - 0.5) * 2.4 + (ru - 0.5) * 0.25, 0.0, 1.0)
+    img = np.dstack([dens * 255, luz * 255, np.zeros((h, w))])
+    salvar("nuvens.png", img)
+
+
 TODAS = [
-    parede_castelinho, parede_musgo, piso_pedra, calcada_lajotas, madeira_porta, madeira_escura,
+    parede_castelinho, parede_interna, parede_nucleo, parede_musgo, piso_pedra, calcada_lajotas, madeira_porta, madeira_escura,
     forro_madeira, deck_madeira, fibrocimento, telha_escura, telha_ceramica, reboco, grama, areia,
     areia_1950, asfalto, folhagem, casca, grade_losango, veneziana, letreiro_castelinho, mural_pescador,
+    nuvens, banner_ambiental, tabuas_claras,
 ]
 
 
