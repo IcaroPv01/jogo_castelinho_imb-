@@ -35,3 +35,32 @@
 - Fatos que **não** consegui reconfirmar online nesta rodada (as fontes bloquearam o acesso): a data exata da primeira ponte (1934) e o "~16 mil para ~80 mil" de P12. Ambos vêm de `historia_imbe.md` com a ressalva de lá.
 - **Áudio nunca foi ouvido** (a nuvem não tem placa de som): os sons foram conferidos só por espectrograma e níveis. Ouça o jingle e os efeitos no navegador; ajustes finos de volume ficam em `VOLUME_PADRAO` (`autoload/audio.gd`) e de timbre em `tools/gerar_audio.py` (rode `python3 tools/gerar_audio.py` e depois `godot --headless --import`).
 - Regenerar arte e tema: `python3 tools/gerar_mascotes.py` (SVGs) e `godot --headless -s res://tools/gerar_tema.gd` (grava `ui/tema_flash.tres`).
+
+## Agente Efeitos e Ato II
+
+### APIs novas (para o agente do Castelinho e o integrador)
+
+- **`Efeitos`** (autoload, CanvasLayer **camada 5**, abaixo do HUD 10, da UI 20/120 e da Transicao 100):
+  - Pós-processamento ligado a `GameState.corruption` (interpolado suavemente). Em corruption 0 (e sem pulso/visor) a camada some e a imagem fica **intacta**. Sobe: pixelização leve, dithering/menos cores, dessaturação, vinheta, grão, aberração cromática; acima de ~0.5, faixas de glitch.
+  - `Efeitos.pulso(intensidade, dur)` (susto), `Efeitos.visor(ativo)` (moldura do Visor: plástico vermelho, dois olhos redondos, sépia, legenda do ano, clarão e `Audio.sfx("slide")`).
+  - Extras: `Efeitos.legenda_visor("Em 1950, aqui era só areia!")` (frase sob o ano; apague com `""`), `Efeitos.flash(dur, cor, forca)`, `Efeitos.material_psx(cor, textura)` (ShaderMaterial com vertex snapping que piora com a corruption; opcional).
+- **`Visor`** (`world/visor.gd`, `class_name Visor`): lógica do Visor do Tempo. **Cada nível que quiser o Visor chama `Visor.instalar(self)`** (idempotente, reaproveita o que já existir). Com `GameState.flag("tem_visor")`: segurar Q troca para `flag("epoca_visor", E1950)` + `Efeitos.visor(true)`; soltar volta para E2020, exceto se `visor_travado`. O nível é quem define a época inicial em `iniciar()` (o Visor não restaura a época ao ser destruído). Não dá para registrar como autoload com o nome `Visor` (conflita com o `class_name`); se o integrador preferir autoload, use outro nome, p.ex. `VisorTempo`, e remova o `instalar` dos níveis (o grupo `visor_tempo` evita duplicar).
+- **`FiguraBranca`** (`creatures/figura_branca.gd`, CharacterBody3D, camada 4 = valor 8, colide só com o mundo): `var f := FiguraBranca.new(); f.velocidade = 2.2; f.pontos_reaparecer = [Vector3(...)]; nivel.add_child(f); f.global_position = ...`. Parâmetros: `ativa` (false = parada, só some se cercada), `angulo_visao` (35), `distancia_cercar` (2,5), `distancia_toque` (0,9), `tempo_reaparecer`, `distancia_reaparecer`, `pontos_reaparecer`, `reaparecer_fn` (Callable), `pontos_caminho` (portas, para contornar paredes), `escuro` (apagão: conta como não olhada), `usar_navegacao` (usa NavigationAgent3D só se o nível tiver navmesh). Métodos: `ativar()`, `teleportar(pos)`, `reiniciar(pos, ativa)`, `esconder()`, `esta_sendo_olhada()`. Sinais: `sumiu`, `reapareceu`, `matou_jogador`. Mata com `GameState.matar_jogador("figura_branca")`.
+- **Níveis**: `world/niveis/ato2.tscn` (marcadores `Spawn`, `Checkpoint_26`, câmeras `Cam_26..Cam_30`) e `world/niveis/barra.tscn` (marcador `Spawn`). Entradas: Ato I sala 14 chama `await Transicao.ir_para("res://world/niveis/barra.tscn")`; a Barra volta para `res://world/niveis/castelinho.tscn` em **`Spawn_volta_barra`** (sala 15) e liga a flag `viu_flashback_barra`. Fim do Ato I (sala 25) chama `Transicao.ir_para("res://world/niveis/ato2.tscn")`. Se `castelinho.tscn` ainda não existir, a Barra cai no nível de teste (aviso no console).
+- **Morte no Ato II**: `ao_morrer()` do nível usa `Morte.mostrar(...)` (UI) e volta ao `Checkpoint_26` **sem recarregar a cena**. **Fim da demo (sala 30)**: tela preta própria (camada 15, abaixo do Guia), `Guia.falar_engasgado("bentinho", ...)` e `FimDemo.mostrar()`.
+- **Estado que o Ato II mexe** (para o integrador saber): `epoca` (E2020 no hall, E1950 depois da porta), flags `visor_travado` e `epoca_visor`, `entrar_sala(26..30)`, `Audio.musica("")` ao entrar nas dunas (o jingle para: só vento). `iniciar()` do Ato II zera a época e a trava; a Barra usa `definir_corruption_manual(0.1..0.5)` e **devolve a curva (`-1`) ao sair**.
+
+### Arquivos fora da minha lista em MVP_ROTEIRO §4
+- `world/niveis/ato2_pecas.gd` (`class_name Ato2Pecas`): texturas procedurais, arco abatido, empena, terreno de dunas. É usado também pela Barra. As texturas do castelinho (`parede_castelinho`, `piso_pedra`, `areia_1950`, `fibrocimento`) são usadas automaticamente se estiverem importadas; senão há versões procedurais.
+- `tests/ato2_test.gd` e `tests/barra_test.gd` (pedidos no briefing). Eles aceleram o tempo (`Engine.time_scale = 4`); a bateria inteira leva ~55 s.
+- Apaguei por engano os PNGs de `build/capturas/` (pasta não versionada) ao refazer minhas capturas; os `.import` ficaram.
+
+### Para o integrador (opcional)
+1. `GameState.set_flag(...)` grava o save a cada chamada; o Visor e o Ato II chamam pouco, mas se isso pesar no navegador vale agrupar.
+2. `main._on_morte` não precisa de mudança: o Ato II implementa `ao_morrer()`. O Castelinho pode fazer o mesmo.
+3. Aviso de teste: arquivos `extends SceneTree` não podem citar `Visor`, `FiguraBranca`, `Ato2Pecas`... por nome (compilam antes dos autoloads); use `load("res://...")` em runtime, como em `tests/ato2_test.gd`.
+
+### Decisões e limites
+- A Figura Branca anda em linha reta com desvio de paredes e pontos de passagem; o Ato II não gera navmesh. No corredor reto da arcada isso basta. Quem preferir navmesh liga `usar_navegacao`.
+- Na arcada a regra "olhar para trás" pode ser burlada andando de costas olhando para ela; o contraponto são os **apagões** (a cada 6-10 s, 0,45 s no escuro, ela avança sem ser vista). Ajuste em `VEL_FIGURA_ARCADA` e `_apagao()` no `ato2.gd`.
+- Áudio e desempenho no navegador **não foram testados** (só captura em Mesa/llvmpipe e testes headless). O pós-processamento custa uma cópia da tela por quadro só quando corruption > 0.
