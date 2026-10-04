@@ -1,0 +1,19 @@
+CASTELINHO: VISITA GUIADA — versão de demonstração (salas 1 a 30)
+
+COMO JOGAR
+1. Extraia esta pasta (botão direito > Extrair tudo).
+2. Dê dois cliques em Castelinho.exe.
+   O Windows pode mostrar "O Windows protegeu o computador" (o jogo não tem
+   assinatura digital paga). Clique em "Mais informações" > "Executar assim mesmo".
+
+CONTROLES
+  Clique ............ começar / capturar o mouse
+  W A S D / setas ... andar
+  Shift ............. correr (gasta fôlego)
+  Mouse ............. olhar
+  E ou clique ....... ler painel / usar
+  Q (segurar) ....... Visor do Tempo (depois da sala 10)
+  Espaço / Enter .... avançar diálogo
+  Esc ou P .......... pausar (clique para voltar)
+
+O jogo salva sozinho. Obra de ficção: não representa a Prefeitura de Imbé.

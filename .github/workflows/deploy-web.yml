@@ -2,6 +2,7 @@ name: Web (Godot → GitHub Pages)
 
 # Em todo PR: exporta e roda o teste automático (valida que o jogo compila).
 # Na main: exporta, testa e publica em https://icaropv01.github.io/jogo_castelinho_imb-/
+# (a versão Windows fica em https://icaropv01.github.io/jogo_castelinho_imb-/Castelinho_Windows.zip)
 
 on:
   push:
@@ -35,9 +36,9 @@ jobs:
           path: |
             ~/godot-bin
             ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
-          key: godot-${{ env.GODOT_VERSION }}-web-v1
+          key: godot-${{ env.GODOT_VERSION }}-web-win-v2
 
-      - name: Baixar Godot e templates Web
+      - name: Baixar Godot e templates (Web + Windows)
         if: steps.godot-cache.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
@@ -49,7 +50,7 @@ jobs:
           curl -fsSL --retry 3 -O "$BASE/$EDITOR_ZIP" -O "$BASE/$TPZ" -O "$BASE/SHA512-SUMS.txt"
           grep -E " (${EDITOR_ZIP}|${TPZ})\$" SHA512-SUMS.txt | sha512sum -c -
           unzip -q "$EDITOR_ZIP" -d ~/godot-bin
-          unzip -q "$TPZ" 'templates/version.txt' 'templates/web_nothreads_*.zip' -d tpl
+          unzip -q "$TPZ" 'templates/version.txt' 'templates/web_nothreads_*.zip' 'templates/windows_release_x86_64.exe' -d tpl
           T=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
           mkdir -p "$T"
           mv tpl/templates/* "$T/"
@@ -64,6 +65,12 @@ jobs:
           mkdir -p build/web
           "$GODOT" --headless --export-release "$EXPORT_PRESET" build/web/index.html
           test -s build/web/index.wasm && test -s build/web/index.pck
+          # Versão Windows (offline), baixável em .../Castelinho_Windows.zip
+          mkdir -p build/win
+          "$GODOT" --headless --export-release "Windows" build/win/Castelinho.exe
+          test -s build/win/Castelinho.exe
+          cp tools/LEIA-ME_windows.txt build/win/LEIA-ME.txt
+          (cd build/win && zip -q -9 ../web/Castelinho_Windows.zip Castelinho.exe LEIA-ME.txt)
           ls -la build/web
 
       - uses: actions/upload-pages-artifact@v3
