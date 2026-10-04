@@ -1,0 +1,83 @@
+name: Web (Godot → GitHub Pages)
+
+# Em todo PR: exporta e roda o teste automático (valida que o jogo compila).
+# Na main: exporta, testa e publica em https://icaropv01.github.io/jogo_castelinho_imb-/
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.7.2"
+  EXPORT_PRESET: "Web"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache do Godot + templates Web
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot-bin
+            ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-${{ env.GODOT_VERSION }}-web-v1
+
+      - name: Baixar Godot e templates Web
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          BASE="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
+          EDITOR_ZIP="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          TPZ="Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          mkdir -p "$RUNNER_TEMP/dl" ~/godot-bin
+          cd "$RUNNER_TEMP/dl"
+          curl -fsSL --retry 3 -O "$BASE/$EDITOR_ZIP" -O "$BASE/$TPZ" -O "$BASE/SHA512-SUMS.txt"
+          grep -E " (${EDITOR_ZIP}|${TPZ})\$" SHA512-SUMS.txt | sha512sum -c -
+          unzip -q "$EDITOR_ZIP" -d ~/godot-bin
+          unzip -q "$TPZ" 'templates/version.txt' 'templates/web_nothreads_*.zip' -d tpl
+          T=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$T"
+          mv tpl/templates/* "$T/"
+
+      - name: Importar, testar e exportar
+        run: |
+          set -euo pipefail
+          GODOT=~/godot-bin/Godot_v${GODOT_VERSION}-stable_linux.x86_64
+          chmod +x "$GODOT"
+          "$GODOT" --headless --import || true
+          bash tools/testar.sh "$GODOT"
+          mkdir -p build/web
+          "$GODOT" --headless --export-release "$EXPORT_PRESET" build/web/index.html
+          test -s build/web/index.wasm && test -s build/web/index.pck
+          ls -la build/web
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: build/web
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

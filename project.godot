@@ -1,0 +1,43 @@
+; Castelinho: Visita Guiada — Godot 4.7, renderer Compatibility (WebGL2) para rodar no navegador.
+
+config_version=5
+
+[application]
+
+config/name="Castelinho: Visita Guiada"
+config/description="Jogo educativo da prefeitura (fictícia) que vai ficando estranho."
+run/main_scene="res://scenes/main/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[autoload]
+
+GameState="*res://autoload/game_state.gd"
+Audio="*res://autoload/audio.gd"
+Transicao="*res://autoload/transicao.gd"
+Guia="*res://autoload/guia.gd"
+Efeitos="*res://autoload/efeitos.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[gui]
+
+theme/custom="res://ui/tema_flash.tres"
+
+[physics]
+
+common/physics_ticks_per_second=60
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+textures/default_filters/anisotropic_filtering_level=0
+anti_aliasing/quality/msaa_3d=0
+environment/defaults/default_clear_color=Color(0.05, 0.05, 0.07, 1)
