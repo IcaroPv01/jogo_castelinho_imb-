@@ -80,6 +80,7 @@ func trocar_epoca(nova: int) -> void:
 	if nova == epoca:
 		return
 	epoca = nova
+	Epocas.aplicar(get_tree(), epoca)
 	epoca_mudou.emit(epoca)
 
 
