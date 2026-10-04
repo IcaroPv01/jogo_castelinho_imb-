@@ -1,15 +1,24 @@
 # Plano do jogo: Castelinho de Imbé
 
 > Documento-mestre do projeto. Base: `docs/pesquisa/castelinho.md`, `docs/pesquisa/historia_imbe.md` e `docs/pesquisa/spookys_e_referencias.md`.
-> **Status:** rascunho v0.1 (04/10/2026). Tudo aqui está aberto a revisão. As perguntas no fim (§12) decidem os pontos em aberto.
+> **Status:** rascunho **v0.2** (04/10/2026), já com as respostas do Icaro às perguntas da v0.1 (ver §12). Falta a aprovação final para começar o M0.
 
 ---
 
 ## 1. A ideia em uma frase
 
-Um "jogo educativo da prefeitura" que faz uma visita guiada pelo Castelinho de Imbé contando a história da cidade, sala por sala. Aos poucos a visita para de fazer sentido, o prédio começa a mudar e o jogador acaba descendo para uma masmorra que **não está na planta**.
+Um "jogo educativo da prefeitura" com cara de **Flash dos anos 2000** que faz uma visita guiada pelo Castelinho de Imbé contando a história da cidade, sala por sala. Objetos do museu levam a **flashbacks** em outros lugares de Imbé. Aos poucos a visita para de fazer sentido, o prédio começa a mudar e o jogador acaba descendo para uma masmorra que **não está na planta**.
 
 **Título provisório:** *Castelinho: Visita Guiada* (alternativas: *Conheça Imbé!*, *Costela-de-Adão*).
+
+**Decisões tomadas (v0.2):**
+- **Público:** amigos.
+- **Onde se joga:** no **navegador do computador**, via GitHub Pages. Nada para instalar.
+- **Idioma:** só português.
+- **Tom:** **sustos com humor** (Spooky's) com **trechos pesados e perturbadores** pontuais (§4.5).
+- **Visual do começo:** **Flash educativo dos anos 2000**.
+- **Tamanho:** MVP de 30 salas, depois expandimos para 100.
+- **Modelagem:** **sem visita presencial** por enquanto. Usamos fotos online, satélite e OpenStreetMap.
 
 ---
 
@@ -92,6 +101,19 @@ Cada painel traz um fato, uma ilustração e um mini-quiz opcional. Ao acertar, 
   - com camadas que descem: blocos de pedra, depois areia molhada, conchas (sambaqui), água e por fim cascos de navio.
 - **Clímax:** o encontro com o Mestre de Obras e a revelação de que a masmorra é o castelo **continuando a se construir**.
 
+### 4.5 Humor e peso: onde fica cada um
+
+A base é **humor de Spooky's**: recortes de papelão, a Tainá fazendo piada de peixe, quiz com resposta absurda e o Quico apitando. Os **trechos pesados** são poucos, curtos e anunciados pela mudança de som (o jingle para). Neles não tem piada nenhuma.
+
+| Trecho pesado | Por que pesa | Limite |
+|---|---|---|
+| Flashback do loteamento de 1939 | Remoção real de moradores. O jogador "aprova" lotes num minigame e vê os ranchos sumirem um a um | Sem gore. O horror é a burocracia alegre contra gente real (genérica, sem nomes) |
+| Flashback do naufrágio de 1902 | Morte no mar, escuro, água subindo | Sem cadáveres explícitos. Silhuetas, vozes e a água |
+| Sala do sambaqui (Ato IV) | Cemitério ancestral | Respeito: nada de "índio monstro". O horror é a profanação, e quem é punido é quem cava |
+| Ato IV, perto do Mestre de Obras | Obsessão e trabalho sem fim: paredes com marcas de unha e pedras "assentadas" em formato de gente | Perturbador, mas sem sangue em excesso |
+
+**Linhas que não cruzamos:** crimes reais, vítimas reais, a enchente de 2024 como espetáculo, povos indígenas como monstros e pessoas reais nomeadas.
+
 ---
 
 ## 5. Mecânica-assinatura: as "camadas de tempo"
@@ -107,11 +129,59 @@ O prédio real teve 4 estados documentados. O jogo usa cada um como cenário, e 
 
 Em Godot, cada camada é uma variação do mesmo modelo: os objetos ganham um marcador de época e são ligados ou desligados conforme a camada. Por isso o castelo é modelado **uma vez só**, de forma modular (§7.3).
 
+### 5.1 As camadas dentro do jogo: o "Visor do Tempo"
+
+As épocas não trocam sozinhas. O jogador **usa** a troca:
+
+- **Ato I, ferramenta educativa:**
+  - Bentinho entrega um **Visor do Tempo**, um visor de slides de plástico como os View-Master de criança, com a marca do "Programa Municipal".
+  - Ao apertar `Q`, o jogador olha pelo visor e vê a sala como era em outra época, com uma legenda didática: "Em 1950, aqui era só areia!".
+  - É um brinquedo e serve para achar selos escondidos.
+- **Ato II, o visor começa a mentir:**
+  - O jogador olha pelo visor e vê algo que não deveria estar lá: uma pessoa parada, uma porta que não existe.
+  - Às vezes, ao baixar o visor, **a época não volta**.
+- **Ato III, puzzle e fuga:**
+  - Uma porta trancada em 2020 estava aberta em 1975.
+  - Uma escada desabada em 2019 está inteira em 1950.
+  - Para fugir de uma criatura, o jogador troca de época: ela some, mas outra coisa pode estar esperando.
+- **Ato IV, sem visor:**
+  - O visor quebra, e a masmorra não tem época.
+  - Na parede há fotos de todas as épocas, inclusive **de épocas que ainda não aconteceram**.
+
+### 5.2 Flashbacks: fora do castelo
+
+O jogo **não fica preso ao lote**. Alguns objetos do acervo do museu (que existem de verdade, ver `castelinho.md` §3.10) abrem **flashbacks jogáveis** em outros lugares e épocas de Imbé.
+
+Cada flashback é uma fase curta e linear, com o **mesmo truque de tom**: começa como "cena educativa" e termina estranha.
+
+| Objeto do acervo (gatilho) | Flashback | Época | Começa como... | ...e vira |
+|---|---|---|---|---|
+| Ossos de baleia / conchas | **Sambaqui** na beira da lagoa | pré-colonial | Aula de arqueologia: "ajude a montar o sambaqui!" | O monte de conchas é também cemitério. As conchas estão quentes |
+| Gravura de barco | **O lanchão Seival** arrastado por terra até a barra | 1839 | Minigame de puxar o barco com os bois | Na névoa, alguém continua puxando muito depois que todos pararam |
+| Mapa de loteamento antigo | **Loteamento da cidade-jardim** | 1939 | Minigame de "planejar a cidade" com ruas curvas e praças | Cada lote marcado tem um rancho de pescador que precisa "sair". Trecho **pesado** (§4.5) |
+| Mural da Sala do Pescador | **Barra do Tramandaí**: pesca com os botos | anos 1960/hoje | Minigame de tarrafa: lance a rede quando o boto sinalizar | O boto sinaliza na hora errada. O rio puxa |
+| Foto da ponte | **Ponte Giuseppe Garibaldi** à noite | anos 1980 | Passeio de carro "turístico" | Pescadores de sardinha que não se mexem, sempre os mesmos |
+| Telefone antigo do acervo | **Praia em pleno inverno**: guaritas fechadas, Av. Beira-Mar vazia | qualquer inverno | O telefone toca: "Alô? A temporada acabou?" | A cidade de 80 mil habitantes tem 16 mil. Todas as janelas estão fechadas, menos uma |
+| Sino de navio | **Naufrágio** na costa ("Cemitério dos Navegantes") | 1902 | Painel sobre o navio Meteoro | O jogador está no convés. Trecho **pesado** (§4.5) |
+
+**Fidelidade dos flashbacks:**
+- Os lugares reais (barra, ponte, praia, guaritas) são modelados por foto, em versão simplificada.
+- As pessoas são sempre genéricas ou fictícias.
+- **Enchente de 2024:** **fora** como cena de terror. Foi recente, tem vítimas e afetou quem vai jogar. No máximo uma menção respeitosa num painel do Ato I.
+
 ---
 
 ## 6. A guia, as criaturas e as regras
 
-**Guia (equivalente à Spooky):** **"Bentinho"** (nome provisório), um boto-mascote de desenho animado, como os de prefeitura. Ele **não muda de aparência**, só de discurso: animado no Ato I, nervoso no Ato II, mudo e ausente no Ato III, e no Ato IV volta como gravação corrompida.
+**Guia (equivalente à Spooky):** **"Bentinho"**, um boto-mascote de desenho animado, como os de prefeitura. Ele **não muda de aparência**, só de discurso: animado no Ato I, nervoso no Ato II, mudo e ausente no Ato III, e no Ato IV volta como gravação corrompida.
+
+**A Turma da Memória:** três mascotes do "Programa Municipal", no estilo Flash, que aparecem juntos na tela de título. Os nomes são provisórios.
+
+| Mascote | Bicho | Papel no Ato I | Como vira |
+|---|---|---|---|
+| **Bentinho** | Boto | Guia principal, apresenta as salas | Fica nervoso, some e volta corrompido (acima) |
+| **Tainá** | Tainha | Apresenta os **quizzes** ("Acertou, guri!") e os flashbacks da pesca | Ela é o peixe que boto e pescador caçam juntos. Aos poucos percebe isso. No flashback da barra, é ela na rede. É o trecho de **humor negro** |
+| **Quico** | Quero-quero (ave-símbolo do RS) | "Fiscal" da visita: apita quando o jogador sai do caminho e guarda os **selos** | O quero-quero real ataca quem chega perto do ninho. Quico passa a "defender" a masmorra e vira um **perseguidor com regra**: no Ato III, o grito dele avisa onde o jogador está. Fica-se longe dos **ninhos** no chão |
 
 **Criaturas:** cada uma tem **uma regra** que o jogador descobre. Todas são inspiradas no folclore e na história do litoral, sem pessoas reais.
 
@@ -138,9 +208,31 @@ São 3 finais, decididos por uma contagem invisível, como no Spooky's:
 
 ### 7.1 Base
 
-- **Godot 4.x** (versão a confirmar com você, ver §12), renderer **Forward+**. A névoa volumétrica da masmorra exige esse renderer.
+- **Godot 4:** a versão estável mais recente. Ela fica fixada no projeto e no robô de publicação. Você baixa a mesma para editar no seu PC.
+- **Renderer Compatibility (WebGL2):** é o **único** que roda no navegador. Na v0.1 o plano previa Forward+, e isso muda:
+  - **Sem névoa volumétrica:** a masmorra usa névoa de profundidade simples, que combina com o visual PS1. Partículas por GPU e alguns efeitos de pós-processamento também ficam limitados (lista exata em `pesquisa/tecnico_web_e_estetica_flash.md`).
+  - **Performance de navegador:** tudo low-poly, texturas pequenas, poucas luzes dinâmicas. O estilo PS1/Flash ajuda.
+  - **Mouse e som:** o jogo pede um clique para começar. O navegador exige isso para capturar o mouse e tocar áudio.
 - **GDScript.** Nenhuma linguagem extra.
-- **Plataforma inicial:** PC (Windows/Linux). Exportação web fica para depois, porque não tem névoa volumétrica.
+- **Plataforma:** **navegador de computador**, via GitHub Pages. Celular fica fora.
+
+### 7.1.1 Publicação automática (GitHub Pages)
+
+1. Toda vez que algo entra na branch `main`, um **GitHub Action** baixa o Godot, exporta o jogo para Web e publica.
+2. O jogo fica em `https://icaropv01.github.io/jogo_castelinho_imb-/`.
+3. A exportação é **single-threaded**, a opção que funciona no GitHub Pages sem configuração extra de servidor.
+4. Para funcionar, o **repositório precisa ser público**, porque o GitHub Pages gratuito não funciona em repositório privado. O GitHub Pro resolve isso e é grátis para estudantes pelo GitHub Education.
+5. Também é preciso ligar **Settings → Pages → Source: GitHub Actions** uma única vez.
+
+### 7.1.2 Organização do repositório
+
+- **`main`:** sempre jogável. É o que está publicado.
+- **Branches por marco:** uma branch de trabalho por marco (M0, M1...). Cada marco vira um **Pull Request** que você revisa e aprova antes de entrar na `main`.
+- **Documentação:**
+  - `docs/PLANO.md` é este documento.
+  - `docs/pesquisa/` guarda as pesquisas.
+  - `docs/CREDITS.md` lista todo asset de terceiros com a licença.
+- **Fotos de imprensa:** só no computador local, nunca no git.
 
 ### 7.2 Estrutura de pastas proposta
 
@@ -161,7 +253,12 @@ tools/          gerar_castelinho.py (Blender headless)
 
 ### 7.3 Como modelar o Castelinho fiel (sem você precisar modelar à mão)
 
-1. **Um arquivo de medidas:** `castelinho/medidas.json` guarda as larguras, alturas, posições das torres, aberturas e espessura das paredes. Hoje os valores são estimados das fotos. Depois da visita presencial, você corrige os números.
+1. **Um arquivo de medidas:** `castelinho/medidas.json` guarda as larguras, alturas, posições das torres, aberturas e espessura das paredes. Fontes:
+   - a pegada (contorno) vem do **OpenStreetMap** e da **imagem de satélite**;
+   - as alturas e as aberturas vêm de **fotos online** com referência de escala (porta, pessoa, carro);
+   - cada número registra de onde veio e a confiança (`pesquisa/medidas_estimadas.json`).
+
+   Se um dia houver visita presencial, só se corrigem os números.
 2. **Geração por script:** um script Python roda o **Blender sem interface** aqui na nuvem, gera o modelo a partir das medidas e exporta em `.glb` para o Godot. Quando uma medida muda, basta regenerar.
 3. **Textura da pedra:** primeiro uma textura CC0 de tijolo/arenito (ambientCG ou Poly Haven) tingida no tom das fotos (#A8583F a #C9806A, juntas claras e grossas). Depois, a sua foto de 1 m² da parede real.
 4. **Validação visual:** renderizo o modelo nos mesmos ângulos das fotos de referência e mostro os dois lado a lado para você aprovar.
@@ -190,10 +287,11 @@ Cada marco termina com algo que **você abre no Godot e testa**, e com uma revis
 
 | Marco | Entrega | Você revisa |
 |---|---|---|
-| **M0: Fundação** | Projeto Godot criado, pastas, `GameState`, jogador andando numa sala cinza, contador de salas | Abre e anda |
+| **M0: Fundação** | Projeto Godot criado, pastas, `GameState`, jogador andando numa sala cinza, contador de salas, **publicação automática no GitHub Pages funcionando** | Abre o link no navegador e anda |
 | **M1: Castelinho v1** | Modelo gerado das medidas estimadas, jardim, texturas CC0, comparação lado a lado com as fotos | Fidelidade do exterior |
-| **M2: Ato I jogável** | Salas 1 a 25: painéis educativos com quiz, guia Bentinho, sustos de papelão | Tom "jogo da prefeitura", textos históricos |
-| **M3: Corruption + camadas de tempo** | Shader PSX progressivo, camadas 1950/1975/2019, Ato II | Se a virada de tom funciona |
+| **M2: Ato I jogável** | Salas 1 a 25: painéis educativos com quiz, interface estilo Flash, Turma da Memória (Bentinho, Tainá, Quico), sustos de papelão | Tom "jogo da prefeitura", textos históricos |
+| **M3: Corruption + Visor do Tempo** | Shader PSX progressivo, Visor do Tempo com as camadas 1950/1975/2019/2020, Ato II | Se a virada de tom funciona |
+| **M3.5: Primeiro flashback** | Barra do Tramandaí: minigame da tarrafa com o boto | Se os flashbacks valem a pena |
 | **M4: Primeira criatura** | Figura Branca com IA e regra, morte e checkpoint | Se dá medo de verdade |
 | **MVP (M0 a M4)** | **Salas 1 a 30 jogáveis**, exportáveis para Windows | Teste com amigos |
 | **M5: Ato III** | Torres impossíveis, ruína de 2019, lanterna, stamina, Costela-de-Adão | |
@@ -211,7 +309,16 @@ Tudo é commitado no GitHub, e você revisa cada marco.
 
 ---
 
-## 9. Lição de casa presencial (para fidelidade de verdade)
+## 9. Levantamento do prédio
+
+**Decisão v0.2:** fazemos **sem visita presencial**. A pesquisa online cobre:
+- satélite e OpenStreetMap para a planta;
+- notícias, Mapillary e vídeos para as fachadas;
+- fotos de interior das reportagens.
+
+Os resultados ficam em `pesquisa/geometria_e_fotos.md`. O checklist abaixo continua aqui para quando (e se) houver uma visita.
+
+### 9.1 Checklist para uma visita futura (opcional)
 
 A Casa de Cultura abre **de segunda a sexta (8h-12h e 13h30-17h30)**, com **visita guiada às torres aos sábados (9h-17h)**. Endereço: Av. Nilza Costa Godoy esq. Av. Garibaldi, Centro, Imbé. Checklist completo em `pesquisa/castelinho.md` §6. O essencial:
 
@@ -235,7 +342,8 @@ Quando voltar, mande tudo, que eu atualizo o `medidas.json`.
 | Risco | Mitigação |
 |---|---|
 | **Escopo grande** para um projeto solo com IA | MVP de 30 salas primeiro. As 100 salas só depois do teste. |
-| **Imagem de um prédio público em jogo de terror** | Avisar a Secretaria de Cultura e pedir autorização por escrito antes de publicar. Prefeitura fictícia e aviso de ficção. Uma exposição positiva pode até interessar ao museu. |
+| **Imagem de um prédio público em jogo de terror** | O público é de amigos, mas o link do GitHub Pages é aberto. Prefeitura fictícia, aviso de ficção na tela inicial e nenhum brasão real. Se o jogo for divulgado além dos amigos, pedir autorização à Secretaria de Cultura. |
+| **Fotos de imprensa no histórico do git** | Elas entraram por engano no 1º commit, e já foram tiradas da versão atual. **Antes de tornar o repositório público**, é preciso limpá-las do histórico (reescrever o histórico, o que pede a sua autorização). |
 | **Falta de medidas reais** | Modelo paramétrico: corrigir números não exige refazer nada. |
 | **Licenças de assets** | `CREDITS.md` desde o primeiro asset. Só CC0/MIT, ou CC-BY com crédito. |
 | **Versão do Godot** diferente da sua | Fixar a mesma versão no container e no seu PC. |
@@ -245,13 +353,34 @@ Quando voltar, mande tudo, que eu atualizo o `medidas.json`.
 
 ## 11. Próximos passos imediatos
 
-1. Você responde às perguntas da §12.
-2. Começo o **M0** (projeto Godot base) e o **M1** (Castelinho gerado das fotos), no ramo `claude/confident-euler-tlf6z1`.
-3. Você agenda uma visita de sábado ao Castelinho para o levantamento da §9.
+1. ~~Você responde às perguntas da §12.~~ Feito.
+2. **Você:**
+   - torna o repositório público;
+   - define `main` como branch padrão;
+   - liga o GitHub Pages com Source = GitHub Actions.
+3. **Você aprova este plano** no Pull Request.
+4. Começo o **M0** (projeto Godot base + publicação no GitHub Pages) e depois o **M1** (Castelinho gerado das medidas online).
 
 ---
 
-## 12. Perguntas para você (decidem o rumo)
+## 12. Perguntas e respostas
+
+### Respostas do Icaro (v0.2)
+
+| Pergunta | Resposta | Efeito no plano |
+|---|---|---|
+| Versão do Godot | Não sabe | Fixamos a estável mais recente e você baixa a mesma |
+| Público | Amigos, via GitHub Pages no PC | Renderer Compatibility, deploy automático, repositório público |
+| Nível de terror | Sustos com humor + partes pesadas e perturbadoras | §4.5 |
+| Guia | Bentinho aprovado, e os outros personagens também | Turma da Memória (§6) |
+| Tamanho | MVP e depois expandir | Mantido |
+| Visita presencial | Não, por enquanto. Pesquisar fotos | §9 |
+| Idioma | Só português | — |
+| Visual do Ato I | Flash educativo | §7 e `pesquisa/tecnico_web_e_estetica_flash.md` |
+| Extra: épocas | Usar as 4 versões dentro do jogo | Visor do Tempo (§5.1) |
+| Extra: fora do castelo | Barra de Imbé etc., talvez em flashbacks | Flashbacks (§5.2) |
+
+### Perguntas originais (v0.1)
 
 1. **Versão do Godot:** qual está instalada no seu computador? Aparece em *Ajuda → Sobre*. O ideal é 4.4 ou mais nova.
 2. **Público e publicação:** o jogo é para você e amigos, para a itch.io/Steam ou para mostrar à própria prefeitura? Isso muda o cuidado com autorização e o nível de terror.
