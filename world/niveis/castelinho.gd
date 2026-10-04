@@ -417,6 +417,7 @@ func _limitar_alcance(no: Node, d: float) -> void:
 		_limitar_alcance(c, d)
 
 
+## Só funciona com yaw múltiplo de 90°: as caixas da Malha são alinhadas aos eixos.
 func _poste_painel(pos: Vector3, yaw: float) -> void:
 	if _props == null:
 		_props = Malha.new()
@@ -434,7 +435,7 @@ func _poste_painel(pos: Vector3, yaw: float) -> void:
 
 func _montar_paineis() -> void:
 	# exterior (em postes de madeira)
-	_painel("p01", Vector3(-21.0, 1.4, -2.2), 0.0, [E2020], true)
+	_painel("p01", Vector3(-19.6, 1.4, -1.6), 0.0, [E2020], true)   # ao lado do caminho (não bloqueia quem anda reto do Spawn)
 	var p02 := _painel("p02", Vector3(-24.8, 1.4, -4.6), 0.0, [E2020], true)
 	_painel("p03", Vector3(-24.2, 1.4, -7.6), 0.0, [E2020], true)
 	_painel("p04", Vector3(-10.7, 1.4, -3.2), 0.0, [E2020], true)
