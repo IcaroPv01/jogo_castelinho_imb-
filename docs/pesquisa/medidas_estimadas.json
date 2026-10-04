@@ -1,0 +1,426 @@
+{
+  "_comentario": "Medidas ESTIMADAS a partir de fotos e satelite. Nenhuma foi tirada com trena. Cada campo traz _fonte (arquivo em refs/) e _confianca (alta/media/baixa). Unidades: metros e graus. Ler junto com geometria_e_fotos.md.",
+  "_sistema_coordenadas": {
+    "origem": "canto do lote na esquina Av. Garibaldi (sul) x Av. Nilza Costa Godoy (leste; antiga Av. Rio Grande)",
+    "eixo_X": "ao longo da testada da Av. Garibaldi, crescendo para OESTE (rumo da rua ~287 graus, OSM)",
+    "eixo_Y": "ao longo da testada da Av. Nilza Costa Godoy, crescendo para NORTE-NORDESTE (rumo da rua ~19,5 graus, OSM), para dentro do lote",
+    "eixo_Z": "altura, 0 = piso externo do gramado",
+    "mao": "X para a esquerda do mapa e Y para cima formam um sistema ESPELHADO em relacao ao matematico. Para Godot: posicao = (-X, Z, -Y). Assim norte-nordeste fica em -Z e leste em +X, como no mapa.",
+    "rumo_do_eixo_X_graus": 287,
+    "_fonte": "OSM way 236493318/236493319 (Garibaldi) e 903024551 (Rio Grande/Nilza), via api.openstreetmap.org/api/0.6/map; bearing calculado com pyproj/shapely",
+    "_confianca": "alta para os rumos; media para a posicao da origem (nao ha poligono do lote no OSM; esquina tirada do cruzamento das ruas deslocado pelas calcadas)"
+  },
+  "unidade_tijolo": {
+    "comprimento_bloco": 0.35,
+    "altura_bloco": 0.115,
+    "junta": 0.02,
+    "altura_fiada_com_junta": 0.135,
+    "comprimento_modulo_com_junta": 0.37,
+    "cor_bloco_hex": [
+      "#A8583F",
+      "#C9806A"
+    ],
+    "cor_junta_hex": "#CDBBA6",
+    "aparencia": "face rustica com poros, tom ferrugem a salmao; junta clara e grossa",
+    "_fonte": "textura_tijolo_mesa_acervo_beta.jpg (blocos medidos contra maquina de escrever Hermes ~32 cm e livros); conferido contra altura de portas em lnr_2026_frontal_esquina_ivan.jpg",
+    "_confianca": "media (+-2 cm na fiada; o dossie fala em pedra gres, as fotos parecem tijolo/bloco cortado)"
+  },
+  "lote": {
+    "x": 0,
+    "y": 0,
+    "largura": 30,
+    "profundidade": 34,
+    "rotacao_graus": 0,
+    "area_aprox_m2": 1020,
+    "_fonte": "imprensa: terreno > 900 m2 (litoralnarede 2019); proporcao tirada de satelite_z18_lote.jpg",
+    "_confianca": "baixa (limites nao medidos; so a ordem de grandeza e o recuo sao confiaveis)"
+  },
+  "recuos": {
+    "fachada_sul_arcada_a_testada_garibaldi": 11.0,
+    "fachada_leste_a_testada_nilza": 5.0,
+    "_fonte": "satelite_z18_lote.jpg (borda do asfalto ~15 m ao sul e ~7 m a leste, menos ~4 m e ~2 m de calcada/verde); aerea_2019 mostra gramado profundo na frente da arcada",
+    "_confianca": "baixa a media (+-3 m)"
+  },
+  "volumes": {
+    "corpo_principal": {
+      "descricao": "bloco do letreiro 'Castelinho'; 2 andares baixos (porao nao ha); cobertura de 1 agua em fibrocimento ondulado, que sobe do leste para o oeste",
+      "x": 5.0,
+      "y": 11.0,
+      "largura": 7.5,
+      "profundidade": 9.5,
+      "rotacao_graus": 0,
+      "altura_beiral_leste": 4.2,
+      "altura_cota_alta_oeste": 5.5,
+      "inclinacao_cobertura_graus": 10,
+      "beiral_projecao": 0.7,
+      "espessura_parede": 0.4,
+      "_fonte": "pegada: aerea_2019 + satelite_z18_lote.jpg; alturas: lnr_2026_frontal_esquina_ivan.jpg (330 px de parede para ~78 px/m)",
+      "_confianca": "pegada media/baixa (+-1,5 m); altura do beiral media (+-0,4 m); inclinacao baixa; espessura baixa (visivel nas aberturas das arcadas)"
+    },
+    "ala_arcada": {
+      "descricao": "galeria de 5 arcos voltada para a Av. Garibaldi (sul); laje plana sobre ela com parapeito ameado e cornija de misulas",
+      "x": 12.5,
+      "y": 11.0,
+      "largura": 10.5,
+      "profundidade": 3.0,
+      "rotacao_graus": 0,
+      "altura_piso_laje": 3.5,
+      "altura_topo_parapeito_com_ameias": 4.4,
+      "_fonte": "lnr_2019_arcada_ameias_marques3.jpg; lnr_2026_frontal_esquina_ivan.jpg; aerea_2019_litoralnarede.jpg; jpl_2021_aerea_drone_fachadas.jpg",
+      "_confianca": "largura/profundidade media/baixa; altura do parapeito media (+-0,4 m)"
+    },
+    "torre_a": {
+      "descricao": "corpo quadrado ameado, com terraco aberto (cobertura plana) e uma TORRETA de canto com cobertura piramidal",
+      "x": 19.0,
+      "y": 14.0,
+      "largura": 4.0,
+      "profundidade": 4.0,
+      "rotacao_graus": 0,
+      "altura_topo_ameias": 5.0,
+      "torreta": {
+        "x": 19.0,
+        "y": 16.8,
+        "largura": 1.2,
+        "profundidade": 1.2,
+        "altura_base_cobertura": 5.6,
+        "altura_apice": 6.3,
+        "cobertura": "piramidal 4 aguas, inclinacao ~42 graus, cor escura (telha/tijolo desgastado)",
+        "_fonte": "lnr_2026_frontal_esquina_ivan.jpg (largura da torreta ~2,5 blocos); zoom em tw_zoom",
+        "_confianca": "media para a seccao (~0,9-1,3 m); media/baixa para a altura"
+      },
+      "_fonte": "lnr_2026_frontal_esquina_ivan.jpg; aerea_2019_litoralnarede.jpg; dim_2026_torre_ameias_hibisco.jpg",
+      "_confianca": "pegada baixa (+-1 m e +-2 m de posicao); altura 5,0 m media/baixa (+-0,7 m)"
+    },
+    "pavilhao_oeste": {
+      "descricao": "torreta isolada pequena com cobertura piramidal, ligada por muro baixo; visivel so na aerea de 2019",
+      "x": 26.0,
+      "y": 14.5,
+      "largura": 1.4,
+      "profundidade": 1.4,
+      "rotacao_graus": 0,
+      "altura_apice": 4.0,
+      "_fonte": "aerea_2019_litoralnarede.jpg (canto esquerdo)",
+      "_confianca": "baixa (especulativo; sumiu ou foi ocultado nas fotos de 2021/2026)"
+    },
+    "terraco_laje": {
+      "descricao": "laje plana com platibanda branca entre o corpo principal e a ala dos fundos; liga as coberturas",
+      "x": 5.0,
+      "y": 20.5,
+      "largura": 14.0,
+      "profundidade": 3.0,
+      "rotacao_graus": 0,
+      "altura_laje": 3.8,
+      "altura_platibanda": 1.1,
+      "_fonte": "aerea_2019_litoralnarede.jpg; jpl_2021_aerea_drone_fachadas.jpg",
+      "_confianca": "baixa"
+    },
+    "ala_fundos": {
+      "descricao": "volume retangular com 2 vaos grandes em arco (portoes de madeira escura) voltados ao sul e cobertura de 1 agua em fibrocimento; parapeito ameado no lado leste",
+      "x": 8.2,
+      "y": 23.5,
+      "largura": 8.8,
+      "profundidade": 6.0,
+      "rotacao_graus": 0,
+      "altura_beiral": 3.6,
+      "altura_cota_alta": 4.6,
+      "inclinacao_cobertura_graus": 10,
+      "_fonte": "aerea_2019_litoralnarede.jpg",
+      "_confianca": "baixa (so vista de cima)"
+    },
+    "torre_b": {
+      "descricao": "torre quadrada ameada com cobertura piramidal, na ponta leste da ala dos fundos; porta em arco aberta na base",
+      "x": 5.0,
+      "y": 23.5,
+      "largura": 3.2,
+      "profundidade": 3.2,
+      "rotacao_graus": 0,
+      "altura_topo_ameias": 4.3,
+      "altura_apice": 5.6,
+      "_fonte": "aerea_2019_litoralnarede.jpg; jpl_2021_aerea_drone_fachadas.jpg (aparece ~0,8x a altura da torre A)",
+      "_confianca": "baixa"
+    }
+  },
+  "chamines": [
+    {
+      "x": 11.4,
+      "y": 12.0,
+      "largura": 0.9,
+      "profundidade": 0.9,
+      "altura_acima_da_cobertura": 1.3,
+      "cobertura": "piramidal baixa",
+      "_fonte": "lnr_2026_frontal_esquina_ivan.jpg; aerea_2019",
+      "_confianca": "baixa (posicao); media (forma)"
+    },
+    {
+      "x": 15.6,
+      "y": 28.2,
+      "largura": 0.8,
+      "profundidade": 0.8,
+      "altura_acima_da_cobertura": 1.2,
+      "_fonte": "aerea_2019_litoralnarede.jpg",
+      "_confianca": "baixa"
+    }
+  ],
+  "aberturas": {
+    "_convencao": "x/y em metros no sistema acima, ao longo da fachada; z_base = altura do peitoril ou piso; formas: arco_abatido, arco_ogival, retangular",
+    "fachada_sul_arcada_Av_Garibaldi": {
+      "plano_y": 11.0,
+      "arcos": [
+        {
+          "forma": "arco_abatido",
+          "x_centro": 13.4,
+          "largura": 1.9,
+          "altura_coroa": 2.4,
+          "nota": "vao de entrada (canto leste), hoje portas de vidro"
+        },
+        {
+          "forma": "arco_abatido",
+          "x_centro": 15.4,
+          "largura": 1.3,
+          "altura_coroa": 2.4,
+          "altura_imposta": 1.75,
+          "nota": "vedado com vidro e esquadria preta em 2020"
+        },
+        {
+          "forma": "arco_abatido",
+          "x_centro": 17.3,
+          "largura": 1.3,
+          "altura_coroa": 2.4,
+          "altura_imposta": 1.75,
+          "nota": "idem"
+        },
+        {
+          "forma": "arco_abatido",
+          "x_centro": 19.2,
+          "largura": 1.3,
+          "altura_coroa": 2.4,
+          "altura_imposta": 1.75,
+          "nota": "aberto em 2019"
+        },
+        {
+          "forma": "arco_abatido",
+          "x_centro": 21.1,
+          "largura": 1.3,
+          "altura_coroa": 2.4,
+          "altura_imposta": 1.75,
+          "nota": "aberto; parcialmente escondido por vegetacao nas fotos"
+        }
+      ],
+      "pilar_largura": 0.65,
+      "pilar_profundidade": 0.65,
+      "_fonte": "lnr_2019_arcada_ameias_marques3.jpg; lnr_2026_frontal_esquina_ivan.jpg; aerea_2019_litoralnarede.jpg (conta 4 arcos visiveis); jpl_2021_aerea_drone_fachadas.jpg",
+      "_confianca": "numero de arcos media (4 a 6); largura/altura baixa a media (+-0,3 m); posicao ao longo da fachada baixa"
+    },
+    "fachada_leste_Av_Nilza": {
+      "plano_x": 5.0,
+      "janelas": [
+        {
+          "forma": "retangular",
+          "y_centro": 13.0,
+          "largura": 0.55,
+          "altura": 1.4,
+          "z_base": 0.95,
+          "grade": "losangos de ferro",
+          "venezianas": "2 folhas de madeira escura, ~0,28 m cada, recorte em losango no alto",
+          "peitoril": "pedra saliente ~0,25 m"
+        },
+        {
+          "forma": "retangular",
+          "y_centro": 16.4,
+          "largura": 0.55,
+          "altura": 1.4,
+          "z_base": 0.95,
+          "grade": "losangos de ferro",
+          "venezianas": "idem"
+        }
+      ],
+      "portas": [
+        {
+          "forma": "arco_abatido",
+          "y_centro": 19.4,
+          "largura": 1.6,
+          "altura": 2.1,
+          "folhas": 2,
+          "detalhe": "tabuas verticais; 4 vidros pequenos quadrados por folha no alto",
+          "nota": "nas fotos o vao parece baixo por causa do arbusto; pode ser mais alto"
+        }
+      ],
+      "letreiro": {
+        "texto": "Castelinho",
+        "fonte_gotica": true,
+        "y_centro": 15.0,
+        "z_base": 2.6,
+        "largura": 2.1,
+        "altura": 0.45,
+        "material": "letras metalicas brancas aplicadas"
+      },
+      "frestas_ventilacao": {
+        "quantidade": 3,
+        "largura": 0.12,
+        "altura": 0.35,
+        "z_base": 3.2,
+        "nota": "sob o beiral"
+      },
+      "janela_alta": {
+        "forma": "retangular",
+        "y_centro": 19.6,
+        "largura": 0.6,
+        "altura": 1.1,
+        "z_base": 3.0,
+        "venezianas": true
+      },
+      "_fonte": "lnr_2026_frontal_esquina_ivan.jpg (janelas e porta contadas e medidas contra fiadas de tijolo)",
+      "_confianca": "quantidade de janelas e porta alta; dimensoes media/baixa (+-0,2 m); alturas relativas ao piso media"
+    },
+    "fachada_oeste_do_corpo_principal": {
+      "plano_x": 12.5,
+      "janelas": [
+        {
+          "forma": "retangular",
+          "y_centro": 17.0,
+          "largura": 0.7,
+          "altura": 1.2,
+          "z_base": 2.9,
+          "venezianas": "recorte em losango"
+        },
+        {
+          "forma": "retangular",
+          "y_centro": 19.2,
+          "largura": 0.4,
+          "altura": 0.6,
+          "z_base": 2.6,
+          "grade": true
+        }
+      ],
+      "portas": [
+        {
+          "forma": "retangular_com_arco",
+          "y_centro": 18.0,
+          "largura": 1.1,
+          "altura": 2.1,
+          "material": "madeira cinza",
+          "nota": "porta cinza visivel na borda esquerda de lnr_2019_passagem_arco_marques.jpg"
+        }
+      ],
+      "_fonte": "lnr_2019_passagem_arco_marques.jpg",
+      "_confianca": "baixa (so um enquadramento, lado do patio)"
+    },
+    "torre_a_fachadas": {
+      "frestas": [
+        {
+          "forma": "arco_ogival",
+          "largura": 0.22,
+          "altura": 0.85,
+          "quantidade": 2,
+          "disposicao": "geminadas, lado a lado",
+          "z_base": 2.0
+        },
+        {
+          "forma": "arco_ogival",
+          "largura": 0.22,
+          "altura": 0.85,
+          "quantidade": 2,
+          "disposicao": "geminadas",
+          "z_base": 3.6
+        },
+        {
+          "forma": "arco_ogival",
+          "largura": 0.2,
+          "altura": 0.6,
+          "quantidade": 1,
+          "nota": "na torreta",
+          "z_base": 4.4
+        }
+      ],
+      "esquadria": "vidro verde e caixilho fino; folha estreita",
+      "_fonte": "yt_ondatv_torre_passagem.jpg; dim_2026_torre_ameias_hibisco.jpg; lnr_2019_passagem_arco_marques.jpg",
+      "_confianca": "quantidade media; tamanho baixa"
+    },
+    "passagem_em_arco": {
+      "descricao": "arco de passagem sob uma 'ponte' ameada entre a torre A e o corpo principal",
+      "largura": 1.8,
+      "altura_coroa": 2.6,
+      "espessura_ponte": 0.9,
+      "x_aprox": 17.5,
+      "y_aprox": 18.5,
+      "_fonte": "lnr_2019_passagem_arco_marques.jpg; yt_ondatv_torre_passagem.jpg",
+      "_confianca": "forma media; posicao baixa (+-3 m)"
+    },
+    "ala_fundos_fachada_sul": {
+      "vaos": [
+        {
+          "forma": "arco_abatido",
+          "largura": 1.8,
+          "altura": 2.4,
+          "quantidade": 2,
+          "material": "portoes de madeira escura"
+        }
+      ],
+      "_fonte": "aerea_2019_litoralnarede.jpg",
+      "_confianca": "baixa"
+    },
+    "torre_b": {
+      "porta": {
+        "forma": "arco_abatido",
+        "largura": 0.9,
+        "altura": 1.9,
+        "estado": "aberta, escura"
+      },
+      "frestas": {
+        "largura": 0.18,
+        "altura": 0.7,
+        "quantidade": 2
+      },
+      "_fonte": "aerea_2019_litoralnarede.jpg",
+      "_confianca": "baixa"
+    }
+  },
+  "ameias_e_misulas": {
+    "merlao": {
+      "largura": 0.33,
+      "altura": 0.3,
+      "espessura": 0.3,
+      "vao_entre_merlões": 0.25,
+      "passo": 0.58,
+      "_fonte": "lnr_2019_arcada_ameias_marques3.jpg; dim_2026_torre_ameias_hibisco.jpg (merlao ~1 bloco de comprimento e 2 fiadas de altura)",
+      "_confianca": "media (+-0,05 m)"
+    },
+    "cornija_misulas": {
+      "fiadas_altura": 3,
+      "altura_faixa": 0.4,
+      "projecao_total": 0.13,
+      "degraus": 3,
+      "passo_misulas_torres_e_arcada": 0.3,
+      "passo_misulas_torretas": 0.2,
+      "arquinhos_cegos_entre_misulas": true,
+      "_fonte": "lnr_2019_arcada_ameias_marques3.jpg; crop da torre em lnr_2026_frontal_esquina_ivan.jpg",
+      "_confianca": "media para o tipo; baixa para a projecao"
+    },
+    "faixa_de_pedra_ou_tijolo_em_dente_serra_sob_a_laje": true
+  },
+  "coberturas": {
+    "piramidal_torres": {
+      "inclinacao_graus": 42,
+      "beiral_projecao": 0.1,
+      "material": "telhas/tijolos escuros e desgastados, topo escurecido",
+      "_fonte": "lnr_2026_frontal_esquina_ivan.jpg; jpl_2021_aerea_drone_fachadas.jpg",
+      "_confianca": "media/baixa"
+    },
+    "fibrocimento_ondulado": {
+      "inclinacao_graus": 10,
+      "passo_da_onda": 0.177,
+      "cor_hex": "#9A9A96",
+      "beiral_projecao": 0.7,
+      "estrutura_beiral": "madeira escura aparente",
+      "_fonte": "lnr_2026_frontal_esquina_ivan.jpg; aerea_2019_litoralnarede.jpg (chapas empenadas/soltas em 2019)",
+      "_confianca": "baixa para inclinacao; passo da onda e o padrao de mercado, nao medido"
+    }
+  },
+  "piso_e_acabamentos": {
+    "calcada_externa": "lajotas de pedra irregulares",
+    "piso_interno": "cacos de pedra cinza-escura com junta larga (ver interior_*.jpg)",
+    "madeira_hex": "#3B2A22",
+    "_fonte": "interior_meio_ambiente_piso_pedra_2020_jplitoral.jpg; interior_galeria_arco_porta_2026_beta.jpg",
+    "_confianca": "media"
+  }
+}

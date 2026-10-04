@@ -22,7 +22,7 @@ baixar lnr_2019_passagem_arco_marques.jpg                         https://litora
 baixar lnr_2019_arcada_ameias_marques3.jpg                        https://litoralnarede.com.br/wp-content/uploads/2019/10/021019-CASTELINHO-IMBE-MAURICIO-MARQUES-3.jpg
 baixar jpl_2021_aerea_drone_fachadas.jpg                          https://jplitoral.com.br/wp-content/uploads/2021/02/Castelinho.jpg
 baixar_webp lnr_2026_frontal_esquina_ivan.jpg                          https://litoralnarede.com.br/wp-content/uploads/2026/03/0203026-CASTELINHO-CULTURA-IMBE-IVAN-DE-ANDRADE-PMI.webp
-baixar_webp dpn_2020_frontal_torre_arcada_ivan.jpg                     https://dapraianews.com.br/Imagens/Casa-de-Cultura-de-Imbe-recebera-Noite-de-Natal-no-Castelo-foto-Ivan-de-Andrade-1536x1026_1.webp
+baixar_webp dpn_natal_frontal_torre_arcada_ivan.jpg                     https://dapraianews.com.br/Imagens/Casa-de-Cultura-de-Imbe-recebera-Noite-de-Natal-no-Castelo-foto-Ivan-de-Andrade-1536x1026_1.webp
 baixar dim_2026_torre_ameias_hibisco.jpg                          https://jornaldimensao.com.br/wp-content/uploads/2026/02/640138686_939898978598244_3197493495157194839_n.jpg
 baixar ci_2025_sala_lareira_escudos.jpg                           https://www.correiodoimbe.com.br/uploads/images/2025/08/conselho-municipal-de-cultura-realiza-reuniao-ordinaria-no-castelinho-da-cultura-ec1d2.jpeg
 baixar interior_meio_ambiente_piso_pedra_2020_jplitoral.jpg       https://jplitoral.com.br/wp-content/uploads/2020/12/Cultura_03.jpeg
