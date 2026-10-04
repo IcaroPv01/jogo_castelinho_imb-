@@ -35,7 +35,9 @@ with sync_playwright() as p:
         print("AVISO: tela de carregamento não sumiu"); print("ERROS:", *erros, sep="\n  ")
     time.sleep(2)
     pg.screenshot(path=f"{saida}/01_titulo.png")
-    pg.mouse.click(640, 360)
+    pg.keyboard.press("Enter")   # "Começar a visita" (sem save, Enter começa)
+    time.sleep(1)
+    pg.mouse.click(640, 360)     # captura o mouse
     time.sleep(3)
     pg.screenshot(path=f"{saida}/02_inicio.png")
     pg.keyboard.down("w"); time.sleep(andar); pg.keyboard.up("w")

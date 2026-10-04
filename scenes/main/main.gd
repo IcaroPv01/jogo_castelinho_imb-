@@ -117,5 +117,7 @@ func _on_morte(_causa: String) -> void:
 		nivel.ao_morrer()
 		return
 	await Transicao.fade_out(0.2, Color(0.4, 0, 0))
+	var tela := Morte.mostrar(_causa)
+	await tela.terminou
 	await carregar_mundo(nivel_atual, "Checkpoint_%d" % GameState.checkpoint_sala)
 	await Transicao.fade_in(1.0)
