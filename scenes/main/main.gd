@@ -104,7 +104,7 @@ func _process(_dt: float) -> void:
 	if not GameState.jogando or DisplayServer.get_name() == "headless":
 		return
 	# Telas de leitura/quiz soltam o mouse de propósito: não contam como pausa.
-	var pausado := Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not GameState.flag("ui_aberta")
+	var pausado: bool = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not GameState.flag("ui_aberta")
 	if get_tree().paused != pausado:
 		get_tree().paused = pausado
 		hud.mostrar_pausa(pausado)
