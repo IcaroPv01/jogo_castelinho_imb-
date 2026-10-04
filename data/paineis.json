@@ -1,0 +1,236 @@
+{
+	"_leia_me": "Conteudo dos paineis educativos. Chave = id (p01..p25, p07_corrompido, quiz_final). Campos: titulo, texto (max ~60 palavras), fonte (URL(s) do fato, separadas por espaco), icone (assets/ui/icones/<nome>.svg), anfitriao (bentinho|taina|quico|sistema) e quiz opcional: {pergunta, opcoes[3], correta (indice 0..2), selo, explicacao?} ou uma lista dessas (quiz_final). 'alias' reaproveita outro painel. Fatos: docs/pesquisa/historia_imbe.md e castelinho.md. Os paineis p24/p25 sao 'reescritos' (tom seco, fatos reais).",
+
+	"p01": {
+		"titulo": "Bem-vindo ao Castelinho!",
+		"texto": "Oba, você chegou! Este é o Castelinho de Imbé. Desde 23 de dezembro de 2020 ele é a Casa de Cultura e Museu Municipal! Aqui dentro tem salas sobre os povos antigos, a pesca, a natureza e muito mais. Vamos explorar juntos? Siga o caminho e leia todos os painéis!",
+		"fonte": "https://jplitoral.com.br/imbe-inaugura-casa-de-cultura-e-museu-municipal/",
+		"icone": "castelo",
+		"anfitriao": "bentinho"
+	},
+	"p02": {
+		"titulo": "De onde vem o nome Imbé?",
+		"texto": "Pergunta de ouro! \"Imbé\" vem de uma planta trepadeira de origem indígena: o cipó-imbé. Ela também é chamada de costela-de-Adão e crescia aos montes por aqui antes de a cidade existir. Dá para ver as folhas grandes e furadinhas em muitos jardins!",
+		"fonte": "https://www.turismo.rs.gov.br/turismo/municipio/visualizar/159 https://camaraimbe.rs.gov.br/historico-de-imbe",
+		"icone": "folha",
+		"anfitriao": "taina",
+		"quiz": {
+			"pergunta": "O nome \"Imbé\" vem de quê?",
+			"opcoes": ["De uma pedra enorme na praia", "De um peixe que sabe falar", "De uma planta trepadeira"],
+			"correta": 2,
+			"selo": "selo_nome",
+			"explicacao": "Isso mesmo! Cipó-imbé, também chamado de costela-de-Adão."
+		}
+	},
+	"p03": {
+		"titulo": "Um castelo feito à mão",
+		"texto": "O Castelinho foi erguido aos poucos, ao longo de muitos anos: a obra durou de 1950 até 1975. E a pedra veio de barco, pelo Rio Tramandaí! Cada bloco foi levantado com muito trabalho.\nConstrutor: ______",
+		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/",
+		"icone": "pedra",
+		"anfitriao": "bentinho"
+	},
+	"p04": {
+		"titulo": "Garibaldi e o lanchão Seival",
+		"texto": "Em junho de 1839, Giuseppe Garibaldi levou dois barcos por terra: o Seival e o Rio Pardo! Eles foram arrastados em carretas puxadas por bois, da Lagoa dos Patos até a barra do Rio Tramandaí. Foram uns 80 a 100 km. Piii! Isso é que é carregar barco!",
+		"fonte": "https://tramandai.rs.gov.br/conteudo/11-historia-da-cidade",
+		"icone": "barco",
+		"anfitriao": "quico"
+	},
+	"p05": {
+		"titulo": "A cidade-jardim de 1939",
+		"texto": "Em 1939, Imbé foi loteada como uma \"cidade-jardim\": ruas curvas, praças e muito verde, num projeto do urbanista Ubatuba de Faria. Os pescadores que já moravam ali foram acomodados do outro lado do rio. Tudo muito organizado e bonito!",
+		"fonte": "https://vitruvius.com.br/revistas/read/minhacidade/08.087/1915 https://pt.wikipedia.org/wiki/Imbé",
+		"icone": "mapa",
+		"anfitriao": "taina",
+		"quiz": {
+			"pergunta": "Em que ano nasceu a cidade-jardim de Imbé?",
+			"opcoes": ["1839", "1939", "1988"],
+			"correta": 1,
+			"selo": "selo_jardim",
+			"explicacao": "Em 1939! Quase 50 anos antes de Imbé virar município."
+		}
+	},
+	"p06": {
+		"titulo": "Imbé ganha autonomia",
+		"texto": "Até 1988, Imbé era o balneário do lado norte de Tramandaí. Então, em 9 de maio de 1988, a Lei nº 8.600 criou o município de Imbé! Ele foi instalado em 1º de janeiro de 1989. Dia de festa! Soltem os confetes!",
+		"fonte": "https://camaraimbe.rs.gov.br/historico-de-imbe https://tramandai.rs.gov.br/conteudo/11-historia-da-cidade",
+		"icone": "lei",
+		"anfitriao": "bentinho"
+	},
+	"p07": {
+		"titulo": "O museu",
+		"texto": "Você está na Casa de Cultura e Museu Municipal! Ele tem salas temáticas: povos originários, pesca, meio ambiente, arte e uma sala medieval. Aos sábados, das 9h às 17h, tem visita guiada pelos ambientes e pelas torres. A nossa visita é por aqui mesmo!",
+		"fonte": "https://www.correiodoimbe.com.br/noticia/castelinho-da-cultura-em-imbe-estara-aberto-aos-sabados-para-visitacao",
+		"icone": "museu",
+		"anfitriao": "bentinho"
+	},
+	"p08": {
+		"titulo": "Os sambaquis",
+		"texto": "\"Sambaqui\" é uma palavra tupi que quer dizer \"monte de conchas\". Povos que viveram no litoral há milhares de anos construíram esses montes. Eram usados como moradia! Neles se acham anzóis, pesos de pesca e machados de pedra.",
+		"fonte": "https://pt.wikipedia.org/wiki/Sambaqui https://xangrila.rs.gov.br/pagina/sitio-arqueologico-capao-alto",
+		"icone": "concha",
+		"anfitriao": "taina",
+		"quiz": {
+			"pergunta": "O que quer dizer \"sambaqui\" em tupi?",
+			"opcoes": ["Rio sinuoso", "Casa de pedra", "Monte de conchas"],
+			"correta": 2,
+			"selo": "selo_sambaqui",
+			"explicacao": "Monte de conchas! \"Rio sinuoso\" é o Tramandaí."
+		}
+	},
+	"p09": {
+		"titulo": "Nossa costa",
+		"texto": "Nossa costa tem muita história! Aqui no museu tem até um pinguim empalhado, ossos de baleia e conchas. Em 2017, uma baleia-de-Bryde de 13 metros encalhou na Praia Santa Terezinha, em Imbé. E muitos navios visitaram nossa costa!",
+		"fonte": "https://www.jornaldocomercio.com/_conteudo/2017/01/geral/542266-veranistas-encontram-baleia-encalhada-em-imbe-no-litoral-norte.html https://afolhatorres.com.br/colunas/naufragios-na-regiao-de-torres-a-memoria-submersa-dos-navios-que-nunca-chegaram-ao-destino/",
+		"icone": "onda",
+		"anfitriao": "bentinho"
+	},
+	"p10": {
+		"titulo": "O Castelinho através do tempo",
+		"texto": "Com o Visor do Tempo você viaja! Por volta de 1950 era só uma casa de pedra na areia, sem torres. A obra terminou em 1975. Em 2019 o prédio, quase em ruínas, foi comprado pelo município, e em 2020 abriu o museu. Segure Q para espiar o passado!",
+		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/ https://litoralnarede.com.br/castelinho-de-imbe-sera-transformado-em-centro-cultural/",
+		"icone": "relogio",
+		"anfitriao": "bentinho"
+	},
+	"p11": {
+		"titulo": "A ponte Giuseppe Garibaldi",
+		"texto": "Essa ponte liga Imbé a Tramandaí por cima do rio! São três pontes lado a lado, com uns 150 metros. A primeira foi construída em 1934, segundo a Prefeitura de Tramandaí. Muita gente pesca sardinha ali. Piii! Cuidado com os carros!",
+		"fonte": "https://tramandai.rs.gov.br/conteudo/11-historia-da-cidade https://pt.wikipedia.org/wiki/Ponte_Giuseppe_Garibaldi",
+		"icone": "ponte",
+		"anfitriao": "quico"
+	},
+	"p12": {
+		"titulo": "Veraneio: de 16 mil para 80 mil",
+		"texto": "No verão, Imbé muda de tamanho! A cidade passa de cerca de 16 mil para uns 80 mil moradores e visitantes, por causa do veraneio. É gente na praia, no calçadão, na ponte... Já no inverno a cidade fica bem mais tranquila.",
+		"fonte": "https://vitruvius.com.br/revistas/read/minhacidade/08.087/1915 https://pt.wikipedia.org/wiki/Imbé",
+		"icone": "sol",
+		"anfitriao": "taina"
+	},
+	"p13": {
+		"titulo": "A pesca com os botos",
+		"texto": "Os botos de Imbé ajudam os pescadores! Eles empurram as tainhas para perto da margem e fazem um sinal com a cabeça na hora de jogar a tarrafa. Isso só acontece em dois lugares do mundo: aqui e em Laguna (SC). Desde 11/03/2026 é Patrimônio Cultural do Brasil!",
+		"fonte": "https://www.ufrgs.br/site/noticias/parceria-entre-botos-e-pescadores-para-captura-de-peixes-vira-patrimonio-imaterial-do-brasil/ https://www.abcmais.com/brasil/rio-grande-do-sul/litoral/video-pesca-cooperativa-entre-botos-e-pescadores-e-patrimonio-da-barra-de-tramandai/",
+		"icone": "boto",
+		"anfitriao": "bentinho"
+	},
+	"p14": {
+		"titulo": "A barra do Rio Tramandaí",
+		"texto": "A barra é onde o Rio Tramandaí encontra o mar! Fica no Guia Corrente, com calçadão, bares e pescadores com tarrafa. É lá que os botos aparecem. Quer espiar como era? Toque no mural da Sala do Pescador!",
+		"fonte": "https://www.viagensecaminhos.com/imbe-rs/",
+		"icone": "onda",
+		"anfitriao": "bentinho"
+	},
+	"p15": {
+		"titulo": "Dia de São Pedro",
+		"texto": "A tainha é o peixe que os botos empurram para as tarrafas! E em 29 de junho é feriado em Imbé: dia de São Pedro, o padroeiro dos pescadores. Eu, a Tainá, prefiro ficar bem longe das redes, viu?",
+		"fonte": "https://pt.wikipedia.org/wiki/Imbé https://www.ufrgs.br/site/noticias/parceria-entre-botos-e-pescadores-para-captura-de-peixes-vira-patrimonio-imaterial-do-brasil/",
+		"icone": "peixe",
+		"anfitriao": "taina"
+	},
+	"p16": {
+		"titulo": "Visita às torres",
+		"texto": "Quer subir? Desde 20 de fevereiro de 2026, o Castelinho abre aos sábados, das 9h às 17h, com visita guiada pelos ambientes temáticos e pelas torres. Piii! Subir correndo, não! Aqui o fiscal sou eu!",
+		"fonte": "https://www.correiodoimbe.com.br/noticia/castelinho-da-cultura-em-imbe-estara-aberto-aos-sabados-para-visitacao https://jornaldimensao.com.br/castelinho-de-imbe-amplia-acesso-ao-publico-e-abre-portas-aos-sabados-com-visitas-guiadas/",
+		"icone": "torre",
+		"anfitriao": "quico"
+	},
+	"p17": {
+		"titulo": "As torres vieram depois",
+		"texto": "Sabia que o Castelinho começou sem torres? A Secretaria de Cultura conta: \"De início, era só esse miolo aqui, as torres foram construídas em momentos diferentes.\" Use o Visor do Tempo (segure Q): em 1950, a torre ainda não existia!",
+		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/",
+		"icone": "torre",
+		"anfitriao": "bentinho"
+	},
+	"p18": {
+		"titulo": "Imbé hoje",
+		"texto": "Hoje Imbé tem 26.824 habitantes (Censo de 2022) e cerca de 9 km de praias. No verão, a população passa de 80 mil! O animal-símbolo da cidade é o boto. Aqui de cima dá para ver tudo, não é?",
+		"fonte": "https://pt.wikipedia.org/wiki/Imbé https://www.turismo.rs.gov.br/turismo/municipio/visualizar/159",
+		"icone": "pessoas",
+		"anfitriao": "bentinho"
+	},
+	"p19": {
+		"titulo": "O tamanho do Castelinho",
+		"texto": "Medidas do Castelinho: cerca de 290 m² construídos, num terreno de mais de 900 m². Em 2019, o município comprou o imóvel por R$ 703 mil. Esta torreta é só uma das partes do castelo! Piii! Cuidado com a cabeça!",
+		"fonte": "https://jplitoral.com.br/patrimonio-historico-prefeitura-de-imbe-fecha-compra-do-castelinho/ https://litoralnarede.com.br/castelinho-de-imbe-sera-transformado-em-centro-cultural/",
+		"icone": "pedra",
+		"anfitriao": "quico"
+	},
+	"p20": {
+		"titulo": "A Feira Medieval",
+		"texto": "O Castelinho vira cenário de filme medieval! Em agosto de 2024 ele recebeu a Feira Medieval Von Helden, com espadas, escudos e tochas. A Sala Medieval, logo ali embaixo, ainda guarda os objetos. Não mexa nas lanças, hein?",
+		"fonte": "https://litoralnarede.com.br/castelinho-de-imbe-recebe-evento-de-cultura-medieval/ https://dapraianews.com.br/noticia/4675/feira-medieval-von-helden-acontece-neste-fim-de-semana-no-castelinho-em-imbe",
+		"icone": "escudo",
+		"anfitriao": "taina"
+	},
+	"p21": {
+		"titulo": "Os dois tronos",
+		"texto": "Esta sala tem dois tronos! Aqui os visitantes tiram fotos com coroas, cetros e capas reais. Existe até um plano de levar os tronos para a Sala do Pescador, num cantinho bem \"instagramável\". Quem vai sentar? Piii!",
+		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/",
+		"icone": "coroa",
+		"anfitriao": "quico"
+	},
+	"p22": {
+		"alias": "quiz_final"
+	},
+	"p23": {
+		"titulo": "Saída em reforma?",
+		"texto": "Desde 2025, a Cultura de Imbé funciona toda aqui dentro, e o Castelinho recebe shows, teatro e oficinas. Por isso a casa está sempre mudando! Atenção: algumas áreas podem estar em reforma.",
+		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/",
+		"icone": "lei",
+		"anfitriao": "bentinho"
+	},
+	"p24": {
+		"titulo": "Os pescadores foram removidos",
+		"texto": "Painel atualizado. Em 1939, a Sociedade Territorial Praia do Imbé comprou as terras onde hoje fica a cidade. Famílias de pescadores já moravam ali. Elas recorreram à Justiça e foram removidas: reassentadas do outro lado do rio, perto da Lagoa do Armazém, em Tramandaí. O termo \"acomodados\" foi retirado.",
+		"fonte": "https://vitruvius.com.br/revistas/read/minhacidade/08.087/1915 https://pt.wikipedia.org/wiki/Imbé",
+		"icone": "pessoas",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p25": {
+		"titulo": "Sambaquis também eram cemitérios",
+		"texto": "Painel atualizado. Alguns grupos indígenas usavam os sambaquis como santuário, enterrando neles os seus mortos. Outros construíam ali suas moradias. O painel anterior citava apenas a moradia. Os sambaquis guardam a memória de quem viveu aqui há milhares de anos.",
+		"fonte": "https://pt.wikipedia.org/wiki/Sambaqui https://arqueologiaupf.wordpress.com/2026/06/03/arqueologia-e-desenvolvimento-preservando-a-memoria-do-litoral-norte/",
+		"icone": "concha",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p07_corrompido": {
+		"titulo": "O museu",
+		"texto": "Você está na Casa de Cultura e Museu Municipal. Aos sábados, das 9h às 17h, tem visita guiada pelos ambientes e pelas torres. Aos sábados, das 9h às 17h, tem visita guiada pelos ambientes e pelas torres.\n[ERRO: DADOS DESATUALIZADOS]\nAtualizando informações... 0%\nA visita continua.",
+		"fonte": "https://www.correiodoimbe.com.br/noticia/castelinho-da-cultura-em-imbe-estara-aberto-aos-sabados-para-visitacao",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"quiz_final": {
+		"titulo": "Quiz final da Visita!",
+		"texto": "Chegou a hora do desafio final! São 3 perguntas sobre tudo o que você aprendeu na visita. Acertando, você ganha selos e o diploma da Visita Guiada! Respire fundo... e boa sorte!",
+		"fonte": "https://camaraimbe.rs.gov.br/historico-de-imbe",
+		"icone": "interrogacao",
+		"anfitriao": "taina",
+		"quiz": [
+			{
+				"pergunta": "Em que dia o Castelinho virou Casa de Cultura e Museu Municipal?",
+				"opcoes": ["09/05/1988", "23/12/2020", "29/06/1975"],
+				"correta": 1,
+				"selo": "selo_final_1",
+				"explicacao": "Inaugurado em 23 de dezembro de 2020!"
+			},
+			{
+				"pergunta": "Quem sinaliza com a cabeça a hora de jogar a tarrafa?",
+				"opcoes": ["O Quico", "As gaivotas", "Os botos"],
+				"correta": 2,
+				"selo": "selo_final_2",
+				"explicacao": "Os botos! O Quico só sinaliza com o apito."
+			},
+			{
+				"pergunta": "Em que dia Imbé virou município?",
+				"opcoes": ["09/05/1988", "15/11/1839", "24/09/1965"],
+				"correta": 0,
+				"selo": "selo_final_3",
+				"explicacao": "Em 9 de maio de 1988, pela Lei nº 8.600!"
+			}
+		]
+	}
+}
