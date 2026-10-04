@@ -160,7 +160,7 @@ Fonte: https://pt.wikipedia.org/wiki/Imbé (a extração mostrou **lacunas entre
 | **Rota Triângulo das Águas** | Rota turística regional | FATO | https://www.turismo.rs.gov.br/turismo/municipio/visualizar/159 |
 | Orla | ~9 km de praias | FATO | idem |
 | **Terminal Petrobras/Transpetro (Tedut)** | Monobóia no mar, em Tramandaí (1968); vazamentos 2000, 2012, 2016 | FATO | ver tabela |
-| **"Castelinho"** | **[LACUNA]** Não encontrei nenhuma fonte sobre um "Castelinho" em Imbé (as buscas só trouxeram Castelinhos de SP, Florianópolis, Erechim). Se o seu "Castelinho" é fictício, ótimo: pode ser um prédio inventado "da prefeitura" sem risco de caluniar um local real. Se for real, pergunte ao grupo onde fica e verifique antes de usar o nome/endereço | LACUNA | — |
+| **"Castelinho"** | **[ATUALIZAÇÃO: o Castelinho é real e está documentado em `castelinho.md`. Casa de Cultura e Museu Municipal, Av. Nilza Costa Godoy esq. Av. Garibaldi.]** Texto original desta pesquisa: **[LACUNA]** Não encontrei nenhuma fonte sobre um "Castelinho" em Imbé (as buscas só trouxeram Castelinhos de SP, Florianópolis, Erechim). Se o seu "Castelinho" é fictício, ótimo: pode ser um prédio inventado "da prefeitura" sem risco de caluniar um local real. Se for real, pergunte ao grupo onde fica e verifique antes de usar o nome/endereço | LACUNA | — |
 | **Igreja / padroeiro** | Padroeiro São José. Não achei a história da igreja matriz de Imbé. A capela original da região foi a de **N. Sra. dos Navegantes (Tramandaí, 1908)** | LACUNA parcial | https://tramandai.rs.gov.br/conteudo/11-historia-da-cidade |
 
 ---

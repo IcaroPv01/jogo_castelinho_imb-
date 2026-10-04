@@ -1,0 +1,9 @@
+# Fotos de imprensa: referência privada, não versionar (direitos autorais).
+# Baixe com: bash docs/pesquisa/baixar_refs.sh
+docs/pesquisa/refs/*.jpg
+docs/pesquisa/refs/*.jpeg
+
+# Godot
+.godot/
+*.import
+export/
