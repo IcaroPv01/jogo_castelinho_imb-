@@ -64,3 +64,24 @@
 - A Figura Branca anda em linha reta com desvio de paredes e pontos de passagem; o Ato II não gera navmesh. No corredor reto da arcada isso basta. Quem preferir navmesh liga `usar_navegacao`.
 - Na arcada a regra "olhar para trás" pode ser burlada andando de costas olhando para ela; o contraponto são os **apagões** (a cada 6-10 s, 0,45 s no escuro, ela avança sem ser vista). Ajuste em `VEL_FIGURA_ARCADA` e `_apagao()` no `ato2.gd`.
 - Áudio e desempenho no navegador **não foram testados** (só captura em Mesa/llvmpipe e testes headless). O pós-processamento custa uma cópia da tela por quadro só quando corruption > 0.
+
+## Agente Castelinho
+
+### O que entrou
+- `castelinho/` (gerador paramétrico, `LEIAME.md` com planta, correções pelas fotos e como regenerar), `world/niveis/castelinho.tscn/.gd` (salas 1 a 25), `assets/textures/` (22 PNGs de `tools/gerar_texturas.py`), `tests/castelinho_test.gd`, `tests/captura_cam.gd` (ferramenta de captura por câmeras `Cam_*`, serve aos outros níveis também).
+- Marcadores: `Spawn`, `Checkpoint_1/6/11/16/21/25`, `Spawn_volta_barra`. Câmeras `Cam_*` listadas no `LEIAME.md`.
+- Integra: `Visor.instalar(self)` em `iniciar()`, `Painel3D.new("pNN")`, `Diploma.mostrar()`, `Audio.musica("jingle")`, `Audio.ambiente("vento")` em 1950, `Guia.falar`, `Transicao.ir_para` para `barra.tscn` (mural) e `ato2.tscn` (porta de saída, protegida por `ResourceLoader.exists`).
+
+### Para o integrador
+1. **Exportação web**: `castelinho/medidas.json` não entra no pacote (só `data/*.json`). Não é urgente: `castelinho/medidas_embutidas.gd` (gerado por `tools/gerar_medidas_embutidas.py`) é o plano B e o teste confere que os dois são iguais. Se editar o JSON, rode o gerador. Opcional: `include_filter="data/*.json, castelinho/*.json"` em `export_presets.cfg`.
+2. A sala 25 grava `GameState.checkpoint_sala` = 25 por código ao ligar `visor_travado` (e entra em E1975). Se `GameState` ganhar um método próprio de checkpoint, vale trocar.
+3. **Peso dos painéis**: cada `Painel3D` tem ~12 superfícies. No nível, os descendentes recebem `visibility_range_end` (13 m fora, 9 m dentro), então só os mais próximos contam. Medido com `captura_cam.gd`: 70 a 150 draw calls por vista (~20 mil triângulos). Se o `Painel3D` ganhar um parâmetro de alcance, dá para tirar essa gambiarra de `_limitar_alcance`.
+4. **Colisão elevada em 1950**: lajes, terraços e parapetos continuam sólidos (invisíveis) em todas as épocas; assim, quem segura Q no topo da torre flutua sobre a areia em vez de cair. As paredes do térreo e o mobiliário somem de verdade. Se o Ato II quiser o mesmo efeito, o grupo é `col_sempre` em `castelinho.gd`.
+5. Texturas reaproveitáveis pelo Ato II/Barra: `areia_1950`, `parede_castelinho`, `piso_pedra`, `fibrocimento`, `grama`, `asfalto`.
+
+### Limites conhecidos
+- Fotos só cobrem fachadas sul e leste; norte, oeste, telhados por dentro e escadas das torres são invenção plausível (documentado).
+- Pinheiros são blocos simples (3 variantes em `MultiMeshInstance3D`); sem sombras dinâmicas (web); letreiro em fonte serifada comum, sem brasão da prefeitura.
+- Decalques em parede interna precisam de >= 3 cm de folga (1 a 2 cm somem por profundidade).
+- Em 1950, soltar Q com a cápsula dentro de onde uma parede reaparece prende o jogador por instantes; ele se desprende sozinho.
+- Desempenho no navegador e áudio não foram testados (só Mesa/llvmpipe e testes headless).
