@@ -131,6 +131,7 @@ func carregar() -> void:
 	sala_maxima = int(dados.get("sala_maxima", 0))
 	checkpoint_sala = int(dados.get("checkpoint_sala", 1))
 	flags = dados.get("flags", {})
+	flags.erase("ui_aberta")
 	selos.assign(dados.get("selos", []))
 	contadores.merge(dados.get("contadores", {}), true)
 	sensibilidade = float(dados.get("sensibilidade", 1.0))
