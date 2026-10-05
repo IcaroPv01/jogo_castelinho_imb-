@@ -7,6 +7,10 @@
 **Tito**, 9 anos, é um menino **fictício**. A família dele veraneava em Imbé e alugava uma casa perto do Castelinho. Em **março de 1967**, no fim da temporada, ele sumiu. Na cidade, a lenda diz que ele se afogou no **Braço Morto**, o antigo braço do Rio Tramandaí.
 
 - O jogo nunca diz que alguém o matou. **A história não culpa ninguém real nem fictício**: nem o construtor real do Castelinho, nem a família real, nem qualquer morador.
+- **Ganchos reais** (`pesquisa/braco_morto.md`):
+  - o Braço Morto ficou isolado do rio justamente **nos anos 1960**, quando a barra foi fixada. Em 1967 ele ainda "morria";
+  - hoje o lago é o ponto mais baixo da cidade e recebe os córregos canalizados que passam sob a **Av. Nilza Godoy e a Garibaldi**, a esquina do Castelinho.
+  - O jogo pode dizer que "a água desce por baixo do Castelinho até o Braço Morto" sem inventar fato sobre ninguém.
 - O que o jogo sugere: Tito seguiu a **Figura Branca** (a "Aparição" da lenda do Passo da Mãe Rosa) até a água. A água do Braço Morto corre **por baixo do Castelinho**, num porão que não existe na planta.
 - **A mãe de Tito** (fictícia, sem nome) aparece só como voz no telefone do acervo e em cartazes de "PROCURA-SE".
 - **Pesado sem ser gráfico:**
@@ -210,7 +214,7 @@ Ordem de aparição. Todos são assinados "TITO" com o "T" ao contrário:
   2. Tito na margem do Braço Morto;
   3. a Figura Branca do outro lado da água, de braços abertos;
   4. a água parada, sem ninguém, e o balde boiando.
-- **Sala 100:** o jogador sai do porão por uma escada e chega à **margem do Braço Morto**, de noite. Ali há uma **lápide de areia** feita por criança. O Visor mostra, pela última vez, Tito sentado na margem, de costas, que olha para o jogador e diz: *"Você veio me procurar."*
+- **Sala 100:** o jogador sai do porão por uma escada e chega à **margem do Braço Morto**, de noite. Aparência real de hoje: lago de ~200 m, calçadão, pontilhões pintados, bancos, postes, pedalinhos parados. Ali há uma **lápide de areia** feita por criança. O Visor mostra, pela última vez, Tito sentado na margem, de costas, que olha para o jogador e diz: *"Você veio me procurar."*
 - **Créditos e depois a tela de dedicatória** (§1).
 
 **Finais** (contagem invisível; detalhar depois):
