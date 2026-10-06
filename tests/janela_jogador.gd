@@ -425,12 +425,13 @@ func _h_mural_barra_e_volta() -> void:
 	await _toque(KEY_E)
 	await _frames(4)
 	_checar(not p.pode_mover and root.get_node("/root/Guia").ocupado(), "a Tainá fala e o jogador fica parado")
-	await _segundos(2.5)
-	await _toque(KEY_SPACE)         # dispensa a fala (bloqueante)
+	# dispensa a fala (bloqueante): o 1º Espaço completa o texto que está sendo "digitado", o 2º fecha
 	var t := 0.0
 	while not main.nivel_atual.ends_with("barra.tscn") and t < 20.0:
-		await _segundos(0.25)
-		t += 0.25
+		if root.get_node("/root/Guia").ocupado():
+			await _toque(KEY_SPACE)
+		await _segundos(0.5)
+		t += 0.5
 	_checar(main.nivel_atual.ends_with("barra.tscn"), "foi para a Barra (%.1f s)" % t)
 	await _segundos(1.0)
 	_checar(main.hud.lbl_aviso.text == "", "na Barra o aviso do mural não ficou na tela ('%s')" % main.hud.lbl_aviso.text)
