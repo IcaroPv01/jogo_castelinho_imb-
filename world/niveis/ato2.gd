@@ -139,6 +139,18 @@ func iniciar(p: Player) -> void:
 		"Esta sala é a mesma de antes. (Não é?)"])
 
 
+## Vistas para o aquecimento de shaders atrás da tela de carregamento (ver main.gd): hall, dunas, casa, arcada.
+func pontos_aquecer() -> Array:
+	var lista: Array = []
+	for nome in ["Cam_26b", "Cam_27", "Cam_28", "Cam_29", "Cam_30"]:
+		var mk := get_node_or_null(nome) as Node3D
+		if mk:
+			var t := mk.global_transform
+			t.origin.y += 1.55          # os marcadores do Ato II ficam no chão: sobe até a altura dos olhos
+			lista.append({"transform": t})
+	return lista
+
+
 ## Morte: fade vermelho, tela de morte (ui/morte.tscn, se existir) e volta ao Checkpoint_26.
 func ao_morrer() -> void:
 	if _morrendo:
@@ -177,6 +189,7 @@ func _resetar_estado() -> void:
 	_visitou.clear()
 	_vento.emitting = false
 	Audio.ambiente("", -8.0, 0.5)
+	Audio.musica("jingle")      # nas dunas o jingle é cortado (sala 27): ao voltar para o hall depois de morrer, volta
 	GameState.set_flag("visor_travado", false)
 	GameState.trocar_epoca(GameState.Epoca.E2020)
 	Efeitos.visor(false)

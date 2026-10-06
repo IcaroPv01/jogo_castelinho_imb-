@@ -33,6 +33,7 @@ var _painel_legenda: PanelContainer
 var _lbl_ano: Label
 var _lbl_extra: Label
 var _psx: Array[ShaderMaterial] = []
+var _aquecendo := 0              # quadros em que o pós-processamento fica ligado só para compilar o shader
 
 
 func _ready() -> void:
@@ -68,13 +69,21 @@ func _process(dt: float) -> void:
 	# interpola suavemente (aproximação proporcional com velocidade mínima: chega exato)
 	corrupcao_visual = move_toward(corrupcao_visual, _alvo_c, maxf(absf(_alvo_c - corrupcao_visual) * 3.0, 0.08) * dt)
 	_visor = move_toward(_visor, _visor_alvo, dt * (7.0 if _visor_alvo > _visor else 9.0))
-	var ligado := corrupcao_visual > 0.003 or _pulso > 0.002 or _visor > 0.002
+	var ligado := corrupcao_visual > 0.003 or _pulso > 0.002 or _visor > 0.002 or _aquecendo > 0
+	if _aquecendo > 0:
+		_aquecendo -= 1
 	if ligado != _rect.visible:
 		_rect.visible = ligado
 	if ligado:
 		_mat.set_shader_parameter("corrupcao", corrupcao_visual)
 		_mat.set_shader_parameter("pulso", _pulso)
 		_mat.set_shader_parameter("visor", _visor)
+
+
+## Liga o pós-processamento por alguns quadros (com a tela de carregamento por cima) para o shader ser compilado
+## agora, e não na primeira vez em que o jogador segurar Q ou levar um susto.
+func aquecer() -> void:
+	_aquecendo = 3
 
 
 func _on_corruption(v: float) -> void:

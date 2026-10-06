@@ -4,7 +4,7 @@ extends Control
 ## Sinal `comecar(continuar: bool)`: emitido NO MESMO EVENTO do clique no botão (o navegador exige um
 ## evento do usuário para capturar o mouse e liberar o áudio; o main.gd faz isso dentro do handler).
 ##
-## O botão "Continuar" só aparece se GameState.tem_save().
+## O botão "Continuar" só aparece se GameState.tem_save(). Enter/Espaço: continua se há save, senão começa.
 ## Música: Audio.musica("jingle") (o jingle institucional alegre).
 
 signal comecar(continuar: bool)
@@ -417,7 +417,8 @@ func iniciar_visita(continuar: bool) -> void:
 
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo and e.is_action_pressed("avancar_dialogo"):
-		iniciar_visita(false)
+		# Com um jogo salvo, Enter/Espaço CONTINUA (antes recomeçava e apagava o save sem avisar)
+		iniciar_visita(GameState.tem_save())
 		get_viewport().set_input_as_handled()
 
 

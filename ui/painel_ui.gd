@@ -8,7 +8,7 @@ extends CanvasLayer
 ##   PainelUI.dados("p02") -> Dictionary      # conteúdo de data/paineis.json
 ##
 ## Ao abrir: solta o mouse, trava o jogador e liga a flag `ui_aberta` (via Flash.abrir_ui()).
-## Ao fechar: recaptura o mouse e emite `fechado(id)`.
+## Ao fechar: recaptura o mouse e emite `fechado(id)`. `concluido` diz se o jogador foi até o fim (quiz terminado).
 ## Quiz: acerto -> Audio.sfx("acerto"), estrelinhas, GameState.ganhar_selo(selo) e
 ## GameState.somar("quiz_acertos"). Erro -> Audio.sfx("erro") e tenta de novo.
 ## Teclas: espaço/Enter = botão principal, 1/2/3 ou A/B/C = respostas, Esc = fechar.
@@ -35,6 +35,9 @@ var _respondida := false
 var _em_quiz := false
 var _digitando := false
 var _fechando := false
+## true se o jogador chegou ao fim: leu o painel (sem quiz) ou terminou o quiz. Esc/X no meio do quiz deixa false.
+var concluido := false
+var _quiz_terminado := false
 var _lista_botoes: Array[BotaoGel] = []
 var _seco := false
 var _corr := 0.0
@@ -420,6 +423,7 @@ func fechar() -> void:
 	if _fechando:
 		return
 	_fechando = true
+	concluido = _perguntas.is_empty() or _quiz_terminado
 	if atual == self:
 		atual = null
 	Flash.fechar_ui()     # recaptura o mouse: precisa rodar dentro do evento de clique/tecla
@@ -563,6 +567,7 @@ func responder(indice: int) -> bool:
 
 func _proxima_pergunta() -> void:
 	if _q >= _perguntas.size() - 1:
+		_quiz_terminado = true
 		fechar()
 		return
 	_q += 1

@@ -22,6 +22,7 @@ func _rodar() -> void:
 	var gs = root.get_node("/root/GameState")
 	var main = load("res://scenes/main/main.tscn").instantiate()
 	root.add_child(main)
+	main.aquecer_ativo = false      # sem tela de carregamento nem aquecimento: a captura sai mais rápida
 	await process_frame
 	main.tela_titulo.queue_free()
 	gs.jogando = false

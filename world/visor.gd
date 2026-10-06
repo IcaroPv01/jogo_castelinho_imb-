@@ -67,8 +67,11 @@ func _desligar() -> void:
 
 
 func _exit_tree() -> void:
-	# O nível acabou com o Visor ligado (ex.: transição): desliga a moldura.
+	# O nível acabou com o Visor ligado (ex.: transição): desliga a moldura e devolve a época de hoje. Sem isso o
+	# nível seguinte nascia em 1950 e o novo Visor, achando que já estava desligado, nunca a corrigia.
 	if ativo:
 		ativo = false
 		if is_instance_valid(Efeitos):
 			Efeitos.visor(false)
+		if is_instance_valid(GameState) and not GameState.flag("visor_travado"):
+			GameState.trocar_epoca(GameState.Epoca.E2020)

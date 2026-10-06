@@ -73,6 +73,9 @@ static func _fachada_leste(c: Castelinho) -> void:
 	c.janela_grade(g, o, U_Z, N_L, jan2["z"], jan2["w"], jan2["base"], jan2["h"])
 	# porta de madeira em arco (fechada), 2 folhas com 4 vidros cada
 	c.porta_arco_fechada(g.ext, o, U_Z, N_L, p["z"], p["w"], 0.0, p["imposta"], p["coroa"], 0.2, true)
+	# a porta fechada era só pintura (o vão da parede ficava sem colisão): em 1975 e 2019, sem a cerca do museu,
+	# dava para entrar no Salão de Arte pela Av. Nilza
+	g.ext.col(Vector3(x - 0.45, 0.0, p["z"] - p["w"] * 0.5), Vector3(x + 0.05, p["coroa"], p["z"] + p["w"] * 0.5))
 	c.arquivolta(g, o, U_Z, N_L, p["z"], p["w"], p["imposta"], p["coroa"], "arco")
 	# frestas sob o beiral (decalque escuro) e janela alta de veneziana fechada
 	var fr: Dictionary = fl.get("frestas", {})
@@ -282,6 +285,9 @@ static func _ala_fundos(c: Castelinho) -> void:
 	var o := ox(-17.0)
 	for zz in [-24.8, -26.6]:
 		c.porta_arco_fechada(g.ext, o, U_Z, N_O, zz, 1.4, 0.0, 1.8, 2.4, 0.2, false)
+		# os portões fechados eram só pintura: o vão da parede ficava sem colisão e dava para entrar na Sala Medieval
+		# pelos fundos do lote, pulando as salas 7 a 20 (e o Visor)
+		g.ext.col(Vector3(-17.45, 0.0, zz - 0.7), Vector3(-16.95, 2.4, zz + 0.7))
 	# LESTE
 	c.parede_z(g, -8.2, -29.5, -23.5, 1, 0.0, y_n, [], "ext", "int", {"y1b": y_s, "tampa": true})
 	# NORTE: porta de saída (x=-10.2), lareira por dentro; frestas cegas
