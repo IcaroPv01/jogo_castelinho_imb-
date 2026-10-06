@@ -219,4 +219,6 @@ func interagir(player: Node) -> void:
 	_foi_lido = true
 	if _check:
 		_check.visible = true
-	lido.emit(id)
+	# Esc/X no meio do quiz fecha a tela mas não vale como "lido" (senão o quiz final dava o diploma sem terminar)
+	if ui.concluido:
+		lido.emit(id)

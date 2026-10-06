@@ -63,6 +63,7 @@ var _porta_saida_1975: Interagivel
 var _t_apito := 0.0
 var _armadura_estado := 0             # 0 = nunca olhou, 1 = olhou, 2 = desviou o olhar, 3 = apareceu
 var _quico19_pendente := false
+var _saindo_barra := false
 
 
 func _ready() -> void:
@@ -86,6 +87,7 @@ func _ready() -> void:
 
 func iniciar(p: Player) -> void:
 	player = p
+	GameState.flags.erase("saindo_para_barra")      # saves antigos podem ter a flag presa
 	Visor.instalar(self)
 	Audio.musica("jingle")
 	if GameState.flag("porta_entrada_aberta"):
@@ -98,6 +100,18 @@ func iniciar(p: Player) -> void:
 				_triggers[n].monitoring = false
 		if _uma_vez("sala15"):
 			_evt_sala15()
+
+
+## Pontos de vista para o "aquecimento" feito pelo main.gd atrás da tela de carregamento (o 1º quadro de cada
+## material compila o shader): interiores, torre, e uma vista em cada época (1950, 1975, 2019).
+func pontos_aquecer() -> Array:
+	var lista: Array = []
+	for par in [["Cam_hall", E2020], ["Cam_corredor", E2020], ["Cam_salaarte", E2020], ["Cam_medieval", E2020],
+			["Cam_topo_torre", E2020], ["Cam_nucleo1950", E1950], ["Cam_corredor1975", E1975], ["Cam_aerea2019", E2019]]:
+		var mk := find_child(par[0], false, false) as Node3D
+		if mk:
+			lista.append({"transform": mk.global_transform, "epoca": par[1]})
+	return lista
 
 
 # ================================================================== céu, Sol, névoa, vento
@@ -256,9 +270,9 @@ func ponto_spawn(nome: String) -> Node3D:
 func _marcadores() -> void:
 	_marcar("Spawn", Vector3(-23.0, 0.1, 1.5), -28.0)
 	_marcar("Checkpoint_1", Vector3(-23.0, 0.1, 1.5), -28.0)
-	_marcar("Checkpoint_6", Vector3(-6.55, 0.1, -9.0), 0.0)
+	_marcar("Checkpoint_6", Vector3(-6.55, 0.1, -10.3), 0.0)     # dentro do gatilho da sala 6 (antes: z=-9, na sala 5)
 	_marcar("Checkpoint_11", Vector3(-8.5, 0.1, -19.5), 180.0)
-	_marcar("Checkpoint_16", Vector3(-12.3, 0.1, -19.55), 90.0)
+	_marcar("Checkpoint_16", Vector3(-13.4, 0.1, -19.55), 90.0)     # dentro do gatilho 16 e fora do 11 (antes: x=-12.3, na fronteira dos dois)
 	_marcar("Checkpoint_21", Vector3(-12.6, 0.1, -24.2), 0.0)
 	_marcar("Checkpoint_25", Vector3(X_COR, 0.1, -31.0), 0.0)
 	_marcar("Spawn_volta_barra", Vector3(-8.6, 0.1, -15.6), 0.0)
@@ -785,13 +799,15 @@ func _usar_mural(_p: Node) -> void:
 	if GameState.flag("viu_flashback_barra"):
 		Guia.falar("bentinho", ["Já vimos esse mural! Vamos continuar a visita!"])
 		return
-	if GameState.flag("saindo_para_barra"):
+	if _saindo_barra:
 		return
-	GameState.set_flag("saindo_para_barra", true)
+	# (era uma flag salva em GameState, mas o código depois do `await` nunca rodava: o nível é destruído na troca.
+	# Quem saísse do jogo no meio da ida à Barra voltava com o mural "ocupado" para sempre.)
+	_saindo_barra = true
 	GameState.entrar_sala(14)
 	await Guia.falar("taina", ["Que mural bonito! Parece até que dá para entrar nele..."], true)
 	await Transicao.ir_para("res://world/niveis/barra.tscn", "Spawn")
-	GameState.set_flag("saindo_para_barra", false)
+	_saindo_barra = false      # só chega aqui se a troca foi recusada (este nível continua vivo)
 
 
 ## Volta da Barra (sala 15): um recorte de pescador cai da porta (susto-piada nº 1).

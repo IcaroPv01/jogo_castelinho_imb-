@@ -10,6 +10,10 @@ var hud: HUD
 var player: Player
 var tela_titulo: Control
 var nivel_atual := ""
+## Mostra a tela "Carregando..." e "aquece" os materiais (renderiza o nível por trás dela) antes de entregar o jogo.
+## No headless não há o que desenhar, então fica desligado; os testes ligam à mão para conferir o fluxo.
+var aquecer_ativo := DisplayServer.get_name() != "headless"
+var _carregando := false
 
 
 func _ready() -> void:
@@ -23,6 +27,9 @@ func _ready() -> void:
 	hud.visible = false
 	add_child(hud)
 	GameState.jogador_morreu.connect(_on_morte)
+	# voltou do "Fim da demonstração" (reload da cena): zera sala, corrupção e época da partida anterior
+	GameState.jogando = false
+	GameState.resetar_sessao()
 	_mostrar_titulo()
 
 
@@ -54,23 +61,52 @@ func _titulo_simples() -> Control:
 ## `continuar` = carregar a partir do checkpoint salvo.
 func _comecar(continuar := false) -> void:
 	# Precisa ser chamado dentro do evento de clique (regra do navegador para mouse e áudio).
+	if _carregando:
+		return
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	if not continuar:
-		GameState.novo_jogo()
-	tela_titulo.queue_free()
-	hud.visible = true
-	GameState.jogando = true
 	var nivel := PRIMEIRO_NIVEL if ResourceLoader.exists(PRIMEIRO_NIVEL) else NIVEL_TESTE
+	var spawn := "Spawn"
+	if continuar:
+		var destino := GameState.preparar_continuar()
+		if ResourceLoader.exists(destino[0]):
+			nivel = destino[0]
+			spawn = destino[1]
+	else:
+		GameState.novo_jogo()
 	if OS.has_feature("nivel_teste") or OS.get_cmdline_user_args().has("--teste"):
 		nivel = NIVEL_TESTE
-	await carregar_mundo(nivel, "Spawn")
+		spawn = "Spawn"
+	hud.visible = true
+	# a tela "Carregando..." nasce no mesmo quadro em que o título some (ver carregar_mundo)
+	await carregar_mundo(nivel, spawn)
+	if is_instance_valid(tela_titulo):
+		tela_titulo.queue_free()
+	GameState.jogando = true
 
 
+## Troca o mundo atual pela cena `caminho`, com o jogador no marcador `spawn` (se não existir, tenta "Spawn").
+## Com `aquecer_ativo`: tela "Carregando..." primeiro (desenhada ANTES do trabalho pesado) e, no fim, um aquecimento
+## dos shaders por trás dela; só então devolve o controle. O mesmo vale para as trocas de nível (Transicao).
 func carregar_mundo(caminho: String, spawn := "Spawn") -> void:
+	_carregando = true
+	var t0 := Time.get_ticks_msec()
+	var tela: TelaCarregando = null
+	if aquecer_ativo:
+		tela = TelaCarregando.mostrar(self)
+		if is_instance_valid(tela_titulo):
+			tela_titulo.queue_free()     # a tela de carregamento (camada 130) já cobre o título no mesmo quadro
+		await tela.aguardar_desenho()
+		tela.definir(0.12, "Arrumando o mundo")
 	for c in mundo.get_children():
 		c.queue_free()
 	await get_tree().process_frame
+	if tela:
+		tela.definir(0.2, "Lendo a planta do prédio")
+		await get_tree().process_frame
 	var cena: PackedScene = load(caminho)
+	if tela:
+		tela.definir(0.4, "Montando as salas")
+		await get_tree().process_frame
 	var nivel: Node3D = cena.instantiate()
 	mundo.add_child(nivel)
 	nivel_atual = caminho
@@ -80,11 +116,67 @@ func carregar_mundo(caminho: String, spawn := "Spawn") -> void:
 	var marcador := nivel.find_child(spawn, true, false) as Node3D
 	if marcador == null and nivel.has_method("ponto_spawn"):
 		marcador = nivel.ponto_spawn(spawn)
-	if marcador:
-		player.global_transform = marcador.global_transform
+	if marcador == null and spawn != "Spawn":
+		push_warning("main: marcador '%s' não existe em %s; usando 'Spawn'" % [spawn, caminho])
+		marcador = nivel.find_child("Spawn", true, false) as Node3D
+	var destino := marcador.global_transform if marcador else Transform3D.IDENTITY
+	player.global_transform = destino
 	hud.conectar_player(player)
+	if tela:
+		# Durante o aquecimento o jogador fica "estacionado" bem acima do mapa: se ficasse no Spawn, os gatilhos de sala
+		# disparariam (e a Guia começaria a falar) atrás da tela de carregamento. Mudar a camada de colisão não
+		# adianta: o Godot só cria o par corpo/área quando o corpo entra de verdade.
+		player.global_position = destino.origin + Vector3(0, 300, 0)
+		tela.definir(0.62, "Preparando as luzes")
+		await get_tree().process_frame
+		await _aquecer(nivel, tela, destino)
+		await tela.finalizar()
+		player.global_transform = destino
+		player.velocity = Vector3.ZERO
+		player.set_physics_process(true)
 	if nivel.has_method("iniciar"):
 		nivel.iniciar(player)
+	if tela:
+		await tela.desaparecer()
+	_carregando = false
+	if aquecer_ativo:
+		print("[carga] %s pronto em %d ms" % [caminho.get_file(), Time.get_ticks_msec() - t0])
+
+
+## Renderiza o nível por trás da tela de carregamento: a 1ª vez que cada material aparece, o GPU compila o shader
+## dele (vários segundos no navegador). Passa por alguns pontos de vista do próprio nível (`pontos_aquecer()`,
+## opcional: Array de {"transform": Transform3D, "epoca": int opcional}) para o jogo não engasgar depois.
+func _aquecer(nivel: Node3D, tela: TelaCarregando, destino: Transform3D) -> void:
+	var cam := Camera3D.new()
+	cam.fov = 72.0
+	cam.near = 0.05
+	cam.far = 200.0
+	mundo.add_child(cam)
+	var epoca0: int = GameState.epoca
+	# o jogador fica parado (não cai quando a época remove o chão)
+	player.set_physics_process(false)
+	var pontos: Array = [{"transform": destino * Transform3D(Basis(), Vector3(0, Player.ALTURA_OLHOS, 0))}]
+	if nivel.has_method("pontos_aquecer"):
+		pontos.append_array(nivel.pontos_aquecer())
+	else:
+		for filho in nivel.get_children():
+			if filho is Marker3D and filho.name.begins_with("Cam_") and pontos.size() < 5:
+				pontos.append({"transform": (filho as Marker3D).global_transform})
+	for i in pontos.size():
+		var pt: Dictionary = pontos[i]
+		if pt.has("epoca") and int(pt["epoca"]) != GameState.epoca:
+			GameState.trocar_epoca(int(pt["epoca"]))
+		cam.global_transform = pt["transform"]
+		cam.make_current()
+		tela.definir(remap(i, 0, pontos.size(), 0.66, 0.95), "Preparando as salas")
+		await get_tree().process_frame
+	if GameState.epoca != epoca0:
+		GameState.trocar_epoca(epoca0)
+	Efeitos.aquecer()
+	tela.definir(0.97, "Quase pronto")
+	await get_tree().process_frame
+	player.camera.make_current()
+	cam.queue_free()
 
 
 func _unhandled_input(e: InputEvent) -> void:
@@ -97,6 +189,14 @@ func _unhandled_input(e: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif e.is_action_pressed("pausa") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+## Alt-Tab no desktop: o mouse continua "capturado" e o jogo seguia rodando (a Figura Branca matava o jogador com a
+## janela em segundo plano). Perder o foco solta o mouse, e o `_process` abaixo trata como pausa.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		if GameState.jogando and not GameState.flag("ui_aberta") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _process(_dt: float) -> void:

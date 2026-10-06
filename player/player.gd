@@ -28,6 +28,9 @@ var lanterna: SpotLight3D
 var _alvo: Node = null
 var _dist_passo := 0.0
 var _bob := 0.0
+var _checar_preso := 0           # quadros de física restantes para conferir se a época prendeu o jogador
+var _ultimo_seguro := Vector3.ZERO
+var _tem_seguro := false
 
 
 func _ready() -> void:
@@ -68,6 +71,9 @@ func _ready() -> void:
 	lanterna.visible = false
 	lanterna.position = Vector3(0.15, -0.15, 0)
 	camera.add_child(lanterna)
+	# Trocar de época liga e desliga colisões (paredes que somem e voltam): se uma parede reaparecer em cima do
+	# jogador, `desprender()` o tira de dentro dela (senão ele ficava preso para sempre, ex.: soltar Q em 1950).
+	GameState.epoca_mudou.connect(_ao_mudar_epoca)
 
 
 func _unhandled_input(e: InputEvent) -> void:
@@ -87,6 +93,10 @@ func _unhandled_input(e: InputEvent) -> void:
 
 
 func _physics_process(dt: float) -> void:
+	if _checar_preso > 0:
+		_checar_preso -= 1
+		if _checar_preso == 0 or _sobrepoe_mundo(global_position):
+			desprender()
 	if not is_on_floor():
 		velocity.y -= GRAVIDADE * dt
 	var dir := Vector3.ZERO
@@ -100,6 +110,9 @@ func _physics_process(dt: float) -> void:
 	velocity.x = dir.x * vel
 	velocity.z = dir.z * vel
 	move_and_slide()
+	if _checar_preso == 0 and is_on_floor():
+		_ultimo_seguro = global_position
+		_tem_seguro = true
 	_balanco(dt, dir.length() > 0.1 and is_on_floor(), vel)
 	_atualizar_alvo()
 
@@ -159,3 +172,55 @@ func olhar_para(ponto: Vector3, dur := 0.4) -> void:
 
 func direcao_olhar() -> Vector3:
 	return -camera.global_transform.basis.z
+
+
+# ---------------------------------------------------------------- jogador preso dentro de uma parede
+func _ao_mudar_epoca(_e: int) -> void:
+	_checar_preso = 4    # a colisão das épocas muda no quadro seguinte: confere alguns quadros depois
+
+
+## Há colisão do mundo (camada 1) dentro da cápsula em `pos` (pé do jogador)? A cápsula é um pouco menor do que a
+## real: encostar na parede não conta, só estar enfiado nela.
+func _sobrepoe_mundo(pos: Vector3, folga := 0.04) -> bool:
+	if not is_inside_tree():
+		return false
+	var q := PhysicsShapeQueryParameters3D.new()
+	var forma := CapsuleShape3D.new()
+	forma.radius = 0.3 - folga
+	forma.height = 1.75 - 2.0 * folga
+	q.shape = forma
+	q.transform = Transform3D(Basis(), pos + Vector3(0, 0.875 + 0.02, 0))
+	q.collision_mask = 1
+	q.exclude = [get_rid()]
+	return not get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
+
+
+## Se a cápsula está enfiada em colisão do mundo, leva o jogador para o ponto livre mais próximo (com chão embaixo);
+## se não achar nenhum, volta para o último lugar seguro. Devolve true se mudou a posição.
+func desprender() -> bool:
+	if not _sobrepoe_mundo(global_position):
+		return false
+	var origem := global_position
+	var espaco := get_world_3d().direct_space_state
+	for raio: float in [0.15, 0.3, 0.45, 0.6, 0.8, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]:
+		for i in 16:
+			var ang := TAU * i / 16.0
+			var cand: Vector3 = origem + Vector3(cos(ang), 0, sin(ang)) * raio
+			# chão sob o candidato (a até 0,7 m acima ou 1,2 m abaixo do ponto atual)
+			var rq := PhysicsRayQueryParameters3D.create(cand + Vector3(0, 0.7, 0), cand + Vector3(0, -1.2, 0), 1)
+			rq.exclude = [get_rid()]
+			var r := espaco.intersect_ray(rq)
+			if r.is_empty():
+				continue
+			cand.y = (r["position"] as Vector3).y
+			if not _sobrepoe_mundo(cand):
+				return _teleportar_seguro(cand)
+	if _tem_seguro and not _sobrepoe_mundo(_ultimo_seguro):
+		return _teleportar_seguro(_ultimo_seguro)
+	return false
+
+
+func _teleportar_seguro(pos: Vector3) -> bool:
+	global_position = pos
+	velocity = Vector3.ZERO
+	return true

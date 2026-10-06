@@ -71,6 +71,12 @@ func _ready() -> void:
 
 
 func conectar_player(p: Player) -> void:
+	# jogador novo (troca de nível, morte): o aviso "[E] ..." e a barra de fôlego do anterior não podem ficar na tela,
+	# porque o novo jogador só emite os sinais quando o valor MUDA
+	lbl_aviso.text = ""
+	barra_stamina.value = 1.0
+	barra_stamina.visible = false
+	barra_stamina.modulate = Color.WHITE
 	p.alvo_mudou.connect(func(t: String): lbl_aviso.text = ("[E] " + t) if t != "" else "")
 	p.stamina_mudou.connect(func(v: float):
 		barra_stamina.value = v

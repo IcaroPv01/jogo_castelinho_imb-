@@ -142,16 +142,40 @@ func tem_save() -> bool:
 
 
 func novo_jogo() -> void:
-	sala_atual = 0
+	resetar_sessao()
 	sala_maxima = 0
 	checkpoint_sala = 1
-	corruption = 0.0
-	corruption_manual = -1.0
-	epoca = Epoca.E2020
 	flags = {}
 	selos.clear()
 	contadores = {"paineis_lidos": 0, "quiz_acertos": 0, "mortes": 0, "sustos": 0}
 	salvar()
+
+
+## Zera o que só vale durante uma partida (sala, corrupção, época), SEM mexer no save. Chamada ao voltar para a
+## tela de título e antes de "Continuar". Avisa quem escuta a corrupção (Efeitos, Audio): antes, o valor era
+## trocado sem sinal e uma nova partida começava com o visual e a música corrompidos do fim da anterior.
+func resetar_sessao() -> void:
+	sala_atual = 0
+	corruption_manual = -1.0
+	epoca = Epoca.E2020
+	flags.erase("ui_aberta")
+	if not is_equal_approx(corruption, 0.0):
+		corruption = 0.0
+		corruption_mudou.emit(corruption)
+
+
+## Prepara o estado para retomar do último checkpoint salvo. Devolve [cena, marcador de chegada].
+## Checkpoint 26 em diante é o Ato II; o 25 é o corredor de 1975 (que só existe em 1975: a época precisa estar
+## certa antes de o nível ser montado, senão o jogador nasceria no vazio).
+func preparar_continuar() -> Array:
+	resetar_sessao()
+	var cp := checkpoint_sala
+	if cp >= 26:
+		return ["res://world/niveis/ato2.tscn", "Checkpoint_26"]
+	if cp == 25:
+		epoca = Epoca.E1975
+	flags.erase("saindo_para_barra")
+	return ["res://world/niveis/castelinho.tscn", "Checkpoint_%d" % cp]
 
 
 # ---------------------------------------------------------------- inputs (definidos em código: evita erro de formato no project.godot)
