@@ -2,13 +2,19 @@ name: Web (Godot → GitHub Pages)
 
 # Em todo PR: exporta e roda o teste automático (valida que o jogo compila).
 # Na main: exporta, testa e publica em https://icaropv01.github.io/jogo_castelinho_imb-/
-# (a versão Windows fica em https://icaropv01.github.io/jogo_castelinho_imb-/Castelinho_Windows.zip)
+# Versão Windows só sob pedido: rodar à mão (Actions > Run workflow) com "windows" marcado. O zip vai para
+# .../Castelinho_Windows.zip e sai do site na próxima publicação normal (assim nunca fica um zip velho no ar).
 
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      windows:
+        description: "Gerar também o zip para Windows"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -55,7 +61,7 @@ jobs:
           mkdir -p "$T"
           mv tpl/templates/* "$T/"
 
-      - name: Importar, testar e exportar
+      - name: Importar, testar e exportar (Web)
         run: |
           set -euo pipefail
           GODOT=~/godot-bin/Godot_v${GODOT_VERSION}-stable_linux.x86_64
@@ -65,7 +71,13 @@ jobs:
           mkdir -p build/web
           "$GODOT" --headless --export-release "$EXPORT_PRESET" build/web/index.html
           test -s build/web/index.wasm && test -s build/web/index.pck
-          # Versão Windows (offline), baixável em .../Castelinho_Windows.zip
+          ls -la build/web
+
+      - name: Exportar Windows (só sob pedido)
+        if: github.event_name == 'workflow_dispatch' && inputs.windows
+        run: |
+          set -euo pipefail
+          GODOT=~/godot-bin/Godot_v${GODOT_VERSION}-stable_linux.x86_64
           mkdir -p build/win
           "$GODOT" --headless --export-release "Windows" build/win/Castelinho.exe
           test -s build/win/Castelinho.exe
