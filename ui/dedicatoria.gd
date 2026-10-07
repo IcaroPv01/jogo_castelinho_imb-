@@ -77,13 +77,7 @@ func _construir() -> void:
 
 	# --- créditos
 	_cred = VBoxContainer.new()
-	_cred.set_anchors_preset(Control.PRESET_CENTER)
-	_cred.anchor_left = 0.5
-	_cred.anchor_right = 0.5
-	_cred.anchor_top = 0.5
-	_cred.anchor_bottom = 0.5
-	_cred.offset_left = -520.0
-	_cred.offset_right = 520.0
+	_cred.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_cred.add_theme_constant_override("separation", 6)
 	_cred.alignment = BoxContainer.ALIGNMENT_CENTER
 	_cred.mouse_filter = Control.MOUSE_FILTER_IGNORE

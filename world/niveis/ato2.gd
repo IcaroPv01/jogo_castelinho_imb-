@@ -767,6 +767,7 @@ func _voltar_ao_castelinho() -> void:
 	GameState.set_flag("visor_travado", false)
 	GameState.trocar_epoca(GameState.Epoca.E2020)
 	Efeitos.visor(false)
+	GameState.set_flag("v3_ato2_feito", true)     # contrato com o Castelinho: libera a escada da visita 3
 	GameState.entrar_sala(61)
 	var cena := destino
 	if not ResourceLoader.exists(cena):

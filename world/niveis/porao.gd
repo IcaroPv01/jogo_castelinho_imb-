@@ -15,6 +15,7 @@ extends Node3D
 ##    crescem se o jogador fica parado) e a voz do Tito (certa ou fatal: a bifurcação com água funda).
 ##  - Sala 99: sobe por uma escada ao luar e vai para `braco_morto.tscn` (sala 100).
 ##
+## Marcadores: `Spawn` e `Checkpoint_<N>` para qualquer N de 81 a 99 (criados sob demanda em `ponto_spawn`).
 ## Contrato com o Main: `iniciar(player)`, `ao_morrer()`, `ponto_spawn(nome)` (Checkpoint_N / Spawn),
 ## `pontos_aquecer()`. Contadores que este nível ESCREVE: `pistas_tito` (+1 por pista, uma vez cada, flag `pista_<id>`).
 
@@ -30,7 +31,8 @@ const PRIMEIRA := 81
 const N := 19
 const SALA_QUARTO := 95
 const SALA_ULTIMA := 99
-const CHECKPOINTS: Array[int] = [81, 86, 91, 96]
+## Checkpoints internos (a morte volta ao último). O `GameState` só grava 81 e 95 (SALAS_CHECKPOINT); ver PENDENCIAS.
+const CHECKPOINTS: Array[int] = [81, 86, 91, 95, 96]
 ## Profundidade da água (m acima do piso) em cada nível: nada, tornozelo, joelho, cintura.
 const PROF_AGUA: Array[float] = [0.0, 0.22, 0.55, 0.95]
 const TEMPO_SUBIR := 6.0

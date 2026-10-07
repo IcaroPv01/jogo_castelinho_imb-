@@ -25,7 +25,6 @@ var _caixa: StyleBoxFlat
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	_caixa = Flash.caixa(Color(Flash.CREME.r, Flash.CREME.g, Flash.CREME.b, 0.93), Flash.NAVY, 18, 4)
 	GameState.discos_mudou.connect(_atualizar)
 	_atualizar()
@@ -52,13 +51,15 @@ func _atualizar() -> void:
 				Audio.sfx("selo", -6.0)
 	var n := _meus.size()
 	visible = n > 0
-	custom_minimum_size = Vector2(n * LARG_SLOT + 20.0, ALT + 12.0)
-	size = custom_minimum_size
-	offset_left = MARGEM
-	offset_right = MARGEM + size.x
-	offset_bottom = -MARGEM
-	offset_top = -MARGEM - size.y
+	size = Vector2(n * LARG_SLOT + 20.0, ALT + 12.0)
+	_posicionar()
 	queue_redraw()
+
+
+## Canto de baixo à esquerda (calculado do tamanho da janela: sem anchors, que dependem do pai).
+func _posicionar() -> void:
+	var vp := get_viewport_rect().size if is_inside_tree() else Vector2(1280, 720)
+	position = Vector2(MARGEM, vp.y - MARGEM - size.y)
 
 
 func _alvo_x() -> float:
@@ -72,6 +73,7 @@ func _process(dt: float) -> void:
 	if not visible:
 		return
 	_t += dt
+	_posicionar()
 	var alvo := _alvo_x()
 	if alvo >= 0.0:
 		_cursor_x = alvo if _cursor_x < 0.0 else lerpf(_cursor_x, alvo, 1.0 - exp(-dt * 16.0))   # o "slide"

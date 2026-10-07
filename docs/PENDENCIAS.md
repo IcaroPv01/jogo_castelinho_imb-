@@ -111,26 +111,39 @@ Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, 
 
 ### Andamento (checklist; atualizado a cada etapa)
 
-- [ ] 1. Áudio novo (`tools/gerar_audio.py`): chuva, goteira, agua_sobe, crianca_ei, telefone_voz, atencao
-- [ ] 2. Arte gerada (`tools/gerar_desenhos.py`): desenho_1..7, procura_se, marcas_altura
-- [ ] 3. Painéis: variantes _v2/_v3/_v4 + fallback + revisão de P14/15/16/19/21/23
-- [ ] 4. Visor 2.0 (discos, Q por disco, atenção, Figura no slide, bloqueio de 10 s)
-- [ ] 5. HUD (VISITA n · SALA nn, faixa de discos, olho)
-- [ ] 6. Telas: VolteSempre, Telefone, Dedicatoria
-- [ ] 7. Testes (`tests/visor_test.gd`, `tests/ui_test.gd`) e `bash tools/testar.sh`
+- [x] 1. Áudio novo (`tools/gerar_audio.py`): chuva, goteira (loops ogg), agua_sobe, crianca_ei, telefone_voz, atencao (wav). Gerados e importados.
+- [x] 2. Arte gerada (`tools/gerar_desenhos.py`): desenho_1..7 (512x512), procura_se (512x720, com alfa), marcas_altura (384x512, opaca). PNG em paleta de 256 cores (~1,5 MB no total). Vistos e iterados.
+- [x] 3. Painéis: `pNN_v2/_v3/_v4` (p01..p22), fallback `pNN_vK` -> `pNN` (`PainelUI.id_efetivo/dados`), entradas de imagem (`desenho_N`, `procura_se`, `marcas_altura`), P14/15/16/19/21/23 revisados.
+- [x] 4. Visor 2.0 escrito (`world/visor.gd`): discos 1-5 e rolagem, Q por disco, atenção, Figura no slide, susto, bloqueio de 10 s, `figura_atravessou`. FALTA testar (item 7).
+- [x] 5. HUD: "VISITA n · SALA nn" (porão: "SALA nn"), `ui/faixa_discos.gd`, `ui/olho_atencao.gd`. Ajustes de captura pendentes (ver "A fazer").
+- [x] 6. Telas escritas: `ui/volte_sempre.gd`, `ui/telefone.gd`, `ui/dedicatoria.gd`. Capturadas; ajustes pendentes (ver "A fazer").
+- [ ] 7. Testes (`tests/visor_test.gd` novo, `tests/ui_test.gd` atualizado) e `bash tools/testar.sh`
 - [ ] 8. Capturas de UI revisadas
 
+### A fazer (resultado das capturas)
+- FaixaDiscos: o painel creme está altíssimo (fica ocupando a coluna esquerda): `size` precisa ser recalculado depois do anchor (usar offsets e `custom_minimum_size`, sem `size =`) e ficar só ~120 px de altura; o texto do HUD ("VISITA 3 · SALA 55") fica atrás da faixa: mover a faixa para o canto de baixo de verdade.
+- VolteSempre: estrelas devem ficar ATRÁS da placa (move_child); Dedicatoria: os créditos devem ocupar a tela inteira centralizados (anchors full rect).
+- Figura no slide: ver captura `visor` (aparece como cone claro; ok, afinar).
+
 ### Decisões
-(ver abaixo; preenchido conforme avanço)
+- `Visor` é de instância; sinal de instância `figura_atravessou(visita)` nas visitas 4 e 5 (documentado no cabeçalho de `world/visor.gd`). `atencao_cheia(visita)` sai sempre.
+- Q sem disco não faz nada; exceção de compatibilidade com os níveis do MVP: sem NENHUM disco e com a flag `epoca_visor` definida, o Q usa essa época. Com discos, `epoca_visor` é ignorada.
+- Tecla n escolhe o disco fixo (1=1950, 2=1967, 3=1975, 4=2019, 5=sem data); rolagem passa entre os discos que o jogador tem.
+- Bloqueio de 10 s é estático (atravessa troca de nível); zera em `Visor._ready` se `sala_atual <= 0`.
+- A Figura do slide é um visual próprio (`Visor.FiguraSlide`), sem IA e fora do grupo "figura_branca": o `FiguraBranca` real mata por proximidade.
+- Assinatura do Tito: o primeiro T é desenhado de cabeça para baixo (um T espelhado na horizontal seria igual ao normal).
+- Desenhos/cartaz em Painel3D: `Painel3D.new("desenho_3")` é uma folha na parede (largura `largura_m` do JSON); `marcas_altura.png` é opaca (batente de porta + parede), pensada para o Visitas colar na parede de 1975.
+- Painéis v4: `anfitriao` vazio, `riscado`, `desenho`; v3 tem `carimbo` "EM REVISÃO". v2/v3/v4 não têm quiz (selos só na visita 1).
+- Pedido ao integrador: `Visor.registrar_inputs()` cria as ações disco_1..5/prox/ant; HUD instancia FaixaDiscos e OlhoAtencao. Telefone/VolteSempre/Dedicatoria sem .tscn (só `class_name` + `new()`).
 
 ## Agente Porão (V2)
 
 > Seção viva: atualizada à medida que avanço. Se eu for interrompido, quem continuar começa pelo "Estado" abaixo.
 
 ### Estado (atualizado a cada etapa)
-- [ ] 1. Renumerar `ato2` (salas 55 a 60) e `barra` (sala_global(14)/(15), sandália) + `ato2_test`/`barra_test`
-- [ ] 2. `porao.tscn`/`porao.gd` (masmorra, salas 81 a 99)
-- [ ] 3. Criaturas: `creatures/costela.gd`, voz do Tito, Figura Branca ligada ao Visor
+- [x] 1. Renumerar `ato2` (salas 55 a 60, `Checkpoint_55`, flag `v3_ato2_feito`, volta em `Spawn_volta_ato2`) e `barra` (`sala_global(14)/(15)`, sandália) + `ato2_test`/`barra_test` (passam)
+- [~] 2. `porao.tscn`/`porao.gd` + `porao_salas.gd` (12 tipos) + `porao_quarto.gd` (quarto do Tito e slides) + shaders `porao_pedra`/`porao_agua`: ESCRITOS, ainda sem rodar (próximo passo: `godot --headless --import`, carregar, depurar erros de script)
+- [~] 3. Criaturas: `creatures/costela.gd` escrita (sem testar); voz do Tito e Figura/Visor estão em `porao.gd`
 - [ ] 4. `braco_morto.tscn`/`.gd` (sala 100) e finais
 - [ ] 5. `tests/porao_test.gd`, `bash tools/testar.sh`
 - [ ] 6. Capturas e ajustes visuais

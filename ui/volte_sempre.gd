@@ -167,6 +167,7 @@ func _construir() -> void:
 			s.pivot_offset = s.size / 2.0
 			s.modulate = Color(1, 1, 1, 0.8)
 			add_child(s)
+			move_child(s, _fundo.get_index() + 2)   # atrás da placa
 			var tw := create_tween().set_loops()
 			tw.tween_property(s, "rotation", 0.5, randf_range(0.6, 1.2))
 			tw.tween_property(s, "rotation", -0.5, randf_range(0.6, 1.2))
@@ -207,7 +208,7 @@ func _process(dt: float) -> void:
 			_l2.scale = Vector2.ONE * (1.0 + 0.03 * sin(_t * 5.0))
 	if estranho:
 		# o Bentinho cresce devagar, sem tirar os olhos de quem lê
-		var k := 1.0 + clampf(_t * 0.025, 0.0, 0.3)
+		var k := 1.0 + clampf(_t * 0.015, 0.0, 0.15)
 		_mascote.scale = Vector2.ONE * k
 	var limite := 9.0
 	if _t >= limite:

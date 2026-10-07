@@ -281,6 +281,7 @@ func _teste_fim_demo() -> void:
 	_checar(ok, "depois da tela preta e da voz corrompida, troca para o destino (Castelinho, aqui o nível de teste)")
 	await _frames(30)
 	_checar(GS.sala_atual == 61, "volta ao Castelinho na sala 61 (sala %d)" % GS.sala_atual)
+	_checar(GS.flag("v3_ato2_feito"), "flag v3_ato2_feito ligada na volta")
 	_checar(not GS.flag("visor_travado") and GS.epoca == GS.Epoca.E2020, "época e Visor liberados na volta")
 	load("res://ui/flash.gd").resetar_ui()
 
