@@ -88,7 +88,7 @@ func _b01_continuar() -> void:
 		[23, CASTELINHO, "Checkpoint_23", 2], [32, CASTELINHO, "Checkpoint_32", 2], [38, CASTELINHO, "Checkpoint_38", 2],
 		[45, CASTELINHO, "Checkpoint_45", 3], [54, CASTELINHO, "Checkpoint_54", 3], [55, ATO2, "Checkpoint_55", 3],
 		[61, CASTELINHO, "Checkpoint_61", 3], [67, CASTELINHO, "Checkpoint_67", 4], [72, CASTELINHO, "Checkpoint_72", 4],
-		[77, CASTELINHO, "Checkpoint_77", 4], [81, PORAO, "Checkpoint_81", 5], [95, PORAO, "Checkpoint_95", 5], [100, BRACO, "Spawn", 5]]
+		[77, CASTELINHO, "Checkpoint_77", 4], [81, PORAO, "Checkpoint_81", 5], [86, PORAO, "Checkpoint_86", 5], [91, PORAO, "Checkpoint_91", 5], [95, PORAO, "Checkpoint_95", 5], [96, PORAO, "Checkpoint_96", 5], [100, BRACO, "Spawn", 5]]
 	for c in casos:
 		GS.novo_jogo()
 		GS.checkpoint_sala = c[0]

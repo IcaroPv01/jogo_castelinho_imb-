@@ -70,9 +70,9 @@ func entrar_sala(numero: int) -> void:
 ## (base 1) e mais dois por visita, em salas base fixas: visitas 1 e 2 = bases 10 (corredor) e 16 (pé da escada);
 ## visita 3 = base 10 e base 17 (topo da Torre A, onde o Ato II devolve o jogador; as globais 55 a 60 são do trecho
 ## do Ato II e NÃO podem ser checkpoint do Castelinho); visita 4 = bases 8 (Povos) e 13 (Pescador), já comprimidas na
-## numeração 67..80 (ver world/niveis/castelinho.gd, V4_SALAS). Porão: 81 (entrada) e 95 (o quarto do Tito).
+## numeração 67..80 (ver world/niveis/castelinho.gd, V4_SALAS). Porão: 81 (entrada), 86, 91, 95 (o quarto do Tito) e 96 (o porão cria `Checkpoint_N` sob demanda).
 ## O trecho do Ato II (55) e a Braço Morto (100) têm checkpoint gravado por quem os dispara.
-const SALAS_CHECKPOINT := [1, 10, 16, 23, 32, 38, 45, 54, 61, 67, 72, 77, 81, 95]
+const SALAS_CHECKPOINT := [1, 10, 16, 23, 32, 38, 45, 54, 61, 67, 72, 77, 81, 86, 91, 95, 96]
 ## Cenas de destino do "Continuar" (o Porão cria os marcadores; se não existirem, o main cai no "Spawn").
 const CENA_CASTELINHO := "res://world/niveis/castelinho.tscn"
 const CENA_ATO2 := "res://world/niveis/ato2.tscn"
@@ -254,7 +254,7 @@ func resetar_sessao() -> void:
 ##   1..22 / 23..44 / 45..66 / 67..80 -> Castelinho, "Checkpoint_<n>" (o nível cria o nome global da visita atual e
 ##                                        também o nome da sala base "Checkpoint_<base>")
 ##   55 (visita 3)                    -> Ato II, "Checkpoint_55" (trecho 55..60 da visita 3)
-##   81..94 / 95..99                  -> Porão, "Checkpoint_81" / "Checkpoint_95"
+##   81..99                           -> Porão, "Checkpoint_<o maior de 81, 86, 91, 95, 96 que seja <= cp>"
 ##   100                              -> Braço Morto, "Spawn"
 func preparar_continuar() -> Array:
 	resetar_sessao()
@@ -265,10 +265,12 @@ func preparar_continuar() -> Array:
 	visita_mudou.emit(visita)
 	if cp >= TOTAL_SALAS:
 		return [CENA_BRACO, "Spawn"]
-	if cp >= 95:
-		return [CENA_PORAO, "Checkpoint_95"]
 	if cp >= PRIMEIRA_SALA_PORAO:
-		return [CENA_PORAO, "Checkpoint_81"]
+		var melhor := PRIMEIRA_SALA_PORAO
+		for c in [86, 91, 95, 96]:
+			if cp >= c:
+				melhor = c
+		return [CENA_PORAO, "Checkpoint_%d" % melhor]
 	if cp == CHECKPOINT_ATO2:
 		return [CENA_ATO2, "Checkpoint_%d" % CHECKPOINT_ATO2]
 	return [CENA_CASTELINHO, "Checkpoint_%d" % cp]
