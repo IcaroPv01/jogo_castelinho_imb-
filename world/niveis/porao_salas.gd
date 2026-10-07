@@ -568,19 +568,61 @@ static func _cisterna(c: Ctx) -> void:
 		# parede lateral da passarela (voltada para o poço) e meio-fio que impede de cair
 		var xe: float = lado * half
 		c.pedra.quad(mp, Vector3(xe, fundo, -c.L), Vector3(xe, fundo, 0.0), Vector3(xe, 0.0, 0.0), Vector3(xe, 0.0, -c.L), Vector3(lado, 0, 0), Vector2.ZERO, Color(0.8, 0.8, 0.8))
-		c.col(Vector3(xe - 0.05 * lado - 0.1, -0.3, -c.L), Vector3(xe + 0.1 + 0.05 * lado, 1.1, 0.0))
-		caixa(c.pedra, mp, minf(xe - 0.18, xe + 0.18), 0.0, -c.L, maxf(xe - 0.18, xe + 0.18), 0.42, 0.0, Color(0.7, 0.68, 0.68))
+		# (na sala 98 o meio-fio do lado direito tem uma falha de 0,8 m: é onde a passarela do último dia se apoia)
+		var tem_ponte: bool = c.ultimo == 98 and lado > 0
+		var segs := [[-c.L, 0.0]] if not tem_ponte else [[-c.L, -5.9], [-5.1, 0.0]]
+		for sg in segs:
+			c.col(Vector3(xe - 0.05 * lado - 0.1, -0.3, sg[0]), Vector3(xe + 0.1 + 0.05 * lado, 1.1, sg[1]))
+			caixa(c.pedra, mp, minf(xe - 0.18, xe + 0.18), 0.0, sg[0], maxf(xe - 0.18, xe + 0.18), 0.42, sg[1], Color(0.7, 0.68, 0.68))
 	# colunas saindo do fundo do poço até o teto
 	for lado in [-1, 1]:
 		for z in [-3.6, -7.2, -10.8]:
 			var x: float = lado * 4.4
 			caixa(c.pedra, mp, x - 0.5, fundo, z - 0.5, x + 0.5, h - 0.3, z + 0.5, Color(0.85, 0.82, 0.82))
 			caixa(c.pedra, mp, x - 0.75, h - 0.6, z - 0.75, x + 0.75, h - 0.3, z + 0.75, Color(0.7, 0.68, 0.68))
+	if c.ultimo == 98:
+		_ponte_semdata(c, half, fundo)
 	tocha(c, Vector3(-half + 0.0, 1.5, -4.5), 0, 1.5, 12.0)
 	tocha(c, Vector3(half - 0.0, 1.5, -10.0), 0, 1.3, 12.0)
 	c.pontos["figura"] = Vector3(0, 0.05, -c.L + 1.5)
 	c.pontos["voz"] = Vector3(0, 1.4, -c.L + 0.8)
 	c.piso_fn = func(_z: float) -> float: return 0.0
+
+
+## Sala 98: uma plataforma do outro lado de um vão de 1,4 m, no poço, com uma sandália pequena. Só o Visor com o disco
+## sem data mostra a passarela de tábuas que ligava as duas margens (a passagem existe só nesse dia).
+static func _ponte_semdata(c: Ctx, half: float, fundo: float) -> void:
+	var mp: Material = c.mats["pedra"]
+	var mv := mat_vc()
+	var x0 := half + 1.4
+	var x1 := x0 + 2.6
+	# plataforma sobre pilar, no nível da passarela
+	c.pedra.caixa(mp, Vector3(x0, fundo, -6.5), Vector3(x1, 0.0, -4.5), Malha.F_SEM_BASE, 0.0, Color(0.8, 0.78, 0.78))
+	c.col(Vector3(x0, fundo, -6.5), Vector3(x1, 0.0, -4.5))
+	# a sandália pequena, azul, de tira amarela (a outra do par que veio na rede da Barra)
+	var sand := Node3D.new()
+	sand.name = "SandaliaPorao"
+	sand.position = Vector3((x0 + x1) * 0.5 + 0.4, 0.0, -5.5)
+	sand.rotation_degrees.y = 30.0
+	c.raiz.add_child(sand)
+	var m: Malha = MalhaGd.new()
+	m.caixa(mv, Vector3(-0.045, 0.0, -0.1), Vector3(0.045, 0.025, 0.1), Malha.F_SEM_BASE, 0.0, Color(0.3, 0.52, 0.9))
+	m.caixa(mv, Vector3(-0.045, 0.025, -0.03), Vector3(0.045, 0.04, 0.0), Malha.F_SEM_BASE, 0.0, Color(0.95, 0.8, 0.2))
+	m.construir_instancia(sand, "Sandalia")
+	c.pontos["sandalia"] = sand.position + Vector3(0, 0.1, 0)
+	# a passarela: só na época sem data (visual + colisão)
+	var ponte := Node3D.new()
+	ponte.name = "PasserelaSemData"
+	c.raiz.add_child(ponte)
+	var mb: Malha = MalhaGd.new()
+	mb.caixa(mv, Vector3(half - 0.2, -0.12, -5.9), Vector3(x0 + 0.2, 0.0, -5.1), Malha.F_SEM_BASE, 0.0, Color(0.5, 0.34, 0.2))
+	for k in 4:
+		mb.caixa(mv, Vector3(half - 0.2 + k * 0.45, 0.0, -5.9), Vector3(half - 0.2 + k * 0.45 + 0.04, 0.02, -5.1), Malha.F_SEM_BASE, 0.0, Color(0.3, 0.2, 0.12))
+	mb.col(Vector3(half - 0.2, -0.3, -5.9), Vector3(x0 + 0.2, 0.0, -5.1))
+	mb.construir_instancia(ponte, "Tabuas")
+	mb.construir_colisao(ponte, "ColisaoPonte")
+	Epocas.marcar(ponte, [GameState.Epoca.ESEMDATA])
+	c.pistas.append({"id": "ponte_semdata", "no": ponte, "epocas": [GameState.Epoca.ESEMDATA]})
 
 
 # ============================================================================ 4. escada (desce ou sobe)

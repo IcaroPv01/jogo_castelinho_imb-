@@ -26,8 +26,8 @@ signal matou
 @export var luta_necessaria := 0.9      # s apertando uma direção para se soltar
 
 const N_CIPOS := 12
-const CORES := {"talo": Color(0.20, 0.27, 0.09), "folha_escura": Color(0.07, 0.24, 0.1), "folha_clara": Color(0.2, 0.48, 0.2),
-	"nervura": Color(0.05, 0.14, 0.06)}
+const CORES := {"talo": Color(0.28, 0.36, 0.12), "folha_escura": Color(0.1, 0.36, 0.14), "folha_clara": Color(0.3, 0.64, 0.28),
+	"nervura": Color(0.08, 0.22, 0.09)}
 
 var alvo: Node3D
 var ativa := false:
@@ -222,6 +222,9 @@ static func material() -> StandardMaterial3D:
 		_material = StandardMaterial3D.new()
 		_material.vertex_color_use_as_albedo = true
 		_material.roughness = 0.85
+		_material.emission_enabled = true               # um brilho fraco: a planta precisa ser legível no escuro
+		_material.emission = Color(0.12, 0.3, 0.12)
+		_material.emission_energy_multiplier = 0.5
 		_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return _material
 

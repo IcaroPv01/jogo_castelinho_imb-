@@ -459,8 +459,6 @@ func _atualizar_luzes(cur: int) -> void:
 
 func total_luzes_visiveis() -> int:
 	var n := 0
-	for l in get_tree().get_nodes_in_group("") if false else []:
-		n += 1
 	for i in salas:
 		for l in salas[i].luzes:
 			if is_instance_valid(l) and l.is_visible_in_tree():

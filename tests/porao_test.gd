@@ -463,6 +463,16 @@ func _teste_slides() -> void:
 			_checar(slide.get_node_or_null("BaldeBoiando") != null, "sala 99: a água parada e o balde boiando")
 		if i == 17:
 			_checar(slide.get_node_or_null("FiguraAberta") != null, "sala 98: a Figura Branca de braços abertos")
+			var ponte: Node3D = c.raiz.get_node_or_null("PasserelaSemData")
+			_checar(ponte != null and ponte.visible, "sala 98: a passarela sobre o poço só existe no disco sem data")
+			GS.trocar_epoca(GS.Epoca.E2020)
+			await _frames(2)
+			_checar(not ponte.visible, "sala 98: sem o Visor a passarela some (a plataforma com a sandália fica fora do alcance)")
+			var antes_s: int = GS.contadores.get("pistas_tito", 0)
+			GS.flags.erase("pista_sandalia_porao")
+			nivel._pegar_sandalia(null, c)
+			_checar(GS.contadores.get("pistas_tito", 0) == antes_s + 1, "pegar a sandália soma 1 em pistas_tito")
+			GS.trocar_epoca(GS.Epoca.ESEMDATA)
 		if i == 15 or i == 16:
 			_checar(slide.get_node_or_null("Tito") != null, "sala %d: Tito (de costas, com o balde)" % (81 + i))
 	_checar(nivel.mat_agua.get_shader_parameter("ondas") < 0.99 or true, "água parada no slide")

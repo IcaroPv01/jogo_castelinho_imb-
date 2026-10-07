@@ -149,8 +149,11 @@ Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, 
 - [x] 2. `porao.tscn`/`porao.gd` + `porao_salas.gd` (12 tipos + quarto + escada que sobe) + `porao_quarto.gd` (quarto do Tito e slides) + shaders `porao_pedra`/`porao_agua`: carregam, capturas conferidas (draw calls 20 a 50, 4 luzes)
 - [x] 3. Criaturas: `creatures/costela.gd` (prende parado, solta andando, mata se não lutar), voz do Tito com marcas do Visor, Figura Branca ligada ao `figura_atravessou` (testados em `porao_test`)
 - [x] 4. `braco_morto.tscn`/`.gd`: margem do lago, lápide de areia, Tito pelo Visor, finais "Encontrado"/"Visita concluída", `Dedicatoria.mostrar()` (testado)
-- [x] 5. `tests/porao_test.gd` passa (~47 s); `bash tools/testar.sh` rodando (ver abaixo)
-- [ ] 6. Capturas e ajustes visuais
+- [x] 5. `tests/porao_test.gd` passa (~47 s). `bash tools/testar.sh`: ato2, barra, porao, qa_logica, smoke, ui e visor passam; `castelinho_test` falha em "V4: porta zebrada do hall = sala 80" (é do Visitas, ainda em obra)
+- [x] 6. Capturas conferidas com `tests/captura_porao.gd` (salas do porão, quarto do Tito, slides 96 a 99, Costela) e `tests/captura_cam.gd` (Braço Morto: Cam_margem, Cam_lapide, Cam_pier, Cam_tito, Cam_escada)
+
+Limites conhecidos: áudio nunca foi ouvido (sons "crianca_ei", "agua_sobe", "goteira" existem, vindos do Visor/UI); desempenho no navegador não medido (só draw calls/luzes em Mesa);
+a passarela da sala 98 (época sem data) e a sandália são a "passagem" do disco sem data; o resto das pistas usa 1967 (voz, pegadas, mão, desenho escondido) e 1975 (marcas de altura).
 
 ## Agente Visitas (V2)
 

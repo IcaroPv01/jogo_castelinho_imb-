@@ -382,7 +382,7 @@ func _escada_do_porao() -> void:
 	for i in n:
 		var za := z0 - i * tread
 		var y := -2.4 + (i + 1) * 0.3
-		m.caixa(pedra, Vector3(-15.6, y - 0.3, za - tread), Vector3(-12.4, y, za), Malha.F_PY | Malha.F_NZ, 0.0, Color.WHITE)
+		m.caixa(pedra, Vector3(-15.6, y - 0.3, za - tread), Vector3(-12.4, y, za), Malha.F_PY | Malha.F_PZ, 0.0, Color.WHITE)
 	m.rampa(PackedVector3Array([Vector3(-15.6, -2.4, z0), Vector3(-12.4, -2.4, z0), Vector3(-15.6, 0.0, 7.2), Vector3(-12.4, 0.0, 7.2),
 		Vector3(-15.6, -2.9, z0), Vector3(-12.4, -2.9, z0), Vector3(-15.6, -2.9, 7.2), Vector3(-12.4, -2.9, 7.2)]))
 	m.caixa(pedra, Vector3(-15.6, -2.4, z0), Vector3(-12.4, -2.0, z0 + 0.6), Malha.F_TODAS, 0.0, Color.WHITE)
@@ -397,12 +397,14 @@ func _escada_do_porao() -> void:
 	sp.name = "Spawn"
 	sp.position = Vector3(-14.0, -2.3, 12.4)
 	add_child(sp)
-	for nome in ["Cam_margem", "Cam_lapide", "Cam_pier"]:
+	for nome in ["Cam_margem", "Cam_lapide", "Cam_pier", "Cam_tito", "Cam_escada"]:
 		var mk := Marker3D.new()
 		mk.name = nome
 		add_child(mk)
 	get_node("Cam_margem").transform = Transform3D(Basis(Vector3.UP, deg_to_rad(-40.0)), Vector3(-14.0, 1.6, 4.0))
 	get_node("Cam_lapide").transform = Transform3D(Basis(Vector3.UP, deg_to_rad(-12.0)), Vector3(7.0, 1.5, 0.0))
+	get_node("Cam_tito").transform = Transform3D(Basis(), Vector3(3.0, 1.45, -1.2))
+	get_node("Cam_escada").transform = Transform3D(Basis(), Vector3(-14.0, -0.9, 11.0))
 	get_node("Cam_pier").transform = Transform3D(Basis(Vector3.UP, deg_to_rad(55.0)), Vector3(-20.0, 1.6, -3.0))
 	# a luz que vem do alto da escada: o jogador sai do escuro para a noite (uma luz fria só)
 	var l := OmniLight3D.new()
