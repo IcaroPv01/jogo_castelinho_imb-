@@ -233,8 +233,9 @@ func _frames_f(n: int) -> void:
 		await physics_frame
 
 
-func _carregar_visita(v: int, flags: Dictionary = {}) -> void:
-	GameState.novo_jogo()
+func _carregar_visita(v: int, flags: Dictionary = {}, novo := true) -> void:
+	if novo:
+		GameState.novo_jogo()
 	GameState.visita = v
 	GameState.flags["tem_visor"] = true
 	for f in flags:
@@ -469,7 +470,42 @@ func _visitas() -> void:
 			await _ir_para(ponto)
 			var dc2 := _superficies_visiveis(nivel)
 			_checar(dc2 < 150, "V%d: menos de 150 draw calls estimados em %s (%d)" % [v, str(ponto), dc2])
+	await _pistas_do_tito()
 	GameState.novo_jogo()
+
+
+## O final "Encontrado" (V2 §6.3) precisa de 6 pistas: o Castelinho tem 8 (buraco e Tito em 1967, marcas em 1975, desenhos 2, 3, 4,
+## cartaz e o desenho atrás do painel em 2019). Cada uma só conta com uma ação deliberada e uma vez só.
+func _pistas_do_tito() -> void:
+	print("-- pistas do Tito")
+	GameState.novo_jogo()
+	var total := 0
+	var esperadas := {2: ["buraco", "tito_1967", "desenho_2", "desenho_3"], 3: ["marcas_altura", "desenho_4", "cartaz"], 4: ["desenho_2019"]}
+	for v in [2, 3, 4]:
+		await _carregar_visita(v, {"evt_v2_apagao": true}, false)
+		_checar(int(GameState.contadores.get("pistas_tito", 0)) == total, "V%d: só entrar e andar não conta pista (%d)" % [v, int(GameState.contadores.get("pistas_tito", 0))])
+		for id in esperadas[v]:
+			var it: Node = nivel.find_child("Pista_" + id, true, false)
+			if id == "buraco":
+				it = nivel.find_child("BuracoNoMuro", true, false)
+			if id == "desenho_2019":
+				it = null
+			if id == "desenho_2019":
+				for c in nivel.get_children():
+					if c.has_method("interagir") and c.get("texto_interacao") == "Olhar o desenho na parede":
+						it = c
+			_checar(it != null, "V%d: pista '%s' existe" % [v, id])
+			if it:
+				it.interagir(p)
+				await _frames_f(3)
+				it.interagir(p)
+				await _frames_f(3)
+				total += 1
+				_checar(GameState.flag("pista_" + id), "V%d: pista '%s' marcada" % [v, id])
+		_checar(int(GameState.contadores.get("pistas_tito", 0)) == total, "V%d: contador de pistas = %d, cada pista conta uma vez só (%d)" % [v, total, int(GameState.contadores.get("pistas_tito", 0))])
+	_checar(total >= 6 and int(GameState.contadores["pistas_tito"]) >= 6, "o Castelinho sozinho dá pistas de sobra para o 'Encontrado' (%d)" % total)
+	GameState.novo_jogo()
+	_checar(int(GameState.contadores.get("pistas_tito", 0)) == 0, "jogo novo zera as pistas")
 
 
 const POS_PORAO_X := -14.0

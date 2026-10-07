@@ -247,3 +247,8 @@ por 0,9 s solta (imune por 1,5 s); sem lutar, em 2,6 s `matar_jogador("costela")
 - **Pendências para outros agentes:** (Visor/UI) `ui/diploma.gd` ler a flag `diploma_nome` ("TITO" na visita 2); (Porão) ligar
   `v3_ato2_feito` no `ato2` ao sair é opcional (o Castelinho já liga); marcador `Spawn_volta_ato2` existe em y = 6,9.
 - Os níveis do Castelinho mexem em `Efeitos.flash`, `Guia.falar_engasgado`, `Audio.ambiente("chuva"|"vento"|"mar")` e `sfx_3d("goteira")`.
+
+### Fechamento do Visitas (rodada 2)
+- **Sala 80 (porta zebrada):** o gatilho 80 fica dentro do gatilho 7 (hall); se os dois disparavam no mesmo quadro a ordem era arbitrária e o contador podia cair para 71 (falha intermitente). Agora `_entrou(7)` na visita 4 reaplica a sala 80 se o jogador está na zona da porta.
+- **Checkpoints do porão:** `SALAS_CHECKPOINT` ganhou 86, 91 e 96; `preparar_continuar` devolve `Checkpoint_<maior de 81/86/91/95/96 <= cp>` em `porao.tscn`. `qa_logica_test` cobre os cinco.
+- **Pistas (`pistas_tito`)**, convenção `pista_<id>` + `somar`, uma vez cada, todas com E em cima do objeto: `buraco` e `tito_1967` (só em 1967), `marcas_altura` (só em 1975), `desenho_2`, `desenho_3`, `desenho_4`, `cartaz`, `desenho_2019` (só em 2019) = 8 no Castelinho; só andar não conta. `castelinho_test` confere.

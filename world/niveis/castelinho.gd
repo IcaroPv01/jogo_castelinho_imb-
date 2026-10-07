@@ -735,6 +735,9 @@ func _montar_paineis() -> void:
 				var painel: Node3D = _paineis[id]
 				var cartaz := TitoCastelinho.cartaz_sobre(self, painel, 1 if id.hash() % 2 == 0 else -1)
 				cartaz.name = "Cartaz_" + id
+				if id == lista[0]:
+					_interagivel_pista("Ler o cartaz", cartaz.position + Vector3(0, 0, 0.03), Vector3(0.4, 0.55, 0.25), "cartaz",
+						["PROCURA-SE: Tito, 9 anos. Desaparecido desde 12/03/1967. Bermuda azul, balde vermelho.", "\"Informações: fone 4-27. A família agradece.\""], [E2020])
 				_limitar_alcance(cartaz, 9.0)
 				Epocas.marcar(cartaz, [E2020])
 
@@ -921,10 +924,14 @@ func _montar_visita() -> void:
 			_desenhos["desenho_1"] = TitoCastelinho.folha(self, "desenho_1", Vector3(-9.62, 1.25, -20.01), 0.0, 0.46, 2)
 		2:
 			_desenhos["desenho_2"] = TitoCastelinho.folha(self, "desenho_2", Vector3(-6.45, 1.45, -20.01), 0.0, 0.5, 2)
+			_interagivel_pista("Olhar o desenho", Vector3(-6.45, 1.45, -19.9), Vector3(0.6, 0.6, 0.3), "desenho_2",
+				["Um desenho de giz de cera: um menino e a mãe, de mãos dadas, na praia.", "Está assinado \"TITO\", com o T ao contrário."], [E2020])
 			if GameState.flag(_chave("apagao")):
 				_criar_balde_e_desenho3()
 		3:
 			_desenhos["desenho_4"] = TitoCastelinho.folha(self, "desenho_4", Vector3(-24.5, 1.25, -16.0), 90.0, 0.5, 2)
+			_interagivel_pista("Olhar o desenho", Vector3(-24.4, 1.25, -16.0), Vector3(0.3, 0.6, 0.6), "desenho_4",
+				["Um menino pequeno embaixo de um castelo enorme, todo de pedra.", "O castelo está em cima dele."], [E2020])
 			_montar_porta_ato2()
 			_montar_pedestal_1975()
 			_montar_bloqueio_escada()
@@ -942,6 +949,8 @@ func _montar_visita() -> void:
 	var marcas := TitoCastelinho.folha(self, "marcas_altura", Vector3(-9.2, 1.25, -29.085), 0.0, 0.6, 2)
 	marcas.name = "MarcasDeAltura"
 	Epocas.marcar(marcas, [E1975])
+	_interagivel_pista("Olhar as marcas na parede", Vector3(-9.2, 1.25, -28.95), Vector3(0.7, 0.9, 0.4), "marcas_altura",
+		["Marcas de altura a lápis: \"TITO 6\", \"7\", \"8\", \"TITO 9\"...", "Depois do nove, nada. A parede não tem mais marcas."], [E1975])
 	_limitar_alcance(marcas, 9.0)
 	# Tito "no canto da sala", só dentro do Visor (visitas 3 e 4), cada vez mais perto
 	if visita >= 3:
@@ -974,6 +983,8 @@ func _montar_epoca_1967() -> void:
 	_tito.position = info.get("tito_pos", ObraCastelinho.TITO_POS)
 	add_child(_tito)
 	Epocas.marcar(_tito, [E1967])
+	_interagivel_pista("Acenar para o Tito", _tito.position + Vector3(0, 0.65, 0), Vector3(0.9, 1.4, 0.9), "tito_1967",
+		["Um menino de bermuda azul brinca de castelo na areia, com um balde vermelho.", "Ele acena para você. Ninguém mais parece vê-lo."], [E1967])
 	# o buraco no muro: pista que só existe em 1967 (Interagivel só nessa época)
 	var bp: Vector3 = info.get("buraco_pos", ObraCastelinho.BURACO_POS)
 	var it := Interagivel.new("Olhar o buraco no muro", Vector3(1.0, 1.0, 0.8), _olhar_buraco)
@@ -983,11 +994,33 @@ func _montar_epoca_1967() -> void:
 	Epocas.marcar(it, [E1967])
 
 
+# ---------------------------------------------------------------- pistas do Tito (final "Encontrado": GameState.contadores["pistas_tito"])
+## Convenção do projeto: uma vez por pista, flag "pista_<id>" + somar("pistas_tito"). O Castelinho tem 8: o buraco no muro
+## (1967), o Tito brincando (1967), as marcas de altura (1975), os desenhos 2, 3 e 4 e o cartaz de PROCURA-SE (presente) e o
+## desenho atrás do painel (2019). Todas pedem uma ação deliberada (E em cima do objeto; quatro delas só com o Visor).
+func _pista(id: String) -> void:
+	if GameState.flag("pista_" + id):
+		return
+	GameState.set_flag("pista_" + id, true)
+	GameState.somar("pistas_tito")
+
+
+## Interagivel sobre um objeto de pista: olhar (E) fala a linha e conta a pista.
+func _interagivel_pista(texto: String, pos: Vector3, tam: Vector3, id: String, fala: Array, epocas: Array, quem := "sistema") -> Interagivel:
+	var it := Interagivel.new(texto, tam, Callable())
+	it.position = pos
+	it.name = "Pista_" + id
+	it.acao = func(_p: Node) -> void:
+		_pista(id)
+		await Guia.falar(quem, fala)
+	add_child(it)
+	Epocas.marcar(it, epocas)
+	return it
+
+
 func _olhar_buraco(_p: Node) -> void:
 	await Guia.falar("sistema", ["Um buraco no muro, do tamanho de uma criança.", "Marcas de pezinhos na areia levam para dentro da obra."])
-	if not GameState.flag("pista_buraco"):
-		GameState.set_flag("pista_buraco", true)
-		GameState.somar("pistas_tito")
+	_pista("buraco")
 
 
 # ---------------------------------------------------------------- discos
@@ -1064,6 +1097,8 @@ func _criar_balde_e_desenho3() -> void:
 	_limitar_alcance(d3, 9.0)
 	Epocas.marcar(d3, [E2020])
 	_desenhos["desenho_3"] = d3
+	_interagivel_pista("Olhar o desenho", Vector3(-16.45, 1.5, -26.0), Vector3(0.3, 0.6, 0.6), "desenho_3",
+		["O castelo desenhado a giz de cera, e na janela da torre uma mulher toda branca.", "Esse desenho não estava aqui antes."], [E2020])
 
 
 # ---------------------------------------------------------------- visita 3: a porta para 1950 (Ato II) e a escada interditada
@@ -1215,9 +1250,7 @@ func _montar_desenho_oculto_2019() -> void:
 
 func _olhar_desenho_2019(_p: Node) -> void:
 	await Guia.falar("sistema", ["Um desenho a giz de cera na parede, escondido atrás do painel: dois olhos num fundo preto.", "Assinado: TITO."])
-	if not GameState.flag("pista_desenho_2019"):
-		GameState.set_flag("pista_desenho_2019", true)
-		GameState.somar("pistas_tito")
+	_pista("desenho_2019")
 
 
 ## A porta zebrada do hall (sala 80): onde nunca houve porta. Aberta, com fitas rasgadas e água escorrendo pelos degraus.
