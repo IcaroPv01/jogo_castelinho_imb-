@@ -14,15 +14,21 @@ Jogo 3D de terror em Godot 4 sobre o Castelinho de Imbé (RS). Começa como um "
 | Shift | Correr (gasta fôlego) |
 | Mouse | Olhar |
 | E ou clique | Ler painel / usar |
-| Q (segurar) | Visor do Tempo (depois da sala 10) |
+| **1–5** | Selecionar disco do Visor |
+| **Rolagem do mouse** | Trocar disco do Visor |
+| Q (segurar) | Mostrar época do disco (Visor do Tempo) |
+| **F** | Lanterna (a partir da visita 3) |
 | Espaço / Enter | Avançar diálogo |
 | Esc ou P | Pausar (clique para voltar) |
 
-Versão de demonstração: salas 1 a 30 de 100. O jogo salva sozinho no navegador.
+**Versão 2:** Quatro visitas ao Castelinho (salas 1–80), um porão com salas 81–99, e o Braço Morto (sala 100). O jogo salva sozinho no navegador. A história se desdobra em cada visita, com ritmo lento na visita 1 e complexidade crescente.
 
 ## Documentação
 
 - **Plano do projeto:** [`docs/PLANO.md`](docs/PLANO.md)
+- **Roteiro da Versão 2:** [`docs/V2_ROTEIRO.md`](docs/V2_ROTEIRO.md)
+- **Revisão gráfica e de ritmo (V2):** [`docs/REVISAO_V2.md`](docs/REVISAO_V2.md)
+- **Bugs conhecidos:** [`docs/BUGS.md`](docs/BUGS.md)
 - **Roteiro do MVP (salas 1 a 30):** [`docs/MVP_ROTEIRO.md`](docs/MVP_ROTEIRO.md)
 - **Revisão gráfica:** [`docs/REVISAO_GRAFICA.md`](docs/REVISAO_GRAFICA.md)
 - **Créditos e licenças:** [`docs/CREDITS.md`](docs/CREDITS.md)
@@ -32,5 +38,9 @@ Versão de demonstração: salas 1 a 30 de 100. O jogo salva sozinho no navegado
   - [História de Imbé](docs/pesquisa/historia_imbe.md)
   - [Spooky's e referências técnicas](docs/pesquisa/spookys_e_referencias.md)
 - **Fotos de referência** (não versionadas): `bash docs/pesquisa/baixar_refs.sh`
+
+## Conteúdo
+
+**Aviso:** Este jogo trata de um **desaparecimento infantil fictício** com temas pesados. Nada é mostrado de forma gráfica ou violenta: o horror é psicológico e por sugestão. Ao final do jogo, há informações sobre proteção infantil: **Disque 100** (Direitos Humanos, gratuito, 24h).
 
 Obra de ficção. O programa municipal mostrado no jogo é inventado e não representa a Prefeitura de Imbé.
