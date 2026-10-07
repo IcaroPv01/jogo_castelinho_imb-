@@ -5,8 +5,8 @@ extends Control
 ## Fechado e invisível com atenção 0; pulsa no ritmo do batimento. Só leitura (escuta `atencao_mudou`).
 ## O HUD o instancia; pode ser usado sozinho: `add_child(OlhoAtencao.new())`.
 
-const LARG := 150.0
-const ALT := 84.0
+const LARG := 210.0
+const ALT := 110.0
 
 var _a := 0.0        # atenção suavizada (0..1)
 var _t := 0.0
@@ -44,8 +44,8 @@ func _draw() -> void:
 	var a := _a
 	var c := size / 2.0
 	var pulso := 1.0 + 0.07 * a * sin(_t * (6.0 + 12.0 * a))
-	var meia := 58.0 * pulso
-	var h := lerpf(1.5, 30.0, pow(a, 0.8)) * pulso
+	var meia := 84.0 * pulso
+	var h := lerpf(1.5, 44.0, pow(a, 0.8)) * pulso
 	var alfa := clampf(a * 5.0, 0.0, 1.0)
 	var topo := PackedVector2Array()
 	var base := PackedVector2Array()
@@ -61,7 +61,7 @@ func _draw() -> void:
 	if h > 3.0:
 		draw_colored_polygon(contorno, Color(0.98, 0.94, 0.86, alfa))
 		# íris vermelha e pupila (fenda), do tamanho que cabe dentro do olho
-		var r_iris := minf(h * 0.82, 20.0)
+		var r_iris := minf(h * 0.82, 29.0)
 		var olhar := Vector2(sin(_t * 0.9) * 8.0 * a, 0.0)
 		draw_circle(c + olhar, r_iris, Color(0.80, 0.10, 0.12, alfa))
 		draw_circle(c + olhar, r_iris * 0.62, Color(0.55, 0.03, 0.06, alfa))

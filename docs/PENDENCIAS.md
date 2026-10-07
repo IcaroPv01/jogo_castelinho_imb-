@@ -117,13 +117,17 @@ Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, 
 - [x] 4. Visor 2.0 escrito (`world/visor.gd`): discos 1-5 e rolagem, Q por disco, atenção, Figura no slide, susto, bloqueio de 10 s, `figura_atravessou`. FALTA testar (item 7).
 - [x] 5. HUD: "VISITA n · SALA nn" (porão: "SALA nn"), `ui/faixa_discos.gd`, `ui/olho_atencao.gd`. Ajustes de captura pendentes (ver "A fazer").
 - [x] 6. Telas escritas: `ui/volte_sempre.gd`, `ui/telefone.gd`, `ui/dedicatoria.gd`. Capturadas; ajustes pendentes (ver "A fazer").
-- [ ] 7. Testes (`tests/visor_test.gd` novo, `tests/ui_test.gd` atualizado) e `bash tools/testar.sh`
-- [ ] 8. Capturas de UI revisadas
+- [x] 7. Testes: `tests/visor_test.gd` (novo, 100% ok) e `tests/ui_test.gd` (sons novos + telas V2) passam. `bash tools/testar.sh`: meus testes, ato2, barra e smoke OK, sem "SCRIPT ERROR". Falhas que NÃO são minhas (domínio Visitas, anotadas): `castelinho_test` (V1 marcas de altura, V4 porta zebrada = sala 71 em vez de 80, draw calls > 150 nos pontos (-9.8,-18.8) e (-10.4,-12.6)) e `qa_logica_test` (checkpoints 6/11/21/25/26 caem em `Spawn`, corrupção do fim da demo); vêm de `entrar_sala`/`preparar_continuar` e do nível em reescrita.
+- [x] 8. Capturas de UI vistas (build/capturas/*, não versionada): painéis v2/v3/v4, desenhos, placas 3D, volte sempre (1ª e 2ª), telefone, créditos, dedicatória, HUD, Visor com a Figura.
 
-### A fazer (resultado das capturas)
-- FaixaDiscos: o painel creme está altíssimo (fica ocupando a coluna esquerda): `size` precisa ser recalculado depois do anchor (usar offsets e `custom_minimum_size`, sem `size =`) e ficar só ~120 px de altura; o texto do HUD ("VISITA 3 · SALA 55") fica atrás da faixa: mover a faixa para o canto de baixo de verdade.
-- VolteSempre: estrelas devem ficar ATRÁS da placa (move_child); Dedicatoria: os créditos devem ocupar a tela inteira centralizados (anchors full rect).
-- Figura no slide: ver captura `visor` (aparece como cone claro; ok, afinar).
+### Feito depois das capturas
+- FaixaDiscos posicionada pelo tamanho da janela (sem anchors); estrelas do VolteSempre atrás da placa; créditos centralizados; olho maior.
+
+### Para o integrador
+- `docs/CREDITS.md`: acrescentar `tools/gerar_desenhos.py` (arte do Tito, cartaz e marcas, tudo por código) e os sons novos (todos sintetizados).
+- Quem chama: `GameState.comecar_visita(n+1); await VolteSempre.mostrar().terminou`; `await Telefone.tocar([...]).terminou` (2º argumento false pula o toque); `await Dedicatoria.mostrar().terminou` (ou `mostrar(true)` recarrega a cena principal sozinha).
+- Importante: rode `godot --headless --import` ao integrar para gerar os `.import` dos PNG/WAV novos.
+- `Visor.figura_atravessou(visita)` (instância): o nível do porão (e da visita 4) liga com `Visor.instalar(self).figura_atravessou.connect(...)`.
 
 ### Decisões
 - `Visor` é de instância; sinal de instância `figura_atravessou(visita)` nas visitas 4 e 5 (documentado no cabeçalho de `world/visor.gd`). `atencao_cheia(visita)` sai sempre.
@@ -157,8 +161,8 @@ Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, 
 ### Estado
 - [x] 1. `game_state.gd`: regra de checkpoint (`SALAS_CHECKPOINT`) e `preparar_continuar` (visitas, Ato II, porão, Braço Morto)
 - [x] 2. E1967 (obra) gerada: `castelinho/obra.gd`, Tito e desenhos em `castelinho/tito.gd`
-- [ ] 3. Nível `world/niveis/castelinho.gd` em 4 visitas (iluminação, clima, eventos, painéis, discos, loop)
-- [ ] 4. Testes (`castelinho_test`, `qa_logica_test`, `janela_jogador`) e `bash tools/testar.sh`
+- [x] 3. Nível `world/niveis/castelinho.gd` em 4 visitas (iluminação, clima, eventos, painéis, discos, loop). Falta só conferir posições por captura (porta do Ato II, painel solto)
+- [ ] 4. Testes: `castelinho_test` feito (4 visitas, loop, E1967); falta `qa_logica_test` (Continuar por visita), `janela_jogador` e `bash tools/testar.sh`
 - [ ] 5. Capturas de cada visita e da E1967; LEIAME do Castelinho
 
 ### Contratos que o Visitas assume (por favor, confirmem ou avisem)

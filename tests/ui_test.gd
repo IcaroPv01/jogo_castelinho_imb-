@@ -237,7 +237,8 @@ func _teste_audio() -> void:
 	print("-- Audio")
 	var nomes := ["clique", "boing", "blip_bentinho", "blip_taina", "blip_quico", "acerto", "erro", "selo", "confete",
 		"fanfarra", "passo_1", "passo_2", "passo_3", "ofego", "susto", "apito", "telefone", "porta", "vento", "mar",
-		"rio", "agua_puxa", "chiado_radio", "jingle_0", "jingle_1", "jingle_2"]
+		"rio", "agua_puxa", "chiado_radio", "jingle_0", "jingle_1", "jingle_2",
+		"slide", "sussurro", "splash", "tarrafa", "chuva", "goteira", "agua_sobe", "crianca_ei", "telefone_voz", "atencao"]
 	var faltando := []
 	for n in nomes:
 		if Audio._carregar(n) == null:
@@ -305,6 +306,69 @@ func _teste_telas() -> void:
 	await process_frame
 	_checar(fim.texto_estatisticas().contains("Selos"), "fim da demo mostra estatísticas")
 	fim.queue_free()
+	Flash.resetar_ui()
+	await _teste_telas_v2()
+
+
+# ---------------------------------------------------------------- telas da V2
+func _teste_telas_v2() -> void:
+	print("-- Telas V2: VolteSempre, Telefone, Dedicatoria")
+	# VolteSempre: 1ª vez alegre, 2ª estranha; termina e se remove
+	var VS = load("res://ui/volte_sempre.gd")
+	var a = VS.mostrar(1)
+	await process_frame
+	await process_frame
+	_checar(not a.estranho, "Volte sempre (1ª vez) é a versão normal")
+	var fim_a := []
+	a.terminou.connect(func(): fim_a.append(1))
+	a.continuar()
+	await create_timer(0.5).timeout
+	_checar(fim_a == [1] and not GameState.flag("ui_aberta"), "Volte sempre termina e libera a UI")
+	var b = VS.mostrar(2)
+	await process_frame
+	await process_frame
+	_checar(b.estranho, "Volte sempre (2ª vez) é a versão estranha")
+	for i in 20:
+		await process_frame
+	b.continuar()
+	await create_timer(0.5).timeout
+	Flash.resetar_ui()
+	GameState.flags.erase("volte_sempre_vezes")
+	# Telefone: o chiado mantém o tamanho do texto; a ligação mostra as linhas na caixa "???" e termina
+	var Tel = load("res://ui/telefone.gd")
+	var original := "O meu filho... ele vinha sempre brincar aí na obra"
+	var chiado: String = Tel.chiar(original, 1.0)
+	_checar(chiado.length() == original.length() and chiado != original, "chiar() troca letras e mantém o tamanho")
+	_checar(Tel.chiar(original, 0.0) == original, "sem força, sem chiado")
+	var vistas := []
+	Guia.linha_mostrada.connect(func(pers, txt): vistas.append(pers))
+	_acelerar(6.0)
+	var t = Tel.tocar(["Alô?", "Vocês viram o Tito?"], false)
+	await t.terminou
+	_checar(vistas == ["???", "???"], "o telefone fala pela caixa '???' (%s)" % str(vistas))
+	_checar(not Guia.ocupado(), "Telefone termina e libera o Guia")
+	# Dedicatória: texto exato do roteiro, fundo preto, só termina depois de ~6 s
+	var Ded = load("res://ui/dedicatoria.gd")
+	var d = Ded.mostrar()
+	await process_frame
+	await process_frame
+	_checar(Ded.TEXTO_1 == "Tito é um personagem fictício. As crianças que sofrem violência e abandono não são.", "dedicatória, frase 1 igual ao roteiro")
+	_checar(Ded.TEXTO_2 == "Se você desconfia de que uma criança está em perigo: Disque 100 (Direitos Humanos, gratuito, 24h) ou procure o Conselho Tutelar da sua cidade.", "dedicatória, frase 2 igual ao roteiro (Disque 100, Conselho Tutelar)")
+	_checar(d.texto_dedicatoria() == Ded.TEXTO_1 + "\n" + Ded.TEXTO_2, "o que o jogador lê é exatamente o texto do roteiro")
+	_checar(d._fundo.color == Color.BLACK, "fundo preto")
+	var fim_d := []
+	d.terminou.connect(func(): fim_d.append(1))
+	d.avancar()   # ainda nos créditos (menos de 2 s): não pula
+	_checar(d.fase == "creditos", "créditos não pulam nos primeiros 2 s")
+	d._t_fase = 3.0
+	d.avancar()
+	_checar(d.fase == "dedicatoria", "depois de 2 s os créditos pulam para a dedicatória")
+	d.avancar()
+	_checar(fim_d.is_empty() and d.fase == "dedicatoria", "a dedicatória NÃO termina antes de ~6 s")
+	d._t_fase = 6.5
+	d.avancar()
+	await create_timer(0.8).timeout
+	_checar(fim_d == [1], "depois de 6 s, clique/Enter termina")
 	Flash.resetar_ui()
 
 

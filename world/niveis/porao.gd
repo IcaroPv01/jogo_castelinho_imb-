@@ -223,7 +223,7 @@ func _ambiente() -> void:
 	env.background_color = Color(0.016, 0.022, 0.022)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.34, 0.40, 0.40)
-	env.ambient_light_energy = 0.55
+	env.ambient_light_energy = 0.85
 	env.fog_enabled = true
 	env.fog_mode = Environment.FOG_MODE_DEPTH
 	env.fog_light_color = Color(0.018, 0.026, 0.026)
@@ -237,6 +237,9 @@ func _ambiente() -> void:
 func _criar_agua_material() -> void:
 	mat_agua = ShaderMaterial.new()
 	mat_agua.shader = load("res://shaders/porao_agua.gdshader")
+	mat_agua.set_shader_parameter("ondas", 1.0)
+	mat_agua.set_shader_parameter("cor_ceu", Color(0.30, 0.42, 0.42))
+	mat_agua.set_shader_parameter("cor_fundo", Color(0.02, 0.07, 0.08))
 
 
 func _aplicar_agua() -> void:
@@ -329,7 +332,7 @@ func _criar_extras(c) -> void:
 		c.raiz.add_child(di)
 		c.interativos.append(di)
 	elif c.pontos.has("disco"):
-		var disco := c.raiz.get_node_or_null("Disco")
+		var disco = c.raiz.get_node_or_null("Disco")
 		if disco:
 			disco.visible = false
 	if c.pontos.has("sandalia"):
@@ -814,7 +817,7 @@ func _pegar_disco(_p: Node, c) -> void:
 	_registrar_pista("quarto_tito")
 	Audio.sfx("slide")
 	Efeitos.flash(0.5, Color(1.0, 0.95, 0.85), 0.8)
-	var disco := c.raiz.get_node_or_null("Disco")
+	var disco = c.raiz.get_node_or_null("Disco")
 	if disco:
 		disco.visible = false
 	for it in c.interativos:
@@ -834,7 +837,7 @@ func _pegar_sandalia(_p: Node, c) -> void:
 	for it in c.interativos:
 		if is_instance_valid(it) and it.texto_interacao == "Pegar a sandália":
 			it.queue_free()
-	var s := c.raiz.get_node_or_null("SandaliaPorao")
+	var s = c.raiz.get_node_or_null("SandaliaPorao")
 	if s:
 		s.visible = false
 
@@ -899,7 +902,7 @@ func _on_figura_atravessou(_visita: int) -> void:
 	var z := clampf(l.z + 7.0, -c.L + 0.8, -1.4)
 	if absf(z - l.z) < 4.5:
 		z = clampf(l.z - 7.0, -c.L + 0.8, -1.4)
-	var p := c.raiz.to_global(Vector3(clampf(l.x, -c.w * 0.3, c.w * 0.3), c.piso_fn.call(z) + 0.05, z))
+	var p = c.raiz.to_global(Vector3(clampf(l.x, -c.w * 0.3, c.w * 0.3), c.piso_fn.call(z) + 0.05, z))
 	figura.reiniciar(p, true)
 	figura.velocidade = 2.4
 	Audio.sfx("susto", -6.0)
@@ -994,7 +997,7 @@ func _ao_mudar_epoca(e: int) -> void:
 		_tween_env.tween_property(mat_agua, "shader_parameter/cor_fundo", Color(0.18, 0.09, 0.06), 0.5)
 	else:
 		_tween_env.tween_property(env, "ambient_light_color", Color(0.34, 0.40, 0.40), 0.4)
-		_tween_env.tween_property(env, "ambient_light_energy", 0.55, 0.4)
+		_tween_env.tween_property(env, "ambient_light_energy", 0.85, 0.4)
 		_tween_env.tween_property(env, "fog_light_color", Color(0.018, 0.026, 0.026), 0.4)
 		_tween_env.tween_property(env, "background_color", Color(0.016, 0.022, 0.022), 0.4)
 		_tween_env.tween_property(env, "fog_depth_end", 26.0, 0.4)

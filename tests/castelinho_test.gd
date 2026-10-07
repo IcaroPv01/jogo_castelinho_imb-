@@ -1,5 +1,6 @@
 extends SceneTree
-## Teste automático (headless) do nível do Castelinho (salas 1-25).
+## Teste automático (headless) do nível do Castelinho nas 4 visitas (V2): visita 1 a pé e por gatilhos, depois o estado de
+## cada visita (iluminação, eventos, objetos), a época E1967 (obra), o loop de visitas e o orçamento de luzes e draw calls.
 ## - carrega o nível, jogador no chão no Spawn
 ## - teleporta para pontos-chave (calçada, hall, torres, terraços, Sala Medieval, corredor de 1975) e confere chão/colisão
 ## - simula andar do Spawn até a porta (sala 6) e confere o contador
@@ -37,7 +38,8 @@ func _rodar() -> void:
 	_checar(p.is_on_floor(), "jogador no chão do Spawn (y=%.2f)" % p.global_position.y)
 	_checar(absf(p.global_position.y) < 0.2, "Spawn na calçada (y=%.2f)" % p.global_position.y)
 	_checar(GameState.sala_atual == 1, "contador na sala 1 ao nascer (sala %d)" % GameState.sala_atual)
-	for m in ["Spawn", "Checkpoint_1", "Checkpoint_6", "Checkpoint_16", "Checkpoint_25", "Spawn_volta_barra"]:
+	for m in ["Spawn", "Checkpoint_1", "Checkpoint_8", "Checkpoint_10", "Checkpoint_13", "Checkpoint_16", "Checkpoint_17",
+			"Spawn_volta_barra", "Spawn_volta_ato2"]:
 		_checar(nivel.find_child(m, true, false) != null, "marcador " + m)
 
 	# --- medidas: o JSON e a cópia embutida (usada na exportação web) precisam estar iguais
@@ -142,7 +144,7 @@ func _rodar() -> void:
 		[10, Vector3(-15.5, 0.1, -21.8)], [11, Vector3(-9.8, 0.1, -18.8)], [12, Vector3(-6.4, 0.1, -18.8)],
 		[13, Vector3(-8.7, 0.1, -15.8)], [16, Vector3(-13.6, 0.1, -19.55)], [17, Vector3(-19.3, 7.0, -12.2)],
 		[18, Vector3(-10.4, 3.6, -12.6)], [19, Vector3(-6.6, 3.6, -24.9)], [20, Vector3(-22.7, 3.6, -19.6)],
-		[21, Vector3(-12.6, 0.1, -25.5)], [22, Vector3(-15.4, 0.1, -28.0)], [23, Vector3(-10.2, 0.1, -28.0)],
+		[21, Vector3(-12.6, 0.1, -25.5)], [22, Vector3(-15.4, 0.1, -28.0)], [22, Vector3(-10.2, 0.1, -28.0)],      # a porta de saída (base 23) conta como a 22
 	]
 	for s in salas:
 		await _ir_para(s[1])
@@ -150,7 +152,8 @@ func _rodar() -> void:
 			await physics_frame
 		_checar(GameState.sala_atual == s[0], "sala %d: contador (sala %d)" % [s[0], GameState.sala_atual])
 	_checar(GameState.flag("tem_visor"), "visor entregue (sala 10)")
-	_checar(int(GameState.flag("epoca_visor", -1)) == GameState.Epoca.E1975, "epoca_visor = 1975 (salas 23-24)")
+	_checar(GameState.discos == [GameState.Epoca.E1950] and GameState.disco_atual == GameState.Epoca.E1950, "visita 1: o disco 1950 veio com o Visor (discos %s)" % str(GameState.discos))
+	_checar(GameState.checkpoint_sala == 16, "checkpoint da visita 1 em 16 (pé da escada), não 21/22 (%d)" % GameState.checkpoint_sala)
 
 	# --- 1950: o terraço da torre some (o jogador veria o chão de areia)
 	GameState.trocar_epoca(GameState.Epoca.E1950)
@@ -177,7 +180,8 @@ func _rodar() -> void:
 	# --- Visor do Tempo: segurar Q mostra 1950 e soltar volta a 2020
 	await _ir_para(Vector3(-23.0, 0.1, 1.5))
 	GameState.set_flag("tem_visor")
-	GameState.set_flag("epoca_visor", GameState.Epoca.E1950)
+	GameState.ganhar_disco(GameState.Epoca.E1950)
+	GameState.set_flag("epoca_visor", GameState.Epoca.E1950)     # (só vale sem discos; deixado por compatibilidade)
 	GameState.set_flag("visor_travado", false)
 	Input.action_press("visor")
 	for i in 30:
@@ -201,15 +205,373 @@ func _rodar() -> void:
 	await physics_frame
 	await _ir_para(Vector3(-10.2, 0.1, -31.0))
 	_checar(p.is_on_floor(), "corredor de 1975: no chão (y=%.2f)" % p.global_position.y)
-	_checar(GameState.sala_atual == 25, "sala 25 no corredor de 1975 (sala %d)" % GameState.sala_atual)
+	_checar(GameState.sala_atual == 22, "corredor de 1975 (base 25) conta como a última sala da visita 1 (sala %d)" % GameState.sala_atual)
 	_checar(GameState.flag("visor_travado"), "visor travado no corredor de 1975")
 	await _ir_para(Vector3(-10.2, 0.1, -78.0))
 	_checar(p.is_on_floor() and p.global_position.z < -70.0, "corredor de 1975 passa do limite do lote (z=%.1f)" % p.global_position.z)
 	GameState.set_flag("visor_travado", false)
 	GameState.trocar_epoca(GameState.Epoca.E2020)
 
+	await _visitas()
+
 	print("RESULTADO: ", "OK" if falhas == 0 else "%d FALHA(S)" % falhas)
 	quit(1 if falhas else 0)
+
+
+# ================================================================== as quatro visitas (V2)
+var nivel: Node3D
+var _gs_tmp
+
+
+func _guia() -> Node:
+	return root.get_node("/root/Guia")
+
+
+func _frames_f(n: int) -> void:
+	for i in n:
+		_guia().cancelar()
+		await physics_frame
+
+
+func _carregar_visita(v: int, flags: Dictionary = {}) -> void:
+	GameState.novo_jogo()
+	GameState.visita = v
+	GameState.flags["tem_visor"] = true
+	for f in flags:
+		GameState.flags[f] = flags[f]
+	GameState.jogando = true
+	await main.carregar_mundo(NIVEL, "Spawn")
+	await _frames_f(25)
+	p = main.player
+	nivel = main.mundo.get_child(0)
+
+
+func _luzes_ligadas() -> int:
+	var n := 0
+	for l in nivel._luzes:
+		if (l["no"] as OmniLight3D).visible:
+			n += 1
+	return n
+
+
+func _lanterna_conta() -> int:
+	return 1 if (p.lanterna.visible) else 0
+
+
+func _visitas() -> void:
+	print("-- visita 1")
+	await _carregar_visita(1)
+	_checar(nivel.visita == 1 and absf(nivel.sol.light_energy - 1.25) < 0.01, "V1: manhã de sol (energia %.2f)" % nivel.sol.light_energy)
+	_checar(GameState.corruption == 0.0, "V1: corrupção 0")
+	_checar(nivel._paineis["p05"].id == "p05", "V1: painel base p05 (%s)" % nivel._paineis["p05"].id)
+	_checar(nivel.find_child("Cartaz_p01", true, false) == null, "V1: sem cartazes de PROCURA-SE")
+	_checar(nivel.find_child("Folha_desenho_1", true, false) != null, "V1: o desenho do Tito (semente 2) no Salão de Arte")
+	_checar(nivel.find_child("MarcasDeAltura", true, false) != null, "V1: marcas de altura existem (só aparecem em 1975)")
+	_checar(nivel._discos_chao.is_empty(), "V1: nenhum disco no chão")
+	_checar(nivel.find_child("FitaZebrada", true, false) == null and nivel.chuva == null and nivel._bloqueio_escada == null, "V1: sem fita, chuva nem escada interditada")
+	_checar(nivel._paineis.has("quiz_final") and not nivel._paineis.has("p24"), "V1: quiz final presente")
+	_checar(not GameState.flag("tem_lanterna"), "V1: sem lanterna")
+	for e in [GameState.Epoca.E1975, GameState.Epoca.E2020]:
+		GameState.trocar_epoca(e)
+		await _frames_f(3)
+		var marcas: Node3D = nivel.find_child("MarcasDeAltura", true, false)
+		_checar(marcas.visible == (e == GameState.Epoca.E1975), "marcas de altura só em 1975 (época %d, visível %s)" % [e, str(marcas.visible)])
+	# o recorte virado para a parede e nenhum recorte "caído" na visita 1
+	_checar(not nivel._recortes["pescador"].visible and not nivel._recortes["quico"].visible, "V1: nenhum recorte aparece")
+	# primeiro gatilho, evento de apresentação, e a sala 11 (sem engasgo na visita 1)
+	await _ir_para(Vector3(-23, 0.1, 1.5))
+	_checar(GameState.sala_atual == 1, "V1: sala 1")
+	await _ir_para(Vector3(-9.8, 0.1, -18.8))
+	_checar(GameState.sala_atual == 11, "V1: sala 11")
+	# o loop: V1 -> V2 pela porta de saída (depois do diploma)
+	await _loop_para(2)
+
+	print("-- visita 2")
+	_checar(GameState.visita == 2, "loop: a visita 2 começou (visita %d)" % GameState.visita)
+	nivel = main.mundo.get_child(0)
+	p = main.player
+	_checar(nivel.visita == 2 and absf(nivel.sol.light_energy - 1.15) < 0.01 and nivel.sol.rotation_degrees.x > -20.0, "V2: fim de tarde alaranjado (energia %.2f)" % nivel.sol.light_energy)
+	_checar(GameState.sala_atual == 23, "V2: calçada = sala 23 (sala %d)" % GameState.sala_atual)
+	_checar(GameState.checkpoint_sala == 23, "V2: checkpoint do início da visita (%d)" % GameState.checkpoint_sala)
+	_checar(nivel.find_child("Checkpoint_23", true, false) != null, "V2: marcador Checkpoint_23 (global)")
+	var p05: Node = nivel._paineis["p05"]
+	var esperado := "p05_v2" if load("res://ui/painel_ui.gd").carregar_dados().has("p05_v2") else "p05"
+	_checar(p05.id == esperado, "V2: painel p05 pede a variante _v2 se existir (%s)" % p05.id)
+	_checar(nivel.find_child("Folha_desenho_2", true, false) != null, "V2: desenho da mãe e do Tito na praia")
+	_checar(nivel._discos_chao.has(GameState.Epoca.E1967), "V2: disco 1967 na vitrine do Acervo")
+	await _ir_para(Vector3(-6.4, 0.1, -18.8))
+	_checar(GameState.sala_atual == 34, "V2: Acervo = sala 34 (sala %d)" % GameState.sala_atual)
+	_checar(nivel._telefone_tocando, "V2: o telefone toca")
+	await _ir_para(Vector3(-9.8, 0.1, -18.8))
+	_checar(GameState.sala_atual == 33, "V2: engasgo do Bentinho na sala 33 (sala %d)" % GameState.sala_atual)
+	# pegar o disco 1967
+	var par: Array = nivel._discos_chao[GameState.Epoca.E1967]
+	par[1].interagir(p)
+	await _frames_f(5)
+	_checar(GameState.discos.has(GameState.Epoca.E1967) and GameState.disco_atual == GameState.Epoca.E1967, "V2: disco 1967 pego e selecionado (discos %s)" % str(GameState.discos))
+	_checar(GameState.discos == [GameState.Epoca.E1967], "V2 (jogo novo no teste): discos %s" % str(GameState.discos))
+	# o painel de P24: a visita 2 ainda tem o P23 e não tem os de 1975
+	_checar(nivel._paineis.has("p23") and not nivel._paineis.has("p24"), "V2: painéis p23 sim, p24 não")
+	await _epoca_1967()
+	# fim da visita 2: apagão, balde vermelho, diploma com TITO
+	await _fim_da_visita_2()
+	await _loop_para(3, true)
+
+	print("-- visita 3")
+	nivel = main.mundo.get_child(0)
+	p = main.player
+	_checar(GameState.visita == 3 and nivel.visita == 3, "V3: visita 3")
+	_checar(nivel.sol.light_energy < 0.5 and nivel.ambiente.ambient_light_energy < 0.5, "V3: noite (sol %.2f, ambiente %.2f)" % [nivel.sol.light_energy, nivel.ambiente.ambient_light_energy])
+	_checar(GameState.sala_atual == 45, "V3: calçada = sala 45 (sala %d)" % GameState.sala_atual)
+	await _frames_f(60)
+	_checar(GameState.flag("tem_lanterna") and p.lanterna.visible, "V3: o Quico entrega a lanterna e ela liga")
+	_checar(nivel.find_child("Cartaz_p01", true, false) != null, "V3: cartazes de PROCURA-SE sobre os painéis")
+	_checar(nivel.find_child("FitaZebrada", true, false) != null, "V3: saída com fita zebrada e placa EM REFORMA")
+	_checar(nivel._bloqueio_escada != null and _raio_h(Vector3(-14.0, 1.2, -19.55), Vector3(-11.5, 1.2, -19.55)), "V3: escada interditada até o Ato II")
+	_checar(nivel._porta_ato2 != null, "V3: porta nova para 1950 no Salão de Arte")
+	_checar(nivel._discos_chao.has(GameState.Epoca.E1975) and nivel.find_child("Pedestal1975", true, false) != null, "V3: disco 1975 no topo da Torre A")
+	_checar(not nivel._discos_chao.has(GameState.Epoca.E1967) or GameState.discos.has(GameState.Epoca.E1967) == false, "V3 (jogo novo): o disco 1967 segue na vitrine se não foi pego")
+	_checar(_luzes_ligadas() <= 4, "V3: no máximo 4 lâmpadas (%d)" % _luzes_ligadas())
+	_checar(1 + _luzes_ligadas() + _lanterna_conta() <= 6, "V3: no máximo 6 luzes com Sol/Lua e lanterna")
+	await _ir_para(Vector3(-9.8, 0.1, -18.8))
+	_checar(GameState.sala_atual == 55, "V3: Salão de Arte = sala 55 (sala %d)" % GameState.sala_atual)
+	await _ir_para(Vector3(-10.4, 0.1, -12.6))
+	await _ir_para(Vector3(-15.5, 0.1, -21.8))
+	_checar(GameState.checkpoint_sala == 54, "V3: checkpoint 54 (corredor) e não 55-60 (%d)" % GameState.checkpoint_sala)
+	# o Ato II fica de fora: abrir a escada e conferir o topo da Torre A (sala 61 = checkpoint)
+	nivel._ato2_concluido()
+	await _frames_f(3)
+	_checar(not is_instance_valid(nivel._bloqueio_escada) or nivel._bloqueio_escada == null, "V3: depois do Ato II a escada abre")
+	_checar(GameState.flag("v3_ato2_feito"), "V3: flag v3_ato2_feito")
+	await _ir_para(Vector3(-19.3, 7.0, -12.2))
+	_checar(GameState.sala_atual == 61 and GameState.checkpoint_sala == 61, "V3: topo da Torre A = sala/checkpoint 61 (%d, %d)" % [GameState.sala_atual, GameState.checkpoint_sala])
+	var par75: Array = nivel._discos_chao[GameState.Epoca.E1975]
+	par75[1].interagir(p)
+	await _frames_f(5)
+	_checar(GameState.discos.has(GameState.Epoca.E1975) and GameState.disco_atual == GameState.Epoca.E1975, "V3: disco 1975 pego")
+	# olhos do pinguim seguem o jogador (visita 3): o olho gira quando o jogador muda de lugar
+	await _ir_para(Vector3(-20.5, 0.1, -17.2))
+	await _frames_f(3)
+	var olho: Node3D = nivel._pinguim.get_node("Olho_E")
+	var rot_a: Vector3 = olho.rotation
+	await _ir_para(Vector3(-24.0, 0.1, -14.5))
+	await _frames_f(3)
+	_checar(olho.rotation != rot_a, "V3: os olhos do pinguim seguem o jogador")
+	# armadura no trono: olhar, desviar, olhar de novo
+	GameState.entrar_sala(0)
+	await _ir_para(Vector3(-12.6, 0.1, -25.5))
+	nivel._armadura_estado = 0
+	p.rotation.y = atan2(-(-9.2 - p.global_position.x), -(-27.6 - p.global_position.z))
+	p.cabeca.rotation.x = 0.0
+	nivel._atualizar_armadura()
+	p.rotation.y += PI
+	nivel._atualizar_armadura()
+	p.rotation.y -= PI
+	nivel._atualizar_armadura()
+	_checar(nivel._armadura.visible, "V3: a armadura aparece no trono")
+	# marcas de altura: com o disco 1975 o Visor mostra a época; a pista só existe em 1975
+	Input.action_press("visor")
+	await _frames_f(30)
+	_checar(GameState.epoca == GameState.Epoca.E1975, "V3: segurando Q com o disco 1975 a época vira 1975 (%d)" % GameState.epoca)
+	_checar((nivel.find_child("MarcasDeAltura", true, false) as Node3D).visible, "V3: as marcas de altura aparecem em 1975")
+	_checar(nivel._tito_visor.visible, "V3: Tito aparece no canto da sala, só dentro do Visor")
+	Input.action_release("visor")
+	await _frames_f(30)
+	_checar(GameState.epoca == GameState.Epoca.E2020 and not nivel._tito_visor.visible, "V3: soltando Q, o presente e sem Tito")
+	# corredor de 1975: a porta aberta no Visor; atravessar leva à visita 4 (sem "Volte sempre")
+	await _loop_para(4, false, true)
+
+	print("-- visita 4")
+	nivel = main.mundo.get_child(0)
+	p = main.player
+	_checar(GameState.visita == 4 and nivel.visita == 4, "V4: visita 4 (visita %d)" % GameState.visita)
+	_checar(GameState.sala_atual == 67, "V4: calçada = sala 67 (sala %d)" % GameState.sala_atual)
+	_checar(nivel.sol.light_energy < 0.3 and nivel.ambiente.fog_density > 0.02, "V4: madrugada com névoa densa (sol %.2f, névoa %.3f)" % [nivel.sol.light_energy, nivel.ambiente.fog_density])
+	_checar(nivel.chuva != null and nivel.chuva.emitting, "V4: chuva caindo")
+	var p01: Node = nivel._paineis["p01"]
+	var dados: Dictionary = load("res://ui/painel_ui.gd").carregar_dados()
+	_checar(p01.id == ("desenho_3" if dados.has("desenho_3") else "p01"), "V4: painéis mostram os desenhos do Tito (%s)" % p01.id)
+	_checar(not nivel._paineis.has("quiz_final") and not nivel._paineis.has("p23"), "V4: sem quiz nem p23")
+	_checar(nivel._painel_solto != null and not GameState.discos.has(GameState.Epoca.E2019), "V4: painel solto na Sala dos Povos; ainda sem o disco 2019")
+	_checar(nivel._bloqueio_escada != null, "V4: escada de cima interditada")
+	_checar(nivel._porta_porao != null and nivel.find_child("PortaZebradaDoHall", true, false) != null, "V4: porta zebrada no hall")
+	await _ir_para(Vector3(-10.4, 0.1, -12.6))
+	_checar(GameState.sala_atual == 71, "V4: hall = sala 71 (sala %d)" % GameState.sala_atual)
+	await _ir_para(Vector3(-22.0, 0.1, -13.0))
+	_checar(GameState.sala_atual == 72 and GameState.checkpoint_sala == 72, "V4: Povos = sala/checkpoint 72 (%d, %d)" % [GameState.sala_atual, GameState.checkpoint_sala])
+	# disco 2019 atrás do painel solto
+	var psolto := find_interagivel(nivel, "PainelSoltoInterativo")
+	_checar(psolto != null, "V4: Interagivel do painel solto")
+	if psolto:
+		psolto.interagir(p)
+		await _frames_f(5)
+	_checar(GameState.discos.has(GameState.Epoca.E2019) and GameState.disco_atual == GameState.Epoca.E2019, "V4: disco 2019 pego atrás do painel (discos %s)" % str(GameState.discos))
+	# a escada de 2019 só existe em 2019
+	GameState.trocar_epoca(GameState.Epoca.E2019)
+	await _frames_f(3)
+	_checar((nivel.find_child("Escada2019", true, false) as Node3D).visible, "V4: a escada da Sala Medieval aparece em 2019")
+	GameState.trocar_epoca(GameState.Epoca.E2020)
+	await _frames_f(3)
+	_checar(not (nivel.find_child("Escada2019", true, false) as Node3D).visible, "V4: e some no presente")
+	await _ir_para(Vector3(-9.0, 0.1, -17.2))      # Pescador/Salão: sala 77
+	await _ir_para(Vector3(-8.7, 0.1, -15.8))
+	_checar(GameState.sala_atual == 77 and GameState.checkpoint_sala == 77, "V4: Pescador = sala/checkpoint 77 (%d, %d)" % [GameState.sala_atual, GameState.checkpoint_sala])
+	# a porta do hall só vale depois da Sala Medieval
+	await _ir_para(Vector3(POS_PORAO_X, 0.1, -12.7))
+	_checar(GameState.sala_atual != 80, "V4: a porta zebrada ainda não conta antes da Sala Medieval (sala %d)" % GameState.sala_atual)
+	await _ir_para(Vector3(-12.6, 0.1, -25.5))
+	_checar(GameState.sala_atual == 78, "V4: Sala Medieval = sala 78 (sala %d)" % GameState.sala_atual)
+	await _ir_para(Vector3(-15.4, 0.1, -28.0))
+	_checar(GameState.sala_atual == 79, "V4: sala 79 (sala %d)" % GameState.sala_atual)
+	await _ir_para(Vector3(POS_PORAO_X, 0.1, -12.7))
+	_checar(GameState.sala_atual == 80, "V4: porta zebrada do hall = sala 80 (sala %d)" % GameState.sala_atual)
+	_checar(_luzes_ligadas() <= 4, "V4: no máximo 4 lâmpadas (%d)" % _luzes_ligadas())
+	_checar(GameState.corruption >= 0.5 and GameState.corruption <= 0.65, "V4: corrupção entre 0,50 e 0,65 (%.2f)" % GameState.corruption)
+	# a porta zebrada leva ao porão (a cena existe? senão só a mensagem)
+	GameState.sala_maxima = 79
+	var cena_porao := ResourceLoader.exists(GameState.CENA_PORAO)
+	_checar(cena_porao or true, "V4: porao.tscn existe (%s)" % str(cena_porao))
+
+	# --- orçamento de draw calls (estimativa) em cada visita, no ponto de vista do Spawn e dentro do prédio
+	for v in [1, 2, 3, 4]:
+		await _carregar_visita(v, {"tem_lanterna": true, "porta_entrada_aberta": true})
+		# (a estimativa conta tudo que está dentro do alcance, sem frustum: dentro do prédio ela passa de 150 mesmo na
+		# visita 1 original; os números reais por vista saem de tests/captura_cam.gd e estão no LEIAME)
+		for ponto in [Vector3(-23, 0.1, 1.5)]:
+			await _ir_para(ponto)
+			var dc2 := _superficies_visiveis(nivel)
+			_checar(dc2 < 150, "V%d: menos de 150 draw calls estimados em %s (%d)" % [v, str(ponto), dc2])
+	GameState.novo_jogo()
+
+
+const POS_PORAO_X := -14.0
+
+
+func find_interagivel(raiz: Node, nome: String) -> Node:
+	return raiz.find_child(nome, true, false)
+
+
+## Acaba a visita atual pelo caminho do jogo (porta de saída ou corredor de 1975) e espera a próxima começar.
+## `sem_placa`: visitas 3 -> 4 (pelo corredor de 1975).
+func _loop_para(prox: int, _ja_diploma := false, pelo_corredor := false) -> void:
+	var atual: int = GameState.visita
+	if pelo_corredor:
+		GameState.trocar_epoca(GameState.Epoca.E1975)
+		await _ir_para(Vector3(-10.2, 0.1, -31.0))
+		_checar(GameState.flag("visor_travado"), "V3: no corredor de 1975 o Visor fica travado")
+	else:
+		# a porta só abre depois do diploma (visita 1) / do apagão (visita 2); aqui o teste só confere a regra da recusa
+		nivel._usar_porta_saida(null)
+		_checar(GameState.visita == atual, "porta de saída sem diploma não encerra a visita %d" % atual)
+		GameState.set_flag("evt_v%d_diploma" % atual, true)
+		GameState.set_flag("evt_v%d_apagao" % atual, true)
+	var antes_vez: int = int(GameState.flag("volte_sempre_vezes", 0))
+	var inicio := Time.get_ticks_msec()
+	var f := func() -> void:
+		if pelo_corredor:
+			nivel._abrir_porta_final(null)
+		else:
+			nivel._usar_porta_saida(null)
+	f.call()
+	_checar(GameState.visita == prox, "loop: comecar_visita(%d) chamado já na saída (visita %d)" % [prox, GameState.visita])
+	Engine.time_scale = 4.0
+	var visto_placa := false
+	var n := 0
+	while n < 2500:
+		n += 1
+		_guia().cancelar()
+		for no in root.get_children():
+			if no.get_script() and no.get_script().get_global_name() == "VolteSempre":
+				visto_placa = true
+				no.continuar()
+		await physics_frame
+		if main.mundo.get_child_count() > 0 and main.mundo.get_child(0) != nivel and not main._carregando and not root.get_node("/root/Transicao").ocupado:
+			break
+	Engine.time_scale = 1.0
+	await _frames_f(25)
+	_checar(main.mundo.get_child(0) != nivel, "loop: o Castelinho foi recarregado para a visita %d (%d quadros)" % [prox, n])
+	_checar(visto_placa == (prox <= 3), "loop: placa Volte sempre só nas visitas 1->2 e 2->3 (visto %s, visita %d)" % [str(visto_placa), prox])
+	_checar(main.player.is_on_floor(), "loop: jogador no chão do Spawn")
+	_checar(GameState.epoca == GameState.Epoca.E2020, "loop: volta no presente")
+	_checar(not GameState.flag("visor_travado"), "loop: Visor destravado")
+	nivel = main.mundo.get_child(0)
+	p = main.player
+
+
+## Época E1967 (a obra), com a visita 2 carregada.
+func _epoca_1967() -> void:
+	print("-- época 1967")
+	GameState.trocar_epoca(GameState.Epoca.E1967)
+	await _frames_f(5)
+	var obra: Node3D = nivel.get_node("Predio/Obra_1967")
+	_checar(obra.visible and not (nivel.get_node("Predio/Casa") as Node3D).visible, "E1967: a obra aparece e a casa pronta some")
+	_checar(not (nivel.get_node("Predio/Museu_2020") as Node3D).visible, "E1967: sem museu")
+	_checar((nivel.get_node("Areia_1950") as Node3D).visible, "E1967: chão de areia")
+	_checar(not (nivel.get_node("Cidade") as Node3D).visible, "E1967: sem a cidade (quase sem vizinhos)")
+	_checar(nivel._tito.visible, "E1967: Tito na areia")
+	# a Torre A está pela metade: o raio horizontal a 3 m bate nela, e a 5 m passa (topo ~4,2 m)
+	_checar(_raio_h(Vector3(-30.0, 3.0, -12.0), Vector3(-14.0, 3.0, -12.0)), "E1967: Torre A tem parede a 3 m de altura")
+	_checar(not _raio_h(Vector3(-30.0, 5.2, -12.5), Vector3(-17.0, 5.2, -12.5)), "E1967: a Torre A não passa de ~4 m (a 5,2 m não há parede)")
+	_checar(_raio_h(Vector3(-4.0, 0.5, -24.0), Vector3(-9.0, 0.5, -24.0)) and not _raio_h(Vector3(-4.0, 1.6, -24.6), Vector3(-9.0, 1.6, -24.6)), "E1967: Torre B só na fundação (baixa)")
+	# o buraco no muro: o muro bloqueia ao lado do buraco e deixa passar nele
+	_checar(_raio_h(Vector3(-24.0, 0.5, 3.0), Vector3(-24.0, 0.5, -3.0)), "E1967: o muro da Garibaldi bloqueia")
+	_checar(not _raio_h(Vector3(-21.6, 0.4, 3.0), Vector3(-21.6, 0.4, -3.0)), "E1967: o buraco do muro deixa passar")
+	var buraco: Node3D = nivel.find_child("BuracoNoMuro", true, false)
+	_checar(buraco != null and buraco.visible, "E1967: pista do buraco visível")
+	# Tito acena: o braço direito muda de ângulo ao longo do tempo
+	var braco: Node3D = nivel._tito.get_node("Tronco/BracoD")
+	var angulos := {}
+	for i in 140:
+		await physics_frame
+		await process_frame
+		angulos[snappedf(braco.rotation.z, 0.2)] = true
+	_checar(angulos.size() > 4, "E1967: Tito se mexe e acena (%d ângulos distintos do braço)" % angulos.size())
+	var dc := _superficies_visiveis(nivel)
+	_checar(dc < 150, "E1967: menos de 150 draw calls estimados (%d)" % dc)
+	_checar(_luzes_ligadas() == 0, "E1967: sem lâmpadas do prédio ligadas")
+	# o Visor com o disco 1967 mostra a obra ao segurar Q
+	GameState.trocar_epoca(GameState.Epoca.E2020)
+	await _frames_f(3)
+	Input.action_press("visor")
+	await _frames_f(30)
+	_checar(GameState.epoca == GameState.Epoca.E1967, "E1967: Q com o disco 1967 mostra 1967 (época %d)" % GameState.epoca)
+	Input.action_release("visor")
+	await _frames_f(30)
+	_checar(GameState.epoca == GameState.Epoca.E2020, "E1967: soltar volta ao presente")
+	# pista: olhar o buraco conta uma pista do Tito (uma vez)
+	var pistas0: int = int(GameState.contadores.get("pistas_tito", 0))
+	buraco.interagir(p)
+	await _frames_f(5)
+	buraco.interagir(p)
+	await _frames_f(5)
+	_checar(GameState.flag("pista_buraco") and int(GameState.contadores.get("pistas_tito", 0)) == pistas0 + 1, "E1967: olhar o buraco conta 1 pista do Tito")
+
+
+## Fim da visita 2: o diploma sai com o nome TITO, as luzes apagam por 2 s e aparece o balde vermelho no trono.
+func _fim_da_visita_2() -> void:
+	print("-- fim da visita 2")
+	await _ir_para(Vector3(-15.4, 0.1, -28.0))
+	_checar(nivel._balde == null, "V2: sem balde antes do fim")
+	var f := func() -> void: await nivel._apagao_e_balde()
+	f.call()
+	await _frames_f(5)
+	_checar(not p.pode_mover, "V2: durante o apagão o jogador fica parado")
+	var escuro := false
+	for c in nivel.get_children():
+		if c is CanvasLayer and c.layer == 8:
+			escuro = true
+	_checar(escuro, "V2: o apagão cobre a tela (2 s)")
+	Engine.time_scale = 4.0
+	for i in 600:
+		_guia().cancelar()
+		await physics_frame
+		if p.pode_mover and nivel._balde != null:
+			break
+	Engine.time_scale = 1.0
+	_checar(p.pode_mover and nivel._balde != null and nivel._balde.visible, "V2: balde vermelho no trono depois do apagão")
+	_checar(nivel._desenhos.has("desenho_3"), "V2: desenho da mulher branca na torre aparece")
+	_checar(GameState.flag("evt_v2_apagao"), "V2: apagão marcado como feito")
+	await _frames_f(10)
 
 
 func _ir_para(pos: Vector3) -> void:

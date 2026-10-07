@@ -5,9 +5,9 @@ shader_type spatial;
 // dia, no Visor sem data).
 render_mode blend_mix, cull_back, depth_draw_opaque;
 
-uniform vec3 cor_fundo : source_color = vec3(0.012, 0.045, 0.05);
-uniform vec3 cor_ceu : source_color = vec3(0.16, 0.24, 0.24);
-uniform float opacidade : hint_range(0.0, 1.0) = 0.9;
+uniform vec3 cor_fundo : source_color = vec3(0.02, 0.07, 0.08);
+uniform vec3 cor_ceu : source_color = vec3(0.30, 0.42, 0.42);
+uniform float opacidade : hint_range(0.0, 1.0) = 0.8;
 uniform float ondas : hint_range(0.0, 1.0) = 1.0;
 uniform float velocidade = 0.7;
 

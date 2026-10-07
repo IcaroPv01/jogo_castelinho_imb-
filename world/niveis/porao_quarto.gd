@@ -40,7 +40,7 @@ static func quarto(c) -> void:
 		var x: float = lado * (w * 0.5 - 0.015)
 		var z := -rampa
 		var k := 0
-		while z > -L + rampa - 0.01:
+		while z > -L + rampa + 0.01:
 			var z2 := maxf(z - 0.45, -L + rampa)
 			var cor := Color(1, 1, 1) if k % 2 == 0 else Color(0.88, 0.8, 0.66)
 			c.papel.quad(mpa, Vector3(x, PISO + 0.15, z), Vector3(x, PISO + 0.15, z2), Vector3(x, h - 0.1, z2), Vector3(x, h - 0.1, z), Vector3(-lado, 0, 0), Vector2.ZERO, cor)
@@ -173,15 +173,15 @@ static func vinheta(c) -> void:
 	match c.ultimo:
 		96:
 			# Tito sai de casa ao entardecer, de costas, com o balde: no meio do corredor, indo para a luz
-			_menino(slide, Vector3(0.0, 0.0, -L * 0.62), PI, false, true)
+			_menino(slide, Vector3(0.0, 0.0, -L * 0.62), 0.0, false, true)
 			_poente(slide, c, -L + 0.08, 2.6, 3.0, 0.0, false)
 		97:
 			# Tito na margem do Braço Morto: sentado numa borda de pedra, de costas, o balde ao lado
-			_menino(slide, Vector3(-1.2, 0.0, -L + 3.0), PI, true, true)
+			_menino(slide, Vector3(-1.2, 0.0, -L + 3.0), 0.0, true, true)
 			_poente(slide, c, -L + 0.08, 3.4, 3.2, 0.0, true)
 		98:
 			# a Figura Branca do outro lado da água, de braços abertos; o menino pequeno, sentado, de costas para nós
-			_menino(slide, Vector3(-1.0, 0.0, -3.6), PI, true, true)
+			_menino(slide, Vector3(-1.0, 0.0, -3.6), 0.0, true, true)
 			_figura_aberta(slide, Vector3(0.0, 0.0, -L + 1.2))
 			_poente(slide, c, -L + 0.08, 3.4, 3.2, 0.0, true)
 		99:
@@ -284,6 +284,27 @@ static func _menino(pai: Node3D, pos: Vector3, yaw: float, sentado: bool, balde:
 	cab2.radial_segments = 8
 	cab2.rings = 3
 	_peca(n, cab2, Vector3(0, 1.24 + y0, 0.025), cabelo)
+	# rosto (só aparece quando ele se vira): dois olhos e a boca, que o nível troca de "—" para ")" (sorriso)
+	var olhos := Node3D.new()
+	olhos.name = "Olhos"
+	n.add_child(olhos)
+	var olho := SphereMesh.new()
+	olho.radius = 0.016
+	olho.height = 0.032
+	olho.radial_segments = 6
+	olho.rings = 3
+	for lado in [-1.0, 1.0]:
+		_peca(olhos, olho, Vector3(lado * 0.045, 1.215 + y0, -0.105), _mat_slide(Color(0.05, 0.04, 0.05)))
+	var boca := Label3D.new()
+	boca.name = "Boca"
+	boca.text = "—"
+	boca.font_size = 24
+	boca.pixel_size = 0.0016
+	boca.modulate = Color(0.25, 0.08, 0.08)
+	boca.shaded = false
+	boca.position = Vector3(0, 1.165 + y0, -0.118)
+	boca.rotation_degrees.y = 180.0
+	n.add_child(boca)
 	# o balde vermelho na mão direita (ao lado do corpo, ou no chão ao lado, se sentado)
 	if balde:
 		var cil := CylinderMesh.new()
@@ -360,7 +381,7 @@ static func _poente(pai: Node3D, c, z: float, larg: float, alt: float, y0: float
 	var hor := Color(1.0, 0.72, 0.3)
 	var x0 := -larg * 0.5
 	var x1 := larg * 0.5
-	var ya := y0 + c.dy * 0.0
+	var ya: float = y0
 	var faixas := [[0.0, 0.42, hor, hor], [0.42, 0.62, hor, meio], [0.62, 1.0, meio, topo]]
 	if lago:
 		faixas = [[0.0, 0.32, Color(0.85, 0.42, 0.18), Color(0.95, 0.55, 0.22)], [0.32, 0.38, Color(0.12, 0.08, 0.1), Color(0.12, 0.08, 0.1)],
@@ -371,3 +392,8 @@ static func _poente(pai: Node3D, c, z: float, larg: float, alt: float, y0: float
 		m.tri_cores(mat, Vector3(x0, y_a, z), Vector3(x1, y_a, z), Vector3(x1, y_b, z), Vector3(0, 0, 1), f[2], f[2], f[3])
 		m.tri_cores(mat, Vector3(x0, y_a, z), Vector3(x1, y_b, z), Vector3(x0, y_b, z), Vector3(0, 0, 1), f[2], f[3], f[3])
 	m.construir_instancia(pai, "Poente")
+
+
+## Versão pública (usada pelo Braço Morto): o mesmo menino do slide.
+static func menino(pai: Node3D, pos: Vector3, yaw: float, sentado: bool, balde: bool) -> Node3D:
+	return _menino(pai, pos, yaw, sentado, balde)

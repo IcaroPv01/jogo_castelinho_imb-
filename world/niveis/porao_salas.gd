@@ -155,9 +155,9 @@ static func _materiais(c: Ctx) -> void:
 	var t_mad := _textura("madeira_escura", Ato2Pecas.tex_madeira)
 	var t_papel := _textura("reboco", Ato2Pecas.tex_reboco)
 	var seco: bool = not c.agua
-	c.mats["pedra"] = _mat_pedra(t_parede, 1.48, Color(0.50, 0.42, 0.42), 0.15 if seco else 0.75)
-	c.mats["piso"] = _mat_pedra(t_piso, 2.0, Color(0.55, 0.52, 0.52), 0.15 if seco else 0.8, 0.3)
-	c.mats["madeira"] = _mat_pedra(t_mad, 1.0, Color(0.7, 0.6, 0.55), 0.1 if seco else 0.6, 0.3)
+	c.mats["pedra"] = _mat_pedra(t_parede, 1.48, Color(0.64, 0.53, 0.52), 0.15 if seco else 0.75)
+	c.mats["piso"] = _mat_pedra(t_piso, 2.0, Color(0.72, 0.68, 0.68), 0.15 if seco else 0.8, 0.3)
+	c.mats["madeira"] = _mat_pedra(t_mad, 1.0, Color(1.0, 0.88, 0.78), 0.1 if seco else 0.6, 0.3)
 	c.mats["papel"] = _mat_pedra(t_papel, 1.2, Color(0.82, 0.70, 0.50), 0.05, 0.25)
 	# Uma Malha só por sala: ela já separa uma superfície por material (pedra, piso, madeira, papel, objetos, brilhos)
 	c.pedra = MalhaGd.new()
@@ -367,7 +367,8 @@ static func tocha(c: Ctx, pos: Vector3, lado := 0, energia := 1.5, alcance := 8.
 	var mv := mat_vc()
 	caixa(c.vc, mv, pos.x - 0.05, pos.y - 0.28, pos.z - 0.05, pos.x + 0.05, pos.y + 0.12, pos.z + 0.05, Color(0.09, 0.08, 0.07))
 	caixa(c.vc, mv, pos.x - 0.12, pos.y + 0.1, pos.z - 0.12, pos.x + 0.12, pos.y + 0.18, pos.z + 0.12, Color(0.09, 0.08, 0.07))
-	caixa(c.luz, mat_luz(), pos.x - 0.07, pos.y + 0.18, pos.z - 0.07, pos.x + 0.07, pos.y + 0.52, pos.z + 0.07, Color(1.0, 0.7, 0.25), Malha.F_TODAS)
+	c.luz.piramide(mat_luz(), Vector3(pos.x, pos.y + 0.18, pos.z), 0.13, 0.13, 0.34, 1.0)
+	c.luz.piramide(mat_luz(), Vector3(pos.x, pos.y + 0.18, pos.z), 0.07, 0.07, 0.46, 1.0)
 	var l := OmniLight3D.new()
 	l.position = pos + Vector3(-lado * 0.45, 0.45, 0.0)
 	l.light_color = cor

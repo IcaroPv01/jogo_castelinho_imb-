@@ -80,19 +80,40 @@ func _novo_castelinho() -> void:
 
 # ---------------------------------------------------------------- B01
 func _b01_continuar() -> void:
-	print("-- B01 Continuar a partir de cada checkpoint")
-	var casos := [[1, CASTELINHO, "Checkpoint_1"], [6, CASTELINHO, "Checkpoint_6"], [11, CASTELINHO, "Checkpoint_11"],
-		[16, CASTELINHO, "Checkpoint_16"], [21, CASTELINHO, "Checkpoint_21"], [25, CASTELINHO, "Checkpoint_25"],
-		[26, ATO2, "Checkpoint_26"]]
+	print("-- B01 Continuar a partir de cada checkpoint (4 visitas, Ato II, porão, Braço Morto)")
+	const PORAO := "res://world/niveis/porao.tscn"
+	const BRACO := "res://world/niveis/braco_morto.tscn"
+	# [checkpoint, cena, marcador, visita esperada]
+	var casos := [[1, CASTELINHO, "Checkpoint_1", 1], [10, CASTELINHO, "Checkpoint_10", 1], [16, CASTELINHO, "Checkpoint_16", 1],
+		[23, CASTELINHO, "Checkpoint_23", 2], [32, CASTELINHO, "Checkpoint_32", 2], [38, CASTELINHO, "Checkpoint_38", 2],
+		[45, CASTELINHO, "Checkpoint_45", 3], [54, CASTELINHO, "Checkpoint_54", 3], [55, ATO2, "Checkpoint_55", 3],
+		[61, CASTELINHO, "Checkpoint_61", 3], [67, CASTELINHO, "Checkpoint_67", 4], [72, CASTELINHO, "Checkpoint_72", 4],
+		[77, CASTELINHO, "Checkpoint_77", 4], [81, PORAO, "Checkpoint_81", 5], [95, PORAO, "Checkpoint_95", 5], [100, BRACO, "Spawn", 5]]
 	for c in casos:
 		GS.novo_jogo()
 		GS.checkpoint_sala = c[0]
 		GS.set_flag("tem_visor")
+		GS.set_flag("tem_lanterna")
 		GS.set_flag("saindo_para_barra", true)          # save antigo com a flag presa (B04)
 		# estado "sujo" da partida anterior: não pode vazar para a que continua
 		GS.sala_atual = 30
+		GS.visita = 1 if c[3] != 1 else 4
 		GS.epoca = GS.Epoca.E1950
 		GS.corruption = 0.6
+		# a cena de destino pode não existir ainda (porão/Braço Morto são de outro agente): só confere o contrato
+		var destino: Array = GS.preparar_continuar()
+		_checar(destino[0] == c[1] and destino[1] == c[2], "checkpoint %d: preparar_continuar -> %s %s" % [c[0], str(destino[0]).get_file(), destino[1]])
+		_checar(GS.visita == c[3] and GS.epoca == GS.Epoca.E2020 and GS.sala_atual == 0, "checkpoint %d: visita %d e época de hoje restauradas (visita %d)" % [c[0], c[3], GS.visita])
+		if c[1] != CASTELINHO and (not ResourceLoader.exists(c[1])):
+			continue
+		if c[1] != CASTELINHO:
+			continue          # Ato II / porão / Braço Morto: os níveis têm os próprios testes
+		GS.sala_atual = 30
+		GS.epoca = GS.Epoca.E1950
+		GS.corruption = 0.6
+		GS.flags["tem_visor"] = true
+		GS.flags["tem_lanterna"] = true
+		GS.flags["saindo_para_barra"] = true
 		await main._comecar(true)
 		await _frames(40)
 		p = main.player
@@ -103,20 +124,20 @@ func _b01_continuar() -> void:
 			"checkpoint %d: jogador no marcador %s (%s)" % [c[0], c[2], str(p.global_position.snapped(Vector3(0.1, 0.1, 0.1)))])
 		_checar(p.is_on_floor() and p.global_position.y > -0.5, "checkpoint %d: no chão (y=%.2f)" % [c[0], p.global_position.y])
 		_checar(GS.sala_atual == c[0], "checkpoint %d: contador na sala %d (sala %d)" % [c[0], c[0], GS.sala_atual])
+		_checar(GS.visita == c[3] and nivel.visita == c[3], "checkpoint %d: visita %d no nível" % [c[0], c[3]])
 		_checar(GS.jogando, "checkpoint %d: jogando" % c[0])
-		_checar(not GS.flags.has("saindo_para_barra") or c[1] == ATO2, "checkpoint %d: flag saindo_para_barra limpa (B04)" % c[0])
-		if c[0] == 25:
-			_checar(GS.epoca == GS.Epoca.E1975 and GS.flag("visor_travado"), "checkpoint 25: corredor de 1975 (época %d, visor travado)" % GS.epoca)
-		elif c[0] < 26:
-			_checar(GS.epoca == GS.Epoca.E2020, "checkpoint %d: época de hoje (época %d)" % [c[0], GS.epoca])
-			_checar(GS.corruption <= GS.corruption_por_sala(c[0]) + 0.001, "checkpoint %d: corrupção da sala, não a da partida anterior (%.2f)" % [c[0], GS.corruption])
+		_checar(not GS.flags.has("saindo_para_barra"), "checkpoint %d: flag saindo_para_barra limpa (B04)" % c[0])
+		_checar(GS.epoca == GS.Epoca.E2020, "checkpoint %d: época de hoje (época %d)" % [c[0], GS.epoca])
+		_checar(GS.corruption <= GS.corruption_por_sala(c[0]) + 0.001, "checkpoint %d: corrupção da sala, não a da partida anterior (%.2f)" % [c[0], GS.corruption])
+		# a morte no Castelinho volta ao mesmo lugar: o main usa "Checkpoint_%d" % checkpoint_sala (nome global)
+		_checar(nivel.find_child("Checkpoint_%d" % GS.checkpoint_sala, true, false) != null, "checkpoint %d: marcador pelo número global existe" % c[0])
 	GS.set_flag("visor_travado", false)
 
 
 # ---------------------------------------------------------------- B02
 func _b02_corrupcao_nova_partida() -> void:
 	print("-- B02 nova partida zera a corrupção COM sinal")
-	GS.sala_atual = 28
+	GS.sala_atual = 70
 	GS._atualizar_corruption()
 	_checar(GS.corruption > 0.4, "corrupção alta no fim da demo (%.2f)" % GS.corruption)
 	var efeitos = root.get_node("/root/Efeitos")
@@ -130,7 +151,7 @@ func _b02_corrupcao_nova_partida() -> void:
 	_checar(vistos == [0.0], "novo_jogo avisou a corrupção 0 (%s)" % str(vistos))
 	_checar(is_equal_approx(efeitos._alvo_c, 0.0), "Efeitos voltou a 0 (%.2f)" % efeitos._alvo_c)
 	# voltar ao título depois do "Fim da demonstração" recarrega a cena principal
-	GS.sala_atual = 29
+	GS.sala_atual = 70
 	GS._atualizar_corruption()
 	GS.epoca = GS.Epoca.E1950
 	var outro = load("res://scenes/main/main.tscn").instantiate()
