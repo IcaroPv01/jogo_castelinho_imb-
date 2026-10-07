@@ -1401,6 +1401,11 @@ func _entrou(base: int) -> void:
 		return
 	GameState.entrar_sala(_global(base))
 	_evento(base)
+	# o gatilho 80 (porta zebrada) está dentro do gatilho 7 (hall): se os dois disparam no mesmo quadro, a ordem é
+	# arbitrária e o 7 podia derrubar o contador de 80 para 71. Quem está dentro da zona da porta fica em 80.
+	if visita == 4 and base == 7 and _triggers.has(SALA_V4_PORTA) and player and is_instance_valid(player) \
+			and (_triggers[SALA_V4_PORTA] as Area3D).overlaps_body(player):
+		_entrou(SALA_V4_PORTA)
 
 
 func _evento(base: int) -> void:
