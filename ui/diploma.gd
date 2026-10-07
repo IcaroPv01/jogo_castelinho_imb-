@@ -8,6 +8,11 @@ extends CanvasLayer
 ##   await d.fechado                  # o jogador clicou em "Continuar"
 ## Ou instancie a cena à mão: load("res://ui/diploma.tscn").instantiate() e add_child() — ela se abre sozinha.
 ## Solta o mouse e trava o jogador enquanto estiver aberto (Flash.abrir_ui / fechar_ui).
+##
+## V2: o nome na linha em branco vem de `GameState.flag("diploma_nome", "")` (na visita 2 vale "TITO"), lido ao abrir,
+## ou de `diploma.definir_nome("TITO")` a qualquer momento. Escrito em letra de criança: cada letra um pouco torta,
+## de tamanho e altura diferentes, em giz vermelho, tremendo em 12 quadros por segundo. Sem nome, fica a dica
+## "(nome do visitante)".
 
 signal fechado
 
@@ -18,6 +23,10 @@ var _fechando := false
 var _janela: Control
 var _confete: Control
 var _t := 0.0
+var nome := ""
+var _letras: Array[Label] = []
+var _dica_nome: Label
+var _nome_base := Vector2.ZERO
 
 
 class Estrelas extends Control:
@@ -161,7 +170,8 @@ func _construir() -> void:
 	linha.position = Vector2(LARGURA / 2.0 - 260.0, 352)
 	linha.size = Vector2(520, 3)
 	_janela.add_child(linha)
-	_rotulo("(nome do visitante)", Vector2(0, 358), Vector2(LARGURA, 24), Flash.fonte_sistema(), 15, Color("8B93A3"))
+	_dica_nome = _rotulo("(nome do visitante)", Vector2(0, 358), Vector2(LARGURA, 24), Flash.fonte_sistema(), 15, Color("8B93A3"))
+	_nome_base = Vector2(LARGURA / 2.0, 352)
 
 	_rotulo("completou a visita ao Castelinho e conquistou", Vector2(0, 396), Vector2(LARGURA, 30), Flash.fonte_texto(), 23, Color("4B5568"))
 	var estrelas := Estrelas.new()
@@ -187,6 +197,60 @@ func _construir() -> void:
 	_confete = Confete.new()
 	_confete.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_confete)
+	var n := str(GameState.flag("diploma_nome", ""))
+	if n != "":
+		definir_nome(n)
+
+
+## Escreve `novo` na linha em branco, em letra de criança (tremida). "" apaga e volta a dica.
+func definir_nome(novo: String) -> void:
+	nome = novo
+	for l in _letras:
+		l.queue_free()
+	_letras.clear()
+	if _dica_nome:
+		_dica_nome.visible = novo == ""
+	if novo == "" or _janela == null:
+		return
+	var fonte := Flash.fonte_texto()
+	var tam := 54
+	var larguras: Array[float] = []
+	var total := 0.0
+	for ch in novo:
+		var w := fonte.get_string_size(ch, HORIZONTAL_ALIGNMENT_LEFT, -1, tam).x
+		larguras.append(w)
+		total += w + 3.0
+	var x := _nome_base.x - total / 2.0
+	var cor := Color("C62828")
+	for i in novo.length():
+		var l := Label.new()
+		l.text = novo[i]
+		l.add_theme_font_override("font", fonte)
+		l.add_theme_font_size_override("font_size", int(tam * randf_range(0.88, 1.12)))
+		l.add_theme_color_override("font_color", cor)
+		l.add_theme_color_override("font_outline_color", cor.darkened(0.3))
+		l.add_theme_constant_override("outline_size", 2)
+		l.size = Vector2(larguras[i] + 8.0, 80.0)
+		l.pivot_offset = l.size / 2.0
+		l.rotation = deg_to_rad(randf_range(-9.0, 9.0))
+		l.position = Vector2(x, _nome_base.y - 40.0 + randf_range(-4.0, 5.0))
+		l.set_meta("base", l.position)
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_janela.add_child(l)
+		_letras.append(l)
+		x += larguras[i] + 3.0
+
+
+## Letras tremem em 12 quadros por segundo (traço de giz de criança).
+func _process(dt: float) -> void:
+	if _letras.is_empty():
+		return
+	_t += dt
+	var passo := int(_t * 12.0)
+	if passo != int((_t - dt) * 12.0):
+		for l in _letras:
+			l.position = (l.get_meta("base") as Vector2) + Vector2(randf_range(-1.6, 1.6), randf_range(-1.6, 1.6))
+			l.rotation += randf_range(-0.012, 0.012)
 
 
 func fechar() -> void:

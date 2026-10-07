@@ -290,6 +290,29 @@ func _teste_telas() -> void:
 	await create_timer(0.3).timeout
 	_checar(fechou == [1] and not GameState.flag("ui_aberta"), "diploma fecha e libera o mouse")
 
+	# V2: o nome do diploma vem da flag `diploma_nome` (visita 2: "TITO") ou de definir_nome()
+	var dip2 = Diploma.mostrar()
+	await process_frame
+	await process_frame
+	_checar(dip2.nome == "" and dip2._letras.is_empty() and dip2._dica_nome.visible, "diploma sem flag: linha em branco com a dica")
+	dip2.definir_nome("TITO")
+	_checar(dip2.nome == "TITO" and dip2._letras.size() == 4 and not dip2._dica_nome.visible, "definir_nome('TITO') escreve 4 letras e esconde a dica")
+	var junto := ""
+	for l in dip2._letras:
+		junto += l.text
+	_checar(junto == "TITO", "as letras formam TITO ('%s')" % junto)
+	dip2.fechar()
+	await create_timer(0.3).timeout
+	GameState.set_flag("diploma_nome", "TITO")
+	var dip3 = Diploma.mostrar()
+	await process_frame
+	await process_frame
+	_checar(dip3.nome == "TITO" and dip3._letras.size() == 4, "flag diploma_nome = 'TITO' escreve o nome ao abrir")
+	dip3.fechar()
+	await create_timer(0.3).timeout
+	GameState.flags.erase("diploma_nome")
+	Flash.resetar_ui()
+
 	var Morte = load("res://ui/morte.gd")
 	var mo = Morte.mostrar("teste")
 	await process_frame

@@ -69,6 +69,8 @@ func _rodar() -> void:
 			gs.ganhar_selo("b")
 			gs.ganhar_selo("c")
 			gs.ganhar_selo("d")
+			if extra == "tito":
+				gs.set_flag("diploma_nome", "TITO")
 			load("res://ui/diploma.gd").mostrar()
 			espera = 1.4
 		"volte":
