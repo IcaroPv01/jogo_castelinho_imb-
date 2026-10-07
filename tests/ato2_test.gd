@@ -1,6 +1,6 @@
 extends SceneTree
-## Teste automático do Ato II (headless): Efeitos, Visor do Tempo, salas 26 a 30, regra da
-## Figura Branca, morte/checkpoint e fim da demo.
+## Teste automático do trecho Ato II da visita 3 (headless): Efeitos, Visor do Tempo, salas 55 a 60, regra da
+## Figura Branca, morte/checkpoint e a volta ao Castelinho (sala 61).
 ## Uso: godot --headless -s res://tests/ato2_test.gd
 ## Atenção: não referencie classes do jogo (Visor, FiguraBranca...) por nome neste arquivo: o script de
 ## teste compila antes dos autoloads existirem. Use load("res://...") em tempo de execução.
@@ -67,8 +67,10 @@ func _ate(cond: Callable, max_frames := 600) -> bool:
 
 
 func _carregar_ato2() -> void:
+	GS.comecar_visita(3)
 	await main.carregar_mundo("res://world/niveis/ato2.tscn", "Spawn")
 	nivel = main.mundo.get_child(0)
+	nivel.destino = "res://world/niveis/teste.tscn"   # o Castelinho é de outro agente (e outro teste)
 	player = main.player
 	await _frames(10)
 
@@ -96,10 +98,10 @@ func _teste_chao_e_marcadores() -> void:
 	_checar(player.is_on_floor(), "jogador no chão do hall (y=%.2f)" % player.global_position.y)
 	_checar(absf(player.global_position.y) < 0.05, "altura do chão = 0")
 	_checar(nivel.get_node_or_null("Spawn") != null, "marcador Spawn")
-	_checar(nivel.get_node_or_null("Checkpoint_26") != null, "marcador Checkpoint_26")
-	_checar(GS.sala_atual == 26, "começa na sala 26 (sala %d)" % GS.sala_atual)
+	_checar(nivel.get_node_or_null("Checkpoint_55") != null, "marcador Checkpoint_55")
+	_checar(GS.sala_atual == 55, "começa na sala 55 (sala %d)" % GS.sala_atual)
 	_checar(nivel.has_method("ao_morrer") and nivel.has_method("iniciar"), "contrato iniciar/ao_morrer")
-	_checar(abs(GS.corruption - 0.36) < 0.02, "corruption da sala 26 = %.2f" % GS.corruption)
+	_checar(abs(GS.corruption - 0.37) < 0.02, "corruption da sala 55 = %.2f" % GS.corruption)
 
 
 func _teste_efeitos() -> void:
@@ -158,13 +160,13 @@ func _teste_visor() -> void:
 
 
 func _teste_caminhada() -> void:
-	print("-- caminhada 26 -> 30")
-	_checar(GS.sala_atual == 26, "sala 26")
+	print("-- caminhada 55 -> 59")
+	_checar(GS.sala_atual == 55, "sala 55")
 	var ok: bool = await _ir_ate(Vector3(0, 0, -6.0))
 	_checar(ok and nivel._porta_hall_aberta, "a porta do hall abre quando o jogador se aproxima")
 	ok = await _ir_ate(Vector3(0, 0, -19.0))
 	_checar(ok, "atravessa a porta do hall")
-	_checar(GS.sala_atual == 27, "sala 27 (sala %d)" % GS.sala_atual)
+	_checar(GS.sala_atual == 56, "sala 56 (sala %d)" % GS.sala_atual)
 	_checar(GS.epoca == GS.Epoca.E1950 and GS.flag("visor_travado"), "a porta abre para 1950 e o visor trava")
 	_checar(not nivel._raiz_hall.visible, "o hall desapareceu atrás do jogador")
 	var f = nivel.figura
@@ -181,22 +183,22 @@ func _teste_caminhada() -> void:
 		await physics_frame
 		if f.sumida:
 			break
-	_checar(f.sumida, "27: a figura da duna some quando o jogador a cerca olhando")
+	_checar(f.sumida, "56: a figura da duna some quando o jogador a cerca olhando")
 	await _ate(func(): return not f.sumida, 300)
-	_checar(f.visible and f.global_position.distance_to(player.global_position) > 6.0, "27: reaparece mais longe (%.0f m)" % f.global_position.distance_to(player.global_position))
+	_checar(f.visible and f.global_position.distance_to(player.global_position) > 6.0, "56: reaparece mais longe (%.0f m)" % f.global_position.distance_to(player.global_position))
 	player.global_position = Vector3(0, 0.3, -40.0)
 	player.rotation.y = 0.0
 	await _frames(30)
 	ok = await _ir_ate(Vector3(0, 0, -71.5), 0.7, 40.0)
 	_checar(ok, "caminha pelas dunas até o núcleo de 1950")
 	ok = await _ir_ate(Vector3(0, 0, -74.0))
-	_checar(ok and GS.sala_atual == 28, "entra na casa de 1950: sala 28 (sala %d)" % GS.sala_atual)
+	_checar(ok and GS.sala_atual == 57, "entra na casa de 1950: sala 57 (sala %d)" % GS.sala_atual)
 	_checar(f.ativa and f.global_position.distance_to(Vector3(-6, 0, -75)) < 1.5, "a Figura Branca ativa na casa")
 	f.ativa = false   # só para atravessar a casa sem ser pego
 	ok = await _ir_ate(Vector3(-2.0, 0, -76.4))
 	_checar(ok, "cruza a casa até a porta dos fundos")
 	ok = await _ir_ate(Vector3(-2.0, 0, -80.0))
-	_checar(ok and GS.sala_atual == 29, "entra na arcada: sala 29 (sala %d)" % GS.sala_atual)
+	_checar(ok and GS.sala_atual == 58, "entra na arcada: sala 58 (sala %d)" % GS.sala_atual)
 	ok = await _ir_ate(Vector3(-1.8, 0, -92.0))
 	_checar(ok and nivel._chase_ativo, "a perseguição começa dentro da arcada")
 	_checar(f.velocidade > 3.0 and f.ativa and f.visible, "figura atrás do jogador (vel %.1f)" % f.velocidade)
@@ -204,14 +206,14 @@ func _teste_caminhada() -> void:
 	var zf: float = f.global_position.z
 	_checar(zf > player.global_position.z + 8.0, "figura nasce atrás (%.0f m)" % (zf - player.global_position.z))
 	ok = await _ir_ate(Vector3(-1.8, 0, -117.0), 0.7, 40.0)
-	_checar(ok and GS.sala_atual == 30, "chega na sala 30 (sala %d)" % GS.sala_atual)
+	_checar(ok and GS.sala_atual == 59, "chega na sala 59 (sala %d)" % GS.sala_atual)
 	player.rotation.y = 0.0
 	player.cabeca.rotation.x = 0.0
 	await _ir_ate(Vector3(-1.8, 0, -119.4), 0.3)
 	player.rotation.y = 0.0
 	await _frames(10)
 	_checar(player._alvo == nivel._interagivel_final, "o raio do jogador acha a porta (Interagivel)")
-	_checar(abs(GS.corruption - 0.6) < 0.02, "corruption da sala 30 = %.2f" % GS.corruption)
+	_checar(abs(GS.corruption - 0.40) < 0.02, "corruption da sala 59 = %.2f" % GS.corruption)
 
 
 func _teste_perseguicao_e_morte() -> void:
@@ -229,7 +231,7 @@ func _teste_perseguicao_e_morte() -> void:
 	var ok: bool = await _ate(func(): return f.matou, 600)
 	_checar(ok and causa[0] == "figura_branca", "encostou sem ser olhada: matar_jogador('figura_branca')")
 	_checar(GS.contadores.get("mortes", 0) == mortes_antes + 1, "contador de mortes subiu")
-	# ao_morrer: fade vermelho, (tela de morte), volta ao Checkpoint_26
+	# ao_morrer: fade vermelho, (tela de morte), volta ao Checkpoint_55
 	ok = await _ate(func(): return nivel._morrendo, 60)
 	_checar(ok, "ao_morrer do nível foi chamado pelo Main")
 	var viu_morte := [false]
@@ -241,9 +243,9 @@ func _teste_perseguicao_e_morte() -> void:
 		return not nivel._morrendo, 1500)
 	_checar(viu_morte[0], "a tela de morte da UI (Morte) apareceu")
 	_checar(ok, "sequência de morte terminou")
-	var cp: Vector3 = nivel.get_node("Checkpoint_26").global_position
-	_checar(player.global_position.distance_to(cp) < 0.6, "volta ao Checkpoint_26 (%s)" % str(player.global_position))
-	_checar(GS.sala_atual == 26 and GS.epoca == GS.Epoca.E2020, "sala 26 e época 2020 restauradas")
+	var cp: Vector3 = nivel.get_node("Checkpoint_55").global_position
+	_checar(player.global_position.distance_to(cp) < 0.6, "volta ao Checkpoint_55 (%s)" % str(player.global_position))
+	_checar(GS.sala_atual == 55 and GS.epoca == GS.Epoca.E2020, "sala 55 e época 2020 restauradas")
 	_checar(player.pode_mover and not f.matou and not f.ativa, "jogador livre, figura reiniciada")
 	_checar(is_equal_approx(Transicao_alfa(), 0.0), "tela clareou depois da morte")
 
@@ -263,20 +265,24 @@ func _destravar_ui() -> void:
 
 
 func _teste_fim_demo() -> void:
-	print("-- sala 30: fim da demo")
+	print("-- sala 60: a porta devolve o jogador ao Castelinho (sala 61)")
 	player.global_position = Vector3(-1.8, 0.1, -119.4)
 	player.rotation.y = 0.0
 	await _frames(10)
+	GS.set_flag("visor_travado", true)
+	GS.trocar_epoca(GS.Epoca.E1950)
+	_checar(nivel.spawn_destino == "Spawn_volta_ato2", "a volta ao Castelinho é em Spawn_volta_ato2")
 	nivel._abrir_porta_final(player)
+	await _frames(5)
+	_checar(GS.sala_atual == 60, "abrir a porta entra na sala 60 (sala %d)" % GS.sala_atual)
 	var ok: bool = await _ate(func():
 		Gui.avancar()
-		return nivel._cena_fim != null, 2400)
-	_checar(ok, "depois da porta: tela preta, fala corrompida e tela de fim")
-	await _ate(func(): return nivel._cena_fim != null and nivel._cena_fim.is_inside_tree(), 120)
-	_checar(nivel._cena_fim != null and nivel._cena_fim.has_method("voltar_ao_inicio"), "tela de fim de demo (FimDemo) criada")
-	_checar(not main.hud.visible, "HUD escondido no fim")
-	_checar(GS.flag("ui_aberta"), "fim marca ui_aberta (não pausa)")
-	nivel._cena_fim.queue_free()
+		return main.nivel_atual == "res://world/niveis/teste.tscn", 3000)
+	_checar(ok, "depois da tela preta e da voz corrompida, troca para o destino (Castelinho, aqui o nível de teste)")
+	await _frames(30)
+	_checar(GS.sala_atual == 61, "volta ao Castelinho na sala 61 (sala %d)" % GS.sala_atual)
+	_checar(GS.flag("v3_ato2_feito"), "flag v3_ato2_feito ligada na volta")
+	_checar(not GS.flag("visor_travado") and GS.epoca == GS.Epoca.E2020, "época e Visor liberados na volta")
 	load("res://ui/flash.gd").resetar_ui()
 
 
@@ -362,7 +368,7 @@ func _teste_regra_figura() -> void:
 	var dist_nova: float = f.global_position.distance_to(player.global_position)
 	_checar(dist_nova > 8.0, "reaparece mais longe (%.1f m)" % dist_nova)
 
-	# estática (sala 27): parada, mas some se cercada
+	# estática (sala 56): parada, mas some se cercada
 	f.pontos_reaparecer = [Vector3(0, 0.1, -45.0)]
 	f.ativa = false
 	f.global_position = Vector3(0, 0.1, -25.0)

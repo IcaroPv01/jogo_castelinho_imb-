@@ -1,20 +1,30 @@
 extends Node3D
-## Ato II — "Informações Atualizadas" (salas 26 a 30). Tudo montado por código.
+## Trecho da VISITA 3 (V2_ROTEIRO §3.3 e §8.2): a porta do Salão de Arte abre para 1950. Salas globais 55 a 60.
+## Tudo montado por código.
 ##
-##  26  O hall errado (a sala 7 de novo, mas errada): reboco, lustre balançando, painel corrompido.
-##  27  A porta do hall abre para 1950: o núcleo original sozinho nas dunas, vento, céu cinza.
+##  55  O hall errado (a sala 7 de novo, mas errada): reboco, lustre balançando, painel corrompido.
+##  56  A porta do hall abre para 1950: o núcleo original sozinho nas dunas, vento, céu cinza.
 ##      Longe, numa duna, uma Figura Branca parada. Some se o jogador a cerca olhando.
-##  28  Dentro do núcleo de 1950 (casa de pedra de dois volumes, chaminé): primeira ameaça real.
-##  29  A arcada repetida (8 módulos de arcos abatidos sobre pilares quadrados): perseguição.
-##  30  A porta da Sala Medieval, fora de lugar. Ao abrir: tela preta, voz corrompida, FIM DA DEMO.
+##  57  Dentro do núcleo de 1950 (casa de pedra de dois volumes, chaminé): primeira ameaça real.
+##  58  A arcada repetida (8 módulos de arcos abatidos sobre pilares quadrados): perseguição.
+##  59  O fim da arcada: a porta da Sala Medieval, fora de lugar.
+##  60  A porta abre: tela preta, voz corrompida do Bentinho e a porta devolve o jogador ao Castelinho
+##      (topo da Torre A, sala 61), em `Spawn_volta_ato2`.
 ##
-## Marcadores: Spawn e Checkpoint_26 (hall). Marcadores de câmera para captura: Cam_26 .. Cam_30.
+## Marcadores: Spawn e Checkpoint_55 (hall; `Checkpoint_26` continua existindo só como apelido do mesmo ponto,
+## para testes antigos). Marcadores de câmera para captura: Cam_55 .. Cam_59.
 ## O Visor do Tempo fica instalado (Visor.instalar). Épocas: o hall só existe fora de 1950; ao
 ## cruzar a porta a época vira 1950 e o Visor "trava" (a época não volta ao soltar Q).
 ##
-## Morte: Morte.mostrar() da UI (ui/morte.tscn) e volta ao Checkpoint_26 sem recarregar o nível.
-## Fim da demo (sala 30): tela preta própria (camada 15, abaixo do Guia), voz corrompida do Bentinho
-## (Guia.falar_engasgado) e FimDemo.mostrar() (ui/fim_demo.tscn: estatísticas e "Voltar ao início").
+## Morte: Morte.mostrar() da UI (ui/morte.tscn) e volta ao Checkpoint_55 sem recarregar o nível.
+## Saída (sala 60): tela preta própria (camada 15, abaixo do Guia), voz corrompida do Bentinho
+## (Guia.falar_engasgado) e Transicao.ir_para(castelinho.tscn, "Spawn_volta_ato2") com época e Visor liberados.
+
+signal saiu
+
+## Para onde a porta final leva (visita 3, sala 61: topo da Torre A). Os testes redirecionam.
+@export var destino := "res://world/niveis/castelinho.tscn"
+@export var spawn_destino := "Spawn_volta_ato2"
 
 const Z_PORTA_HALL := -14.25
 const CASA_Z_FRENTE := -72.5
@@ -70,7 +80,6 @@ var _pivo_final_e: Node3D
 var _pivo_final_d: Node3D
 var _interagivel_final: Interagivel
 var _visitou := {}
-var _cena_fim: FimDemo
 var _tween_lustre: Tween
 
 # materiais
@@ -142,7 +151,7 @@ func iniciar(p: Player) -> void:
 ## Vistas para o aquecimento de shaders atrás da tela de carregamento (ver main.gd): hall, dunas, casa, arcada.
 func pontos_aquecer() -> Array:
 	var lista: Array = []
-	for nome in ["Cam_26b", "Cam_27", "Cam_28", "Cam_29", "Cam_30"]:
+	for nome in ["Cam_55b", "Cam_56", "Cam_57", "Cam_58", "Cam_59"]:
 		var mk := get_node_or_null(nome) as Node3D
 		if mk:
 			var t := mk.global_transform
@@ -151,7 +160,7 @@ func pontos_aquecer() -> Array:
 	return lista
 
 
-## Morte: fade vermelho, tela de morte (ui/morte.tscn, se existir) e volta ao Checkpoint_26.
+## Morte: fade vermelho, tela de morte (ui/morte.tscn, se existir) e volta ao Checkpoint_55.
 func ao_morrer() -> void:
 	if _morrendo:
 		return
@@ -173,7 +182,7 @@ func _tela_morte() -> void:
 
 
 func _reposicionar_jogador() -> void:
-	var cp := get_node("Checkpoint_26") as Node3D
+	var cp := get_node("Checkpoint_55") as Node3D
 	player.global_transform = cp.global_transform
 	player.velocity = Vector3.ZERO
 	player.cabeca.rotation.x = 0.0
@@ -189,7 +198,7 @@ func _resetar_estado() -> void:
 	_visitou.clear()
 	_vento.emitting = false
 	Audio.ambiente("", -8.0, 0.5)
-	Audio.musica("jingle")      # nas dunas o jingle é cortado (sala 27): ao voltar para o hall depois de morrer, volta
+	Audio.musica("jingle")      # nas dunas o jingle é cortado (sala 56): ao voltar para o hall depois de morrer, volta
 	GameState.set_flag("visor_travado", false)
 	GameState.trocar_epoca(GameState.Epoca.E2020)
 	Efeitos.visor(false)
@@ -200,7 +209,7 @@ func _resetar_estado() -> void:
 	figura.pontos_reaparecer = _pontos_reaparecer_dunas()
 	figura.pontos_caminho = []
 	_ambiente("hall", 0.0)
-	GameState.entrar_sala(26)
+	GameState.entrar_sala(55)
 
 
 # ============================================================================ materiais e ambiente
@@ -225,7 +234,7 @@ func _materiais() -> void:
 	m_reboco = Ato2Pecas.mat_tri("reboco", Color.WHITE, Ato2Pecas.tex_reboco(), 0.4)
 	# o hall "errado" usa os MESMOS blocos internos do hall da sala 7: o lugar precisa ser reconhecível para o
 	# "errado" (grande demais, portas repetidas, lambri que não existia) funcionar
-	# o núcleo de 1950 (salas 27-28) usa a mesma pedra pálida do núcleo do Castelinho (foto antiga)
+	# o núcleo de 1950 (salas 56-57) usa a mesma pedra pálida do núcleo do Castelinho (foto antiga)
 	var t_nuc := Ato2Pecas.externa("parede_nucleo")
 	m_pedra_nucleo = Ato2Pecas.mat_tri("pedra_nucleo", Color.WHITE, t_nuc, 1.0 / 1.48) if t_nuc else m_pedra
 	var t_int := Ato2Pecas.externa("parede_interna")
@@ -399,7 +408,7 @@ func _criar_vento() -> void:
 	add_child(_vento)
 
 
-# ============================================================================ sala 26: o hall errado
+# ============================================================================ sala 55: o hall errado
 func _hall() -> void:
 	_raiz_hall = Node3D.new()
 	_raiz_hall.name = "Hall"
@@ -506,7 +515,7 @@ func _fechar_porta_hall() -> void:
 		_pivo_porta_d.rotation.y = 0.0
 
 
-# ============================================================================ sala 28: o núcleo de 1950
+# ============================================================================ sala 57: o núcleo de 1950
 func _casa() -> void:
 	var casa := Node3D.new()
 	casa.name = "Casa1950"
@@ -589,7 +598,7 @@ func _casa() -> void:
 	_luz(casa, Vector3(-5.5, 2.0, -75.0), Color(0.55, 0.65, 1.0), 0.7, 5.0)
 
 
-# ============================================================================ sala 29: a arcada repetida
+# ============================================================================ sala 58: a arcada repetida
 func _arcada() -> void:
 	var arc := Node3D.new()
 	arc.name = "Arcada"
@@ -650,7 +659,7 @@ func _arcada() -> void:
 	parede.name = "ParedeFinal"
 
 
-# ============================================================================ sala 30: a porta fora de lugar
+# ============================================================================ sala 59/60: a porta fora de lugar
 func _porta_final() -> void:
 	var z_fim := ARC_Z0 - ARC_BAIA * ARC_N
 	var raiz := Node3D.new()
@@ -716,6 +725,7 @@ func _abrir_porta_final(_p: Node) -> void:
 	if _fim:
 		return
 	_fim = true
+	GameState.entrar_sala(60)
 	if _interagivel_final:
 		_interagivel_final.queue_free()
 	if figura:
@@ -749,15 +759,22 @@ func _abrir_porta_final(_p: Node) -> void:
 	else:
 		await Guia.falar("bentinho", falas, true)
 	await get_tree().create_timer(0.6).timeout
-	_mostrar_fim_demo()
+	await _voltar_ao_castelinho()
 
 
-## Mostra a tela de fim da UI (FimDemo.mostrar: estatísticas + "Voltar ao início").
-func _mostrar_fim_demo() -> void:
-	var main := get_tree().get_first_node_in_group("main")
-	if main and main.get("hud"):
-		main.hud.visible = false
-	_cena_fim = FimDemo.mostrar()
+## A porta devolve o jogador ao Castelinho (topo da Torre A, sala 61): a época e o Visor voltam ao normal antes.
+func _voltar_ao_castelinho() -> void:
+	GameState.set_flag("visor_travado", false)
+	GameState.trocar_epoca(GameState.Epoca.E2020)
+	Efeitos.visor(false)
+	GameState.set_flag("v3_ato2_feito", true)     # contrato com o Castelinho: libera a escada da visita 3
+	GameState.entrar_sala(61)
+	var cena := destino
+	if not ResourceLoader.exists(cena):
+		push_warning("Ato2: destino '%s' ainda não existe; usando o nível de teste." % cena)
+		cena = "res://world/niveis/teste.tscn"
+	await Transicao.ir_para(cena, spawn_destino)
+	saiu.emit()
 
 
 # ============================================================================ figura, triggers, marcadores
@@ -798,11 +815,11 @@ func _area(tam: Vector3, pos: Vector3, ao_entrar: Callable) -> Area3D:
 
 
 func _triggers() -> void:
-	_trigger_sala(26, Vector3(10, 4, 2), Vector3(0, 0, 0))
-	_trigger_sala(27, Vector3(30, 6, 2), Vector3(0, 0, -16.5))
-	_trigger_sala(28, Vector3(6.0, 3, 1.0), Vector3(0, 0, -73.4))
-	_trigger_sala(29, Vector3(4.4, 4, 1.5), Vector3(ARC_XC, 0, ARC_Z0 - 1.2))
-	_trigger_sala(30, Vector3(4.4, 4, 2.0), Vector3(ARC_XC, 0, ARC_Z0 - ARC_BAIA * (ARC_N - 1) - 1.0))
+	_trigger_sala(55, Vector3(10, 4, 2), Vector3(0, 0, 0))
+	_trigger_sala(56, Vector3(30, 6, 2), Vector3(0, 0, -16.5))
+	_trigger_sala(57, Vector3(6.0, 3, 1.0), Vector3(0, 0, -73.4))
+	_trigger_sala(58, Vector3(4.4, 4, 1.5), Vector3(ARC_XC, 0, ARC_Z0 - 1.2))
+	_trigger_sala(59, Vector3(4.4, 4, 2.0), Vector3(ARC_XC, 0, ARC_Z0 - ARC_BAIA * (ARC_N - 1) - 1.0))
 	# a porta do hall abre quando o jogador se aproxima
 	_area(Vector3(12, 4, 8), Vector3(0, 2, -6.0), _abrir_porta_hall)
 	# a perseguição começa um pouco dentro da arcada
@@ -811,17 +828,18 @@ func _triggers() -> void:
 
 func _marcadores() -> void:
 	_marcador("Spawn", Vector3(0, 0.1, 0.5), 0.0)
-	_marcador("Checkpoint_26", Vector3(0, 0.1, 0.5), 0.0)
+	_marcador("Checkpoint_55", Vector3(0, 0.1, 0.5), 0.0)
+	_marcador("Checkpoint_26", Vector3(0, 0.1, 0.5), 0.0)   # apelido antigo (testes da V1)
 	# marcadores de câmera (capturas e testes)
-	_marcador("Cam_26", Vector3(0, 0.1, 1.0), 0.0)
-	_marcador("Cam_26b", Vector3(0, 0.1, -12.0), 180.0)
-	_marcador("Cam_27", Vector3(0, 0.1, -17.5), 0.0)
-	_marcador("Cam_27b", Vector3(0, 0.1, -17.5), -44.0)
-	_marcador("Cam_28", Vector3(0, 0.1, -71.0), 0.0)
-	_marcador("Cam_28b", Vector3(0, 0.1, -75.0), 90.0)
-	_marcador("Cam_29", Vector3(ARC_XC, 0.1, ARC_Z0 - 1.0), 0.0)
-	_marcador("Cam_29b", Vector3(ARC_XC, 0.1, ARC_Z0 - 3.0 * ARC_BAIA), 180.0)
-	_marcador("Cam_30", Vector3(ARC_XC, 0.1, ARC_Z0 - ARC_BAIA * ARC_N + 4.5), 0.0)
+	_marcador("Cam_55", Vector3(0, 0.1, 1.0), 0.0)
+	_marcador("Cam_55b", Vector3(0, 0.1, -12.0), 180.0)
+	_marcador("Cam_56", Vector3(0, 0.1, -17.5), 0.0)
+	_marcador("Cam_56b", Vector3(0, 0.1, -17.5), -44.0)
+	_marcador("Cam_57", Vector3(0, 0.1, -71.0), 0.0)
+	_marcador("Cam_57b", Vector3(0, 0.1, -75.0), 90.0)
+	_marcador("Cam_58", Vector3(ARC_XC, 0.1, ARC_Z0 - 1.0), 0.0)
+	_marcador("Cam_58b", Vector3(ARC_XC, 0.1, ARC_Z0 - 3.0 * ARC_BAIA), 180.0)
+	_marcador("Cam_59", Vector3(ARC_XC, 0.1, ARC_Z0 - ARC_BAIA * ARC_N + 4.5), 0.0)
 
 
 func _marcador(nome: String, pos: Vector3, yaw: float) -> Marker3D:
@@ -839,7 +857,7 @@ func _on_sala(n: int) -> void:
 		return
 	_visitou[n] = true
 	match n:
-		27:
+		56:
 			# a porta do hall abre para 1950: o hall some e o Visor "mente" (não volta)
 			GameState.trocar_epoca(GameState.Epoca.E1950)
 			GameState.set_flag("visor_travado", true)
@@ -852,7 +870,7 @@ func _on_sala(n: int) -> void:
 			Guia.falar("bentinho", [
 				"Esta área não consta no mapa!",
 				"Siga as estacas. Elas são seguras. Provavelmente."])
-		28:
+		57:
 			_ambiente("casa", 1.2)
 			_em_dunas = false
 			_vento.emitting = false
@@ -865,13 +883,13 @@ func _on_sala(n: int) -> void:
 			figura.ativar()
 			Efeitos.pulso(0.4, 0.4)
 			Guia.falar("bentinho", ["...", "Fique de olho nos outros visitantes. Sempre."])
-		29:
+		58:
 			_ambiente("arcada", 1.2)
 			_em_dunas = false
 			Audio.ambiente("", -8.0, 1.5)
 			figura.esconder()   # a figura da casa fica para trás; outra vem atrás de você
 			Guia.falar("bentinho", ["Atenção: a visita guiada continua.", "Por favor, não corra. (Corra.)"])
-		30:
+		59:
 			Guia.falar("bentinho", ["A saída é logo ali!", "...Não é a saída."])
 
 

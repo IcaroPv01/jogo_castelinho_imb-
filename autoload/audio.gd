@@ -11,6 +11,9 @@ extends Node
 ## "acerto", "erro", "selo", "confete", "fanfarra", "passo", "ofego", "susto", "apito", "telefone", "porta",
 ## "agua_puxa" (ou "água_puxa"), "chiado_radio", "glitch", "slide" (Visor do Tempo), "sussurro", "splash",
 ## "tarrafa", "vento", "mar", "rio", "jingle_0/1/2".
+## V2: loops de ambiente "chuva" e "goteira" (Audio.ambiente); efeitos "agua_sobe", "crianca_ei" (sussurro "ei... aqui..."
+## de ruído filtrado, o texto vai na tela), "telefone_voz" (a mãe do Tito, chiada) e "atencao" (UM batimento de 0,6 s:
+## o Visor o repete mais depressa e mais alto conforme a atenção sobe). Revisão V2: "trovao" (trovão distante, visita 4).
 ##
 ## Música "jingle": a versão tocada acompanha GameState.corruption (o modo Sample da web não aceita
 ## efeitos de bus, então as três versões foram pré-renderizadas):
@@ -31,6 +34,8 @@ const VOLUME_PADRAO := {
 	"blip_bentinho": -8.0, "blip_taina": -8.0, "blip_quico": -9.0, "blip_sistema": -9.0,
 	"blip_misterio": -6.0, "clique": -5.0, "boing": -4.0, "passo_1": -5.0, "passo_2": -5.0, "passo_3": -5.0,
 	"vento": -4.0, "mar": -4.0, "rio": -4.0, "ofego": -3.0, "confete": -3.0, "sussurro": -2.0, "slide": -4.0,
+	"chuva": -6.0, "goteira": -5.0, "agua_sobe": -3.0, "crianca_ei": -3.0, "telefone_voz": -3.0, "atencao": -2.0,
+	"trovao": -3.0,
 }
 
 var volume_musica_db := -9.0

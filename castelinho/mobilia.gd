@@ -120,7 +120,8 @@ static func _museu(c: Castelinho) -> void:
 	var claro: Material = Castelinho.mat_cor(Color(0.82, 0.62, 0.38), 0.9)
 	# --- hall (galeria): cavaletes com telas encostados na parede norte
 	for i in 3:
-		_cavalete(c, g, Vector3(-9.6 - i * 1.8, 0, -13.4), N_S, tela_cores, i)
+		# (revisão V2: 0,5 m para o leste; o terceiro cobria metade da porta zebrada do porão, em x = -14, na visita 4)
+		_cavalete(c, g, Vector3(-9.1 - i * 1.75, 0, -13.4), N_S, tela_cores, i)
 	# --- Salão de Arte (corpo principal, metade oeste do bloco norte): cavaletes junto à divisória
 	for i in 3:
 		_cavalete(c, g, Vector3(-11.3 + i * 1.6, 0, -17.7), N_N, tela_cores, 3 + i)

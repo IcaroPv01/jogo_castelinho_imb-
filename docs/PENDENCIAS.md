@@ -104,3 +104,172 @@ Relatório completo em `docs/REVISAO_GRAFICA.md`. Arquivos de outras divisões q
 - **`tests/captura.gd`** (integrador): agora imprime draw calls e triângulos, como `captura_cam.gd`.
 - **Para quem cuida da Barra:** a vista `barra_m70` tem ~69 mil triângulos, provavelmente da água ou dos molhes. Os
   prédios do horizonte (vista de costas) são caixas sem janela.
+
+## Agente Visor/UI (V2)
+
+Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, `ui/**`, `world/painel_3d.gd`, `data/**`, `assets/ui/**`, `assets/audio/**`, `tools/{gerar_audio,gerar_desenhos}.py`, `tests/{ui,visor}_test.gd`, `tests/captura_ui.gd`.
+
+### Andamento (checklist; atualizado a cada etapa)
+
+- [x] 1. Áudio novo (`tools/gerar_audio.py`): chuva, goteira (loops ogg), agua_sobe, crianca_ei, telefone_voz, atencao (wav). Gerados e importados.
+- [x] 2. Arte gerada (`tools/gerar_desenhos.py`): desenho_1..7 (512x512), procura_se (512x720, com alfa), marcas_altura (384x512, opaca). PNG em paleta de 256 cores (~1,5 MB no total). Vistos e iterados.
+- [x] 3. Painéis: `pNN_v2/_v3/_v4` (p01..p22), fallback `pNN_vK` -> `pNN` (`PainelUI.id_efetivo/dados`), entradas de imagem (`desenho_N`, `procura_se`, `marcas_altura`), P14/15/16/19/21/23 revisados.
+- [x] 4. Visor 2.0 escrito (`world/visor.gd`): discos 1-5 e rolagem, Q por disco, atenção, Figura no slide, susto, bloqueio de 10 s, `figura_atravessou`. FALTA testar (item 7).
+- [x] 5. HUD: "VISITA n · SALA nn" (porão: "SALA nn"), `ui/faixa_discos.gd`, `ui/olho_atencao.gd`. Ajustes de captura pendentes (ver "A fazer").
+- [x] 6. Telas escritas: `ui/volte_sempre.gd`, `ui/telefone.gd`, `ui/dedicatoria.gd`. Capturadas; ajustes pendentes (ver "A fazer").
+- [x] 7. Testes: `tests/visor_test.gd` (novo, 100% ok) e `tests/ui_test.gd` (sons novos + telas V2) passam. `bash tools/testar.sh`: meus testes, ato2, barra e smoke OK, sem "SCRIPT ERROR". Falhas que NÃO são minhas (domínio Visitas, anotadas): `castelinho_test` (V1 marcas de altura, V4 porta zebrada = sala 71 em vez de 80, draw calls > 150 nos pontos (-9.8,-18.8) e (-10.4,-12.6)) e `qa_logica_test` (checkpoints 6/11/21/25/26 caem em `Spawn`, corrupção do fim da demo); vêm de `entrar_sala`/`preparar_continuar` e do nível em reescrita.
+- [x] 8. Capturas de UI vistas (build/capturas/*, não versionada): painéis v2/v3/v4, desenhos, placas 3D, volte sempre (1ª e 2ª), telefone, créditos, dedicatória, HUD, Visor com a Figura.
+
+### Feito depois das capturas
+- FaixaDiscos posicionada pelo tamanho da janela (sem anchors); estrelas do VolteSempre atrás da placa; créditos centralizados; olho maior.
+
+### Para o integrador
+- `docs/CREDITS.md`: acrescentar `tools/gerar_desenhos.py` (arte do Tito, cartaz e marcas, tudo por código) e os sons novos (todos sintetizados).
+- Quem chama: `GameState.comecar_visita(n+1); await VolteSempre.mostrar().terminou`; `await Telefone.tocar([...]).terminou` (2º argumento false pula o toque); `await Dedicatoria.mostrar().terminou` (ou `mostrar(true)` recarrega a cena principal sozinha).
+- Importante: rode `godot --headless --import` ao integrar para gerar os `.import` dos PNG/WAV novos.
+- `Visor.figura_atravessou(visita)` (instância): o nível do porão (e da visita 4) liga com `Visor.instalar(self).figura_atravessou.connect(...)`.
+
+### Decisões
+- `Visor` é de instância; sinal de instância `figura_atravessou(visita)` nas visitas 4 e 5 (documentado no cabeçalho de `world/visor.gd`). `atencao_cheia(visita)` sai sempre.
+- Q sem disco não faz nada; exceção de compatibilidade com os níveis do MVP: sem NENHUM disco e com a flag `epoca_visor` definida, o Q usa essa época. Com discos, `epoca_visor` é ignorada.
+- Tecla n escolhe o disco fixo (1=1950, 2=1967, 3=1975, 4=2019, 5=sem data); rolagem passa entre os discos que o jogador tem.
+- Bloqueio de 10 s é estático (atravessa troca de nível); zera em `Visor._ready` se `sala_atual <= 0`.
+- A Figura do slide é um visual próprio (`Visor.FiguraSlide`), sem IA e fora do grupo "figura_branca": o `FiguraBranca` real mata por proximidade.
+- Assinatura do Tito: o primeiro T é desenhado de cabeça para baixo (um T espelhado na horizontal seria igual ao normal).
+- Desenhos/cartaz em Painel3D: `Painel3D.new("desenho_3")` é uma folha na parede (largura `largura_m` do JSON); `marcas_altura.png` é opaca (batente de porta + parede), pensada para o Visitas colar na parede de 1975.
+- Painéis v4: `anfitriao` vazio, `riscado`, `desenho`; v3 tem `carimbo` "EM REVISÃO". v2/v3/v4 não têm quiz (selos só na visita 1).
+- Pedido ao integrador: `Visor.registrar_inputs()` cria as ações disco_1..5/prox/ant; HUD instancia FaixaDiscos e OlhoAtencao. Telefone/VolteSempre/Dedicatoria sem .tscn (só `class_name` + `new()`).
+
+## Agente Porão (V2)
+
+> Seção viva: atualizada à medida que avanço. Se eu for interrompido, quem continuar começa pelo "Estado" abaixo.
+
+### Estado (atualizado a cada etapa)
+- [x] 1. Renumerar `ato2` (salas 55 a 60, `Checkpoint_55`, flag `v3_ato2_feito`, volta em `Spawn_volta_ato2`) e `barra` (`sala_global(14)/(15)`, sandália) + `ato2_test`/`barra_test` (passam)
+- [x] 2. `porao.tscn`/`porao.gd` + `porao_salas.gd` (12 tipos + quarto + escada que sobe) + `porao_quarto.gd` (quarto do Tito e slides) + shaders `porao_pedra`/`porao_agua`: carregam, capturas conferidas (draw calls 20 a 50, 4 luzes)
+- [x] 3. Criaturas: `creatures/costela.gd` (prende parado, solta andando, mata se não lutar), voz do Tito com marcas do Visor, Figura Branca ligada ao `figura_atravessou` (testados em `porao_test`)
+- [x] 4. `braco_morto.tscn`/`.gd`: margem do lago, lápide de areia, Tito pelo Visor, finais "Encontrado"/"Visita concluída", `Dedicatoria.mostrar()` (testado)
+- [x] 5. `tests/porao_test.gd` passa (~47 s). `bash tools/testar.sh`: ato2, barra, porao, qa_logica, smoke, ui e visor passam; `castelinho_test` falha em "V4: porta zebrada do hall = sala 80" (é do Visitas, ainda em obra)
+- [x] 6. Capturas conferidas com `tests/captura_porao.gd` (salas do porão, quarto do Tito, slides 96 a 99, Costela) e `tests/captura_cam.gd` (Braço Morto: Cam_margem, Cam_lapide, Cam_pier, Cam_tito, Cam_escada)
+
+Limites conhecidos: áudio nunca foi ouvido (sons "crianca_ei", "agua_sobe", "goteira" existem, vindos do Visor/UI); desempenho no navegador não medido (só draw calls/luzes em Mesa);
+a passarela da sala 98 (época sem data) e a sandália são a "passagem" do disco sem data; o resto das pistas usa 1967 (voz, pegadas, mão, desenho escondido) e 1975 (marcas de altura).
+
+## Agente Visitas (V2)
+
+> Seção viva (atualizada à medida que avanço). Se eu for interrompido, quem continuar começa pelo "Estado".
+> Meus arquivos: `castelinho/**`, `world/niveis/castelinho.*`, `assets/textures/**`, `tools/gerar_texturas.py`,
+> `tests/{castelinho,qa_logica}_test.gd`, `tests/janela_jogador.gd`, `GameState.entrar_sala` e `preparar_continuar`.
+
+### Estado
+- [x] 1. `game_state.gd`: regra de checkpoint (`SALAS_CHECKPOINT`) e `preparar_continuar` (visitas, Ato II, porão, Braço Morto)
+- [x] 2. E1967 (obra) gerada: `castelinho/obra.gd`, Tito e desenhos em `castelinho/tito.gd`
+- [x] 3. Nível `world/niveis/castelinho.gd` em 4 visitas (iluminação, clima, eventos, painéis, discos, loop). Falta só conferir posições por captura (porta do Ato II, painel solto)
+- [x] 4. Testes: `castelinho_test`, `qa_logica_test` e `janela_jogador` atualizados e passando (4 visitas, loop, E1967, Continuar por checkpoint). `bash tools/testar.sh`: tudo OK e sem SCRIPT ERROR, exceto `porao_test` (do agente Porão, em andamento). Dica: outro agente mata processos `godot` com `pkill`; rode os testes com um symlink (`ln -s $(which godot) /tmp/gdv; bash tools/testar.sh /tmp/gdv`)
+- [x] 5. Capturas de cada visita e da E1967 conferidas (build/capturas/v2/); LEIAME do Castelinho atualizado
+
+### Contratos que o Visitas assume (por favor, confirmem ou avisem)
+- **Checkpoints (números globais):** 1, 10, 16 | 23, 32, 38 | 45, 54, 61 | 67, 72, 77 | porão 81 e 95. O nível cria os marcadores
+  `Checkpoint_<base>` (bases 1, 8, 10, 13, 16, 17) **e** `Checkpoint_<global>` da visita atual (a morte em `main.gd`
+  usa `"Checkpoint_%d" % checkpoint_sala`).
+- **Ato II (para o Porão):** ao abrir a porta da visita 3 (base 11 = sala 55) o Castelinho grava `checkpoint_sala = 55` e vai para
+  `ato2.tscn` "Spawn". O "Continuar" com checkpoint 55 devolve `["res://world/niveis/ato2.tscn", "Checkpoint_55"]`: o `ato2`
+  precisa ter um marcador **`Checkpoint_55`** (pode ser igual ao `Spawn`). A volta é em **`Spawn_volta_ato2`** (topo da Torre A).
+  Ao voltar, o `ato2` deve ligar a flag **`v3_ato2_feito`** (`GameState.set_flag("v3_ato2_feito", true)`): sem ela o
+  Castelinho mantém a escada da visita 3 interditada. O Castelinho também liga essa flag ao receber o jogador em `Spawn_volta_ato2`.
+- **Porão:** marcadores `Checkpoint_81` (entrada, `Spawn` também) e `Checkpoint_95` (quarto do Tito). Braço Morto: `Spawn`.
+  Entrada no porão a partir do Castelinho: `Transicao.ir_para("res://world/niveis/porao.tscn", "Spawn")` (porta do hall na visita 4
+  = sala 80; escada da Sala Medieval só em 2019).
+- **Barra:** o mural leva a `barra.tscn` "Spawn" só na visita 2 (sala 36). A volta é em `Spawn_volta_barra` (sala 37).
+- **Visor/UI:** (a) o Castelinho **não** grava mais `epoca_visor`; quem manda é o disco selecionado. (b) O Castelinho chama
+  `GameState.ganhar_disco(E1950|E1967|E1975|E2019)`. (c) Diploma da visita 2: o Castelinho liga a flag `diploma_nome = "TITO"`
+  antes de `Diploma.mostrar()` (e tenta `set("nome", "TITO")` no nó): peço que `ui/diploma.gd` leia a flag. (d) O Castelinho usa
+  `VolteSempre.mostrar()` e `Telefone.tocar(linhas)` se as classes existirem (procura em `ProjectSettings` as classes globais);
+  senão cai em um fade com Label e em `Guia.falar("???", ...)`. (e) Texturas: usa `assets/ui/tito/{desenho_1..7,procura_se,marcas_altura}.png`
+  quando existirem; senão, placeholders gerados em `castelinho/tito.gd` (mesmo estilo).
+- **Painéis por visita:** o nível pede `pNN_vK` (K = visita); se o id não existe em `data/paineis.json` usa `pNN`. Na visita 4 usa
+  `desenho_N` (N = 3..6 conforme a sala). `quiz_final` só existe nas visitas 1 e 2.
+
+### Decisões e contratos do Porão (para o Visitas, o Visor/UI e o integrador)
+
+**Arquivos meus:** `world/niveis/{ato2,barra,porao,porao_salas,porao_quarto,braco_morto}.gd` (+ `.tscn`), `creatures/costela.gd`,
+`shaders/porao_pedra.gdshader`, `shaders/porao_agua.gdshader`, `tests/{ato2,barra,porao}_test.gd`, `tests/captura_porao.gd`.
+`porao_salas.gd`/`porao_quarto.gd` usam `Malha` e `Muros` de `castelinho/` (só leitura: se a API deles mudar, avisem).
+
+**Checkpoints do porão (formato).** `ponto_spawn("Checkpoint_<N>")` aceita qualquer N de 81 a 99: monta a sala N e devolve o marcador (o Main cai
+nele quando `find_child` não acha). Para a morte, o porão guarda `ultimo_checkpoint` entre 81, 86, 91, 95 e 96 (volta ao começo daquela sala, com a
+água daquele bloco). O `GameState.SALAS_CHECKPOINT` (do Visitas) só grava 81 e 95; **pedido ao Visitas**: se quiserem que o "Continuar" também volte a
+86, 91 e 96, acrescentem 86, 91, 96 em `SALAS_CHECKPOINT` e façam `preparar_continuar` devolver `["res://world/niveis/porao.tscn", "Checkpoint_%d" % cp]`
+para cp de 81 a 99 (os marcadores existem sob demanda). Sala 100: `["res://world/niveis/braco_morto.tscn", "Spawn"]` (existe).
+`ato2.tscn` tem `Spawn`, `Checkpoint_55` (e o apelido antigo `Checkpoint_26`), liga `v3_ato2_feito` na volta e volta em `Spawn_volta_ato2`.
+
+**Semente:** `GameState.flags["porao_semente"]` (int sorteado no 1º acesso; `novo_jogo()` apaga e sorteia outro).
+
+**Contadores e flags que o final lê/escreve:** lê `contadores["pistas_tito"]` (>= `BracoMorto.PISTAS_ENCONTRADO` = 6 dá o final "Encontrado"; senão
+"Visita concluída"). Convenção para QUALQUER agente que ache uma pista com o Visor: `if not GameState.flag("pista_<id>"): GameState.set_flag("pista_<id>", true);
+GameState.somar("pistas_tito")` (uma vez por pista). O porão registra: `desenho_porao`, `marcas_porao`, `pegadas_porao`, `mao_poco`, `telefone`,
+`quarto_tito` (pegar o disco) e `sandalia_porao`; a lápide registra `lapide`. Escreve ainda `viu_tito_final`, `final_encontrado`, `final_visita_concluida`,
+`telefone_porao_atendido`, `tem_disco_semdata`, `viu_sandalia_barra` (Barra). **Pedido ao Visitas:** contem as pistas da visita 3 e 4 (marcas de altura/1975,
+desenho atrás do painel/2019, buraco no muro/1967) com essa convenção, para o total passar de 6.
+
+**Visor:** o porão usa `Visor.instalar(self)` e escuta `figura_atravessou` (solta a Figura de verdade atrás do jogador). As marcas da voz (facho vermelho com
+balde = caminho certo; facho azul com ondas = água funda) e as pistas aparecem com `Epocas.marcar` nas épocas E1967 e ESEMDATA. No disco sem data o porão
+esquenta a luz (fim de tarde) e a água para (ondas = 0).
+
+**Orçamento web medido (captura):** 20 a 50 draw calls por vista, 4 luzes (2 por sala, sala atual e próxima; a lanterna do jogador seria a 5ª),
+2 a 3 salas montadas por vez, névoa de profundidade. Água: um plano por sala com `porao_agua.gdshader` (sem refração).
+
+**Lentidão na água:** o `player.gd` não é meu, então o nível (prioridade de física 100) encolhe o deslocamento horizontal do jogador depois que ele andou:
+fator `clamp(1 - prof*0.6, 0.42, 1)` (tornozelo 0,87; joelho 0,67; cintura 0,43). Se o integrador preferir, o jogador pode ler `nivel.fator_agua()`.
+
+**Costela:** cipós crescem em ~3,2 s de jogador parado (< 0,45 m/s), recuam rápido andando; prendem (jogador travado, câmera livre); apertar uma direção
+por 0,9 s solta (imune por 1,5 s); sem lutar, em 2,6 s `matar_jogador("costela")`. Afogamento: `matar_jogador("afogamento")` (tela escurece, sem gráfico).
+**Pedido ao Visor/UI:** `ui/morte.gd` pode ter textos para as causas "costela", "afogamento" e "figura_branca" (hoje mostra a mesma tela para todas).
+
+### Decisões e notas do Visitas
+- **Bug achado e corrigido (existia desde o MVP):** o painel `p08` (Sala dos Povos, tem quiz) estava a 36 cm DENTRO da parede
+  (x -26,76; a face interna é x -26,4) e ninguém conseguia lê-lo. Agora em x -26,35. `castelinho_test` confere que todo painel
+  visível é alcançável pelo raio do jogador (V1 e V4).
+- **Numeração:** bases 23, 24 e 25 (porta de saída, Sala Medieval em 1975, corredor de 1975) contam como a base 22: a sala
+  global 23/45/67 já é a primeira da visita seguinte. Visita 4 comprime as bases em 67..79 (`V4_SALAS`); a 80 é a porta zebrada
+  do hall, que só conta depois da Sala Medieval (78) ter sido vista. Os gatilhos chamam `_entrou(base)` do nível
+  (`GatilhoCastelinho`), não `entrar_sala_base` direto.
+- **Visita 3 e o Ato II:** a escada para a laje fica interditada (fita zebrada + colisão) até o Ato II ser concluído (flag
+  `v3_ato2_feito`, ligada ao nascer em `Spawn_volta_ato2` ou ao entrar na sala 17). O disco 1975 fica num pedestal no topo da Torre A.
+  A porta nova para 1950 fica na parede oeste do Salão de Arte (x -12,1; z -18). Ela grava `checkpoint_sala = 55` antes de ir ao `ato2`.
+- **Fim da visita 3:** o Visor com o disco 1975 mostra a saída aberta (o vão da Sala Medieval em 1975 leva ao corredor); o gatilho
+  do corredor trava o Visor em 1975 e a porta do fundo chama `comecar_visita(4)` sem placa "Volte sempre".
+- **Visita 4:** porta zebrada no hall (parede da pilastra, x -14,0) e escada da Sala Medieval (só em 2019, x -14; z -26,8) descem para
+  `porao.tscn` "Spawn" com `comecar_visita(5)`. Painéis mostram `desenho_3..6` (se existirem em `data/paineis.json`).
+- **Pistas do Tito** (para o final "Encontrado"): flags `pista_buraco` (muro de 1967), `pista_desenho_2019` (atrás do painel solto) e
+  contador `pistas_tito`; as marcas de altura (1975) são só visuais por enquanto (sem Interagivel).
+- **Tito no Visor (visitas 3 e 4):** boneco `TitoNoVisor`, visível só nas épocas fora do presente, a cada sala mais perto (`_spot_tito_visor`).
+- **Pendências para outros agentes:** (Visor/UI) `ui/diploma.gd` ler a flag `diploma_nome` ("TITO" na visita 2); (Porão) ligar
+  `v3_ato2_feito` no `ato2` ao sair é opcional (o Castelinho já liga); marcador `Spawn_volta_ato2` existe em y = 6,9.
+- Os níveis do Castelinho mexem em `Efeitos.flash`, `Guia.falar_engasgado`, `Audio.ambiente("chuva"|"vento"|"mar")` e `sfx_3d("goteira")`.
+
+### Fechamento do Visitas (rodada 2)
+- **Sala 80 (porta zebrada):** o gatilho 80 fica dentro do gatilho 7 (hall); se os dois disparavam no mesmo quadro a ordem era arbitrária e o contador podia cair para 71 (falha intermitente). Agora `_entrou(7)` na visita 4 reaplica a sala 80 se o jogador está na zona da porta.
+- **Checkpoints do porão:** `SALAS_CHECKPOINT` ganhou 86, 91 e 96; `preparar_continuar` devolve `Checkpoint_<maior de 81/86/91/95/96 <= cp>` em `porao.tscn`. `qa_logica_test` cobre os cinco.
+- **Pistas (`pistas_tito`)**, convenção `pista_<id>` + `somar`, uma vez cada, todas com E em cima do objeto: `buraco` e `tito_1967` (só em 1967), `marcas_altura` (só em 1975), `desenho_2`, `desenho_3`, `desenho_4`, `cartaz`, `desenho_2019` (só em 2019) = 8 no Castelinho; só andar não conta. `castelinho_test` confere.
+
+## Revisão de arte e experiência da V2 (diretor de arte técnico)
+
+Relatório completo em `docs/REVISAO_V2.md` (capturas em `build/capturas/revisao_v2/`, não versionada). Nenhuma API
+pública, marcador, id de painel ou regra de criatura mudou. Para cada divisão:
+
+- **Integrador:** `player/player.gd`: lanterna com cone/queda novos e estado que sobrevive à troca de cena (flag de save
+  `lanterna_desligada`, gravada ao apertar F). `tests/captura_cam.gd` (jogador acompanha a câmera, `RELAMPAGO=`) e
+  `tests/captura_porao.gd` (com lanterna).
+- **Visitas:** `world/niveis/castelinho.gd`: luz por visita (`LAMPADAS`, `COR_LAMPADA`, `PRESENTE` 3 e 4), luz da rua
+  (`COR_POSTE`, `_montar_luz_da_rua`), janelas acesas na V3, relâmpagos na V4, apagão da V2 com sussurro e luz falhando,
+  discos que giram e piscam, escada virtual na porta zebrada e no alçapão de 2019 (`_escada_falsa`), câmeras
+  `Cam_calcada` (nova) e `Cam_porta_porao` (movida). `castelinho/castelinho.gd` (`mat_vidro`), `entorno.gd` (`POSTES`),
+  `mobilia.gd` (cavaletes do hall 0,5 m a leste: cobriam a porta zebrada), `obra.gd` (andaime, buraco, barco, canteiro),
+  `tito.gd` (cartaz A3).
+- **Porão:** `porao_salas.gd` (chamas coloridas, `chama`), `braco_morto.gd` (poças aditivas, margem de lá com reflexos,
+  lápide de balde, `Cam_escada`). Shaders novos `escada_falsa` e `reflexo_agua`.
+- **Visor/UI:** `world/visor.gd` (a Figura do slide para a 2,6 m e se debruça), `ui/telefone.gd` (plaquinha de ligação),
+  `ui/volte_sempre.gd` (texto que cabe), `autoload/audio.gd` + `tools/gerar_audio.py` (som `trovao`).
+- **A conferir no navegador:** a visita 4 (porta zebrada, alçapão, relâmpago) e o Braço Morto (reflexos). Só o começo da
+  visita 1 passou pelo `testar_web.py`.

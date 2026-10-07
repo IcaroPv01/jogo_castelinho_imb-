@@ -13,6 +13,13 @@ extends CanvasLayer
 ## GameState.somar("quiz_acertos"). Erro -> Audio.sfx("erro") e tenta de novo.
 ## Teclas: espaço/Enter = botão principal, 1/2/3 ou A/B/C = respostas, Esc = fechar.
 ## Para testes: `responder(indice)`, `avancar()` e `fechar()` fazem o que os cliques fazem.
+##
+## V2 (docs/V2_ROTEIRO.md §3 e §8.4):
+##   - Variantes por visita: `PainelUI.dados("p05_v2")`. Se o id `pNN_vK` não existir no JSON, cai para `pNN`
+##     (`PainelUI.id_efetivo()` devolve o id que valeu). v2 = fato real sem verniz, v3 = institucional frio com
+##     "carimbo", v4 = quase sem texto: título riscado e o desenho do Tito em destaque (campos `riscado`, `desenho`).
+##   - Imagens: entradas com `imagem` (desenho_1..7, procura_se, marcas_altura) abrem uma visualização da folha
+##     (gerada por tools/gerar_desenhos.py) com a legenda ao lado, em vez de painel com ícone e anfitrião.
 
 signal fechado(id: String)
 signal quiz_respondido(id: String, correta: bool)
@@ -40,6 +47,8 @@ var concluido := false
 var _quiz_terminado := false
 var _lista_botoes: Array[BotaoGel] = []
 var _seco := false
+var _imagem: Texture2D = null       # desenho/cartaz mostrado no lugar do ícone (tipo "imagem" ou painel v4)
+var _riscado := false
 var _corr := 0.0
 var _dessat := 0.0
 
@@ -93,9 +102,22 @@ static func carregar_dados() -> Dictionary:
 	return _json
 
 
-## Conteúdo de um painel (resolve "alias"). Id desconhecido -> painel genérico "em construção".
+## Id que de fato vale no JSON: o próprio, ou (variante `pNN_vK` inexistente) o painel base `pNN`.
+static func id_efetivo(id_painel: String) -> String:
+	var tudo := carregar_dados()
+	if tudo.has(id_painel):
+		return id_painel
+	var i := id_painel.rfind("_v")
+	if i > 0 and id_painel.substr(i + 2).is_valid_int():
+		var base_id := id_painel.substr(0, i)
+		if tudo.has(base_id):
+			return base_id
+	return id_painel
+
+
+## Conteúdo de um painel (resolve variante inexistente e "alias"). Id desconhecido -> painel genérico "em construção".
 static func dados(id_painel: String) -> Dictionary:
-	var d: Variant = carregar_dados().get(id_painel, null)
+	var d: Variant = carregar_dados().get(id_efetivo(id_painel), null)
 	if d is Dictionary:
 		if d.has("alias"):
 			return dados(str(d.alias))
@@ -123,6 +145,8 @@ func _ready() -> void:
 	_corr = GameState.corruption
 	_dessat = Flash.fator_dessat(_corr)
 	_seco = bool(dados_painel.get("seco", false))
+	_riscado = bool(dados_painel.get("riscado", false))
+	_imagem = _carregar_imagem()
 	var q: Variant = dados_painel.get("quiz", null)
 	if q is Array:
 		_perguntas = q
@@ -206,6 +230,8 @@ func _construir() -> void:
 	_titulo.add_theme_color_override("font_outline_color", Flash.NAVY)
 	_titulo.add_theme_constant_override("outline_size", 0 if _seco else 7)
 	_janela.add_child(_titulo)
+	if _riscado:
+		_riscar_titulo()
 
 	var fechar_btn := BotaoGel.new("X", Flash.VERMELHO, 24)
 	fechar_btn.position = Vector2(LARGURA - 78, 12)
@@ -213,9 +239,168 @@ func _construir() -> void:
 	fechar_btn.pressed.connect(fechar)
 	_janela.add_child(fechar_btn)
 
-	# ---- coluna da esquerda: ícone (e anfitrião)
+	# ---- coluna da esquerda: imagem (desenho, cartaz) OU ícone (e anfitrião)
 	var anfitriao := str(dados_painel.get("anfitriao", "bentinho"))
 	var tem_host := anfitriao in ["bentinho", "taina", "quico"]
+	var x_texto := 300.0
+	if _imagem != null:
+		x_texto = 506.0
+		_montar_imagem()
+	else:
+		_montar_icone_e_anfitriao(tem_host, anfitriao)
+
+	# ---- área de texto (página)
+	_area_texto = Control.new()
+	_area_texto.position = Vector2(x_texto, 98)
+	_area_texto.size = Vector2(LARGURA - x_texto - 28, 420)
+	_janela.add_child(_area_texto)
+	var folha := Panel.new()
+	folha.size = Vector2(_area_texto.size.x, 340)
+	folha.add_theme_stylebox_override("panel", Flash.caixa(Color.WHITE if not _seco else Color("F8F9FB"), Flash.NAVY, 20, 4, false))
+	_area_texto.add_child(folha)
+	_texto = Label.new()
+	_texto.position = Vector2(24, 18)
+	_texto.size = Vector2(_area_texto.size.x - 48, 304)
+	_texto.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_texto.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	var bruto := str(dados_painel.get("texto", ""))
+	_texto.text = bruto if _seco else Flash.corromper(bruto, _corr)
+	var fonte_corpo: Font = Flash.fonte_sistema() if _seco else (Flash.fonte_erro() if _corr >= 0.6 else Flash.fonte_texto())
+	_texto.add_theme_font_override("font", fonte_corpo)
+	var n_chars := _texto.text.length()
+	var tam_corpo := 32 if n_chars < 200 else (29 if n_chars < 280 else 27)
+	_texto.add_theme_font_size_override("font_size", 26 if _seco else (36 if _corr >= 0.6 and n_chars < 260 else (32 if _corr >= 0.6 else tam_corpo)))
+	if _riscado:   # v4: quase sem texto: uma palavra grande, torta, no meio da folha
+		_texto.add_theme_font_override("font", Flash.fonte_erro())
+		_texto.add_theme_font_size_override("font_size", 120 if n_chars < 12 else 56)
+		_texto.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_texto.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_texto.rotation = deg_to_rad(-2.5)
+		_texto.pivot_offset = _texto.size / 2.0
+	_texto.add_theme_color_override("font_color", Color("20242E") if _seco else _cor(Flash.NAVY))
+	_texto.add_theme_constant_override("outline_size", 0)
+	_texto.add_theme_constant_override("line_spacing", 2)
+	_area_texto.add_child(_texto)
+	if not _seco and not _riscado:
+		var etiqueta := PanelContainer.new()
+		etiqueta.position = Vector2(20, -22)
+		etiqueta.rotation = deg_to_rad(-3.0)
+		var sb_e := Flash.caixa(_cor(Flash.LARANJA), Flash.NAVY, 14, 4, false)
+		sb_e.content_margin_left = 12
+		sb_e.content_margin_right = 12
+		sb_e.content_margin_top = 0
+		sb_e.content_margin_bottom = 2
+		etiqueta.add_theme_stylebox_override("panel", sb_e)
+		var el := Label.new()
+		el.text = ("NA FOLHA" if _imagem != null else "VOCÊ SABIA?") if _perguntas.is_empty() else "HORA DO QUIZ!"
+		el.add_theme_font_override("font", Flash.fonte_titulo())
+		el.add_theme_font_size_override("font_size", 20)
+		el.add_theme_constant_override("outline_size", 4)
+		etiqueta.add_child(el)
+		_area_texto.add_child(etiqueta)
+
+	var fonte_txt := _texto_fonte()
+	if fonte_txt != "":
+		var lf := Label.new()
+		lf.position = Vector2(x_texto, 448)
+		lf.size = Vector2(LARGURA - x_texto - 28, 60)
+		lf.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lf.text = fonte_txt
+		lf.add_theme_font_override("font", Flash.fonte_sistema())
+		lf.add_theme_font_size_override("font_size", 15)
+		lf.add_theme_color_override("font_color", Color("5B6577"))
+		lf.add_theme_constant_override("outline_size", 0)
+		_janela.add_child(lf)
+		_fonte_lbl = lf
+
+	# ---- área do quiz (criada vazia; montada quando o jogador clica em "Fazer o quiz!")
+	_area_quiz = Control.new()
+	_area_quiz.position = _area_texto.position
+	_area_quiz.size = _area_texto.size
+	_area_quiz.visible = false
+	_janela.add_child(_area_quiz)
+
+	if str(dados_painel.get("carimbo", "")) != "":
+		_montar_carimbo(str(dados_painel.carimbo), x_texto)
+
+	# ---- rodapé
+	var dica := Label.new()
+	dica.text = "Espaço ou Enter: continuar     Esc: fechar" if _imagem == null else "Esc: fechar"
+	dica.position = Vector2(x_texto, 528)
+	dica.size = Vector2(420 if _imagem == null else 200, 40)
+	dica.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	dica.add_theme_font_override("font", Flash.fonte_sistema())
+	dica.add_theme_font_size_override("font_size", 15)
+	dica.add_theme_color_override("font_color", Color("7A8394"))
+	dica.add_theme_constant_override("outline_size", 0)
+	_janela.add_child(dica)
+
+	_btn_principal = BotaoGel.new(_texto_botao(), _cor(Flash.VERDE) if not _seco else Color("7F8896"), 30)
+	_btn_principal.position = Vector2(LARGURA - 28 - 290, 524)
+	_btn_principal.size = Vector2(290, 70)
+	_btn_principal.pressed.connect(avancar)
+	_janela.add_child(_btn_principal)
+
+
+func _rotulo_painel() -> String:
+	if id == "quiz_final":
+		return "QUIZ FINAL"
+	if str(dados_painel.get("tipo", "")) == "imagem":
+		return {"procura_se": "CARTAZ", "marcas_altura": "MARCAS"}.get(id, "DESENHO")
+	var n := id.trim_prefix("p").get_slice("_", 0)
+	return "PAINEL " + n if n.is_valid_int() else "PAINEL"
+
+
+func _texto_botao() -> String:
+	if str(dados_painel.get("tipo", "")) == "imagem":
+		return "Fechar"
+	if _riscado:
+		return "..."
+	if _seco:
+		return "Entendido"
+	return "Fazer o quiz!" if not _perguntas.is_empty() else "Entendi!"
+
+
+func _texto_fonte() -> String:
+	var f := str(dados_painel.get("fonte", "")).strip_edges()
+	if f == "":
+		return ""
+	var dominios: Array[String] = []
+	for url in f.split(" ", false):
+		var d := url.replace("https://", "").replace("http://", "").replace("www.", "").get_slice("/", 0)
+		if d not in dominios:
+			dominios.append(d)
+	return "Fonte: " + ", ".join(dominios)
+
+
+# ================================================================ V2: imagem, título riscado, carimbo
+## Textura do desenho/cartaz: o próprio painel (`imagem`) ou o desenho citado por um painel v4 (`desenho`).
+func _carregar_imagem() -> Texture2D:
+	var caminho := str(dados_painel.get("imagem", ""))
+	if caminho == "" and str(dados_painel.get("desenho", "")) != "":
+		caminho = str(dados(str(dados_painel.desenho)).get("imagem", ""))
+	return Flash.textura(caminho) if caminho != "" else null
+
+
+func _montar_imagem() -> void:
+	var caixa := Vector2(430, 410)
+	var moldura := Panel.new()
+	moldura.position = Vector2(40, 98)
+	moldura.size = caixa + Vector2(24, 24)
+	moldura.pivot_offset = moldura.size / 2.0
+	moldura.rotation = deg_to_rad(-1.2)
+	var papel := Color("F4EEDC") if not _seco else Color("DADDE3")
+	moldura.add_theme_stylebox_override("panel", Flash.caixa(_cor(papel), Flash.NAVY, 6, 5))
+	_janela.add_child(moldura)
+	var tam := _imagem.get_size()
+	var k := minf(caixa.x / tam.x, caixa.y / tam.y)
+	var alvo := tam * k
+	var tr := Flash.imagem(_imagem, alvo, (moldura.size - alvo) / 2.0)
+	moldura.add_child(tr)
+	_icone = null
+
+
+func _montar_icone_e_anfitriao(tem_host: bool, anfitriao: String) -> void:
 	var moldura := Panel.new()
 	moldura.position = Vector2(48, 98)
 	moldura.size = Vector2(220, 200)
@@ -260,112 +445,49 @@ func _construir() -> void:
 		nome_chip.position = Vector2(100, 496)
 		_janela.add_child(nome_chip)
 
-	# ---- área de texto (página)
-	_area_texto = Control.new()
-	_area_texto.position = Vector2(300, 98)
-	_area_texto.size = Vector2(LARGURA - 300 - 28, 420)
-	_janela.add_child(_area_texto)
-	var folha := Panel.new()
-	folha.size = Vector2(_area_texto.size.x, 340)
-	folha.add_theme_stylebox_override("panel", Flash.caixa(Color.WHITE if not _seco else Color("F8F9FB"), Flash.NAVY, 20, 4, false))
-	_area_texto.add_child(folha)
-	_texto = Label.new()
-	_texto.position = Vector2(24, 18)
-	_texto.size = Vector2(_area_texto.size.x - 48, 304)
-	_texto.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_texto.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-	var bruto := str(dados_painel.get("texto", ""))
-	_texto.text = bruto if _seco else Flash.corromper(bruto, _corr)
-	var fonte_corpo: Font = Flash.fonte_sistema() if _seco else (Flash.fonte_erro() if _corr >= 0.6 else Flash.fonte_texto())
-	_texto.add_theme_font_override("font", fonte_corpo)
-	var n_chars := _texto.text.length()
-	var tam_corpo := 32 if n_chars < 200 else (29 if n_chars < 280 else 27)
-	_texto.add_theme_font_size_override("font_size", 26 if _seco else (36 if _corr >= 0.6 and n_chars < 260 else (32 if _corr >= 0.6 else tam_corpo)))
-	_texto.add_theme_color_override("font_color", Color("20242E") if _seco else _cor(Flash.NAVY))
-	_texto.add_theme_constant_override("outline_size", 0)
-	_texto.add_theme_constant_override("line_spacing", 2)
-	_area_texto.add_child(_texto)
-	if not _seco:
-		var etiqueta := PanelContainer.new()
-		etiqueta.position = Vector2(20, -22)
-		etiqueta.rotation = deg_to_rad(-3.0)
-		var sb_e := Flash.caixa(_cor(Flash.LARANJA), Flash.NAVY, 14, 4, false)
-		sb_e.content_margin_left = 12
-		sb_e.content_margin_right = 12
-		sb_e.content_margin_top = 0
-		sb_e.content_margin_bottom = 2
-		etiqueta.add_theme_stylebox_override("panel", sb_e)
-		var el := Label.new()
-		el.text = "VOCÊ SABIA?" if _perguntas.is_empty() else "HORA DO QUIZ!"
-		el.add_theme_font_override("font", Flash.fonte_titulo())
-		el.add_theme_font_size_override("font_size", 20)
-		el.add_theme_constant_override("outline_size", 4)
-		etiqueta.add_child(el)
-		_area_texto.add_child(etiqueta)
 
-	var fonte_txt := _texto_fonte()
-	if fonte_txt != "":
-		var lf := Label.new()
-		lf.position = Vector2(300, 448)
-		lf.size = Vector2(LARGURA - 300 - 28, 60)
-		lf.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		lf.text = fonte_txt
-		lf.add_theme_font_override("font", Flash.fonte_sistema())
-		lf.add_theme_font_size_override("font_size", 15)
-		lf.add_theme_color_override("font_color", Color("5B6577"))
-		lf.add_theme_constant_override("outline_size", 0)
-		_janela.add_child(lf)
-		_fonte_lbl = lf
-
-	# ---- área do quiz (criada vazia; montada quando o jogador clica em "Fazer o quiz!")
-	_area_quiz = Control.new()
-	_area_quiz.position = _area_texto.position
-	_area_quiz.size = _area_texto.size
-	_area_quiz.visible = false
-	_janela.add_child(_area_quiz)
-
-	# ---- rodapé
-	var dica := Label.new()
-	dica.text = "Espaço ou Enter: continuar     Esc: fechar"
-	dica.position = Vector2(300, 528)
-	dica.size = Vector2(420, 40)
-	dica.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	dica.add_theme_font_override("font", Flash.fonte_sistema())
-	dica.add_theme_font_size_override("font_size", 15)
-	dica.add_theme_color_override("font_color", Color("7A8394"))
-	dica.add_theme_constant_override("outline_size", 0)
-	_janela.add_child(dica)
-
-	_btn_principal = BotaoGel.new(_texto_botao(), _cor(Flash.VERDE) if not _seco else Color("7F8896"), 30)
-	_btn_principal.position = Vector2(LARGURA - 28 - 290, 524)
-	_btn_principal.size = Vector2(290, 70)
-	_btn_principal.pressed.connect(avancar)
-	_janela.add_child(_btn_principal)
+## v4: dois riscos de caneta por cima do título, como quem apaga o que estava escrito.
+func _riscar_titulo() -> void:
+	var fonte_t: Font = _titulo.get_theme_font("font")
+	var tam: int = _titulo.get_theme_font_size("font_size")
+	var larg := minf(fonte_t.get_string_size(_titulo.text, HORIZONTAL_ALIGNMENT_LEFT, -1, tam).x + 16.0, _titulo.size.x)
+	for k in 2:
+		var r := ColorRect.new()
+		r.color = Color(0.08, 0.06, 0.08, 0.92)
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		r.size = Vector2(larg, 5)
+		r.position = Vector2(_titulo.position.x - 6, _titulo.position.y + 28 + k * 7)
+		r.pivot_offset = Vector2(0, 2.5)
+		r.rotation = deg_to_rad(-1.4 + k * 2.6)
+		_janela.add_child(r)
 
 
-func _rotulo_painel() -> String:
-	if id == "quiz_final":
-		return "QUIZ FINAL"
-	var n := id.trim_prefix("p").get_slice("_", 0)
-	return "PAINEL " + n if n.is_valid_int() else "PAINEL"
-
-
-func _texto_botao() -> String:
-	if _seco:
-		return "Entendido"
-	return "Fazer o quiz!" if not _perguntas.is_empty() else "Entendi!"
-
-
-func _texto_fonte() -> String:
-	var f := str(dados_painel.get("fonte", "")).strip_edges()
-	if f == "":
-		return ""
-	var dominios: Array[String] = []
-	for url in f.split(" ", false):
-		var d := url.replace("https://", "").replace("http://", "").replace("www.", "").get_slice("/", 0)
-		if d not in dominios:
-			dominios.append(d)
-	return "Fonte: " + ", ".join(dominios)
+## "EM REVISÃO": carimbo vermelho torto sobre a folha (v3).
+func _montar_carimbo(texto: String, x_texto: float) -> void:
+	var c := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(1, 1, 1, 0.0)
+	sb.border_color = Color("B3261E")
+	sb.set_border_width_all(4)
+	sb.set_corner_radius_all(4)
+	sb.content_margin_left = 14
+	sb.content_margin_right = 14
+	sb.content_margin_top = 2
+	sb.content_margin_bottom = 4
+	c.add_theme_stylebox_override("panel", sb)
+	var l := Label.new()
+	l.text = texto
+	l.add_theme_font_override("font", Flash.fonte_titulo())
+	l.add_theme_font_size_override("font_size", 34)
+	l.add_theme_color_override("font_color", Color("B3261E"))
+	l.add_theme_constant_override("outline_size", 0)
+	c.add_child(l)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.position = Vector2(LARGURA - 300.0, 360.0)
+	c.pivot_offset = Vector2(140, 25)
+	c.rotation = deg_to_rad(-8.0)
+	c.modulate.a = 0.82
+	_janela.add_child(c)
 
 
 # ================================================================ animação e texto

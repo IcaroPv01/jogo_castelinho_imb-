@@ -1,4 +1,4 @@
-# Castelinho de Imbé: modelo paramétrico e nível das salas 1 a 25
+# Castelinho de Imbé: modelo paramétrico e o nível das quatro visitas (V2)
 
 Tudo é gerado por código (nenhum `.glb`, nenhuma malha feita à mão). Os números ficam em `medidas.json`;
 mudar uma medida e recarregar o nível basta. Fontes: `docs/pesquisa/geometria_e_fotos.md`, as fotos de
@@ -17,8 +17,11 @@ mudar uma medida e recarregar o nível basta. Fontes: `docs/pesquisa/geometria_e
 | `entorno.gd` | Lote, calçadas, avenidas, casas vizinhas, pinheiros, postes, cercas, dunas de 1950, barreiras e o corredor de 1975. |
 | `malha.gd` | `Malha`: junta a geometria por material (uma `ArrayMesh`, uma superfície por material) e as caixas de colisão. `bolha` (elipsoide low-poly com cor de vértice) faz tufos de pinheiro, arbustos, hortênsias e peças do acervo. |
 | `sombras.gd` | `SombrasChao`: sombras pintadas no chão, com uma imagem por época (sombra projetada pelo Sol da época, oclusão no pé dos volumes e copas), num quadrilátero em modo MULTIPLICAR. Custa 1 draw call. |
+| `obra.gd` | `ObraCastelinho`: a época **E1967** (o Castelinho em obra), ver "Licença criativa" abaixo. |
+| `tito.gd` | `TitoCastelinho`: o boneco do Tito (só E1967), desenhos, cartaz de PROCURA-SE, marcas de altura, balde e disco. Usa as texturas de `assets/ui/tito/` e, se faltarem, gera placeholders. |
+| `gatilho.gd` | `GatilhoCastelinho`: o `SalaTrigger` que entrega a sala BASE ao nível (que converte para a sala global da visita). |
 | `muros.gd` | `Muros`: parede reta com aberturas (arco abatido, ogival, retangular) gerada por código, sem CSG. |
-| `../world/niveis/castelinho.gd/.tscn` | O nível: céu, luzes, marcadores, `SalaTrigger`, painéis, eventos. |
+| `../world/niveis/castelinho.gd/.tscn` | O nível das 4 visitas: céu, luzes, marcadores, gatilhos, painéis, eventos, discos e o loop de visitas. |
 | `../tools/gerar_texturas.py` | Texturas PNG próprias em `assets/textures/` (numpy + Pillow). |
 
 ## Sistema de coordenadas
@@ -65,13 +68,44 @@ Capturas de comparação (rodar `tests/captura_cam.gd`): `build/capturas/cmp2_dr
 | `Nucleo_1950` | 1950 | Casa de pedra de dois volumes (A alto ao norte, B baixo ao sul), telhados de duas águas, chaminé saliente, janela gradeada alta, porta arqueada aberta. **Posição: onde hoje é o corpo principal** (x -12,5..-5, z -20,5..-11, mesma fachada leste do letreiro, a da foto antiga: duas janelas, porta arqueada, janela alta). Oco e caminhável. |
 | `Cidade` | 1975, 2019, 2020 | Ruas, calçadas, casas vizinhas, postes, cercas, pinheiros. |
 | `Areia_1950` | 1950 | Chão de areia clara e dunas. Vento (partículas) e `Audio.ambiente("vento")`. |
-| `Corredor_1975` | 1975 | Corredor de 1975 (x -10,2, de z -29,5 até -82): passa do limite do lote (z -34). |
+| `Corredor_1975` | 1975 | Corredor de 1975 (x -10,2, de z -29,5 até -82): passa do limite do lote (z -34). É o fim da visita 3. |
+| `Obra_1967` | 1967 | O Castelinho em obra (licença criativa, abaixo). `Areia_1950` (chão e dunas) também vale em 1967; a `Cidade` não. |
 
 **Colisão elevada persiste em 1950**: lajes, terraços e parapetos ficam sólidos (invisíveis) em todas as épocas.
 Assim, na sala 17, segurando Q no topo da torre, o jogador **flutua** sobre o chão de areia em vez de cair. As paredes
 do térreo, as escadas e o mobiliário somem de verdade (colisão incluída).
 
-## Distribuição interior (invenção plausível; não existe planta real)
+## Licença criativa: a época E1967 (obra)
+
+Os dados históricos dizem que a obra foi de 1950 a 1975 e que as torres vieram depois. **O estado exato em 1967 não está
+documentado**: o que está em `obra.gd` é uma estimativa plausível, não um fato.
+
+* Corpo principal e arcada de pé (sem telhado, só caibros; parapeito da arcada incompleto, com ferros de armação).
+* Torre A pela metade (topo desigual, 2,6 a 4,2 m) com andaime de madeira; Torre B só na fundação (0,9 m) com ferros.
+* Pilhas de blocos de pedra, um barco de madeira encalhado, chão de areia, três casas de madeira de pilotis, nenhuma rua.
+* Um muro baixo de blocos ao longo da Av. Garibaldi **com um buraco de criança** (pista que só existe em 1967): é por ele
+  que o Tito entrava na obra.
+* **Tito** (fictício, 9 anos): boneco low-poly de caixas (estilo PS1), bermuda azul, camiseta clara, balde vermelho, rosto de
+  dois pontos. Brinca na areia ao lado de um castelinho de areia e acena para a câmera (`TitoCastelinho.animar`). Só existe
+  em E1967 (e, como "visão", dentro do Visor nas visitas 3 e 4). Nada de rosto realista, nada gráfico.
+
+## As quatro visitas (V2)
+
+O nível é o mesmo prédio nas quatro visitas; `GameState.visita` muda o estado. Gatilhos numerados pela sala base 1..22;
+`sala = base + {0, 22, 44}` nas visitas 1 a 3, e a visita 4 comprime as bases nas salas 67..79 (`V4_SALAS`), com a 80 na porta
+zebrada do hall. As bases 23, 24, 25 (porta de saída, corredor de 1975) contam como a 22.
+
+| Visita | Hora/clima | O que muda |
+|---|---|---|
+| 1 | manhã de sol | 3 sementes (recorte virado para a parede, desenho nº 1 no Salão de Arte, criança no mural). Visor + disco 1950 na sala 10. Diploma. |
+| 2 | fim de tarde, vento | painéis `_v2`; telefone (sala 34), engasgo (33), recorte que cai (37), Barra (mural, 36); disco 1967 no Acervo; diploma "TITO", apagão de 2 s e balde vermelho no trono. |
+| 3 | noite, lanterna | Quico entrega a lanterna; cartazes PROCURA-SE; porta para 1950 (Ato II) no Salão de Arte; disco 1975 no topo da Torre A; marcas de altura (só em 1975); pinguim que olha; armadura; saída com fita zebrada (em 1975 aberta, pelo corredor). |
+| 4 | madrugada, chuva | painéis com desenhos do Tito; disco 2019 atrás do painel solto (Povos); porta zebrada no hall (sala 80) e escada na Sala Medieval (só em 2019): descem para o porão. |
+
+Checkpoints (globais): 1, 10, 16 | 23, 32, 38 | 45, 54, 61 | 67, 72, 77 | porão 81 e 95. Marcadores `Checkpoint_<base>` e
+`Checkpoint_<global>`. Orçamento: no máximo 6 luzes (Sol/Lua + 5 lâmpadas na visita 1/2; 4 lâmpadas + lanterna nas 3 e 4).
+
+ (invenção plausível; não existe planta real)
 
 Fachadas e volumes seguem as fotos; o miolo é nosso. Sequência linear das salas do roteiro (norte em cima, x cresce
 para a direita):
@@ -134,13 +168,17 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 -s res:/
 ```
 
 Câmeras `Cam_*` do nível: drone, frontal, esquina, torres, aerea2019, fundos, hall, medieval, nucleo1950, topo_torre,
-pescador, corredor, escada, terraco, salaarte, povos, ambiente, torreb, corredor1975, spawn, deck. O quarto argumento
-é a época (0 = 1950, 1 = 1975, 2 = 2019, 3 = 2020).
+pescador, corredor, escada, terraco, salaarte, povos, ambiente, torreb, corredor1975, spawn, deck, e da V2: obra1967,
+tito1967, buraco1967, acervo, porta_ato2, porta_porao, escada2019, povos2. Argumentos de `captura_cam.gd`: época (0 = 1950,
+1 = 1975, 2 = 2019, 3 = 2020, 4 = 1967), corrupção, **visita** (1 a 4) e flags a ligar (ex.: `evt_v2_apagao`).
 
 ## Limitações conhecidas
 
 * Fachadas norte e oeste, telhados por dentro e a escada real das torres não têm foto: são invenção.
 * O letreiro "Castelinho" é uma fonte serifada (sem fonte gótica livre no repositório) e a placa traz o programa
   fictício, nunca o brasão ou o nome oficial da prefeitura.
+* Medido na V2 (`captura_cam.gd`): 70 a 113 draw calls nas visitas 1 a 4 e 11 a 16 em 1967 (o teste estima o teto sem frustum).
+* O painel p08 da Sala dos Povos estava enterrado na parede (x -26,76; a face interna é x -26,4): corrigido; `castelinho_test`
+  confere que todo painel visível é alcançável pelo raio do jogador.
 * Em 1950 o jogador pode ficar preso numa parede se soltar Q dentro de onde uma parede reaparece; a cápsula se
   desprende sozinha, mas convém soltar Q em espaço aberto.

@@ -1,5 +1,5 @@
 {
-	"_leia_me": "Conteudo dos paineis educativos. Chave = id (p01..p25, p07_corrompido, quiz_final). Campos: titulo, texto (max ~60 palavras), fonte (URL(s) do fato, separadas por espaco), icone (assets/ui/icones/<nome>.svg), anfitriao (bentinho|taina|quico|sistema) e quiz opcional: {pergunta, opcoes[3], correta (indice 0..2), selo, explicacao?} ou uma lista dessas (quiz_final). 'alias' reaproveita outro painel. Fatos: docs/pesquisa/historia_imbe.md e castelinho.md. Os paineis p24/p25 sao 'reescritos' (tom seco, fatos reais).",
+	"_leia_me": "Conteudo dos paineis educativos. Chave = id (p01..p25, p07_corrompido, quiz_final). Campos: titulo, texto (max ~60 palavras), fonte (URL(s) do fato, separadas por espaco), icone (assets/ui/icones/<nome>.svg), anfitriao (bentinho|taina|quico|sistema|vazio) e quiz opcional: {pergunta, opcoes[3], correta (indice 0..2), selo, explicacao?} ou uma lista dessas (quiz_final). 'alias' reaproveita outro painel. Fatos: docs/pesquisa/historia_imbe.md e castelinho.md. V2 (docs/V2_ROTEIRO.md): 'pNN_v2' (fatos reais sem verniz, 'seco'), 'pNN_v3' (institucional frio, 'carimbo': EM REVISAO) e 'pNN_v4' (quase sem texto, 'riscado': titulo riscado, 'desenho': id de um desenho do Tito mostrado no painel). Se o id 'pNN_vK' nao existir, PainelUI.dados() cai em 'pNN' (fallback). Imagens: entradas com 'tipo': 'imagem' (desenho_1..7, procura_se, marcas_altura) trazem 'imagem' (res://assets/ui/tito/*.png, geradas por tools/gerar_desenhos.py), 'largura_m' (largura da folha no mundo, em metros) e 'texto' (legenda). Campos opcionais: seco, carimbo, riscado, desenho.",
 
 	"p01": {
 		"titulo": "Bem-vindo ao Castelinho!",
@@ -115,21 +115,21 @@
 	},
 	"p14": {
 		"titulo": "A barra do Rio Tramandaí",
-		"texto": "A barra é onde o Rio Tramandaí encontra o mar! Fica no Guia Corrente, com calçadão, bares e pescadores com tarrafa. É lá que os botos aparecem. Quer espiar como era? Toque no mural da Sala do Pescador!",
+		"texto": "A barra é o lugar onde o Rio Tramandaí encontra o mar! Fica no Guia Corrente, com calçadão, restaurantes e pescadores de tarrafa. É ali que os botos aparecem. Dica do Bentinho: na praia, só entre na água perto dos guarda-vidas! Quer espiar a pesca de pertinho? Toque no mural da Sala do Pescador!",
 		"fonte": "https://www.viagensecaminhos.com/imbe-rs/",
 		"icone": "onda",
 		"anfitriao": "bentinho"
 	},
 	"p15": {
 		"titulo": "Dia de São Pedro",
-		"texto": "A tainha é o peixe que os botos empurram para as tarrafas! E em 29 de junho é feriado em Imbé: dia de São Pedro, o padroeiro dos pescadores. Eu, a Tainá, prefiro ficar bem longe das redes, viu?",
+		"texto": "A tainha é o peixe que os botos empurram para as tarrafas! Em 29 de junho é feriado em Imbé: dia de São Pedro, o padroeiro dos pescadores. Eu, a Tainá, só peço que as redes me esqueçam!",
 		"fonte": "https://pt.wikipedia.org/wiki/Imbé https://www.ufrgs.br/site/noticias/parceria-entre-botos-e-pescadores-para-captura-de-peixes-vira-patrimonio-imaterial-do-brasil/",
 		"icone": "peixe",
 		"anfitriao": "taina"
 	},
 	"p16": {
 		"titulo": "Visita às torres",
-		"texto": "Quer subir? Desde 20 de fevereiro de 2026, o Castelinho abre aos sábados, das 9h às 17h, com visita guiada pelos ambientes temáticos e pelas torres. Piii! Subir correndo, não! Aqui o fiscal sou eu!",
+		"texto": "Quer subir nas torres? Desde 20 de fevereiro de 2026, o Castelinho abre aos sábados, das 9h às 17h, com visita guiada pelos ambientes temáticos e pelas torres. Piii! Subir devagarinho, tá? Aqui o fiscal sou eu, o Quico!",
 		"fonte": "https://www.correiodoimbe.com.br/noticia/castelinho-da-cultura-em-imbe-estara-aberto-aos-sabados-para-visitacao https://jornaldimensao.com.br/castelinho-de-imbe-amplia-acesso-ao-publico-e-abre-portas-aos-sabados-com-visitas-guiadas/",
 		"icone": "torre",
 		"anfitriao": "quico"
@@ -150,7 +150,7 @@
 	},
 	"p19": {
 		"titulo": "O tamanho do Castelinho",
-		"texto": "Medidas do Castelinho: cerca de 290 m² construídos, num terreno de mais de 900 m². Em 2019, o município comprou o imóvel por R$ 703 mil. Esta torreta é só uma das partes do castelo! Piii! Cuidado com a cabeça!",
+		"texto": "O Castelinho tem cerca de 290 m² de área construída, num terreno de mais de 900 m². Em 2019, o município comprou o imóvel por R$ 703 mil para transformá-lo em Casa de Cultura. Esta torreta é só uma das partes do castelo! Piii! Cuidado com a cabeça nas portinhas!",
 		"fonte": "https://jplitoral.com.br/patrimonio-historico-prefeitura-de-imbe-fecha-compra-do-castelinho/ https://litoralnarede.com.br/castelinho-de-imbe-sera-transformado-em-centro-cultural/",
 		"icone": "pedra",
 		"anfitriao": "quico"
@@ -164,7 +164,7 @@
 	},
 	"p21": {
 		"titulo": "Os dois tronos",
-		"texto": "Esta sala tem dois tronos! Aqui os visitantes tiram fotos com coroas, cetros e capas reais. Existe até um plano de levar os tronos para a Sala do Pescador, num cantinho bem \"instagramável\". Quem vai sentar? Piii!",
+		"texto": "Esta é a Sala Medieval, e ela tem dois tronos! Os visitantes tiram fotos com coroas, cetros e capas reais doados pelo secretário de Cultura. Há um plano de levar os tronos para a Sala do Pescador, num cantinho para fotos. Quem vai sentar primeiro? Piii!",
 		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/",
 		"icone": "coroa",
 		"anfitriao": "quico"
@@ -173,8 +173,8 @@
 		"alias": "quiz_final"
 	},
 	"p23": {
-		"titulo": "Saída em reforma?",
-		"texto": "Desde 2025, a Cultura de Imbé funciona toda aqui dentro, e o Castelinho recebe shows, teatro e oficinas. Por isso a casa está sempre mudando! Atenção: algumas áreas podem estar em reforma.",
+		"titulo": "A casa que não para!",
+		"texto": "Desde 2025, a Secretaria de Cultura de Imbé funciona toda aqui dentro, e o Castelinho recebe shows, teatro, oficinas e até encontros de filosofia! Por isso a agenda vive mudando. Atenção: algumas áreas podem estar fechadas para reforma. Siga as setas!",
 		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/",
 		"icone": "lei",
 		"anfitriao": "bentinho"
@@ -232,5 +232,636 @@
 				"explicacao": "Em 9 de maio de 1988, pela Lei nº 8.600!"
 			}
 		]
+	},
+	"p01_v2": {
+		"titulo": "Antes de ser museu",
+		"texto": "Painel atualizado. O Castelinho foi restaurante, choperia e creperia, até 2019. Naquele ano estava prestes a virar ruínas, e a demolição quase aconteceu. A Casa de Cultura abriu em 23 de dezembro de 2020.",
+		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/ https://litoralnarede.com.br/castelinho-de-imbe-sera-transformado-em-centro-cultural/ https://jplitoral.com.br/imbe-inaugura-casa-de-cultura-e-museu-municipal/",
+		"icone": "castelo",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p01_v3": {
+		"titulo": "Painel 01 · em revisão",
+		"texto": "AVISO. Este painel está em revisão.\nO texto de boas-vindas foi retirado a pedido do Programa.\nSe você viu o menino desaparecido em 1967, procure a recepção. A recepção está fechada.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p01_v4": {
+		"titulo": "Bem-vindo ao Castelinho!",
+		"texto": "…",
+		"icone": "castelo",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_2"
+	},
+	"p02_v2": {
+		"titulo": "O nome é de uma planta que se agarra",
+		"texto": "Painel atualizado. \"Imbé\" vem de uma trepadeira, o cipó-imbé, também chamada costela-de-Adão: ela se agarra ao que encontra e sobe. Era abundante aqui antes de a cidade existir. A Câmara fala em \"capão imbé\": uma mancha de mato.",
+		"fonte": "https://www.turismo.rs.gov.br/turismo/municipio/visualizar/159 https://camaraimbe.rs.gov.br/historico-de-imbe",
+		"icone": "folha",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p02_v3": {
+		"titulo": "Painel 02 · em revisão",
+		"texto": "Painel 02. Conteúdo em revisão.\nO nome \"Imbé\" vem de uma planta que cresce sobre o que encontra. Não encoste nas trepadeiras do jardim.\nO Programa não sabe por que elas crescem mais perto do prédio.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p02_v4": {
+		"titulo": "De onde vem o nome Imbé?",
+		"texto": "…",
+		"icone": "folha",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_2"
+	},
+	"p03_v2": {
+		"titulo": "Vinte e cinco anos de obra",
+		"texto": "Painel atualizado. A obra durou de 1950 a 1975. A pedra veio de barco, pelo Rio Tramandaí. Depois da morte do construtor, os herdeiros alugaram o imóvel por cerca de trinta anos. Em 2019, estava quase em ruínas.\nConstrutor: ______",
+		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/ https://jplitoral.com.br/patrimonio-historico-prefeitura-de-imbe-fecha-compra-do-castelinho/",
+		"icone": "pedra",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p03_v3": {
+		"titulo": "Painel 03 · em revisão",
+		"texto": "CONTEÚDO EM REVISÃO.\nA obra durou de 1950 a 1975. Parte dela não consta na planta oficial.\nConstrutor: ______\nNenhum menino foi visto nas obras em 1967. Quem disser o contrário será encaminhado à recepção.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p03_v4": {
+		"titulo": "Um castelo feito à mão",
+		"texto": "ei",
+		"icone": "pedra",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_2"
+	},
+	"p04_v2": {
+		"titulo": "Os barcos eram de guerra",
+		"texto": "Painel atualizado. O Seival e o Rio Pardo eram barcos de guerra. Em 1839, durante a Guerra dos Farrapos, foram arrastados por terra, de 80 a 100 km, para atacar Laguna (SC) pelo mar. Naquele tempo, o rio só se cruzava de canoa. O gado atravessava a nado.",
+		"fonte": "https://tramandai.rs.gov.br/conteudo/11-historia-da-cidade https://www.jornaltradicao.com.br/regiao/colunistas/guerra-farroupilha-chega-a-santa-catarina/ https://camaraimbe.rs.gov.br/historico-de-imbe",
+		"icone": "barco",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p04_v3": {
+		"titulo": "Painel 04 · em revisão",
+		"texto": "Painel 04. Conteúdo em revisão.\nOs barcos Seival e Rio Pardo atravessaram a barra em 1839. O que atravessa a barra hoje não está catalogado.\nNão vá à margem depois do pôr do sol.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p04_v4": {
+		"titulo": "Garibaldi e o lanchão Seival",
+		"texto": "…",
+		"icone": "barco",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_2"
+	},
+	"p05_v2": {
+		"titulo": "Os pescadores foram removidos",
+		"texto": "Painel atualizado. Em 1939, a Sociedade Territorial Praia do Imbé comprou as terras. Famílias de pescadores já moravam ali. Elas recorreram à Justiça e foram removidas: reassentadas do outro lado do rio, perto da Lagoa do Armazém. O painel anterior dizia \"acomodados\".",
+		"fonte": "https://vitruvius.com.br/revistas/read/minhacidade/08.087/1915 https://pt.wikipedia.org/wiki/Imbé",
+		"icone": "mapa",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p05_v3": {
+		"titulo": "Painel 05 · em revisão",
+		"texto": "Aviso de revisão nº 5.\nOs moradores anteriores à cidade-jardim aguardam resposta do Programa desde 1939. Nenhum prazo foi estabelecido.\nObrigado pela compreensão.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p05_v4": {
+		"titulo": "A cidade-jardim de 1939",
+		"texto": "…",
+		"icone": "mapa",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_3"
+	},
+	"p06_v2": {
+		"titulo": "Imbé não decidia por Imbé",
+		"texto": "Painel atualizado. Até 1988, Imbé era só o balneário da margem norte de Tramandaí, governado do outro lado do rio. A emancipação foi aprovada em plebiscito (10/04/1988) e criada em 9 de maio, pela Lei nº 8.600. O município foi instalado em 1º de janeiro de 1989.",
+		"fonte": "https://camaraimbe.rs.gov.br/historico-de-imbe https://tramandai.rs.gov.br/conteudo/11-historia-da-cidade",
+		"icone": "lei",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p06_v3": {
+		"titulo": "Painel 06 · em revisão",
+		"texto": "CONTEÚDO EM REVISÃO.\nEm 1988, Imbé deixou de ser balneário e passou a ter prefeitura. O menino desaparecido em 1967 não consta nos registros da emancipação.\nO Programa não comenta o caso.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p06_v4": {
+		"titulo": "Imbé ganha autonomia",
+		"texto": "…",
+		"icone": "lei",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_3"
+	},
+	"p07_v2": {
+		"titulo": "Horário de visita",
+		"texto": "Painel atualizado. Horário divulgado: segunda a sexta, das 8h às 12h e das 13h30 às 17h30; aos sábados, das 9h às 17h, com visita guiada. Fora desses horários, o prédio está fechado. À noite, só com eventos.",
+		"fonte": "https://www.correiodoimbe.com.br/noticia/castelinho-da-cultura-em-imbe-estara-aberto-aos-sabados-para-visitacao https://jornaldimensao.com.br/castelinho-de-imbe-amplia-acesso-ao-publico-e-abre-portas-aos-sabados-com-visitas-guiadas/ https://cadastro.museus.gov.br/museus/casa-de-cultura-e-museu-municipal-de-imbe/",
+		"icone": "museu",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p07_v3": {
+		"titulo": "Painel 07 · em revisão",
+		"texto": "Horário de visita: sábados, das 9h às 17h.\nA visita atual não tem horário de encerramento. A recepção não responde.\nDúvidas sobre o menino desaparecido em 1967: não pergunte ao guia.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p07_v4": {
+		"titulo": "O museu",
+		"texto": "aqui",
+		"icone": "museu",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_3"
+	},
+	"p08_v2": {
+		"titulo": "Sambaquis também eram cemitérios",
+		"texto": "Painel atualizado. Alguns grupos indígenas usavam os sambaquis como santuário, enterrando neles os seus mortos. Outros construíam ali suas moradias. O painel anterior citava apenas a moradia. Os sambaquis guardam a memória de quem viveu aqui há milhares de anos.",
+		"fonte": "https://pt.wikipedia.org/wiki/Sambaqui https://arqueologiaupf.wordpress.com/2026/06/03/arqueologia-e-desenvolvimento-preservando-a-memoria-do-litoral-norte/",
+		"icone": "concha",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p08_v3": {
+		"titulo": "Painel 08 · em revisão",
+		"texto": "Painel 08. Conteúdo em revisão.\nSambaquis são montes de conchas, e alguns são cemitérios. Respeite-os.\nNão há sambaquis dentro do prédio. Se encontrar conchas no piso, avise a recepção.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p08_v4": {
+		"titulo": "Os sambaquis",
+		"texto": "…",
+		"icone": "concha",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_3"
+	},
+	"p09_v2": {
+		"titulo": "O Cemitério dos Navegantes",
+		"texto": "Painel atualizado. A costa gaúcha é chamada de \"Cemitério dos Navegantes\": há pelo menos 10 naufrágios entre Torres e Cidreira até 1963. Em Tramandaí, a Marinha registra o Minuano (1836) e o Meteoro (1902). Em 2017, uma baleia-de-Bryde de 13 metros encalhou morta em Imbé.",
+		"fonte": "https://afolhatorres.com.br/colunas/naufragios-na-regiao-de-torres-a-memoria-submersa-dos-navios-que-nunca-chegaram-ao-destino/ https://www.marinha.mil.br/cprs/naufrars https://www.jornaldocomercio.com/_conteudo/2017/01/geral/542266-veranistas-encontram-baleia-encalhada-em-imbe-no-litoral-norte.html",
+		"icone": "onda",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p09_v3": {
+		"titulo": "Painel 09 · em revisão",
+		"texto": "CONTEÚDO EM REVISÃO.\nOs registros de naufrágios da costa terminam em 1963.\nUm barco de madeira foi visto encalhado no terreno em 1967. Ele não consta em nenhuma ocorrência.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p09_v4": {
+		"titulo": "Nossa costa",
+		"texto": "…",
+		"icone": "onda",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_4"
+	},
+	"p10_v2": {
+		"titulo": "Ninguém concorda com a data",
+		"texto": "Painel atualizado. As fontes não concordam sobre o Castelinho: 1948 no cadastro de museus, 1956 para a Secretaria de Cultura, 1950 a 1975 para a imprensa. Não foi localizada nenhuma planta da obra. O que o Visor mostra é o que as fotos permitem; o resto é suposição.",
+		"fonte": "https://cadastro.museus.gov.br/museus/casa-de-cultura-e-museu-municipal-de-imbe/ https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/ https://www.correiodoimbe.com.br/noticia/castelinho-da-cultura-em-imbe-estara-aberto-aos-sabados-para-visitacao",
+		"icone": "relogio",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p10_v3": {
+		"titulo": "Painel 10 · em revisão",
+		"texto": "Painel 10. Conteúdo em revisão.\nA planta oficial do prédio não registra nenhum porão. O terreno é de areia.\nImbé é areia. Não existe porão aqui.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p10_v4": {
+		"titulo": "O Castelinho através do tempo",
+		"texto": "…",
+		"icone": "relogio",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_4"
+	},
+	"p11_v2": {
+		"titulo": "Três pontes, duas datas",
+		"texto": "Painel atualizado. São três pontes lado a lado, com uns 150 metros: duas num sentido e uma no outro. A Prefeitura de Tramandaí data a primeira de 1934; outra fonte fala em obras entre os anos 1950 e 1980. As datas não concordam. Pescadores de sardinha ocupam as margens.",
+		"fonte": "https://tramandai.rs.gov.br/conteudo/11-historia-da-cidade https://pt.wikipedia.org/wiki/Ponte_Giuseppe_Garibaldi",
+		"icone": "ponte",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p11_v3": {
+		"titulo": "Painel 11 · em revisão",
+		"texto": "Painel 11. Conteúdo em revisão.\nA ponte liga Imbé a Tramandaí.\nO Programa não tem informações sobre quem a atravessa à noite. Não pergunte.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p11_v4": {
+		"titulo": "A ponte Giuseppe Garibaldi",
+		"texto": "…",
+		"icone": "ponte",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_4"
+	},
+	"p12_v2": {
+		"titulo": "A cidade que esvazia",
+		"texto": "Painel atualizado. No verão, Imbé passa de cerca de 16 mil para uns 80 mil moradores e visitantes. Fora da temporada, a cidade esvazia, e as casas de veraneio ficam fechadas boa parte do ano.",
+		"fonte": "https://vitruvius.com.br/revistas/read/minhacidade/08.087/1915 https://pt.wikipedia.org/wiki/Imbé",
+		"icone": "sol",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p12_v3": {
+		"titulo": "Painel 12 · em revisão",
+		"texto": "CONTEÚDO EM REVISÃO.\nFora da temporada, a cidade tem 16 mil moradores. O Programa não sabe dizer quantos visitantes ainda estão no prédio.\nContagem em revisão. Se você é um deles, siga as setas.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p12_v4": {
+		"titulo": "Veraneio: de 16 mil para 80 mil",
+		"texto": "…",
+		"icone": "sol",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_4"
+	},
+	"p13_v2": {
+		"titulo": "Os botos e o esgoto",
+		"texto": "Painel atualizado. A pesca com botos já era registrada por volta de 1900 e só acontece aqui e em Laguna (SC). Virou Patrimônio Cultural do Brasil em 11/03/2026. A ameaça que os pesquisadores apontam é o esgoto lançado no Rio Tramandaí.",
+		"fonte": "https://www.ufrgs.br/site/noticias/parceria-entre-botos-e-pescadores-para-captura-de-peixes-vira-patrimonio-imaterial-do-brasil/ https://sul21.com.br/noticias/meio-ambiente/2026/03/pesca-com-botos-se-torna-patrimonio-cultural-e-aumenta-expectativa-de-protecao-contra-esgoto-no-rio-tramandai/",
+		"icone": "boto",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p13_v3": {
+		"titulo": "Painel 13 · em revisão",
+		"texto": "Painel 13. Conteúdo em revisão.\nOs botos indicam a hora de lançar a rede. Ninguém no Programa sabe a quem eles indicam hoje.\nNão responda a sinais vindos da água.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p13_v4": {
+		"titulo": "A pesca com os botos",
+		"texto": "…",
+		"icone": "boto",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_5"
+	},
+	"p14_v2": {
+		"titulo": "Afogamentos na barra",
+		"texto": "Painel atualizado. Em um estudo da UFRGS sobre afogamentos no RS e em SC, Imbé concentra 13% das mortes. A temporada mais trágica foi a de 2009/2010, com 35 mortes. As guaritas 136 e 137, onde o rio encontra o mar, são de alto risco. A vigilância só começa às 8h.",
+		"fonte": "https://www.ufrgs.br/gravel/12/1/Gravel_12_V1_05.pdf",
+		"icone": "onda",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p14_v3": {
+		"titulo": "Painel 14 · em revisão",
+		"texto": "Painel 14. Conteúdo em revisão.\nEm caso de chamado vindo da água, não siga. Procure o guarda-vidas.\nEm 1967, um menino foi visto pela última vez perto do Braço Morto. O Programa não comenta.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p14_v4": {
+		"titulo": "A barra do Rio Tramandaí",
+		"texto": "Não vá.",
+		"icone": "onda",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_5"
+	},
+	"p15_v2": {
+		"titulo": "Oferendas ao mar",
+		"texto": "Painel atualizado. Quem vive do mar pede proteção a ele. Em 29 de junho, a São Pedro: pescadores separavam uma tainha em cada cem como oferenda. Em 2 de fevereiro, a Nossa Senhora dos Navegantes e a Iemanjá, com oferendas levadas ao mar.",
+		"fonte": "https://fundart.com.br/dt_portfolio/festa-de-sao-pedro/ https://www.brasildefato.com.br/2025/02/01/festas-missas-e-procissoes-marcam-os-festejos-de-iemanja-e-nossa-senhora-dos-navegantes-pelo-rs/",
+		"icone": "peixe",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p15_v3": {
+		"titulo": "Painel 15 · em revisão",
+		"texto": "CONTEÚDO EM REVISÃO.\n29 de junho: feriado municipal.\n12 de março: sem registro.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p15_v4": {
+		"titulo": "Dia de São Pedro",
+		"texto": "…",
+		"icone": "peixe",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_5"
+	},
+	"p16_v2": {
+		"titulo": "Ninguém publicou a planta",
+		"texto": "Painel atualizado. As torres foram construídas em momentos diferentes, segundo a Secretaria de Cultura. Nenhuma planta ou projeto foi divulgado. As visitas às torres existem desde 20 de fevereiro de 2026, aos sábados, das 9h às 17h.",
+		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/ https://www.correiodoimbe.com.br/noticia/castelinho-da-cultura-em-imbe-estara-aberto-aos-sabados-para-visitacao https://jornaldimensao.com.br/castelinho-de-imbe-amplia-acesso-ao-publico-e-abre-portas-aos-sabados-com-visitas-guiadas/",
+		"icone": "torre",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p16_v3": {
+		"titulo": "Painel 16 · em revisão",
+		"texto": "As torres estão fechadas para reforma. Visitas suspensas.\nMotivo: em revisão.\nSe você ouvir passos no andar de cima, não responda.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p16_v4": {
+		"titulo": "Visita às torres",
+		"texto": "…",
+		"icone": "torre",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_5"
+	},
+	"p17_v2": {
+		"titulo": "O Castelinho começou sem torres",
+		"texto": "Painel atualizado. De início, era só o miolo da casa. A foto antiga exposta no museu mostra uma casa de pedra na areia nua, sem torres, sem ameias e sem arcada, quase sem vegetação e sem casas em volta. Imbé, nos anos 1950, era quase um deserto.",
+		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/",
+		"icone": "torre",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p17_v3": {
+		"titulo": "Painel 17 · em revisão",
+		"texto": "Painel 17. Conteúdo em revisão.\nEm 1967, a Torre A tinha 4 metros e um andaime. O menino desaparecido em 1967 brincava perto dela.\nO Programa pede que não se suba.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p17_v4": {
+		"titulo": "As torres vieram depois",
+		"texto": "ei...",
+		"icone": "torre",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_6"
+	},
+	"p18_v2": {
+		"titulo": "Para onde desce a água",
+		"texto": "Painel atualizado. Imbé tem 26.824 habitantes (Censo de 2022). A cidade é baixa: a água das ruas desce por valos e tubos até o Lago do Braço Morto, o ponto mais baixo. Um desses canais passa pela Av. Nilza Godoy, na frente do Castelinho. Quando chove forte, o lago transborda.",
+		"fonte": "https://sul21.com.br/noticias/meio-ambiente/2025/09/imbe-canalizacao-de-cursos-dagua-ameaca-biodiversidade-alertam-especialistas/ https://www.turismo.rs.gov.br/turismo/municipio/visualizar/159 https://pt.wikipedia.org/wiki/Imbé",
+		"icone": "pessoas",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p18_v3": {
+		"titulo": "Painel 18 · em revisão",
+		"texto": "CONTEÚDO EM REVISÃO.\nImbé tem 26.824 habitantes. O Programa registra 26.825.\nDiferença em revisão.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p18_v4": {
+		"titulo": "Imbé hoje",
+		"texto": "…",
+		"icone": "pessoas",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_6"
+	},
+	"p19_v2": {
+		"titulo": "O que ia ser demolido",
+		"texto": "Painel atualizado. Em 02/10/2019, o município pagou R$ 703 mil por um imóvel de cerca de 290 m², num terreno de mais de 900 m², avaliado em R$ 850 mil. A reportagem da época diz que ele estava prestes a virar ruínas e que a demolição estava prestes a acontecer.",
+		"fonte": "https://jplitoral.com.br/patrimonio-historico-prefeitura-de-imbe-fecha-compra-do-castelinho/ https://litoralnarede.com.br/castelinho-de-imbe-sera-transformado-em-centro-cultural/ https://jplitoral.com.br/imbe-inaugura-casa-de-cultura-e-museu-municipal/",
+		"icone": "pedra",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p19_v3": {
+		"titulo": "Painel 19 · em revisão",
+		"texto": "Painel 19. Conteúdo em revisão.\nÁrea construída: cerca de 290 m². Área medida pelo Programa: não confere.\nHá espaço que a planta não mostra.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p19_v4": {
+		"titulo": "O tamanho do Castelinho",
+		"texto": "…",
+		"icone": "pedra",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_6"
+	},
+	"p20_v2": {
+		"titulo": "A atmosfera mística",
+		"texto": "Painel atualizado. A prefeitura diz querer manter a \"atmosfera mística\" do prédio. Escudos, espadas, lanças e tochas decoram a Sala Medieval. Em agosto de 2024, a Feira Medieval Von Helden ocupou o Castelinho; um novo festival está marcado para 28 a 30 de agosto de 2026.",
+		"fonte": "https://litoralnarede.com.br/castelinho-de-imbe-recebe-evento-de-cultura-medieval/ https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/",
+		"icone": "escudo",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p20_v3": {
+		"titulo": "Painel 20 · em revisão",
+		"texto": "CONTEÚDO EM REVISÃO.\nA Feira Medieval foi cancelada por tempo indeterminado. Os objetos da Sala Medieval não devem ser tocados.\nEm especial: a armadura do trono.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p20_v4": {
+		"titulo": "A Feira Medieval",
+		"texto": "…",
+		"icone": "escudo",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_6"
+	},
+	"p21_v2": {
+		"titulo": "Para quem são os tronos",
+		"texto": "Painel atualizado. Os dois tronos da Sala Medieval servem para fotos: o secretário de Cultura doou coroas, cetros e capas reais para os visitantes. O plano é mudar os tronos para a Sala do Pescador.",
+		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/",
+		"icone": "coroa",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p21_v3": {
+		"titulo": "Painel 21 · em revisão",
+		"texto": "Painel 21. Conteúdo em revisão.\nDois tronos. Um balde vermelho foi deixado em um deles. O Programa não sabe quem o deixou.\nNão toque no balde.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p21_v4": {
+		"titulo": "Os dois tronos",
+		"texto": "aqui",
+		"icone": "coroa",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_6"
+	},
+	"p22_v2": {
+		"titulo": "Quiz final: encerrado",
+		"texto": "Painel atualizado. O quiz final foi encerrado. O diploma da Visita Guiada será emitido com o nome já preenchido.",
+		"fonte": "https://camaraimbe.rs.gov.br/historico-de-imbe",
+		"icone": "interrogacao",
+		"anfitriao": "sistema",
+		"seco": true
+	},
+	"p22_v3": {
+		"titulo": "Painel 22 · em revisão",
+		"texto": "Quiz final: encerrado.\nDiploma emitido em nome de TITO.\nConteúdo em revisão.",
+		"icone": "alerta",
+		"anfitriao": "sistema",
+		"seco": true,
+		"carimbo": "EM REVISÃO"
+	},
+	"p22_v4": {
+		"titulo": "Quiz final da Visita!",
+		"texto": "você veio",
+		"icone": "interrogacao",
+		"anfitriao": "",
+		"seco": true,
+		"riscado": true,
+		"desenho": "desenho_6"
+	},
+	"desenho_1": {
+		"tipo": "imagem",
+		"titulo": "Desenho de criança",
+		"texto": "Um castelo vermelho, um sol e um boneco palito. No canto: TITO.",
+		"imagem": "res://assets/ui/tito/desenho_1.png",
+		"largura_m": 0.9,
+		"icone": "interrogacao",
+		"anfitriao": ""
+	},
+	"desenho_2": {
+		"tipo": "imagem",
+		"titulo": "Desenho de criança",
+		"texto": "A praia. Uma mulher e um menino de mãos dadas. Um balde vermelho. No canto: TITO.",
+		"imagem": "res://assets/ui/tito/desenho_2.png",
+		"largura_m": 0.9,
+		"icone": "interrogacao",
+		"anfitriao": ""
+	},
+	"desenho_3": {
+		"tipo": "imagem",
+		"titulo": "Desenho de criança",
+		"texto": "O castelo, de noite. Na janela da torre, uma mulher toda branca, sem rosto. No canto: TITO.",
+		"imagem": "res://assets/ui/tito/desenho_3.png",
+		"largura_m": 0.9,
+		"icone": "interrogacao",
+		"anfitriao": ""
+	},
+	"desenho_4": {
+		"tipo": "imagem",
+		"titulo": "Desenho de criança",
+		"texto": "Um castelo de pedra, enorme. Embaixo dele, debaixo da terra, um menino pequeno. No canto: TITO.",
+		"imagem": "res://assets/ui/tito/desenho_4.png",
+		"largura_m": 0.9,
+		"icone": "interrogacao",
+		"anfitriao": ""
+	},
+	"desenho_5": {
+		"tipo": "imagem",
+		"titulo": "Desenho de criança",
+		"texto": "Muita água azul. Uma figura pequena no meio. Um balde boiando. No canto: TITO.",
+		"imagem": "res://assets/ui/tito/desenho_5.png",
+		"largura_m": 0.9,
+		"icone": "interrogacao",
+		"anfitriao": ""
+	},
+	"desenho_6": {
+		"tipo": "imagem",
+		"titulo": "Desenho de criança",
+		"texto": "A página toda pintada de preto. Dois olhos. No canto, bem pequeno: TITO.",
+		"imagem": "res://assets/ui/tito/desenho_6.png",
+		"largura_m": 0.9,
+		"icone": "interrogacao",
+		"anfitriao": ""
+	},
+	"desenho_7": {
+		"tipo": "imagem",
+		"titulo": "Desenho de criança",
+		"texto": "Alguém de costas, num corredor de pedra, com uma caixinha vermelha na mão. Lá no fundo, uma figura branca. No canto: TITO.",
+		"imagem": "res://assets/ui/tito/desenho_7.png",
+		"largura_m": 0.9,
+		"icone": "interrogacao",
+		"anfitriao": ""
+	},
+	"procura_se": {
+		"tipo": "imagem",
+		"titulo": "Cartaz de 1967",
+		"texto": "PROCURA-SE. TITO, 9 anos, desaparecido desde 12/03/1967. Bermuda azul, balde vermelho. Informações: fone 4-27. A família agradece.",
+		"imagem": "res://assets/ui/tito/procura_se.png",
+		"largura_m": 0.62,
+		"icone": "interrogacao",
+		"anfitriao": ""
+	},
+	"marcas_altura": {
+		"tipo": "imagem",
+		"titulo": "Marcas de altura",
+		"texto": "Riscos de lápis no batente da porta: TITO 6, 7, 8, 9. Depois do 9, nada.",
+		"imagem": "res://assets/ui/tito/marcas_altura.png",
+		"largura_m": 0.55,
+		"icone": "interrogacao",
+		"anfitriao": ""
 	}
 }

@@ -9,7 +9,7 @@ extends Node3D
 ## - Lê castelinho/medidas.json (coordenadas do Godot: x = leste, z = sul, y = altura).
 ## - Junta a geometria estática por material (classe Malha): poucas MeshInstance3D, colisão em caixas.
 ## - Camadas de tempo via Epocas.marcar: casa completa (1975/2019/2020), museu (2020), núcleo (1950),
-##   ruína (2019), mobília de 1975. Nós não marcados existem em todas as épocas.
+##   ruína (2019), mobília de 1975, obra de 1967 (ObraCastelinho). Nós não marcados existem em todas as épocas.
 ## - Malhas internas ficam na camada visual 2 (o Sol, cull_mask = 1, não as ilumina: só luz ambiente
 ##   e as luzes quentes de dentro). Malhas externas ficam na camada 1.
 ## - Detalhes de layout em castelinho/LEIAME.md.
@@ -71,6 +71,8 @@ var g_museu: Grupo             # só 2020: vidros, deck, hortênsias, letreiros,
 var g_1975: Grupo              # só 1975: arcos abertos, mobília de veraneio
 var g_2019: Grupo              # só 2019: ruína (telhado quebrado, mato)
 var g_1950: Grupo              # só 1950: núcleo original de pedra
+var g_1967: Grupo              # só 1967: o Castelinho em obra (castelinho/obra.gd, licença criativa)
+var obra := {}                 # dados da obra para o nível: volumes (sombras), tito_pos, buraco_pos
 var porta_entrada: Node3D      # porta de vidro do arco de entrada (E2020); o nível a abre na sala 6
 var luzes: Array = []          # pontos de luz internos [{pos, sala}]: o nível cria no máximo ~5 OmniLight3D ativas
 var construido := false
@@ -108,10 +110,12 @@ func construir() -> void:
 	g_1975 = Grupo.new("Veraneio_1975", [GameState.Epoca.E1975])
 	g_2019 = Grupo.new("Ruina_2019", [GameState.Epoca.E2019])
 	g_1950 = Grupo.new("Nucleo_1950", [GameState.Epoca.E1950])
+	g_1967 = Grupo.new("Obra_1967", [GameState.Epoca.E1967])
 	CascoCastelinho.construir(self)
 	InteriorCastelinho.construir(self)
 	ExtrasCastelinho.construir(self)
-	for g in [g_base, g_museu, g_1975, g_2019, g_1950]:
+	obra = ObraCastelinho.construir(self)
+	for g in [g_base, g_museu, g_1975, g_2019, g_1950, g_1967]:
 		g.finalizar(self)
 		triangulos_total += g.triangulos()
 	if not GameState.epoca_mudou.is_connected(_on_epoca):
@@ -251,6 +255,18 @@ static func mat_cor(cor: Color, rug := 0.9, dupla := false) -> StandardMaterial3
 
 
 ## Brilho sem sombreamento (lâmpadas, brasas, tochas): uma só superfície com cor de vértice.
+## Vidro translúcido de duas faces com emissão (desligada = preta). Um material por instância do prédio.
+static func mat_vidro(cor: Color, rug: float) -> StandardMaterial3D:
+	var mt := StandardMaterial3D.new()
+	mt.albedo_color = cor
+	mt.roughness = rug
+	mt.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mt.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mt.emission_enabled = true
+	mt.emission = Color.BLACK
+	return mt
+
+
 static func mat_luz(cor: Color, _energia := 1.6) -> StandardMaterial3D:
 	var chave := "luz|%s" % cor.to_html()
 	if _cache.has(chave):
@@ -296,9 +312,11 @@ func _criar_materiais() -> void:
 		"grade": mat_uv("grade_losango", Color.WHITE, 0.6, "scissor", true),
 		"veneziana": mat_uv("veneziana", Color.WHITE, 0.9, "scissor", true),
 		"letreiro": mat_uv("letreiro_castelinho", Color.WHITE, 0.5, "blend", true),
-		"vidro": mat_cor(Color(0.55, 0.72, 0.78, 0.26), 0.1, true),
-		"vidro_verde": mat_cor(Color(0.35, 0.55, 0.4, 0.7), 0.2, true),
-		"vidro_ambar": mat_cor(Color(0.95, 0.7, 0.2, 0.8), 0.2, true),
+		# vidros com material próprio (sem cor de vértice) e emissão já ligada em preto: na visita 3 o nível acende as
+		# janelas vistas de fora trocando só a cor da emissão (sem recompilar shader). Revisão V2.
+		"vidro": mat_vidro(Color(0.55, 0.72, 0.78, 0.26), 0.1),
+		"vidro_verde": mat_vidro(Color(0.35, 0.55, 0.4, 0.7), 0.2),
+		"vidro_ambar": mat_vidro(Color(0.95, 0.7, 0.2, 0.8), 0.2),
 		"ferro": mat_cor(Color(0.1, 0.1, 0.11), 0.5),
 		"escuro": mat_cor(Color(0.04, 0.035, 0.035), 1.0, true),
 		"luz": mat_luz(Color(1.0, 0.88, 0.62), 1.4),

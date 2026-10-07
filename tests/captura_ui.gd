@@ -11,6 +11,12 @@ extends SceneTree
 ##   guia [personagem]       caixa de fala (bentinho|taina|quico|sistema|???)
 ##   placa [id]              placa 3D do painel
 ##   diploma | morte | fim   telas finais
+## V2:
+##   volte [vez]             placa "Volte sempre!" (vez 1 = alegre, 2 = estranha)
+##   telefone                a voz da mãe (caixa "???" com chiado)
+##   creditos | dedicatoria  créditos e a tela de dedicatória (Disque 100)
+##   hud [atencao]           HUD "VISITA 3 · SALA 55", faixa de discos e olho (extra = atenção 0..1)
+##   visor [atencao]         cena 3D com o Visor ligado (disco 1967), Figura no slide e olho (extra = atenção 0..1)
 
 
 func _initialize() -> void:
@@ -63,8 +69,32 @@ func _rodar() -> void:
 			gs.ganhar_selo("b")
 			gs.ganhar_selo("c")
 			gs.ganhar_selo("d")
+			if extra == "tito":
+				gs.set_flag("diploma_nome", "TITO")
 			load("res://ui/diploma.gd").mostrar()
 			espera = 1.4
+		"volte":
+			load("res://ui/volte_sempre.gd").mostrar(int(extra) if extra != "" else 1)
+			espera = 2.4
+		"telefone":
+			var Tel = load("res://ui/telefone.gd")
+			Tel.tocar(["Alô? É do Castelinho?", "O meu filho... ele vinha sempre brincar aí na obra... vocês viram o Tito?"], false)
+			espera = 1.8
+		"creditos", "dedicatoria":
+			var d = load("res://ui/dedicatoria.gd").mostrar()
+			await create_timer(0.3).timeout
+			if modo == "dedicatoria":
+				d._ir_para_dedicatoria()
+				d._t_fase = 7.0
+			else:
+				d._t_fase = 5.0
+			espera = 0.5
+		"hud":
+			_cena_hud(float(extra) if extra != "" else 0.0)
+			espera = 0.9
+		"visor":
+			await _cena_visor(float(extra) if extra != "" else 0.6)
+			espera = 0.1
 		"morte":
 			load("res://ui/morte.gd").mostrar("teste")
 			espera = 1.0
@@ -118,3 +148,68 @@ func _cena_3d(id: String) -> void:
 	mundo.add_child(cam)
 	cam.look_at(Vector3(0, 1.4, 0))
 	cam.current = true
+
+
+func _cena_hud(atencao: float) -> void:
+	var gs = root.get_node("/root/GameState")
+	var fundo := ColorRect.new()
+	fundo.color = Color("6E7F8F")
+	fundo.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(fundo)
+	gs.visita = 3
+	gs.entrar_sala(55)
+	for ep in [0, 4, 1]:
+		gs.ganhar_disco(ep)
+	gs.selecionar_disco(4)
+	var hud = load("res://ui/hud.gd").new()
+	root.add_child(hud)
+	gs.definir_atencao(atencao)
+
+
+func _cena_visor(atencao: float) -> void:
+	var gs = root.get_node("/root/GameState")
+	var VisorCls = load("res://world/visor.gd")
+	var mundo := Node3D.new()
+	root.add_child(mundo)
+	var env := WorldEnvironment.new()
+	var e := Environment.new()
+	e.background_mode = Environment.BG_COLOR
+	e.background_color = Color(0.1, 0.1, 0.14)
+	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	e.ambient_light_color = Color(0.8, 0.8, 0.85)
+	e.ambient_light_energy = 0.8
+	env.environment = e
+	mundo.add_child(env)
+	# um corredor de pedra: chão e duas paredes
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color("A8583F")
+	for par in [[Vector3(0, -0.05, -10), Vector3(6, 0.1, 26)], [Vector3(-3, 1.5, -10), Vector3(0.2, 3, 26)], [Vector3(3, 1.5, -10), Vector3(0.2, 3, 26)]]:
+		var m := MeshInstance3D.new()
+		var b := BoxMesh.new()
+		b.size = par[1]
+		m.mesh = b
+		m.material_override = mat
+		m.position = par[0]
+		mundo.add_child(m)
+	var luz := DirectionalLight3D.new()
+	luz.rotation_degrees = Vector3(-50, -20, 0)
+	mundo.add_child(luz)
+	var cam := Camera3D.new()
+	cam.position = Vector3(0, 1.55, 2)
+	cam.fov = 72
+	mundo.add_child(cam)
+	cam.current = true
+	var fundo_hud = load("res://ui/hud.gd").new()
+	root.add_child(fundo_hud)
+	gs.visita = 3
+	gs.entrar_sala(55)
+	for ep in [0, 4, 1]:
+		gs.ganhar_disco(ep)
+	gs.selecionar_disco(4)
+	gs.set_flag("tem_visor")
+	var v = VisorCls.instalar(mundo)
+	Input.action_press("visor")
+	await create_timer(0.5).timeout
+	gs.definir_atencao(atencao)
+	await create_timer(0.35).timeout
+	gs.definir_atencao(atencao)

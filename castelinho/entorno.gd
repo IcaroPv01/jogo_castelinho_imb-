@@ -20,7 +20,7 @@ const L_CORREDOR := 2.3
 static func construir(raiz: Node3D, c: Castelinho) -> Dictionary:
 	var g_cid := Castelinho.Grupo.new("Cidade", Castelinho.ep_casa())
 	var g_cerca_n := Castelinho.Grupo.new("CercaNorte", [GameState.Epoca.E2019, GameState.Epoca.E2020])
-	var g_areia := Castelinho.Grupo.new("Areia_1950", [GameState.Epoca.E1950])
+	var g_areia := Castelinho.Grupo.new("Areia_1950", [GameState.Epoca.E1950, GameState.Epoca.E1967])     # chão de areia e dunas também em 1967
 	var g_cor := Castelinho.Grupo.new("Corredor_1975", [GameState.Epoca.E1975])
 	_chao(raiz, c, g_cid, g_areia)
 	_ruas(c, g_cid)
@@ -292,14 +292,16 @@ static func _duas_aguas(m: Malha, mat: Material, mat_oitao: Material, cx_: float
 
 
 # ------------------------------------------------------------------ postes
+## Pé de cada poste de luz (a lâmpada fica 1,35 m para -x, a 6,76 m de altura). O nível usa a lista para a luz da rua.
+const POSTES := [Vector3(-3.0, 0, 2.2), Vector3(-28.0, 0, 2.2), Vector3(-60.0, 0, 2.2), Vector3(2.2, 0, -30.0), Vector3(2.2, 0, -62.0),
+	Vector3(10.0, 0, 18.0), Vector3(-30.0, 0, 18.0), Vector3(9.0, 0, -12.0)]
+
 static func _postes(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var m := g.ext
 	var concreto: Material = Castelinho.mat_cor(Color(0.6, 0.6, 0.58), 0.9)
 	var ferro: Material = c.m.ferro
 	var luz: Material = Castelinho.mat_luz(Color(1.0, 0.95, 0.8), 1.0)
-	var pontos := [Vector3(-3.0, 0, 2.2), Vector3(-28.0, 0, 2.2), Vector3(-60.0, 0, 2.2), Vector3(2.2, 0, -30.0), Vector3(2.2, 0, -62.0),
-		Vector3(10.0, 0, 18.0), Vector3(-30.0, 0, 18.0), Vector3(9.0, 0, -12.0)]
-	for p in pontos:
+	for p in POSTES:
 		m.caixa(concreto, p + Vector3(-0.1, 0, -0.1), p + Vector3(0.1, 7.0, 0.1), Malha.F_SEM_BASE)
 		m.caixa(concreto, p + Vector3(-0.6, 6.6, -0.05), p + Vector3(0.6, 6.75, 0.05), Malha.F_TODAS)
 		m.caixa(ferro, p + Vector3(-1.3, 6.8, -0.05), p + Vector3(0.0, 6.88, 0.05), Malha.F_TODAS)
@@ -544,7 +546,7 @@ static func _barreiras(raiz: Node3D) -> void:
 	fecho.add_child(cs2)
 	fecho.position = Vector3(X_CORREDOR, 2.5, -34.6)
 	raiz.add_child(fecho)
-	Epocas.marcar(fecho, [GameState.Epoca.E1950, GameState.Epoca.E2019, GameState.Epoca.E2020])
+	Epocas.marcar(fecho, [GameState.Epoca.E1950, GameState.Epoca.E1967, GameState.Epoca.E2019, GameState.Epoca.E2020])
 
 
 # ------------------------------------------------------------------ corredor de 1975 (só em E1975)

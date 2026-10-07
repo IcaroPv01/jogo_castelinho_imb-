@@ -462,6 +462,124 @@ def s_tarrafa():
     return buf
 
 
+# ------------------------------------------------------------------ sons da V2 (visitas, porão, Tito)
+def s_chuva():
+    """Chuva de madrugada (loop, 8 s): chiado denso de banda larga com respingos e uma ondulação lenta."""
+    dur = 8.0
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    base = filtro(ruido(dur), "banda", 1200, 7500) * (0.8 + 0.2 * np.sin(2 * np.pi * (3 / dur) * t + 1.0))
+    grave = filtro(ruido(dur), "banda", 150, 700) * (0.5 + 0.2 * np.sin(2 * np.pi * (2 / dur) * t))
+    gotas = np.zeros(n)
+    for _ in range(260):  # respingos: estalinhos curtos espalhados (circular: o fim emenda no começo)
+        d = RNG.uniform(0.006, 0.02)
+        g = filtro(ruido(d), "alta", 3000) * np.exp(-tt(d) / 0.004) * RNG.uniform(0.2, 0.7)
+        i = int(RNG.uniform(0, dur - 0.05) * SR)
+        gotas[i:i + len(g)] += g
+    return base * 0.9 + grave * 0.5 + gotas * 0.8
+
+
+def s_goteira():
+    """Goteira (loop, 6 s): pingos esparsos e graves numa sala de pedra, com eco curto."""
+    dur = 6.0
+    buf = np.zeros(int(dur * SR))
+    for pos, f0, ganho in [(0.4, 1250, 1.0), (1.55, 980, 0.7), (2.9, 1500, 0.9), (3.7, 1100, 0.55), (4.95, 1350, 0.8)]:
+        d = 0.16
+        t = tt(d)
+        gota = np.sin(fase(f0 * (1 + 1.4 * np.exp(-t / 0.03)))) * np.exp(-t / 0.045)
+        gota += 0.25 * filtro(ruido(d), "banda", 800, 3000) * np.exp(-t / 0.01)
+        colocar(buf, gota, pos, ganho)
+        colocar(buf, gota, pos + 0.19, ganho * 0.32)   # eco curto
+        colocar(buf, gota, pos + 0.41, ganho * 0.14)
+    buf += filtro(ruido(dur), "banda", 80, 400) * 0.03   # fundo molhado
+    return buf
+
+
+def s_agua_sobe():
+    """Água subindo no porão (4,5 s): ronco grave que cresce, borbulhar e um gorgolejo que fica mais agudo."""
+    dur = 4.5
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    cresce = np.clip(t / 3.6, 0, 1) ** 1.4
+    ronco = filtro(ruido(dur), "baixa", 260) * (0.25 + 0.75 * cresce)
+    corrente = filtro(ruido(dur), "banda", 300, 2200) * (0.1 + 0.7 * cresce) * (0.8 + 0.2 * np.sin(2 * np.pi * 5.5 * t))
+    bolhas = np.zeros(n)
+    for _ in range(60):
+        d = RNG.uniform(0.05, 0.12)
+        pos = RNG.uniform(0.3, dur - 0.3)
+        f0 = RNG.uniform(250, 600) * (1 + 0.8 * pos / dur)
+        tb = tt(d)
+        b = np.sin(fase(f0 * (1 + 2.2 * tb / d))) * np.exp(-tb / 0.03) * RNG.uniform(0.25, 0.7)
+        i = int(pos * SR)
+        bolhas[i:i + len(b)] += b
+    y = ronco * 1.4 + corrente * 0.7 + bolhas * 0.5
+    return y * np.minimum(1, t / 0.4) * np.minimum(1, (dur - t) / 0.6)
+
+
+def s_crianca_ei():
+    """'ei... aqui...': sussurro de RUÍDO filtrado com formantes (sem tom, sem voz realista).
+    O texto aparece na tela; o som só dá a silhueta das sílabas, bem de longe."""
+    dur = 2.6
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+
+    def silaba(ini, d, formantes, ganho):
+        m = int(d * SR)
+        s = np.zeros(m)
+        for fc, largura, g in formantes:
+            s += g * filtro(ruido(d), "banda", max(fc - largura, 100), fc + largura)
+        env = np.sin(np.pi * np.clip(tt(d)[:m] / d, 0, 1)) ** 1.6
+        return ini, s * env * ganho
+
+    buf = np.zeros(n)
+    # "e" (F1 ~ 450, F2 ~ 2000), "i" (F1 ~ 300, F2 ~ 2600): as sílabas de "ei"
+    for ini, x in [silaba(0.15, 0.30, [(450, 150, 1.0), (2000, 500, 0.8)], 0.9),
+                   silaba(0.42, 0.45, [(300, 100, 1.0), (2600, 600, 0.9)], 0.8),
+                   # "a-qui"
+                   silaba(1.35, 0.25, [(750, 200, 1.0), (1300, 300, 0.6)], 0.85),
+                   silaba(1.62, 0.18, [(400, 120, 0.8), (2200, 500, 0.9)], 0.75),
+                   silaba(1.78, 0.55, [(300, 100, 1.0), (2600, 600, 0.9)], 0.65)]:
+        colocar(buf, x, ini)
+    buf += filtro(ruido(dur), "alta", 3500) * 0.02
+    return buf
+
+
+def s_telefone_voz():
+    """Voz da mãe no telefone do acervo: um murmúrio de banda estreita (300-3000 Hz) com sílabas, chiado e estalos.
+    Não imita fala: só o contorno de quem fala longe, com a linha ruim. O texto vem na caixa '???'."""
+    dur = 3.4
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    voz = filtro(ruido(dur), "banda", 280, 1500) + 0.6 * filtro(ruido(dur), "banda", 1500, 3000)
+    ritmo = np.clip(np.sin(2 * np.pi * 3.7 * t) + 0.6 * np.sin(2 * np.pi * 1.1 * t + 1.3), 0, None) ** 1.2
+    pausas = np.where((t > 1.25) & (t < 1.6), 0.15, 1.0) * np.where((t > 2.4) & (t < 2.62), 0.0, 1.0)
+    y = voz * ritmo * pausas * 0.9
+    y += filtro(ruido(dur), "banda", 500, 3400) * 0.22        # chiado da linha
+    estalos = np.zeros(n)
+    for _ in range(14):
+        i = int(RNG.uniform(0, dur - 0.05) * SR)
+        d = int(RNG.uniform(0.002, 0.012) * SR)
+        estalos[i:i + d] += RNG.uniform(-1, 1, d) * RNG.uniform(0.4, 1.0)
+    y += estalos * 0.5
+    y += 0.08 * np.sin(2 * np.pi * 50 * t)                    # zumbido da rede
+    y *= np.minimum(1, t / 0.1) * np.minimum(1, (dur - t) / 0.5)
+    return y
+
+
+def s_atencao():
+    """Um batimento ('tum-tá', 0,55 s). O Visor o repete cada vez mais depressa e mais alto conforme a atenção sobe."""
+    buf = np.zeros(int(0.6 * SR))
+
+    def tum(freq, d, ganho):
+        t = tt(d)
+        return (np.sin(fase(freq * (1 + 0.9 * np.exp(-t / 0.03)))) * np.exp(-t / 0.06)
+                + 0.3 * filtro(ruido(d), "baixa", 300) * np.exp(-t / 0.03)) * ganho
+
+    colocar(buf, tum(58, 0.22, 1.0), 0.0)
+    colocar(buf, tum(48, 0.25, 0.7), 0.17)
+    return buf
+
+
 # ------------------------------------------------------------------ jingle (3 versões)
 # Melodia (beat, nota MIDI, duração em beats): 8 compassos em Dó maior (C - Am - F - G - C - Am - F - G).
 MELODIA = [
@@ -482,6 +600,23 @@ VERSOES_JINGLE = {
     1: dict(bpm=104, trans=-1, xilo=False, chocalho=False, stabs=True, baixo=True, cents=9, hiss=0.0, wob=0.006, drop=0.0, lp=5200),
     2: dict(bpm=84, trans=-2, xilo=False, chocalho=False, stabs=False, baixo=True, cents=38, hiss=0.02, wob=0.03, drop=0.14, lp=3000),
 }
+
+
+def s_trovao():
+    """Trovão distante da madrugada (visita 4, revisão V2): estalo abafado e ronco grave que rola e morre em ~4 s.
+    Usa um gerador próprio para não deslocar a sequência aleatória dos outros sons."""
+    rng = np.random.default_rng(19670312)
+    dur = 4.2
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    branco = rng.uniform(-1, 1, n)
+    ronco = filtro(branco, "banda", 35, 260, 2)
+    rola = 0.55 + 0.45 * np.abs(np.sin(2 * np.pi * 1.3 * t + rng.uniform(0, 6))) * np.abs(np.sin(2 * np.pi * 0.47 * t))
+    env = np.minimum(1, t / 0.18) * np.exp(-t / 1.25)
+    y = ronco * rola * env
+    est = filtro(rng.uniform(-1, 1, int(0.5 * SR)), "banda", 180, 1100, 2) * np.exp(-tt(0.5) / 0.09)
+    y[:len(est)] += est * 0.35
+    return y
 
 
 def s_jingle(versao):
@@ -581,9 +716,16 @@ CATALOGO = {
     "vento": (s_vento, "ogg"),
     "mar": (s_mar, "ogg"),
     "rio": (s_rio, "ogg"),
+    "chuva": (s_chuva, "ogg"),
+    "goteira": (s_goteira, "ogg"),
+    "agua_sobe": (s_agua_sobe, "wav"),
+    "crianca_ei": (s_crianca_ei, "wav"),
+    "telefone_voz": (s_telefone_voz, "wav"),
+    "atencao": (s_atencao, "wav"),
     "jingle_0": (lambda: s_jingle(0), "ogg"),
     "jingle_1": (lambda: s_jingle(1), "ogg"),
     "jingle_2": (lambda: s_jingle(2), "ogg"),
+    "trovao": (s_trovao, "ogg"),
 }
 
 
@@ -600,7 +742,7 @@ def main():
         for nome in nomes:
             fn, fmt = CATALOGO[nome]
             x = fn()
-            if nome.startswith("jingle") or nome in ("vento", "mar", "rio"):
+            if nome.startswith("jingle") or nome in ("vento", "mar", "rio", "chuva", "goteira"):
                 x = normalizar(x, 0.8)  # loops: sem fade nas pontas (emenda sem corte)
             else:
                 x = fade(normalizar(x, 0.85))

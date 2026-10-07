@@ -132,7 +132,7 @@ func _a_titulo_e_carregamento() -> void:
 	print("  (clique até o jogo: %d ms)" % (Time.get_ticks_msec() - t0))
 	_checar(GS.jogando and p != null, "o jogo começou")
 	_checar(not is_instance_valid(TelaCarregando.ultima), "a tela de carregamento sumiu")
-	_checar(GS.sala_atual == 1 and main.hud.lbl_sala.text == "SALA 01", "HUD mostra SALA 01 ('%s')" % main.hud.lbl_sala.text)
+	_checar(GS.sala_atual == 1 and main.hud.lbl_sala.text == "VISITA 1 · SALA 01", "HUD mostra VISITA 1 · SALA 01 ('%s')" % main.hud.lbl_sala.text)
 	await _segundos(0.6)
 	_checar(root.get_node("/root/Guia").ocupado(), "o Bentinho começou a falar")
 	_checar(Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not paused, "mouse capturado, jogo sem pausa")
@@ -298,7 +298,7 @@ func _c_pausa() -> void:
 func _d_visor_em_paredes() -> void:
 	print("-- D. segurar Q, entrar nas paredes e soltar")
 	GS.set_flag("tem_visor")
-	GS.set_flag("epoca_visor", GS.Epoca.E1950)
+	GS.ganhar_disco(GS.Epoca.E1950)           # quem manda é o disco selecionado (Visor 2.0)
 	GS.set_flag("visor_travado", false)
 	var presos := 0
 	for pos in [Vector3(-27, 0.1, -12), Vector3(-24, 0.1, -14), Vector3(-20, 0.1, -20), Vector3(-14, 0.1, -26), Vector3(-6, 0.1, -20)]:
@@ -368,8 +368,8 @@ func _f_morte_no_ato2() -> void:
 	await _toque(KEY_ENTER)
 	await _segundos(1.5)
 	_checar(not GS.flag("ui_aberta") and p.pode_mover and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, "Enter volta ao jogo com mouse e movimento")
-	_checar(p.global_position.distance_to(nivel.get_node("Checkpoint_26").global_position) < 0.8, "de volta ao Checkpoint_26")
-	_checar(GS.contadores["mortes"] == mortes0 + 1 and GS.sala_atual == 26, "mortes +1 e sala 26 (sala %d)" % GS.sala_atual)
+	_checar(p.global_position.distance_to(nivel.get_node("Checkpoint_55").global_position) < 0.8, "de volta ao Checkpoint_55")
+	_checar(GS.contadores["mortes"] == mortes0 + 1 and GS.sala_atual == 55, "mortes +1 e sala 55 (sala %d)" % GS.sala_atual)
 	_checar(not paused, "sem pausa depois de morrer")
 	# morrer duas vezes seguidas
 	GS.matar_jogador("figura_branca")
@@ -382,7 +382,7 @@ func _f_morte_no_ato2() -> void:
 # ---------------------------------------------------------------- G: Continuar pelo botão
 func _g_continuar_pelo_botao() -> void:
 	print("-- G. 'Continuar' pelo botão do título, com save no checkpoint 16")
-	for cp in [16, 25]:
+	for cp in [16, 38, 45, 72]:
 		GS.novo_jogo()
 		GS.checkpoint_sala = cp
 		GS.set_flag("tem_visor")
@@ -398,7 +398,7 @@ func _g_continuar_pelo_botao() -> void:
 		var mk: Node3D = nivel.find_child("Checkpoint_%d" % cp, true, false)
 		_checar(p.global_position.distance_to(mk.global_position) < 1.0 and p.is_on_floor(), "checkpoint %d: no marcador, em pé (%s)" % [cp, str(p.global_position.snapped(Vector3(0.1, 0.1, 0.1)))])
 		await _segundos(0.5)
-		_checar(GS.sala_atual == cp and main.hud.lbl_sala.text == "SALA %02d" % cp, "checkpoint %d: HUD '%s'" % [cp, main.hud.lbl_sala.text])
+		_checar(GS.sala_atual == cp and main.hud.lbl_sala.text == main.hud.texto_sala(cp) and GS.visita == GS.visita_da_sala(cp), "checkpoint %d: HUD '%s', visita %d" % [cp, main.hud.lbl_sala.text, GS.visita])
 		await _tecla(KEY_W, true)
 		await _segundos(0.8)
 		await _tecla(KEY_W, false)
@@ -410,7 +410,7 @@ func _g_continuar_pelo_botao() -> void:
 func _h_mural_barra_e_volta() -> void:
 	print("-- H. mural da Sala do Pescador, flashback da Barra jogado com E e volta ao Castelinho")
 	GS.novo_jogo()
-	GS.checkpoint_sala = 11
+	GS.checkpoint_sala = 32           # visita 2: o mural leva à Barra (sala 36) e volta na sala 37
 	GS.set_flag("tem_visor")
 	root.get_node("/root/Guia").cancelar()
 	await _novo_main()
@@ -422,6 +422,8 @@ func _h_mural_barra_e_volta() -> void:
 	_olhar(mural.global_position)
 	await _frames(6)
 	_checar(main.hud.lbl_aviso.text == "[E] Olhar o mural", "aviso do mural: '%s'" % main.hud.lbl_aviso.text)
+	root.get_node("/root/Guia").cancelar()          # a fala da Tainá da sala 35 (visita 2) não pode atrasar a do mural
+	await _frames(3)
 	await _toque(KEY_E)
 	await _frames(4)
 	_checar(not p.pode_mover and root.get_node("/root/Guia").ocupado(), "a Tainá fala e o jogador fica parado")
@@ -467,7 +469,7 @@ func _h_mural_barra_e_volta() -> void:
 	await _segundos(4.0)
 	nivel = main.mundo.get_child(0)
 	p = main.player
-	_checar(GS.flag("viu_flashback_barra") and GS.sala_atual >= 15, "flag da Barra ligada e sala %d" % GS.sala_atual)
+	_checar(GS.flag("viu_flashback_barra") and GS.sala_atual >= 37, "flag da Barra ligada e sala %d" % GS.sala_atual)
 	var q := 0.0
 	while guia.ocupado() and q < 20.0:
 		await _toque(KEY_SPACE)
@@ -475,7 +477,7 @@ func _h_mural_barra_e_volta() -> void:
 		q += 0.5
 	_checar(p.pode_mover and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not paused, "jogador livre e com o mouse capturado")
 	_checar(p.global_position.distance_to(Vector3(-8.6, 0.0, -15.6)) < 2.0, "voltou à Sala do Pescador (%s)" % str(p.global_position.snapped(Vector3(0.1, 0.1, 0.1))))
-	_checar(GS.epoca == GS.Epoca.E2020 and GS.corruption < 0.1, "época de hoje e corrupção da curva (%.2f)" % GS.corruption)
+	_checar(GS.epoca == GS.Epoca.E2020 and GS.corruption <= GS.corruption_por_sala(GS.sala_atual) + 0.001, "época de hoje e corrupção da curva (%.2f)" % GS.corruption)
 	# mural de novo: "Já vimos esse mural"
 	_olhar(nivel._mural.global_position)
 	await _frames(6)

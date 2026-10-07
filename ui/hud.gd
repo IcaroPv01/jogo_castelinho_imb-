@@ -2,12 +2,16 @@ class_name HUD
 extends CanvasLayer
 ## HUD do jogo: contador de salas (estilo Spooky's), mira, aviso de interação, stamina.
 ## O estilo visual Flash (fontes, molduras) é aplicado pelo tema; aqui só a estrutura.
+## V2: o contador diz "VISITA 2 · SALA 27" (no porão, só "SALA 87"); a faixa de discos do Visor (FaixaDiscos, canto
+## de baixo à esquerda) e o olho da atenção (OlhoAtencao, no alto, no meio) vivem aqui.
 
 var lbl_sala: Label
 var lbl_aviso: Label
 var mira: Label
 var barra_stamina: ProgressBar
 var lbl_pausa: Label
+var faixa_discos: FaixaDiscos
+var olho: OlhoAtencao
 var _t_glitch := 0.0
 
 
@@ -66,7 +70,15 @@ func _ready() -> void:
 	lbl_pausa.visible = false
 	add_child(lbl_pausa)
 
+	faixa_discos = FaixaDiscos.new()
+	faixa_discos.name = "FaixaDiscos"
+	add_child(faixa_discos)
+	olho = OlhoAtencao.new()
+	olho.name = "OlhoAtencao"
+	add_child(olho)
+
 	GameState.sala_mudou.connect(_on_sala)
+	GameState.visita_mudou.connect(func(_v): _on_sala(GameState.sala_atual))
 	_on_sala(GameState.sala_atual)
 
 
@@ -84,8 +96,18 @@ func conectar_player(p: Player) -> void:
 		barra_stamina.modulate = Color(1, 0.4, 0.4) if p.cansado else Color.WHITE)
 
 
+## "VISITA 2 · SALA 27"; no porão (salas 81+) só "SALA 87". `n` pode ser um número errado (glitch da corrupção).
+func texto_sala(n: int) -> String:
+	if n <= 0:
+		return ""
+	var visita := GameState.visita_da_sala(GameState.sala_atual if GameState.sala_atual > 0 else n)
+	if visita >= 5:
+		return "SALA %02d" % n
+	return "VISITA %d · SALA %02d" % [visita, n]
+
+
 func _on_sala(n: int) -> void:
-	lbl_sala.text = "SALA %02d" % n if n > 0 else ""
+	lbl_sala.text = texto_sala(n)
 	_t_glitch = 0.0
 
 
@@ -97,12 +119,12 @@ func _process(dt: float) -> void:
 	if _t_glitch > 0.0:
 		_t_glitch -= dt
 		if _t_glitch <= 0.0:
-			lbl_sala.text = "SALA %02d" % GameState.sala_atual
+			lbl_sala.text = texto_sala(GameState.sala_atual)
 		return
 	var c := GameState.corruption
 	if c > 0.35 and randf() < dt * remap(c, 0.35, 1.0, 0.03, 0.4):
 		_t_glitch = randf_range(0.08, 0.25)
-		lbl_sala.text = "SALA %02d" % randi_range(1, 99)
+		lbl_sala.text = texto_sala(randi_range(1, 99))
 
 
 func mostrar_pausa(v: bool) -> void:
