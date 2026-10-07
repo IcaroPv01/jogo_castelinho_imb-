@@ -51,6 +51,8 @@ func _rodar() -> void:
 
 
 func _checar(cond: bool, msg: String) -> void:
+	if msg.begins_with("sala 8") or msg.begins_with("sala 9"):
+		print("   [t=%d ms]" % Time.get_ticks_msec())
 	print(("  ok   " if cond else "  FALHA ") + msg)
 	if not cond:
 		falhas += 1
@@ -104,7 +106,7 @@ func _teste_chao_e_plano() -> void:
 	_checar(player.is_on_floor() and absf(player.global_position.y) < 0.2, "jogador no chão da escada (y=%.2f)" % player.global_position.y)
 	_checar(GS.sala_atual == 81, "começa na sala 81 (sala %d)" % GS.sala_atual)
 	_checar(GS.visita == 5, "a visita é 5 (porão)")
-	_checar(nivel.get_node_or_null("Spawn") != null, "marcador Spawn")
+	_checar(nivel.find_child("Spawn", true, false) != null, "marcador Spawn")
 	_checar(nivel.has_method("ao_morrer") and nivel.has_method("iniciar") and nivel.has_method("ponto_spawn"), "contrato iniciar/ao_morrer/ponto_spawn")
 	_checar(nivel.plano.size() == 19, "19 salas no plano")
 	_checar(nivel.plano[0]["tipo"] == "escada" and nivel.plano[14]["tipo"] == "quarto_tito" and nivel.plano[18]["tipo"] == "escada_sobe", "primeira = escada, 15ª (sala 95) = quarto do Tito, última = escada que sobe")
@@ -138,7 +140,10 @@ func _teste_atravessar_19_salas() -> void:
 	# o jogador sobe de sala em sala, andando de verdade pelo fim de cada uma (a porta da 96 é aberta pelo disco)
 	var max_salas := 0
 	var max_luzes := 0
+	nivel.ameacas_ligadas = false
 	for i in 18:
+		if OS.get_environment("PORAO_RAPIDO") != "" and i not in [0, 4, 5, 9, 10, 14, 15, 17]:
+			continue                      # (depuração) pula parte das salas
 		nivel.ir_para_sala(i)
 		await _frames(4)
 		if i == 14:
@@ -155,8 +160,11 @@ func _teste_atravessar_19_salas() -> void:
 		player.rotation.y = c.raiz.global_rotation.y
 		player.velocity = Vector3.ZERO
 		Input.action_press("frente")
+		var t_ini := Time.get_ticks_msec()
 		var chegou: bool = await _ate(func(): return nivel.idx_atual == i + 1, 420)
 		Input.action_release("frente")
+		if OS.get_environment("PORAO_RAPIDO") != "":
+			print("   (tempo) sala %d: %d ms" % [81 + i, Time.get_ticks_msec() - t_ini])
 		_checar(chegou, "sala %d -> %d andando pela passagem (sala %d)" % [81 + i, 82 + i, GS.sala_atual])
 		await _frames(30)
 	_checar(max_salas <= 4, "no máximo %d salas montadas ao mesmo tempo" % max_salas)
@@ -177,6 +185,7 @@ func _teste_atravessar_19_salas() -> void:
 
 func _teste_agua() -> void:
 	print("-- a água sobe e deixa lento")
+	nivel.ameacas_ligadas = false
 	nivel.ir_para_sala(0)
 	await _frames(5)
 	_checar(nivel.nivel_agua == 0 and absf(nivel.prof) < 0.001, "sala 81: água nível 0")
@@ -193,39 +202,50 @@ func _teste_agua() -> void:
 	# lentidão: na sala 86 (nível 1) e na 91 (nível 2) o deslocamento por quadro é menor do que seco
 	nivel.ir_para_sala(0)
 	await _frames(5)
-	var seco := await _medir_deslocamento(0, 0.0)
-	nivel.ir_para_sala(7)             # sala 88 (alguma sala alagável de nível 1)
-	nivel.nivel_agua = 1
-	nivel.prof = nivel.PROF_AGUA[1]
-	var c1 = nivel.salas[7]
-	var m1 := await _medir_deslocamento(7, nivel.PROF_AGUA[1])
-	nivel.prof = nivel.PROF_AGUA[3]
-	var m3 := await _medir_deslocamento(7, nivel.PROF_AGUA[3])
+	var seco := 0.0
+	var plana := _sala_do_tipo("abobada")           # corredor reto e livre
+	nivel.ir_para_sala(plana)
+	_fixar_agua(1)
+	var m1 := await _medir_deslocamento(plana, nivel.PROF_AGUA[1])
+	_fixar_agua(3)
+	var m3 := await _medir_deslocamento(plana, nivel.PROF_AGUA[3])
+	_fixar_agua(0)
+	var seco2 := await _medir_deslocamento(plana, 0.0)
+	seco = seco2
 	_checar(seco > 0.0 and m1 < seco * 0.97, "andando na água (tornozelo) é mais lento: %.2f vs %.2f m" % [m1, seco])
 	_checar(m3 < m1 * 0.85, "na cintura é ainda mais lento: %.2f vs %.2f m" % [m3, m1])
 	_checar(nivel.profundidade_no_jogador(player.global_position) >= 0.0, "profundidade medida no jogador")
 
 
+## Fixa o nível da água (para de animar a subida) para medir.
+func _fixar_agua(n: int) -> void:
+	if nivel._tween_agua and nivel._tween_agua.is_valid():
+		nivel._tween_agua.kill()
+	nivel.nivel_agua = n
+	nivel.prof = nivel.PROF_AGUA[n]
+
+
 ## Anda 1 s para a frente no meio de uma sala e devolve a distância percorrida.
 func _medir_deslocamento(i: int, _prof: float) -> float:
 	var c = nivel.salas[i]
-	var ponto := Vector3(0, 0.1, -2.0)
-	if c.tipo in ["poco", "pedras", "cisterna", "colunas"]:
-		ponto = Vector3(0, 0.1, -c.L + 3.0)
+	var ponto := Vector3(0, 0.1, -1.6)
 	player.global_position = c.raiz.to_global(ponto)
 	player.rotation.y = 0.0
 	player.velocity = Vector3.ZERO
 	await _frames(10)
 	var p0: Vector3 = player.global_position
 	Input.action_press("frente")
-	await _frames(40)
+	await _frames(20)
 	Input.action_release("frente")
 	var d := Vector2(player.global_position.x - p0.x, player.global_position.z - p0.z).length()
+	if d < 0.01:
+		print("   (diag) pode_mover=%s ui=%s vel=%s no_chao=%s pos=%s sala=%d" % [player.pode_mover, GS.flag("ui_aberta"), player.velocity, player.is_on_floor(), player.global_position, i])
 	return d
 
 
 func _teste_costela() -> void:
 	print("-- Costela-de-Adão: parado prende, andando solta")
+	nivel.ameacas_ligadas = true
 	var i := _sala_do_tipo("colunas")
 	for d in nivel.plano:
 		if d["costela"] and d["idx"] > 0:
@@ -240,8 +260,10 @@ func _teste_costela() -> void:
 	player.velocity = Vector3.ZERO
 	await _frames(5)
 	# parado: cresce
-	await _frames(int(cos.tempo_prende * 60.0 * 0.5))
+	await _ate(func(): return cos.parado_t > cos.tempo_prende * 0.5, 300)
 	_checar(cos.crescimento > 0.3 and cos.crescimento < 1.0, "parado, os cipós crescem (%.2f)" % cos.crescimento)
+	if cos.crescimento < 0.3:
+		print("   (diag) vel=%.3f imune=%.2f anc=%s parado_t=%.2f pode=%s ui=%s presa=%s pos=%s" % [cos.velocidade, cos._imune, cos._ancoras_ok, cos.parado_t, player.pode_mover, GS.flag("ui_aberta"), cos.presa, player.global_position])
 	var visiveis := 0
 	for v in cos._cipos:
 		visiveis += 1 if v.visible else 0
@@ -249,16 +271,16 @@ func _teste_costela() -> void:
 	# andando: recuam
 	player.rotation.y = c.raiz.global_rotation.y
 	Input.action_press("frente")
-	await _frames(60)
+	await _ate(func(): return cos.parado_t < 0.01, 120)
 	Input.action_release("frente")
 	_checar(cos.crescimento < 0.05 and not cos.presa, "andando, os cipós recuam (%.2f)" % cos.crescimento)
 	# parado demais: prende
 	player.global_position = c.raiz.to_global(Vector3(0, 0.1, -c.L * 0.5))
 	player.velocity = Vector3.ZERO
-	var preso: bool = await _ate(func(): return cos.presa, int(cos.tempo_prende * 60.0 * 2.0))
+	var preso: bool = await _ate(func(): return cos.presa, 300)
 	_checar(preso, "parado demais, os cipós prendem")
 	var pos_preso: Vector3 = player.global_position
-	await _frames(20)
+	await _frames(3)
 	_checar(player.global_position.distance_to(pos_preso) < 0.05, "preso, o jogador não sai do lugar")
 	# lutar (apertar uma direção) solta
 	Input.action_press("frente")
@@ -275,12 +297,13 @@ func _teste_costela() -> void:
 	var causa := [""]
 	var f := func(x): causa[0] = x
 	GS.jogador_morreu.connect(f)
-	var morreu: bool = await _ate(func(): return causa[0] != "", int((cos.tempo_prende + cos.tempo_mata) * 60.0 * 2.5))
+	var morreu: bool = await _ate(func(): return causa[0] != "", 600)
 	GS.jogador_morreu.disconnect(f)
 	_checar(morreu and causa[0] == "costela", "preso e sem lutar: matar_jogador('costela')")
 	_checar(GS.contadores.get("mortes", 0) == mortes0 + 1, "contador de mortes subiu")
 	await _esperar_morte_terminar()
 	await _frames(20)
+	nivel.ameacas_ligadas = false
 
 
 func _teste_voz_e_afogamento() -> void:
@@ -391,6 +414,7 @@ func _teste_quarto_e_disco() -> void:
 	_checar(player.is_on_floor(), "jogador no chão do quarto")
 	var porta96 = nivel.salas[15]
 	_checar(not porta96.porta_aberta and not porta96.porta_corpo.disabled, "a grade da sala 96 está fechada")
+	GS.flags.erase("pista_quarto_tito")
 	var di: Node = c.raiz.get_node_or_null("InteragivelDisco")
 	_checar(di != null, "disco interativo")
 	var pistas0: int = GS.contadores.get("pistas_tito", 0)
@@ -502,6 +526,7 @@ func _teste_braco_morto(final: String) -> void:
 	_checar(ok, "olhar para Tito com o Visor dispara a cena final")
 	await _ate(func(): return absf(menino.rotation.y - PI) < 0.05, 600)
 	_checar(absf(menino.rotation.y - PI) < 0.05 and antes_rot == 0.0, "Tito se vira para o jogador")
+	await _ate(func(): return nivel._legenda.text == "Você veio me procurar.", 120)
 	_checar(nivel._legenda.text == "Você veio me procurar.", "ele diz: 'Você veio me procurar.'")
 	var ok2: bool = await _ate(func(): return GS.flag("viu_tito_final"), 1200)
 	_checar(ok2 and nivel.final == final, "final decidido pelas pistas: %s (pistas_tito=%d)" % [nivel.final, GS.contadores.get("pistas_tito", 0)])

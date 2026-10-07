@@ -147,9 +147,9 @@ Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, 
 ### Estado (atualizado a cada etapa)
 - [x] 1. Renumerar `ato2` (salas 55 a 60, `Checkpoint_55`, flag `v3_ato2_feito`, volta em `Spawn_volta_ato2`) e `barra` (`sala_global(14)/(15)`, sandália) + `ato2_test`/`barra_test` (passam)
 - [x] 2. `porao.tscn`/`porao.gd` + `porao_salas.gd` (12 tipos + quarto + escada que sobe) + `porao_quarto.gd` (quarto do Tito e slides) + shaders `porao_pedra`/`porao_agua`: carregam, capturas conferidas (draw calls 20 a 50, 4 luzes)
-- [~] 3. Criaturas: `creatures/costela.gd`, voz do Tito, Figura/Visor em `porao.gd`: escritas, ainda sem teste automático
-- [~] 4. `braco_morto.tscn`/`.gd`: cena montada e capturada; falta testar a sequência final
-- [ ] 5. `tests/porao_test.gd`, `bash tools/testar.sh`
+- [x] 3. Criaturas: `creatures/costela.gd` (prende parado, solta andando, mata se não lutar), voz do Tito com marcas do Visor, Figura Branca ligada ao `figura_atravessou` (testados em `porao_test`)
+- [x] 4. `braco_morto.tscn`/`.gd`: margem do lago, lápide de areia, Tito pelo Visor, finais "Encontrado"/"Visita concluída", `Dedicatoria.mostrar()` (testado)
+- [x] 5. `tests/porao_test.gd` passa (~47 s); `bash tools/testar.sh` rodando (ver abaixo)
 - [ ] 6. Capturas e ajustes visuais
 
 ## Agente Visitas (V2)
@@ -162,8 +162,8 @@ Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, 
 - [x] 1. `game_state.gd`: regra de checkpoint (`SALAS_CHECKPOINT`) e `preparar_continuar` (visitas, Ato II, porão, Braço Morto)
 - [x] 2. E1967 (obra) gerada: `castelinho/obra.gd`, Tito e desenhos em `castelinho/tito.gd`
 - [x] 3. Nível `world/niveis/castelinho.gd` em 4 visitas (iluminação, clima, eventos, painéis, discos, loop). Falta só conferir posições por captura (porta do Ato II, painel solto)
-- [ ] 4. Testes: `castelinho_test` e `qa_logica_test` feitos (4 visitas, loop, E1967, Continuar por checkpoint); `janela_jogador` atualizado (rodando); falta `bash tools/testar.sh` final
-- [ ] 5. Capturas de cada visita e da E1967; LEIAME do Castelinho
+- [x] 4. Testes: `castelinho_test`, `qa_logica_test` e `janela_jogador` atualizados e passando (4 visitas, loop, E1967, Continuar por checkpoint). `bash tools/testar.sh`: tudo OK e sem SCRIPT ERROR, exceto `porao_test` (do agente Porão, em andamento). Dica: outro agente mata processos `godot` com `pkill`; rode os testes com um symlink (`ln -s $(which godot) /tmp/gdv; bash tools/testar.sh /tmp/gdv`)
+- [x] 5. Capturas de cada visita e da E1967 conferidas (build/capturas/v2/); LEIAME do Castelinho atualizado
 
 ### Contratos que o Visitas assume (por favor, confirmem ou avisem)
 - **Checkpoints (números globais):** 1, 10, 16 | 23, 32, 38 | 45, 54, 61 | 67, 72, 77 | porão 81 e 95. O nível cria os marcadores
@@ -186,3 +186,61 @@ Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, 
   quando existirem; senão, placeholders gerados em `castelinho/tito.gd` (mesmo estilo).
 - **Painéis por visita:** o nível pede `pNN_vK` (K = visita); se o id não existe em `data/paineis.json` usa `pNN`. Na visita 4 usa
   `desenho_N` (N = 3..6 conforme a sala). `quiz_final` só existe nas visitas 1 e 2.
+
+### Decisões e contratos do Porão (para o Visitas, o Visor/UI e o integrador)
+
+**Arquivos meus:** `world/niveis/{ato2,barra,porao,porao_salas,porao_quarto,braco_morto}.gd` (+ `.tscn`), `creatures/costela.gd`,
+`shaders/porao_pedra.gdshader`, `shaders/porao_agua.gdshader`, `tests/{ato2,barra,porao}_test.gd`, `tests/captura_porao.gd`.
+`porao_salas.gd`/`porao_quarto.gd` usam `Malha` e `Muros` de `castelinho/` (só leitura: se a API deles mudar, avisem).
+
+**Checkpoints do porão (formato).** `ponto_spawn("Checkpoint_<N>")` aceita qualquer N de 81 a 99: monta a sala N e devolve o marcador (o Main cai
+nele quando `find_child` não acha). Para a morte, o porão guarda `ultimo_checkpoint` entre 81, 86, 91, 95 e 96 (volta ao começo daquela sala, com a
+água daquele bloco). O `GameState.SALAS_CHECKPOINT` (do Visitas) só grava 81 e 95; **pedido ao Visitas**: se quiserem que o "Continuar" também volte a
+86, 91 e 96, acrescentem 86, 91, 96 em `SALAS_CHECKPOINT` e façam `preparar_continuar` devolver `["res://world/niveis/porao.tscn", "Checkpoint_%d" % cp]`
+para cp de 81 a 99 (os marcadores existem sob demanda). Sala 100: `["res://world/niveis/braco_morto.tscn", "Spawn"]` (existe).
+`ato2.tscn` tem `Spawn`, `Checkpoint_55` (e o apelido antigo `Checkpoint_26`), liga `v3_ato2_feito` na volta e volta em `Spawn_volta_ato2`.
+
+**Semente:** `GameState.flags["porao_semente"]` (int sorteado no 1º acesso; `novo_jogo()` apaga e sorteia outro).
+
+**Contadores e flags que o final lê/escreve:** lê `contadores["pistas_tito"]` (>= `BracoMorto.PISTAS_ENCONTRADO` = 6 dá o final "Encontrado"; senão
+"Visita concluída"). Convenção para QUALQUER agente que ache uma pista com o Visor: `if not GameState.flag("pista_<id>"): GameState.set_flag("pista_<id>", true);
+GameState.somar("pistas_tito")` (uma vez por pista). O porão registra: `desenho_porao`, `marcas_porao`, `pegadas_porao`, `mao_poco`, `telefone`,
+`quarto_tito` (pegar o disco) e `sandalia_porao`; a lápide registra `lapide`. Escreve ainda `viu_tito_final`, `final_encontrado`, `final_visita_concluida`,
+`telefone_porao_atendido`, `tem_disco_semdata`, `viu_sandalia_barra` (Barra). **Pedido ao Visitas:** contem as pistas da visita 3 e 4 (marcas de altura/1975,
+desenho atrás do painel/2019, buraco no muro/1967) com essa convenção, para o total passar de 6.
+
+**Visor:** o porão usa `Visor.instalar(self)` e escuta `figura_atravessou` (solta a Figura de verdade atrás do jogador). As marcas da voz (facho vermelho com
+balde = caminho certo; facho azul com ondas = água funda) e as pistas aparecem com `Epocas.marcar` nas épocas E1967 e ESEMDATA. No disco sem data o porão
+esquenta a luz (fim de tarde) e a água para (ondas = 0).
+
+**Orçamento web medido (captura):** 20 a 50 draw calls por vista, 4 luzes (2 por sala, sala atual e próxima; a lanterna do jogador seria a 5ª),
+2 a 3 salas montadas por vez, névoa de profundidade. Água: um plano por sala com `porao_agua.gdshader` (sem refração).
+
+**Lentidão na água:** o `player.gd` não é meu, então o nível (prioridade de física 100) encolhe o deslocamento horizontal do jogador depois que ele andou:
+fator `clamp(1 - prof*0.6, 0.42, 1)` (tornozelo 0,87; joelho 0,67; cintura 0,43). Se o integrador preferir, o jogador pode ler `nivel.fator_agua()`.
+
+**Costela:** cipós crescem em ~3,2 s de jogador parado (< 0,45 m/s), recuam rápido andando; prendem (jogador travado, câmera livre); apertar uma direção
+por 0,9 s solta (imune por 1,5 s); sem lutar, em 2,6 s `matar_jogador("costela")`. Afogamento: `matar_jogador("afogamento")` (tela escurece, sem gráfico).
+**Pedido ao Visor/UI:** `ui/morte.gd` pode ter textos para as causas "costela", "afogamento" e "figura_branca" (hoje mostra a mesma tela para todas).
+
+### Decisões e notas do Visitas
+- **Bug achado e corrigido (existia desde o MVP):** o painel `p08` (Sala dos Povos, tem quiz) estava a 36 cm DENTRO da parede
+  (x -26,76; a face interna é x -26,4) e ninguém conseguia lê-lo. Agora em x -26,35. `castelinho_test` confere que todo painel
+  visível é alcançável pelo raio do jogador (V1 e V4).
+- **Numeração:** bases 23, 24 e 25 (porta de saída, Sala Medieval em 1975, corredor de 1975) contam como a base 22: a sala
+  global 23/45/67 já é a primeira da visita seguinte. Visita 4 comprime as bases em 67..79 (`V4_SALAS`); a 80 é a porta zebrada
+  do hall, que só conta depois da Sala Medieval (78) ter sido vista. Os gatilhos chamam `_entrou(base)` do nível
+  (`GatilhoCastelinho`), não `entrar_sala_base` direto.
+- **Visita 3 e o Ato II:** a escada para a laje fica interditada (fita zebrada + colisão) até o Ato II ser concluído (flag
+  `v3_ato2_feito`, ligada ao nascer em `Spawn_volta_ato2` ou ao entrar na sala 17). O disco 1975 fica num pedestal no topo da Torre A.
+  A porta nova para 1950 fica na parede oeste do Salão de Arte (x -12,1; z -18). Ela grava `checkpoint_sala = 55` antes de ir ao `ato2`.
+- **Fim da visita 3:** o Visor com o disco 1975 mostra a saída aberta (o vão da Sala Medieval em 1975 leva ao corredor); o gatilho
+  do corredor trava o Visor em 1975 e a porta do fundo chama `comecar_visita(4)` sem placa "Volte sempre".
+- **Visita 4:** porta zebrada no hall (parede da pilastra, x -14,0) e escada da Sala Medieval (só em 2019, x -14; z -26,8) descem para
+  `porao.tscn` "Spawn" com `comecar_visita(5)`. Painéis mostram `desenho_3..6` (se existirem em `data/paineis.json`).
+- **Pistas do Tito** (para o final "Encontrado"): flags `pista_buraco` (muro de 1967), `pista_desenho_2019` (atrás do painel solto) e
+  contador `pistas_tito`; as marcas de altura (1975) são só visuais por enquanto (sem Interagivel).
+- **Tito no Visor (visitas 3 e 4):** boneco `TitoNoVisor`, visível só nas épocas fora do presente, a cada sala mais perto (`_spot_tito_visor`).
+- **Pendências para outros agentes:** (Visor/UI) `ui/diploma.gd` ler a flag `diploma_nome` ("TITO" na visita 2); (Porão) ligar
+  `v3_ato2_feito` no `ato2` ao sair é opcional (o Castelinho já liga); marcador `Spawn_volta_ato2` existe em y = 6,9.
+- Os níveis do Castelinho mexem em `Efeitos.flash`, `Guia.falar_engasgado`, `Audio.ambiente("chuva"|"vento"|"mar")` e `sfx_3d("goteira")`.

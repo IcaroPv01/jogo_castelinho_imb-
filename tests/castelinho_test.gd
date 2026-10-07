@@ -246,6 +246,32 @@ func _carregar_visita(v: int, flags: Dictionary = {}) -> void:
 	nivel = main.mundo.get_child(0)
 
 
+## Todo painel visível precisa ser alcançável pelo raio do jogador: um raio de 1,2 m na frente dele bate NELE, não na
+## parede (o p08 da Sala dos Povos ficava enterrado na parede, a 36 cm da face, e ninguém conseguia lê-lo).
+func _paineis_alcancaveis(rotulo: String) -> void:
+	var espaco: PhysicsDirectSpaceState3D = p.get_world_3d().direct_space_state
+	var ruins := []
+	for id in nivel._paineis:
+		var no: Node3D = nivel._paineis[id]
+		if not no.is_visible_in_tree() or not no.has_method("interagir"):
+			continue          # (o painel solto da visita 4 é um nó com Interagivel próprio)
+		var frente: Vector3 = no.global_transform.basis.z.normalized()
+		var q := PhysicsRayQueryParameters3D.create(no.global_position + frente * 1.2, no.global_position, 1 | 4)
+		q.collide_with_areas = true
+		var r: Dictionary = espaco.intersect_ray(q)
+		var c = r.get("collider", null)
+		var ok := false
+		var n = c
+		while n != null:
+			if n == no:
+				ok = true
+				break
+			n = n.get_parent()
+		if not ok:
+			ruins.append(id)
+	_checar(ruins.is_empty(), "%s: todo painel visível é alcançável pelo raio (não enterrado na parede): %s" % [rotulo, str(ruins)])
+
+
 func _luzes_ligadas() -> int:
 	var n := 0
 	for l in nivel._luzes:
@@ -261,6 +287,7 @@ func _lanterna_conta() -> int:
 func _visitas() -> void:
 	print("-- visita 1")
 	await _carregar_visita(1)
+	_paineis_alcancaveis("V1")
 	_checar(nivel.visita == 1 and absf(nivel.sol.light_energy - 1.25) < 0.01, "V1: manhã de sol (energia %.2f)" % nivel.sol.light_energy)
 	_checar(GameState.corruption == 0.0, "V1: corrupção 0")
 	_checar(nivel._paineis["p05"].id == "p05", "V1: painel base p05 (%s)" % nivel._paineis["p05"].id)
@@ -385,6 +412,7 @@ func _visitas() -> void:
 	nivel = main.mundo.get_child(0)
 	p = main.player
 	_checar(GameState.visita == 4 and nivel.visita == 4, "V4: visita 4 (visita %d)" % GameState.visita)
+	_paineis_alcancaveis("V4")
 	_checar(GameState.sala_atual == 67, "V4: calçada = sala 67 (sala %d)" % GameState.sala_atual)
 	_checar(nivel.sol.light_energy < 0.3 and nivel.ambiente.fog_density > 0.02, "V4: madrugada com névoa densa (sol %.2f, névoa %.3f)" % [nivel.sol.light_energy, nivel.ambiente.fog_density])
 	_checar(nivel.chuva != null and nivel.chuva.emitting, "V4: chuva caindo")

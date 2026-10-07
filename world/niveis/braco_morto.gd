@@ -481,7 +481,7 @@ func _process(dt: float) -> void:
 	# vê o Tito: o Visor mostra a época dele, ele está a menos de 14 m e na frente da câmera por ~1 s
 	var vendo := GameState.epoca in EPOCAS_TITO and tito.is_visible_in_tree()
 	if vendo:
-		var alvo := tito.global_position + Vector3(0, 0.8, 0)
+		var alvo := (tito.get_node("Menino") as Node3D).global_position + Vector3(0, 0.8, 0)
 		var dir := alvo - player.camera.global_position
 		vendo = dir.length() < 14.0 and (-player.camera.global_transform.basis.z).angle_to(dir.normalized()) < 0.55
 	_visto_t = _visto_t + dt if vendo else 0.0

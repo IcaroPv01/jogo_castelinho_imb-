@@ -37,7 +37,7 @@ const CHECKPOINTS: Array[int] = [81, 86, 91, 95, 96]
 const PROF_AGUA: Array[float] = [0.0, 0.22, 0.55, 0.95]
 const TEMPO_SUBIR := 6.0
 const COSTELA_OK: Array[String] = ["abobada", "colunas", "desenhos", "crianca", "pedras", "arcos", "telefone", "poco"]
-const FIGURA_OK: Array[String] = ["abobada", "colunas", "desenhos", "pedras", "arcos", "poco", "cisterna"]
+const FIGURA_OK: Array[String] = ["abobada", "colunas", "desenhos", "pedras", "arcos", "poco", "cisterna", "alagado", "crianca", "telefone"]
 const VOZ_OK: Array[String] = ["abobada", "colunas", "pedras", "desenhos", "arcos", "poco"]
 const T := 0.6
 
@@ -60,6 +60,8 @@ var afogando := false
 var morrendo := false
 var visor: Node
 var disco_pego_aqui := false
+## Os testes desligam as ameaças (Figura e Costela) para atravessar as salas sem morrer no caminho.
+var ameacas_ligadas := true
 
 var _t := 0.0
 var _ultima_pos := Vector3.ZERO
@@ -257,7 +259,8 @@ func _ajustar_agua_sala(c) -> void:
 	var no := c.raiz.get_node_or_null("Agua") as MeshInstance3D
 	if no:
 		no.position.y = y
-		no.visible = c.agua and (prof > 0.02 or c.base_agua <= -1.0 or c.tipo == "alagado") and no.get_meta("visivel_epoca", true)
+		if not no.is_in_group("epocal"):          # o plano da sala 96 é controlado por Epocas (some na época sem data)
+			no.visible = c.agua and (prof > 0.02 or c.base_agua <= -1.0 or c.tipo == "alagado")
 	var y_mundo: float = c.raiz.global_position.y + y
 	SalasGd.definir_agua(c, y_mundo, c.raiz.global_position.y + c.base_agua)
 	# objetos que boiam (o balde do slide 4) seguem a água
@@ -515,7 +518,7 @@ func ponto_spawn(nome: String) -> Node3D:
 	var sp := Marker3D.new()
 	sp.name = nome
 	c.raiz.add_child(sp)
-	sp.position = Vector3(0, 0.1, -1.1)
+	sp.position = Vector3(0, c.piso_fn.call(-1.1) + 0.1, -1.1)
 	idx_atual = -1
 	return sp
 
@@ -868,6 +871,8 @@ func _preparar_ameacas(i: int) -> void:
 	figura.esconder()
 	if costela:
 		costela.ativa = false
+	if not ameacas_ligadas:
+		return
 	var d: Dictionary = plano[i]
 	var c = salas[i]
 	if d["costela"] and costela:
@@ -954,9 +959,11 @@ func _reiniciar_no_checkpoint() -> void:
 	player.cabeca.rotation.x = 0.0
 	player.velocity = Vector3.ZERO
 	var c = salas[i]
-	player.global_position = c.raiz.to_global(Vector3(0, 0.05, -1.3))
+	player.global_position = c.raiz.to_global(Vector3(0, c.piso_fn.call(-1.3) + 0.05, -1.3))
 	player.rotation = Vector3(0, c.raiz.global_rotation.y, 0)
 	_tem_ultima = false
+	if _tween_agua and _tween_agua.is_valid():
+		_tween_agua.kill()
 	nivel_agua = nivel_da_sala(sala)
 	prof = PROF_AGUA[nivel_agua]
 	GameState.definir_atencao(0.0)
@@ -973,7 +980,7 @@ func ir_para_sala(i: int) -> void:
 	_carregar_sala(i + 1)
 	idx_atual = -1
 	var c = salas[i]
-	player.global_position = c.raiz.to_global(Vector3(0, 0.05, -1.4))
+	player.global_position = c.raiz.to_global(Vector3(0, c.piso_fn.call(-1.4) + 0.05, -1.4))
 	player.velocity = Vector3.ZERO
 	_tem_ultima = false
 	_ao_entrar_sala(i, true)

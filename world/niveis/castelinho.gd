@@ -97,7 +97,7 @@ const POS_PORTA_PORAO := Vector3(-14.0, 0.0, -13.77)    # visita 4: porta zebrad
 const POS_ESCADA_2019 := Vector3(-14.0, 0.0, -26.8)     # visita 4: escada do chão da Sala Medieval (só em 2019)
 const POS_DISCO_1967 := Vector3(-5.9, 1.01, -19.8)
 const POS_DISCO_1975 := Vector3(-20.6, 7.7, -12.2)      # sobre um pedestal no topo da Torre A (piso em y = 6,8)
-const POS_PAINEL_SOLTO := Vector3(-26.76, 1.45, -13.0)  # Sala dos Povos: o painel p08 solto da parede
+const POS_PAINEL_SOLTO := Vector3(-26.35, 1.45, -13.0)  # Sala dos Povos: o painel p08 solto da parede
 const POS_ARMADURA := Vector3(-9.25, 0.0, -28.2)
 const POS_PORTA_SAIDA := Vector3(-10.2, 1.2, -29.2)
 
@@ -701,7 +701,7 @@ func _montar_paineis() -> void:
 	if visita == 4:
 		_montar_painel_solto()                                      # o p08 da visita 4 é o painel solto (disco 2019)
 	else:
-		_painel("p08", Vector3(-26.76, 1.45, -13.0), 90.0)
+		_painel("p08", Vector3(-26.35, 1.45, -13.0), 90.0)         # (antes x=-26,76: enterrado na parede, a face interna é x=-26,4)
 	_painel("p09", Vector3(-24.55, 1.45, -17.4), 90.0)
 	_painel("p10", Vector3(-17.0, 1.5, -23.04), 0.0)
 	_painel("p11", Vector3(-10.9, 1.5, -20.04), 0.0)
@@ -1174,15 +1174,15 @@ func _montar_painel_solto() -> void:
 	raiz.rotation_degrees.y = 90.0
 	add_child(raiz)
 	var desenho := _id_painel("p08")
-	var folha := TitoCastelinho.folha(raiz, desenho if desenho.begins_with("desenho_") else "desenho_5", Vector3(0.02, 0.0, 0.1), 0.0, 1.3, 2)
-	folha.rotation_degrees.z = 12.0
+	var folha := TitoCastelinho.folha(raiz, desenho if desenho.begins_with("desenho_") else "desenho_5", Vector3(0.0, 0.0, 0.05), 0.0, 1.3, 2)
+	folha.rotation_degrees.z = 6.0
 	_limitar_alcance(raiz, 9.0)
 	Epocas.marcar(raiz, [E2020])
 	_painel_solto = raiz
 	_paineis["p08"] = raiz
 	var it := Interagivel.new("Olhar atrás do painel solto", Vector3(1.5, 1.2, 0.8), _olhar_painel_solto)
 	it.name = "PainelSoltoInterativo"
-	it.position = POS_PAINEL_SOLTO + Vector3(0.3, 0.0, 0.0)
+	it.position = POS_PAINEL_SOLTO + Vector3(0.15, 0.0, 0.0)
 	add_child(it)
 	Epocas.marcar(it, [E2020])
 
@@ -1203,12 +1203,12 @@ func _olhar_painel_solto(_p: Node) -> void:
 
 ## O desenho atrás do painel (pista que só existe em 2019) e a estante rasa onde o disco ficava.
 func _montar_desenho_oculto_2019() -> void:
-	var d := TitoCastelinho.folha(self, "desenho_6", POS_PAINEL_SOLTO + Vector3(0.12, -0.1, 0.0), 90.0, 0.7, 2)
+	var d := TitoCastelinho.folha(self, "desenho_6", Vector3(-26.37, 1.35, -13.0), 90.0, 0.7, 2)
 	d.name = "DesenhoAtrasDoPainel"
 	Epocas.marcar(d, [E2019])
 	_limitar_alcance(d, 9.0)
 	var it := Interagivel.new("Olhar o desenho na parede", Vector3(0.5, 0.9, 0.9), _olhar_desenho_2019)
-	it.position = POS_PAINEL_SOLTO + Vector3(0.2, -0.1, 0.0)
+	it.position = Vector3(-26.2, 1.35, -13.0)
 	add_child(it)
 	Epocas.marcar(it, [E2019])
 

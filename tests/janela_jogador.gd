@@ -422,6 +422,8 @@ func _h_mural_barra_e_volta() -> void:
 	_olhar(mural.global_position)
 	await _frames(6)
 	_checar(main.hud.lbl_aviso.text == "[E] Olhar o mural", "aviso do mural: '%s'" % main.hud.lbl_aviso.text)
+	root.get_node("/root/Guia").cancelar()          # a fala da Tainá da sala 35 (visita 2) não pode atrasar a do mural
+	await _frames(3)
 	await _toque(KEY_E)
 	await _frames(4)
 	_checar(not p.pode_mover and root.get_node("/root/Guia").ocupado(), "a Tainá fala e o jogador fica parado")
@@ -475,7 +477,7 @@ func _h_mural_barra_e_volta() -> void:
 		q += 0.5
 	_checar(p.pode_mover and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not paused, "jogador livre e com o mouse capturado")
 	_checar(p.global_position.distance_to(Vector3(-8.6, 0.0, -15.6)) < 2.0, "voltou à Sala do Pescador (%s)" % str(p.global_position.snapped(Vector3(0.1, 0.1, 0.1))))
-	_checar(GS.epoca == GS.Epoca.E2020 and GS.corruption < 0.1, "época de hoje e corrupção da curva (%.2f)" % GS.corruption)
+	_checar(GS.epoca == GS.Epoca.E2020 and GS.corruption <= GS.corruption_por_sala(GS.sala_atual) + 0.001, "época de hoje e corrupção da curva (%.2f)" % GS.corruption)
 	# mural de novo: "Já vimos esse mural"
 	_olhar(nivel._mural.global_position)
 	await _frames(6)
