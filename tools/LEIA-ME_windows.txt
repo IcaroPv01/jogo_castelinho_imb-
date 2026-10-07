@@ -1,4 +1,4 @@
-CASTELINHO: VISITA GUIADA — versão de demonstração (salas 1 a 30)
+CASTELINHO: VISITA GUIADA — versão 2 (quatro visitas, porão e Braço Morto)
 
 COMO JOGAR
 1. Extraia esta pasta (botão direito > Extrair tudo).
@@ -12,8 +12,17 @@ CONTROLES
   Shift ............. correr (gasta fôlego)
   Mouse ............. olhar
   E ou clique ....... ler painel / usar
-  Q (segurar) ....... Visor do Tempo (depois da sala 10)
+  1 a 5 ............. escolher o disco do Visor do Tempo
+  Rolagem do mouse .. trocar o disco do Visor
+  Q (segurar) ....... Visor do Tempo: mostra a época do disco (depois da sala 10)
+  F ................. lanterna (quando você ganhar uma)
   Espaço / Enter .... avançar diálogo
   Esc ou P .......... pausar (clique para voltar)
 
-O jogo salva sozinho. Obra de ficção: não representa a Prefeitura de Imbé.
+AVISO
+O jogo trata de um desaparecimento infantil fictício, com temas pesados.
+Nada é mostrado de forma gráfica: o horror é psicológico e por sugestão.
+Proteção à criança: Disque 100 (Direitos Humanos, gratuito, 24h).
+
+O jogo salva sozinho. Obra de ficção: o programa municipal do jogo é inventado
+e não representa a Prefeitura de Imbé.
