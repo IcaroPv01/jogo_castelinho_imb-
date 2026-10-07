@@ -54,7 +54,8 @@ link simbólico com outro nome para não ser morto junto.
 - Push na `main` = site publicado (GitHub Actions → Pages), só a versão Web.
 - **Zip do Windows só quando o Icaro pedir:** Actions → "Web (Godot → GitHub Pages)" → Run workflow na `main` com
   `windows` marcado. O zip sai do site na próxima publicação normal.
-- Divisão em módulos e quem faz o merge: `docs/MODULOS.md` (quando existir).
+- **Trabalho em módulos, um de cada vez; cada sessão faz o merge do próprio PR** (CI verde). Fila, roteiro e
+  passagem de bastão: `docs/MODULOS.md`.
 
 ## Mapa rápido
 
