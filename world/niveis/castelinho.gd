@@ -47,7 +47,7 @@ const PRESENTE := {
 	# 3: noite com lua; o que ilumina é a lanterna e as lâmpadas do museu
 	3: [Color(0.03, 0.04, 0.1), Color(0.11, 0.13, 0.24), Color(0.55, 0.65, 1.0), 0.3, -50.0, 30.0, Color(0.34, 0.4, 0.62), 0.42, Color(0.07, 0.09, 0.17), 0.012],
 	# 4: madrugada de chuva, céu fechado, névoa densa
-	4: [Color(0.05, 0.07, 0.09), Color(0.14, 0.17, 0.2), Color(0.5, 0.6, 0.7), 0.22, -55.0, 20.0, Color(0.3, 0.36, 0.42), 0.4, Color(0.1, 0.12, 0.15), 0.026],
+	4: [Color(0.05, 0.07, 0.09), Color(0.14, 0.17, 0.2), Color(0.5, 0.6, 0.7), 0.22, -55.0, 20.0, Color(0.34, 0.4, 0.46), 0.62, Color(0.1, 0.12, 0.15), 0.026],
 }
 
 ## Nuvens (shaders/ceu_nuvens.gdshader): [cor da nuvem, cor da sombra da nuvem, cobertura (menor = mais nuvem),
@@ -67,7 +67,7 @@ const CEUS_PRESENTE := {
 
 ## Lâmpadas do museu por visita: [multiplicador de energia, máximo de OmniLight3D ligadas]. Com a lanterna (SpotLight3D)
 ## e a luz do Sol/Lua, o orçamento da web é de 6 luzes: 1 + 4 + 1 nas visitas 3 e 4.
-const LAMPADAS := {1: [1.0, 5], 2: [0.95, 5], 3: [0.8, 4], 4: [0.55, 4]}
+const LAMPADAS := {1: [1.0, 5], 2: [0.95, 5], 3: [0.8, 4], 4: [0.75, 4]}
 const COR_LAMPADA := {1: Color(1.0, 0.8, 0.52), 2: Color(1.0, 0.76, 0.46), 3: Color(1.0, 0.76, 0.5), 4: Color(0.86, 0.9, 1.0)}
 
 ## Visita 4: as 22 salas base comprimidas na numeração 67..79 (a 80 é a porta zebrada do hall).
@@ -92,8 +92,8 @@ const V4_DESENHOS := {
 const CARTAZES_V3 := ["p01", "p04", "p07", "p09", "p11", "p13", "p18", "p20"]
 const CARTAZES_V4 := ["p02", "p06", "p10", "p14"]
 
-const POS_PORTA_ATO2 := Vector3(-12.47, 0.0, -18.0)     # visita 3: porta nova na parede oeste do Salão de Arte (base 11)
-const POS_PORTA_PORAO := Vector3(-14.0, 0.0, -13.79)    # visita 4: porta zebrada no hall (sala 80)
+const POS_PORTA_ATO2 := Vector3(-12.1, 0.0, -18.0)     # visita 3: porta nova na parede oeste do Salão de Arte (base 11)
+const POS_PORTA_PORAO := Vector3(-14.0, 0.0, -13.77)    # visita 4: porta zebrada no hall (sala 80)
 const POS_ESCADA_2019 := Vector3(-14.0, 0.0, -26.8)     # visita 4: escada do chão da Sala Medieval (só em 2019)
 const POS_DISCO_1967 := Vector3(-5.9, 1.01, -19.8)
 const POS_DISCO_1975 := Vector3(-20.6, 7.7, -12.2)      # sobre um pedestal no topo da Torre A (piso em y = 6,8)
@@ -486,6 +486,7 @@ func _marcadores() -> void:
 	_cam("Cam_salaarte", Vector3(-8.5, 1.55, -19.6), Vector3(-10.5, 1.3, -17.6), 72.0)
 	_cam("Cam_salaarte2", Vector3(-8.2, 1.55, -18.4), Vector3(-12.5, 1.3, -18.2), 75.0)
 	_cam("Cam_povos", Vector3(-17.0, 1.55, -12.9), Vector3(-26.0, 1.3, -12.9), 72.0)
+	_cam("Cam_povos2", Vector3(-22.5, 1.55, -12.9), Vector3(-26.7, 1.3, -13.0), 70.0)
 	_cam("Cam_ambiente", Vector3(-19.0, 1.55, -15.6), Vector3(-23.0, 1.0, -16.8), 72.0)
 	_cam("Cam_acervo", Vector3(-7.4, 1.55, -17.6), Vector3(-5.9, 1.0, -19.8), 70.0)
 	_cam("Cam_medieval2", Vector3(-12.6, 1.55, -23.8), Vector3(-13.5, 1.4, -29.0), 78.0)
@@ -1075,12 +1076,16 @@ func _montar_porta_ato2() -> void:
 	m.caixa(castelo.m.escuro, o + Vector3(-0.03, 0.0, -0.58), o + Vector3(0.02, 2.2, 0.58), Malha.F_TODAS)
 	m.quad(castelo.m.porta, o + Vector3(0.025, 0.0, 0.5), o + Vector3(0.025, 0.0, -0.5), o + Vector3(0.025, 2.05, -0.5), o + Vector3(0.025, 2.05, 0.5), Vector3(1, 0, 0), Vector2(1, 1))
 	m.caixa(castelo.m.ferro, o + Vector3(0.03, 1.0, 0.38), o + Vector3(0.06, 1.1, 0.46), Malha.F_TODAS)
+	# fresta de luz clara embaixo da porta e uma luminosidade na folha: as dunas de 1950 do outro lado (chama o olhar de noite)
+	var luz := Castelinho.mat_luz(Color(1.0, 0.92, 0.65), 1.0)
+	m.quad(luz, o + Vector3(0.04, 0.0, 0.5), o + Vector3(0.04, 0.0, -0.5), o + Vector3(0.04, 0.035, -0.5), o + Vector3(0.04, 0.035, 0.5), Vector3(1, 0, 0))
+	m.quad(luz, o + Vector3(0.04, 0.0, 0.52), o + Vector3(0.04, 0.0, 0.5), o + Vector3(0.04, 2.1, 0.5), o + Vector3(0.04, 2.1, 0.52), Vector3(1, 0, 0))
+	m.quad(luz, o + Vector3(0.04, 0.0, -0.5), o + Vector3(0.04, 0.0, -0.52), o + Vector3(0.04, 2.1, -0.52), o + Vector3(0.04, 2.1, -0.5), Vector3(1, 0, 0))
 	var no := Node3D.new()
 	no.name = "PortaPara1950"
 	add_child(no)
 	m.construir_instancia(no, "Porta", 2)
 	Epocas.marcar(no, [E2020])
-	# fresta de luz clara embaixo da porta (as dunas de 1950 do outro lado)
 	_porta_ato2 = Interagivel.new("Abrir a porta", Vector3(0.5, 2.2, 1.2), _abrir_porta_ato2)
 	_porta_ato2.position = o + Vector3(0.1, 1.1, 0.0)
 	add_child(_porta_ato2)
@@ -1096,9 +1101,9 @@ func _montar_bloqueio_escada() -> void:
 	_bloqueio_escada.collision_layer = 1
 	var cs := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
-	bs.size = Vector3(0.7, 2.4, 1.3)
+	bs.size = Vector3(0.6, 2.4, 1.3)
 	cs.shape = bs
-	cs.position = Vector3(-12.55, 1.2, -19.55)
+	cs.position = Vector3(-12.3, 1.2, -19.55)
 	_bloqueio_escada.add_child(cs)
 	add_child(_bloqueio_escada)
 	# fitas zebradas atravessando a porta (as mesmas da saída em reforma)

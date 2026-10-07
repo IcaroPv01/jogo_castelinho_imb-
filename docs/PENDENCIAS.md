@@ -146,9 +146,9 @@ Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, 
 
 ### Estado (atualizado a cada etapa)
 - [x] 1. Renumerar `ato2` (salas 55 a 60, `Checkpoint_55`, flag `v3_ato2_feito`, volta em `Spawn_volta_ato2`) e `barra` (`sala_global(14)/(15)`, sandália) + `ato2_test`/`barra_test` (passam)
-- [~] 2. `porao.tscn`/`porao.gd` + `porao_salas.gd` (12 tipos) + `porao_quarto.gd` (quarto do Tito e slides) + shaders `porao_pedra`/`porao_agua`: ESCRITOS, ainda sem rodar (próximo passo: `godot --headless --import`, carregar, depurar erros de script)
-- [~] 3. Criaturas: `creatures/costela.gd` escrita (sem testar); voz do Tito e Figura/Visor estão em `porao.gd`
-- [ ] 4. `braco_morto.tscn`/`.gd` (sala 100) e finais
+- [x] 2. `porao.tscn`/`porao.gd` + `porao_salas.gd` (12 tipos + quarto + escada que sobe) + `porao_quarto.gd` (quarto do Tito e slides) + shaders `porao_pedra`/`porao_agua`: carregam, capturas conferidas (draw calls 20 a 50, 4 luzes)
+- [~] 3. Criaturas: `creatures/costela.gd`, voz do Tito, Figura/Visor em `porao.gd`: escritas, ainda sem teste automático
+- [~] 4. `braco_morto.tscn`/`.gd`: cena montada e capturada; falta testar a sequência final
 - [ ] 5. `tests/porao_test.gd`, `bash tools/testar.sh`
 - [ ] 6. Capturas e ajustes visuais
 
@@ -162,7 +162,7 @@ Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, 
 - [x] 1. `game_state.gd`: regra de checkpoint (`SALAS_CHECKPOINT`) e `preparar_continuar` (visitas, Ato II, porão, Braço Morto)
 - [x] 2. E1967 (obra) gerada: `castelinho/obra.gd`, Tito e desenhos em `castelinho/tito.gd`
 - [x] 3. Nível `world/niveis/castelinho.gd` em 4 visitas (iluminação, clima, eventos, painéis, discos, loop). Falta só conferir posições por captura (porta do Ato II, painel solto)
-- [ ] 4. Testes: `castelinho_test` feito (4 visitas, loop, E1967); falta `qa_logica_test` (Continuar por visita), `janela_jogador` e `bash tools/testar.sh`
+- [ ] 4. Testes: `castelinho_test` e `qa_logica_test` feitos (4 visitas, loop, E1967, Continuar por checkpoint); `janela_jogador` atualizado (rodando); falta `bash tools/testar.sh` final
 - [ ] 5. Capturas de cada visita e da E1967; LEIAME do Castelinho
 
 ### Contratos que o Visitas assume (por favor, confirmem ou avisem)

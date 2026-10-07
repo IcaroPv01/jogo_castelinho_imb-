@@ -21,11 +21,12 @@ Modificação: Baloo 2, VT323 e Arimo foram reduzidas ao subconjunto **Latin** (
 - Nenhum brasão, logotipo ou marca da Prefeitura de Imbé, nem de qualquer outra instituição, foi usado. O emblema da tela de título é uma estrela genérica.
 - O cenário da tela de título (castelo, nuvens, morros) é desenhado por código (`ui/tela_titulo.gd`).
 - **Texturas do mundo 3D** (`assets/textures/*.png`): todas **geradas por código** pelo script `tools/gerar_texturas.py` (numpy + Pillow), sem fotos nem texturas de terceiros. Inclui as da revisão gráfica: `parede_interna`, `parede_nucleo`, `tabuas_claras`, `nuvens` e `banner_ambiental` (um banner genérico, sem marca real). As cores da pedra foram medidas nas fotos de referência, que servem só de consulta (não entram no jogo).
+- **Arte da história do Tito** (`assets/ui/tito/*.png`): os 7 desenhos de giz de cera, o cartaz "PROCURA-SE" e as marcas de altura são **gerados por código** por `tools/gerar_desenhos.py` (numpy + Pillow; só usa as fontes OFL já listadas e fontes do sistema para o cartaz). Nenhuma imagem, foto ou desenho de terceiros. Tito, a mãe e o cartaz são fictícios; o telefone "4-27" é inventado.
 - **Shaders** (`shaders/*.gdshader`: céu com nuvens, parede triplanar com oclusão falsa, moldura das placas, pós-processamento, água, PSX): escritos para o projeto.
 
 ## Áudio
 
-Todos os sons (`assets/audio/*`) são **sintetizados** pelo script `tools/gerar_audio.py` (Python + numpy; os arquivos `.ogg` são codificados com `ffmpeg`/libvorbis). Não há nenhuma amostra, trecho de música ou efeito de terceiros. O jingle institucional é uma melodia original em Dó maior, com marimba, xilofone, baixo e percussão sintéticos; o hino municipal **não** é usado.
+Todos os sons (`assets/audio/*`) são **sintetizados** pelo script `tools/gerar_audio.py` (Python + numpy; os arquivos `.ogg` são codificados com `ffmpeg`/libvorbis). Não há nenhuma amostra, trecho de música ou efeito de terceiros. O jingle institucional é uma melodia original em Dó maior, com marimba, xilofone, baixo e percussão sintéticos; o hino municipal **não** é usado. Os sons da versão 2 (`chuva`, `goteira`, `agua_sobe`, `crianca_ei`, `telefone_voz` e `atencao`) também saem de `tools/gerar_audio.py`: a "voz" da criança e a da mãe ao telefone são só ruído filtrado em formantes, sem nenhuma gravação ou síntese de voz realista; o texto vai na tela.
 
 ## Textos
 

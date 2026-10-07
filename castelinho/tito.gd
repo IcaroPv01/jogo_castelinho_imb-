@@ -335,7 +335,7 @@ static func folha(pai: Node, nome: String, pos: Vector3, yaw: float, largura: fl
 static func cartaz_sobre(pai: Node, painel: Node3D, canto := 1, roll := 4.0) -> MeshInstance3D:
 	var yaw := painel.rotation_degrees.y
 	var b := Basis.from_euler(Vector3(0, deg_to_rad(yaw), 0))
-	var off := b * Vector3(0.52 * canto, -0.22, 0.045)
+	var off := b * Vector3(0.52 * canto, -0.22, 0.11)
 	return folha(pai, "procura_se", painel.position + off, yaw, 0.34, 2 if _dentro(painel.position) else 1, false, roll * canto)
 
 
@@ -451,7 +451,7 @@ static func animar(tito: Node3D, t: float, cam: Vector3) -> void:
 		# cavando: tronco inclinado, braço balançando perto do chão
 		tronco.rotation.x = lerpf(tronco.rotation.x, 0.55 + 0.1 * sin(t * 6.0), 0.15)
 		braco.rotation.z = lerpf(braco.rotation.z, 0.25 + 0.2 * sin(t * 6.0), 0.2)
-		braco.rotation.x = lerpf(braco.rotation.x, -0.9, 0.2)
+		braco.rotation.x = lerpf(braco.rotation.x, -0.4, 0.2)
 	else:
 		# acenando: tronco reto, braço para cima balançando
 		tronco.rotation.x = lerpf(tronco.rotation.x, 0.0, 0.15)
