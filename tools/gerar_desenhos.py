@@ -269,27 +269,27 @@ class Folha:
 
 # ------------------------------------------------------------------ pedaços de desenho infantil
 def assinatura(f, x, y, h=34, cor=VERMELHO, larg=5):
-    """"TITO" em giz, com o primeiro T de cabeça para baixo (V2 §5: "o T ao contrário"): a criança escreve o
-    próprio nome e erra a letra que ela mais repetiu. Letras desiguais, o último O não fecha direito."""
+    """"TITO" em giz, escrito normalmente, com o traço tremido de uma criança de 9 anos. O "erro de criança" é o
+    desalinho: as letras sobem e descem, ficam tortas e de tamanhos diferentes, e o O não fecha (ver V2 §5)."""
     f.cor(cor)
     r = f.rng
     xs = x
-    # T invertido (⊥): haste em cima, travessa embaixo
-    w = h * 0.95
-    f.linha([(xs + w / 2, y), (xs + w / 2 + r.uniform(-1, 1), y + h)], larg, 1.0)
-    f.linha([(xs - 4, y + h), (xs + w + 5, y + h - 1)], larg, 1.0)
-    xs += w + h * 0.35
-    # I
-    f.linha([(xs, y + 1), (xs + 1, y + h * 1.02)], larg, 1.0)
-    f.linha([(xs - 6, y + 1), (xs + 7, y)], larg - 1, 0.8)
-    xs += h * 0.4
-    # T normal, um pouco maior
-    h2 = h * 1.08
-    f.linha([(xs - 3, y - 3), (xs + w + 3, y - 2)], larg, 1.0)
-    f.linha([(xs + w / 2, y - 2), (xs + w / 2 + 1, y + h2 - 2)], larg, 1.0)
-    xs += w + h * 0.4
-    # O (não fecha)
-    f.elipse(xs + h * 0.32, y + h * 0.5, h * 0.34, h * 0.5, larg, 1.0, a0=-1.2, a1=-1.2 + 2 * math.pi + 0.5, passes=1)
+    w = h * 0.8
+    # (T, I, T, O) com altura, inclinação e deslocamento vertical próprios
+    for k, (letra, dy, hh, incl) in enumerate([("T", 0, h, 0.06), ("I", 5, h * 0.92, -0.08), ("T", -3, h * 1.1, 0.1), ("O", 4, h * 0.95, 0)]):
+        yy = y + dy
+        if letra == "T":
+            f.linha([(xs - 3, yy + incl * 8), (xs + w + 3, yy - incl * 8)], larg, 1.2)
+            f.linha([(xs + w / 2 + incl * 10, yy), (xs + w / 2 - incl * 10, yy + hh)], larg, 1.2)
+            xs += w + h * 0.3
+        elif letra == "I":
+            f.linha([(xs + 2 - incl * 10, yy), (xs + 2 + incl * 10, yy + hh)], larg, 1.2)
+            f.linha([(xs - 5, yy + 1), (xs + 9, yy - 1)], larg - 1, 0.8)
+            f.linha([(xs - 5, yy + hh), (xs + 9, yy + hh + 1)], larg - 1, 0.8)
+            xs += h * 0.42
+        else:
+            # O aberto em cima, como quem não fecha o círculo
+            f.elipse(xs + h * 0.36, yy + hh * 0.5, h * 0.36, hh * 0.5, larg, 1.3, a0=-1.1, a1=-1.1 + 2 * math.pi - 0.55, passes=1)
 
 
 def boneco(f, x, y, escala=1.0, cor=PRETO, larg=5, sorriso=True, braco_e=(-30, 25), braco_d=(30, 25), corpo_h=38, cabeca=14,
