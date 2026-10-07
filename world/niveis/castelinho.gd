@@ -44,10 +44,13 @@ const PRESENTE := {
 	1: [Color(0.4, 0.6, 0.88), Color(0.8, 0.88, 0.96), Color(1.0, 0.96, 0.88), 1.25, -48.0, 25.0, Color(0.8, 0.78, 0.8), 0.56, Color(0.82, 0.87, 0.94), 0.0022],
 	# 2: fim de tarde alaranjado e ventania
 	2: [Color(0.46, 0.4, 0.62), Color(1.0, 0.62, 0.36), Color(1.0, 0.58, 0.28), 1.15, -13.0, -70.0, Color(0.88, 0.66, 0.58), 0.5, Color(0.96, 0.66, 0.46), 0.0065],
-	# 3: noite com lua; o que ilumina é a lanterna e as lâmpadas do museu
-	3: [Color(0.03, 0.04, 0.1), Color(0.11, 0.13, 0.24), Color(0.55, 0.65, 1.0), 0.3, -50.0, 30.0, Color(0.34, 0.4, 0.62), 0.42, Color(0.07, 0.09, 0.17), 0.012],
-	# 4: madrugada de chuva, céu fechado, névoa densa
-	4: [Color(0.05, 0.07, 0.09), Color(0.14, 0.17, 0.2), Color(0.5, 0.6, 0.7), 0.22, -55.0, 20.0, Color(0.34, 0.4, 0.46), 0.62, Color(0.1, 0.12, 0.15), 0.026],
+	# 3: noite com lua; o que ilumina é a lanterna, a luz da rua (poças de sódio) e o museu aceso por dentro.
+	#    Revisão V2: ambiente mais baixo (0,42 -> 0,34): por dentro a noite passa a depender das poucas lâmpadas e da lanterna.
+	3: [Color(0.03, 0.04, 0.1), Color(0.11, 0.13, 0.24), Color(0.55, 0.65, 1.0), 0.3, -50.0, 30.0, Color(0.32, 0.38, 0.62), 0.34, Color(0.07, 0.09, 0.17), 0.012],
+	# 4: madrugada de chuva, céu fechado. Revisão V2: a névoa era quase preta e densa (apagava o prédio); agora é um
+	#    cinza-azulado de chuva, mais claro que o prédio, que destaca as silhuetas (o Castelinho escuro contra a névoa),
+	#    e o ambiente caiu (0,62 -> 0,3): por dentro mandam a lanterna, duas lâmpadas falhando e os relâmpagos.
+	4: [Color(0.1, 0.12, 0.15), Color(0.27, 0.3, 0.34), Color(0.5, 0.6, 0.7), 0.22, -55.0, 20.0, Color(0.32, 0.37, 0.44), 0.3, Color(0.17, 0.2, 0.24), 0.03],
 }
 
 ## Nuvens (shaders/ceu_nuvens.gdshader): [cor da nuvem, cor da sombra da nuvem, cobertura (menor = mais nuvem),
@@ -67,8 +70,17 @@ const CEUS_PRESENTE := {
 
 ## Lâmpadas do museu por visita: [multiplicador de energia, máximo de OmniLight3D ligadas]. Com a lanterna (SpotLight3D)
 ## e a luz do Sol/Lua, o orçamento da web é de 6 luzes: 1 + 4 + 1 nas visitas 3 e 4.
-const LAMPADAS := {1: [1.0, 5], 2: [0.95, 5], 3: [0.8, 4], 4: [0.75, 4]}
-const COR_LAMPADA := {1: Color(1.0, 0.8, 0.52), 2: Color(1.0, 0.76, 0.46), 3: Color(1.0, 0.76, 0.5), 4: Color(0.86, 0.9, 1.0)}
+## Revisão V2: a escala por dentro era plana (V1 = V2, V3 quase igual). Agora: V2 é fim de expediente (lâmpadas um pouco
+## mais fracas e âmbar); V3 é o museu fechado à noite (3 lâmpadas fracas: entre as poças fica escuro e a lanterna conta);
+## V4 tem só 2 lâmpadas frias que falham.
+const LAMPADAS := {1: [1.0, 5], 2: [0.76, 5], 3: [0.62, 3], 4: [0.55, 2]}
+const COR_LAMPADA := {1: Color(1.0, 0.8, 0.52), 2: Color(1.0, 0.6, 0.3), 3: Color(1.0, 0.74, 0.46), 4: Color(0.8, 0.88, 1.0)}
+## Luz da rua por visita (cor da cabeça dos postes): apagada de dia, acendendo no fim de tarde, sódio aceso à noite e
+## apagada na madrugada (falta de luz: lá fora só os relâmpagos e a lanterna).
+const COR_POSTE := {1: Color(0.78, 0.78, 0.74), 2: Color(1.0, 0.82, 0.55), 3: Color(1.0, 0.74, 0.36), 4: Color(0.16, 0.16, 0.17)}
+const COR_SODIO := Color(1.0, 0.66, 0.3)
+## Janelas acesas vistas de fora na visita 3 (o museu "fechado" com luz lá dentro chama o jogador para a porta).
+const COR_JANELA_NOITE := Color(1.0, 0.68, 0.32)
 
 ## Visita 4: as 22 salas base comprimidas na numeração 67..79 (a 80 é a porta zebrada do hall).
 const V4_SALAS := {
@@ -149,6 +161,10 @@ var _saindo_ato2 := false
 var _saindo_porao := false
 var _painel_solto: Node3D
 var _lampada_fase := 0.0
+var _t_relampago := 6.0               # visita 4: segundos até o próximo relâmpago
+var _clarao := 0.0                    # 0..1: força do relâmpago neste quadro
+var _vidros: Array = []               # materiais de vidro do prédio (acesos por fora na visita 3)
+var _janelas_acesas := -1             # -1 = ainda não aplicado; 0/1 = estado atual
 
 
 func _ready() -> void:
@@ -167,6 +183,7 @@ func _ready() -> void:
 	_montar_props()
 	_montar_vento()
 	_montar_chuva()
+	_montar_luz_da_rua()
 	_montar_visita()
 	_montar_epoca_1967()
 	GameState.epoca_mudou.connect(_on_epoca)
@@ -182,7 +199,7 @@ func iniciar(p: Player) -> void:
 		_abrir_porta_entrada(true)
 	_atualizar_luzes()
 	if visita >= 3 and GameState.flag("tem_lanterna"):
-		player.lanterna.visible = true
+		player.lanterna.visible = not GameState.flag("lanterna_desligada")
 	# volta da Barra (visita 2): os gatilhos 13/14 não podem derrubar o contador de 15
 	if visita == 2 and GameState.flag("viu_flashback_barra") and not GameState.flag(_chave("sala15")):
 		if _triggers.has(13):
@@ -322,6 +339,157 @@ func _montar_chuva() -> void:
 	chuva.position = Vector3(-15.0, 9.0, -12.0)
 	add_child(chuva)
 	Epocas.marcar(chuva, [E2020])
+
+
+## Luz da rua (revisão V2): a cabeça dos postes muda de cor por visita (COR_POSTE) e, na visita 3, cada poste ganha
+## uma poça de luz de sódio no chão e um cone de luz fraco no ar: a noite fica bonita e o caminho da calçada até a
+## entrada fica legível. Tudo sem luz de verdade (o orçamento da web é de 6 luzes): 1 malha aditiva para as poças e
+## 1 MultiMesh para os cones (2 draw calls).
+func _montar_luz_da_rua() -> void:
+	var cabeca := Castelinho.mat_luz(Color(1.0, 0.95, 0.8), 1.0)
+	cabeca.albedo_color = COR_POSTE[visita]
+	if visita != 3:
+		return
+	var tex := _tex_radial(64)
+	var m_poca := StandardMaterial3D.new()
+	m_poca.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m_poca.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m_poca.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m_poca.albedo_texture = tex
+	m_poca.albedo_color = Color(COR_SODIO.r, COR_SODIO.g, COR_SODIO.b, 0.85)
+	m_poca.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	m_poca.disable_receive_shadows = true
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var r := 4.6
+	for p in EntornoCastelinho.POSTES:
+		var c := Vector3(p.x - 1.35, 0.17, p.z)
+		var a := [c + Vector3(-r, 0, -r), c + Vector3(r, 0, -r), c + Vector3(r, 0, r), c + Vector3(-r, 0, r)]
+		var uv := [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
+		for i in [0, 1, 2, 0, 2, 3]:
+			st.set_normal(Vector3.UP)
+			st.set_uv(uv[i])
+			st.add_vertex(a[i])
+	var mi := MeshInstance3D.new()
+	mi.name = "PocasDeLuz"
+	mi.mesh = st.commit()
+	mi.material_override = m_poca
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	Epocas.marcar(mi, [E2020])
+	# cones: cilindro aberto, transparente em cima e embaixo (textura em gradiente vertical)
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.18
+	cone.bottom_radius = 2.6
+	cone.height = 6.6
+	cone.radial_segments = 10
+	cone.rings = 1
+	cone.cap_top = false
+	cone.cap_bottom = false
+	var m_cone := StandardMaterial3D.new()
+	m_cone.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m_cone.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m_cone.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m_cone.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m_cone.albedo_texture = _tex_gradiente_v(32)
+	m_cone.albedo_color = Color(COR_SODIO.r, COR_SODIO.g * 0.9, COR_SODIO.b * 0.8, 0.075)
+	m_cone.disable_receive_shadows = true
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = cone
+	mm.instance_count = EntornoCastelinho.POSTES.size()
+	for i in mm.instance_count:
+		var p: Vector3 = EntornoCastelinho.POSTES[i]
+		mm.set_instance_transform(i, Transform3D(Basis(), Vector3(p.x - 1.35, 6.72 - cone.height * 0.5, p.z)))
+	var mmi := MultiMeshInstance3D.new()
+	mmi.name = "ConesDeLuz"
+	mmi.multimesh = mm
+	mmi.material_override = m_cone
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mmi)
+	Epocas.marcar(mmi, [E2020])
+	# vidros do prédio (Castelinho.mat_vidro já vem com a emissão ligada em preto): só a cor muda depois
+	for k in ["vidro", "vidro_verde", "vidro_ambar"]:
+		var mt := castelo.m.get(k) as StandardMaterial3D
+		if mt:
+			mt.emission_energy_multiplier = 1.2 if k == "vidro" else 1.1
+			_vidros.append(mt)
+
+
+## Mancha radial suave (centro claro, borda transparente), em poucos tons: o pixel aparece, como no resto do jogo.
+static func _tex_radial(n: int) -> ImageTexture:
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	for y in n:
+		for x in n:
+			var d := Vector2(x + 0.5 - n * 0.5, y + 0.5 - n * 0.5).length() / (n * 0.5)
+			var a := clampf(1.0 - d, 0.0, 1.0)
+			a = floorf(pow(a, 1.6) * 6.0) / 6.0
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+	return ImageTexture.create_from_image(img)
+
+
+## Gradiente vertical para o cone de luz: forte perto da lâmpada (v = 0), some no chão (v = 1).
+static func _tex_gradiente_v(n: int) -> ImageTexture:
+	var img := Image.create(4, n, false, Image.FORMAT_RGBA8)
+	for y in n:
+		var v := float(y) / float(n - 1)
+		var a := pow(1.0 - v, 1.3) * smoothstep(0.0, 0.06, v)
+		for x in 4:
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+	return ImageTexture.create_from_image(img)
+
+
+## Visita 3: os vidros do museu brilham quando o jogador está do lado de fora (de dentro, a janela é noite).
+func _atualizar_janelas() -> void:
+	if _vidros.is_empty():
+		return
+	var acesas := 1 if (GameState.epoca == E2020 and not _jogador_dentro()) else 0
+	if acesas == _janelas_acesas:
+		return
+	_janelas_acesas = acesas
+	for mt in _vidros:
+		(mt as StandardMaterial3D).emission = COR_JANELA_NOITE if acesas == 1 else Color.BLACK
+
+
+## Visita 4: relâmpagos. A cada 7 a 15 s, dois clarões curtos (o segundo mais fraco) acendem o céu, a névoa e o
+## ambiente: por um instante o Castelinho aparece inteiro, escuro e errado contra o céu. O trovão vem 0,6 a 2 s depois.
+## Dentro do prédio o clarão é menor (entra pelas janelas). Só no presente (no Visor a época é outra).
+func _relampagos(dt: float) -> void:
+	if GameState.epoca != E2020:
+		_clarao = 0.0
+		return
+	_t_relampago -= dt
+	if _t_relampago <= 0.0:
+		_t_relampago = randf_range(7.0, 15.0)
+		_disparar_relampago()
+	if _clarao <= 0.0:
+		return
+	var a: Array = PRESENTE[4]
+	var dentro := _jogador_dentro()
+	var k := _clarao * (0.45 if dentro else 1.0)
+	ambiente.ambient_light_energy = lerpf(a[7], 2.2, k)
+	ambiente.ambient_light_color = (a[6] as Color).lerp(Color(0.7, 0.78, 0.95), k)
+	ambiente.fog_light_color = (a[8] as Color).lerp(Color(0.62, 0.68, 0.8), k)
+	sol.light_energy = lerpf(a[3], 2.4, k)
+	ceu.set_shader_parameter("cor_horizonte", (a[1] as Color).lerp(Color(0.72, 0.78, 0.9), k))
+	ceu.set_shader_parameter("cor_topo", (a[0] as Color).lerp(Color(0.42, 0.46, 0.58), k))
+
+
+func _disparar_relampago() -> void:
+	var tw := create_tween()
+	tw.tween_property(self, "_clarao", 1.0, 0.03)
+	tw.tween_property(self, "_clarao", 0.15, 0.07)
+	tw.tween_property(self, "_clarao", 0.7, 0.04)
+	tw.tween_property(self, "_clarao", 0.0, 0.45)
+	tw.tween_callback(_fim_relampago)
+	var atraso := randf_range(0.6, 2.0)
+	get_tree().create_timer(atraso).timeout.connect(func(): Audio.sfx("trovao", -2.0 - atraso * 3.0, randf_range(0.85, 1.05)))
+
+
+func _fim_relampago() -> void:
+	_clarao = 0.0
+	if GameState.epoca == E2020:
+		_on_epoca(E2020)
 
 
 func _ambiente_sonoro() -> void:
@@ -498,9 +666,10 @@ func _marcadores() -> void:
 	_cam("Cam_obra1967", Vector3(5.0, 2.2, 1.5), Vector3(-12.0, 2.4, -14.0), 70.0)
 	_cam("Cam_tito1967", Vector3(-6.2, 1.5, -3.0), Vector3(-2.4, 0.9, -7.2), 62.0)
 	_cam("Cam_buraco1967", Vector3(-20.0, 1.5, 3.0), Vector3(-21.6, 0.6, -1.0), 64.0)
-	_cam("Cam_porta_porao", Vector3(-14.0, 1.55, -11.9), Vector3(-14.0, 1.3, -13.8), 66.0)
+	_cam("Cam_porta_porao", Vector3(-14.0, 1.55, -11.6), Vector3(-14.0, 0.6, -13.8), 80.0)
 	_cam("Cam_porta_ato2", Vector3(-9.6, 1.55, -18.1), Vector3(-12.5, 1.2, -18.0), 72.0)
 	_cam("Cam_escada2019", Vector3(-14.0, 1.55, -24.4), Vector3(-14.0, 0.2, -26.8), 70.0)
+	_cam("Cam_calcada", Vector3(-21.0, 1.55, 1.2), Vector3(-34.0, 0.4, 3.0), 72.0)   # revisão V2: a calçada e o poste do spawn
 
 
 # ================================================================== luzes internas (poucas, quentes)
@@ -736,7 +905,7 @@ func _montar_paineis() -> void:
 				var cartaz := TitoCastelinho.cartaz_sobre(self, painel, 1 if id.hash() % 2 == 0 else -1)
 				cartaz.name = "Cartaz_" + id
 				if id == lista[0]:
-					_interagivel_pista("Ler o cartaz", cartaz.position + Vector3(0, 0, 0.03), Vector3(0.4, 0.55, 0.25), "cartaz",
+					_interagivel_pista("Ler o cartaz", cartaz.position + Vector3(0, 0, 0.03), Vector3(0.55, 0.75, 0.25), "cartaz",
 						["PROCURA-SE: Tito, 9 anos. Desaparecido desde 12/03/1967. Bermuda azul, balde vermelho.", "\"Informações: fone 4-27. A família agradece.\""], [E2020])
 				_limitar_alcance(cartaz, 9.0)
 				Epocas.marcar(cartaz, [E2020])
@@ -1048,6 +1217,21 @@ func _disco_no_chao(epoca: int, pos: Vector3, cor: Color, texto: String, a_parti
 		papel.position = Vector3(0.0, -0.18, 0.215)
 		papel.layers = 2
 		raiz.add_child(papel)
+	# revisão V2: o disco gira devagar e pisca um brilho de 4 pontas de vez em quando (o "item" de jogo educativo
+	# Flash): sem isso o disco de 1967 era um botão vermelho perdido na vitrine, e o de 1975 sumia no escuro da torre
+	disco.name = "Disco"
+	var brilho := Sprite3D.new()
+	brilho.name = "Brilho"
+	brilho.texture = _tex_brilho()
+	brilho.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	brilho.shaded = false
+	brilho.no_depth_test = false
+	brilho.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	brilho.pixel_size = 0.012
+	brilho.position = Vector3(0.09, 0.1, 0.05)
+	brilho.modulate = Color(1.0, 0.95, 0.7)
+	brilho.layers = 2
+	raiz.add_child(brilho)
 	Epocas.marcar(raiz, [E2020])
 	var it := Interagivel.new(texto, Vector3(0.4, 0.3, 0.4), Callable())
 	it.position = pos + Vector3(0, 0.05, 0)
@@ -1055,6 +1239,39 @@ func _disco_no_chao(epoca: int, pos: Vector3, cor: Color, texto: String, a_parti
 	add_child(it)
 	Epocas.marcar(it, [E2020])
 	_discos_chao[epoca] = [raiz, it]
+
+
+## Brilho de 4 pontas, 16 px, pixelado (para o disco no chão).
+static func _tex_brilho() -> ImageTexture:
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	for y in 16:
+		for x in 16:
+			var dx := absf(x - 7.5)
+			var dy := absf(y - 7.5)
+			var a := 0.0
+			if dx < 1.0 or dy < 1.0:
+				a = clampf(1.0 - maxf(dx, dy) / 8.0, 0.0, 1.0)
+			if dx + dy < 3.0:
+				a = 1.0
+			img.set_pixel(x, y, Color(1, 1, 1, floorf(a * 3.0) / 3.0))
+	return ImageTexture.create_from_image(img)
+
+
+## Anima os discos que ainda estão no chão: giro lento e o brilho que pisca a cada ~2,5 s.
+func _animar_discos(dt: float) -> void:
+	for ep in _discos_chao:
+		var raiz: Node3D = _discos_chao[ep][0]
+		if not is_instance_valid(raiz) or not raiz.visible:
+			continue
+		var d := raiz.get_node_or_null("Disco") as Node3D
+		if d:
+			d.rotation.y += dt * 0.9
+		var b := raiz.get_node_or_null("Brilho") as Sprite3D
+		if b:
+			var f := maxf(0.0, sin(_t * 2.5 + float(ep)))
+			f = pow(f, 6.0)
+			b.scale = Vector3.ONE * (0.2 + 1.0 * f)
+			b.rotation.z = _t * 1.5
 
 
 func _pegar_disco(epoca: int, fala: Array) -> void:
@@ -1265,14 +1482,12 @@ func _montar_porta_porao() -> void:
 	amarela.albedo_texture = ImageTexture.create_from_image(img)
 	amarela.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	amarela.cull_mode = BaseMaterial3D.CULL_DISABLED
-	# vão escuro (a porta aberta para a escuridão), moldura de madeira e degraus que descem
-	m.quad(castelo.m.escuro, o + Vector3(-0.55, 0.0, 0.0), o + Vector3(0.55, 0.0, 0.0), o + Vector3(0.55, 2.1, 0.0), o + Vector3(-0.55, 2.1, 0.0), Vector3(0, 0, 1))
+	# o vão: uma escada de pedra que desce para dentro da parede, com água escorrendo (shaders/escada_falsa)
 	for lado in [-1.0, 1.0]:
 		m.caixa(castelo.m.madeira, o + Vector3(lado * 0.55 - 0.05, 0.0, -0.01), o + Vector3(lado * 0.55 + 0.05, 2.15, 0.07), Malha.F_TODAS, 1.0)
 	m.caixa(castelo.m.madeira, o + Vector3(-0.6, 2.1, -0.01), o + Vector3(0.6, 2.2, 0.07), Malha.F_TODAS, 1.0)
+	# poça na soleira: a água vem do hall e desce a escada
 	var agua := Castelinho.mat_cor(Color(0.2, 0.38, 0.5, 0.65), 0.1, true)
-	for k in 4:       # degraus (faixas mais claras que descem para o escuro) e a água por cima deles
-		m.quad(castelo.m.piso, o + Vector3(-0.5, 0.012, 0.02 + 0.26 * k), o + Vector3(0.5, 0.012, 0.02 + 0.26 * k), o + Vector3(0.5, 0.012, 0.02 + 0.26 * k + 0.2), o + Vector3(-0.5, 0.012, 0.02 + 0.26 * k + 0.2), Vector3.UP)
 	m.quad(agua, o + Vector3(-0.45, 0.02, 0.05), o + Vector3(0.45, 0.02, 0.05), o + Vector3(0.7, 0.02, 1.2), o + Vector3(-0.7, 0.02, 1.2), Vector3.UP)
 	# fitas zebradas rasgadas: dois pedaços pendurados na moldura e um caído no chão
 	m.quad_uv(amarela, o + Vector3(-0.55, 1.75, 0.08), o + Vector3(-0.05, 1.4, 0.08), o + Vector3(-0.05, 1.5, 0.08), o + Vector3(-0.55, 1.85, 0.08), Vector3(0, 0, 1),
@@ -1285,6 +1500,7 @@ func _montar_porta_porao() -> void:
 	no.name = "PortaZebradaDoHall"
 	add_child(no)
 	m.construir_instancia(no, "Porta", 2)
+	no.add_child(_escada_falsa(0, Vector2(1.1, 2.1), o + Vector3(0, 1.05, 0.0), Vector3(0, 1.05, 0), Vector3.ZERO))
 	Epocas.marcar(no, [E2020, E2019])
 	_porta_porao = Interagivel.new("Descer", Vector3(1.4, 2.2, 0.8), _usar_porta_porao)
 	_porta_porao.position = o + Vector3(0, 1.1, 0.3)
@@ -1294,21 +1510,50 @@ func _montar_porta_porao() -> void:
 
 func _montar_escada_2019() -> void:
 	# a escada que desce do chão da Sala Medieval só existe em 2019 (pista do Visor, V2 §4.2)
+	# revisão V2: antes cinco faixas pintadas no chão (lia como ralo); agora um alçapão com a escada descendo para o
+	# norte, por baixo do piso (shaders/escada_falsa), e uma borda de pedra quebrada em volta
 	var m := Malha.new()
 	var o := POS_ESCADA_2019
-	m.quad(castelo.m.escuro, o + Vector3(-0.7, 0.025, -0.6), o + Vector3(0.7, 0.025, -0.6), o + Vector3(0.7, 0.025, 0.6), o + Vector3(-0.7, 0.025, 0.6), Vector3.UP)
-	for k in 5:
-		var c := Color(0.5, 0.46, 0.4).lerp(Color(0.1, 0.1, 0.1), float(k) / 5.0)
-		m.quad(Castelinho.mat_cor(c, 1.0), o + Vector3(-0.65, 0.03, -0.55 + 0.22 * k), o + Vector3(0.65, 0.03, -0.55 + 0.22 * k), o + Vector3(0.65, 0.03, -0.55 + 0.22 * k + 0.18), o + Vector3(-0.65, 0.03, -0.55 + 0.22 * k + 0.18), Vector3.UP)
+	var borda := Castelinho.mat_cor(Color(0.36, 0.33, 0.3), 1.0)
+	m.caixa(borda, o + Vector3(-0.82, 0.0, -0.72), o + Vector3(0.82, 0.05, -0.6), Malha.F_SEM_BASE)
+	m.caixa(borda, o + Vector3(-0.82, 0.0, 0.6), o + Vector3(0.82, 0.05, 0.72), Malha.F_SEM_BASE)
+	m.caixa(borda, o + Vector3(-0.82, 0.0, -0.6), o + Vector3(-0.7, 0.05, 0.6), Malha.F_SEM_BASE)
+	m.caixa(borda, o + Vector3(0.7, 0.0, -0.6), o + Vector3(0.82, 0.05, 0.6), Malha.F_SEM_BASE)
 	var no := Node3D.new()
 	no.name = "Escada2019"
 	add_child(no)
 	m.construir_instancia(no, "Escada", 2)
+	no.add_child(_escada_falsa(1, Vector2(1.4, 1.2), o + Vector3(0, 0.03, 0), Vector3.ZERO, Vector3(-90, 0, 0)))
 	Epocas.marcar(no, [E2019])
 	_escada_2019 = Interagivel.new("Descer a escada", Vector3(1.4, 0.6, 1.4), _usar_escada_2019)
 	_escada_2019.position = o + Vector3(0, 0.3, 0)
 	add_child(_escada_2019)
 	Epocas.marcar(_escada_2019, [E2019])
+
+
+## Quad com a escada virtual (shaders/escada_falsa.gdshader). modo 0 = porta na parede, 1 = alçapão no chão.
+func _escada_falsa(modo: int, tam: Vector2, pos: Vector3, origem: Vector3, rot_graus: Vector3) -> MeshInstance3D:
+	var q := QuadMesh.new()
+	q.size = tam
+	var mt := ShaderMaterial.new()
+	mt.shader = preload("res://shaders/escada_falsa.gdshader")
+	mt.set_shader_parameter("modo", modo)
+	mt.set_shader_parameter("origem", origem)
+	mt.set_shader_parameter("meia_largura", tam.x * 0.5 - 0.04)
+	if modo == 1:
+		mt.set_shader_parameter("vao_d", Vector2(-tam.y * 0.5, tam.y * 0.5))
+		mt.set_shader_parameter("pisada", 0.34)
+		mt.set_shader_parameter("espelho", 0.17)
+		mt.set_shader_parameter("luz", 1.0)
+	var mi := MeshInstance3D.new()
+	mi.name = "EscadaQueDesce"
+	mi.mesh = q
+	mi.material_override = mt
+	mi.position = pos
+	mi.rotation_degrees = rot_graus
+	mi.layers = 2
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
 
 
 func _descer_porao() -> void:
@@ -1346,6 +1591,7 @@ func _process(dt: float) -> void:
 		_atualizar_luzes()
 		_atualizar_armadura()
 	_tremer_lampadas()
+	_animar_discos(dt)
 	if player == null or not is_instance_valid(player):
 		return
 	if vento and vento.visible:
@@ -1354,6 +1600,10 @@ func _process(dt: float) -> void:
 		chuva.global_position = player.global_position + Vector3(0, 9, 0)
 		chuva.emitting = not _jogador_dentro()
 		_goteiras(dt)
+	if visita == 4:
+		_relampagos(dt)
+	elif visita == 3:
+		_atualizar_janelas()
 	if visita >= 3:
 		_olhos_do_pinguim()
 	if _tito and _tito.visible:
@@ -1489,6 +1739,7 @@ func _quico_da_lanterna() -> void:
 	await Guia.falar("quico", ["Tá escuro, guri! PIII!", "Leva a lanterna. Aperta F para ligar e desligar."], true)
 	Audio.sfx("apito")
 	GameState.set_flag("tem_lanterna")
+	GameState.flags.erase("lanterna_desligada")
 	if player and is_instance_valid(player):
 		player.lanterna.visible = true
 	Audio.sfx("selo")
@@ -1802,10 +2053,19 @@ func _apagao_e_balde() -> void:
 	t.tween_property(rect, "color:a", 1.0, 0.12)
 	await t.finished
 	_criar_balde_e_desenho3()
-	await get_tree().create_timer(2.0).timeout
+	# revisão V2: no escuro, um sussurro baixinho (não um grito: é o primeiro medo, ainda é a visita 2), e a luz volta
+	# falhando (acende, apaga, acende) em vez de um fade limpo: o olho procura o que mudou
+	await get_tree().create_timer(0.9).timeout
+	Audio.sfx("sussurro", -15.0, 0.85)
+	await get_tree().create_timer(1.1).timeout
 	Audio.sfx("clique")
 	var t2 := create_tween()
-	t2.tween_property(rect, "color:a", 0.0, 0.35)
+	t2.tween_property(rect, "color:a", 0.15, 0.06)
+	t2.tween_interval(0.12)
+	t2.tween_property(rect, "color:a", 0.95, 0.04)
+	t2.tween_interval(0.22)
+	t2.tween_callback(func(): Audio.sfx("clique", -4.0, 1.1))
+	t2.tween_property(rect, "color:a", 0.0, 0.3)
 	await t2.finished
 	camada.queue_free()
 	player.pode_mover = true

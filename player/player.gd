@@ -62,14 +62,20 @@ func _ready() -> void:
 	raio.add_exception(self)
 	camera.add_child(raio)
 
+	# Lanterna (revisão V2): cone mais aberto com borda suave e queda MAIS SUAVE com a distância (não estoura a parede a
+	# 1 m e ainda faz poça a 8 m). O estado sobrevive à troca de cena: o Player é recriado a cada nível, e antes a
+	# lanterna voltava apagada no porão e no Braço Morto. A flag "lanterna_desligada" guarda a escolha do jogador.
 	lanterna = SpotLight3D.new()
-	lanterna.spot_range = 14.0
-	lanterna.spot_angle = 28.0
-	lanterna.light_energy = 2.2
-	lanterna.light_color = Color(1.0, 0.93, 0.8)
+	lanterna.spot_range = 18.0
+	lanterna.spot_angle = 34.0
+	lanterna.spot_angle_attenuation = 0.8
+	lanterna.spot_attenuation = 0.5
+	lanterna.light_energy = 3.0
+	lanterna.light_color = Color(1.0, 0.92, 0.76)
 	lanterna.shadow_enabled = false
-	lanterna.visible = false
+	lanterna.visible = GameState.flag("tem_lanterna") and not GameState.flag("lanterna_desligada")
 	lanterna.position = Vector3(0.15, -0.15, 0)
+	lanterna.rotation_degrees.x = -10.0    # um pouco para baixo: o facho cai no chão à frente e mostra o caminho
 	camera.add_child(lanterna)
 	# Trocar de época liga e desliga colisões (paredes que somem e voltam): se uma parede reaparecer em cima do
 	# jogador, `desprender()` o tira de dentro dela (senão ele ficava preso para sempre, ex.: soltar Q em 1950).
@@ -89,6 +95,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif e.is_action_pressed("lanterna") and GameState.flag("tem_lanterna"):
 		lanterna.visible = not lanterna.visible
+		GameState.set_flag("lanterna_desligada", not lanterna.visible)
 		Audio.sfx("clique")
 
 

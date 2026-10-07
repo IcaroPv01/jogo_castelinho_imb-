@@ -62,6 +62,7 @@ func _ready() -> void:
 	_pontilhoes()
 	_pedalinhos()
 	_arvores_e_casas()
+	_margem_de_la()
 	_obra()
 	_escada_do_porao()
 	_lapide_de_areia()
@@ -110,7 +111,7 @@ func _ambiente() -> void:
 	var sky := Sky.new()
 	sky_mat = ProceduralSkyMaterial.new()
 	sky_mat.sky_top_color = Color(0.015, 0.02, 0.06)
-	sky_mat.sky_horizon_color = Color(0.07, 0.09, 0.17)
+	sky_mat.sky_horizon_color = Color(0.1, 0.12, 0.22)     # (revisão V2: um pouco mais claro: o casario recorta o céu)
 	sky_mat.ground_horizon_color = Color(0.05, 0.06, 0.1)
 	sky_mat.ground_bottom_color = Color(0.02, 0.025, 0.04)
 	sky_mat.sky_curve = 0.25
@@ -121,7 +122,7 @@ func _ambiente() -> void:
 	env.ambient_light_energy = 0.8
 	env.fog_enabled = true
 	env.fog_mode = Environment.FOG_MODE_DEPTH
-	env.fog_light_color = Color(0.06, 0.08, 0.14)
+	env.fog_light_color = Color(0.08, 0.1, 0.17)
 	env.fog_depth_begin = 20.0
 	env.fog_depth_end = 150.0
 	env.fog_depth_curve = 1.2
@@ -239,8 +240,7 @@ func _calcadao_e_mobiliario() -> void:
 		m.caixa(mv, Vector3(x - 0.07, 0.0, -3.6), Vector3(x + 0.07, 4.0, -3.4), Malha.F_SEM_BASE, 0.0, ferro)
 		m.caixa(mv, Vector3(x - 0.07, 3.9, -3.9), Vector3(x + 0.07, 4.0, -3.4), Malha.F_SEM_BASE, 0.0, ferro)
 		m.caixa(ml, Vector3(x - 0.22, 3.72, -4.1), Vector3(x + 0.22, 3.88, -3.7), Malha.F_TODAS, 0.0, luz_poste)
-		# poça de luz no chão (quad amarelo translúcido, sem luz): ilumina o calçadão sem gastar luz de verdade
-		m.quad(ml, Vector3(x - 2.4, 0.03, -6.8), Vector3(x + 2.4, 0.03, -6.8), Vector3(x + 2.4, 0.03, -1.4), Vector3(x - 2.4, 0.03, -1.4), Vector3.UP, Vector2.ZERO, Color(0.28, 0.22, 0.1))
+		# (a poça de luz no chão era um quad opaco cor de mostarda: virou mancha aditiva em _margem_de_la)
 		x += 18.0
 	# bancos de madeira pintada voltados para o lago, a cada 12 m
 	x = -84.0
@@ -355,6 +355,108 @@ func _arvores_e_casas() -> void:
 	m.construir_colisao(self, "ColisaoArvores")
 
 
+## Revisão V2 (pesquisa §3, "Noite"): poças de luz amarela no calçadão e REFLEXOS LONGOS NA ÁGUA. Os postes deste lado
+## ficam entre o jogador e a água e não refletem para quem está no calçadão; quem reflete é a margem de lá: uma fila de
+## postes do outro lado do lago, cujo brilho se estica sobre a água até perto do jogador. Tudo sem luz de verdade:
+## 1 malha opaca (postes e calçada de lá) + 1 malha aditiva (poças e reflexos) = 2 draw calls.
+func _margem_de_la() -> void:
+	var m: Malha = MalhaGd.new()
+	var mv := SalasGd.mat_vc()
+	var ml := SalasGd.mat_luz()
+	var luz_poste := Color(1.0, 0.82, 0.45)
+	# calçada da outra margem (faixa escura) e postes
+	m.caixa(mv, Vector3(-LAGO_X - 20.0, -0.3, LAGO_Z0 - 7.0), Vector3(LAGO_X + 20.0, 0.05, LAGO_Z0), Malha.F_PY | Malha.F_PZ, 0.0, Color(0.32, 0.32, 0.34))
+	var xs: Array = []
+	var x := -81.0
+	while x <= 90.0:
+		xs.append(x)
+		m.caixa(mv, Vector3(x - 0.08, 0.0, LAGO_Z0 - 2.2), Vector3(x + 0.08, 4.2, LAGO_Z0 - 2.0), Malha.F_SEM_BASE, 0.0, Color(0.1, 0.1, 0.12))
+		m.caixa(ml, Vector3(x - 0.25, 3.9, LAGO_Z0 - 2.0), Vector3(x + 0.25, 4.08, LAGO_Z0 - 1.6), Malha.F_TODAS, 0.0, luz_poste)
+		x += 18.0
+	m.construir_instancia(self, "MargemDeLa")
+	# aditivo: poças nos dois calçadões e reflexos esticados sobre a água
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	x = -90.0
+	while x <= 90.0:
+		_quad_uv(st, Vector3(x, 0.05, -3.8), 4.6, 4.6, Rect2(0, 0, 0.5, 1))            # poça deste lado (metade esq. da textura)
+		x += 18.0
+	for xl in xs:
+		_quad_uv(st, Vector3(xl, 0.08, LAGO_Z0 - 2.4), 4.0, 3.2, Rect2(0, 0, 0.5, 1))  # poça do lado de lá
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_texture = _tex_luzes()
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	mat.albedo_color = Color(1.0, 0.72, 0.36, 0.9)
+	mat.render_priority = 2          # depois da água (também transparente), senão o lago cobre os reflexos
+	var mi := MeshInstance3D.new()
+	mi.name = "PocasEReflexos"
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	# reflexos: uma faixa por poste da margem de lá, sempre apontada para a câmera (shaders/reflexo_agua.gdshader)
+	var faixa := ArrayMesh.new()
+	var arr := []
+	arr.resize(Mesh.ARRAY_MAX)
+	arr[Mesh.ARRAY_VERTEX] = PackedVector3Array([Vector3(-1, 0, 0), Vector3(1, 0, 0), Vector3(1, 0, 1), Vector3(-1, 0, 1)])
+	arr[Mesh.ARRAY_TEX_UV] = PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)])
+	arr[Mesh.ARRAY_INDEX] = PackedInt32Array([0, 1, 2, 0, 2, 3])
+	faixa.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	var mr := ShaderMaterial.new()
+	mr.shader = preload("res://shaders/reflexo_agua.gdshader")
+	mr.set_shader_parameter("faixa", mat.albedo_texture)
+	mr.render_priority = 2           # depois da água (também transparente), senão o lago cobre os reflexos
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = faixa
+	mm.instance_count = xs.size()
+	for i in xs.size():
+		mm.set_instance_transform(i, Transform3D(Basis(), Vector3(xs[i], AGUA_Y + 0.02, LAGO_Z0 + 0.4)))
+	var mmi := MultiMeshInstance3D.new()
+	mmi.name = "ReflexosNaAgua"
+	mmi.multimesh = mm
+	mmi.material_override = mr
+	mmi.extra_cull_margin = 60.0
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mmi)
+
+
+static func _quad_uv(st: SurfaceTool, c: Vector3, rx: float, rz: float, r: Rect2) -> void:
+	var pts := [c + Vector3(-rx, 0, -rz), c + Vector3(rx, 0, -rz), c + Vector3(rx, 0, rz), c + Vector3(-rx, 0, rz)]
+	var uvs := [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]
+	for i in [0, 1, 2, 0, 2, 3]:
+		st.set_normal(Vector3.UP)
+		st.set_uv(uvs[i])
+		st.add_vertex(pts[i])
+
+
+## Textura 64x64: à esquerda uma mancha radial em degraus (poça), à direita o reflexo (faixas horizontais quebradas,
+## fortes perto da margem de lá e sumindo em direção ao jogador, como luz sobre água parada com marola).
+static func _tex_luzes() -> ImageTexture:
+	var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1967
+	for y in 64:
+		for x in 32:
+			var d := Vector2(x + 0.5 - 16.0, (y + 0.5) * 0.5 - 16.0).length() / 16.0
+			var a := floorf(pow(clampf(1.0 - d, 0.0, 1.0), 1.5) * 5.0) / 5.0
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+		var v := float(y) / 63.0
+		var onda := 0.6 + 0.4 * sin(y * 1.7 + rng.randf() * 2.0)
+		var largura := 0.3 + 0.6 * v * rng.randf_range(0.5, 1.0)
+		var desvio := rng.randf_range(-0.15, 0.15) * v
+		for x in range(32, 64):
+			var u := absf((x - 48.0 + 0.5) / 16.0 - desvio)
+			var a2 := 0.0
+			if u < largura and rng.randf() < 0.9:
+				a2 = pow(1.0 - v * 0.8, 1.3) * onda * (1.0 - u / largura * 0.5)
+			img.set_pixel(x, y, Color(1, 1, 1, ceilf(a2 * 4.0 - 0.3) / 4.0))
+	return ImageTexture.create_from_image(img)
+
+
 ## A obra de canalização que a pesquisa registra perto da Garibaldi: tubos pretos, cones, tapume e uma vala.
 func _obra() -> void:
 	var m: Malha = MalhaGd.new()
@@ -404,7 +506,7 @@ func _escada_do_porao() -> void:
 	get_node("Cam_margem").transform = Transform3D(Basis(Vector3.UP, deg_to_rad(-40.0)), Vector3(-14.0, 1.6, 4.0))
 	get_node("Cam_lapide").transform = Transform3D(Basis(Vector3.UP, deg_to_rad(-12.0)), Vector3(7.0, 1.5, 0.0))
 	get_node("Cam_tito").transform = Transform3D(Basis(), Vector3(3.0, 1.45, -1.2))
-	get_node("Cam_escada").transform = Transform3D(Basis(), Vector3(-14.0, -0.9, 11.0))
+	get_node("Cam_escada").transform = Transform3D(Basis(Vector3.RIGHT, deg_to_rad(16.0)), Vector3(-14.0, -0.75, 12.6))
 	get_node("Cam_pier").transform = Transform3D(Basis(Vector3.UP, deg_to_rad(55.0)), Vector3(-20.0, 1.6, -3.0))
 	# a luz que vem do alto da escada: o jogador sai do escuro para a noite (uma luz fria só)
 	var l := OmniLight3D.new()
@@ -424,13 +526,13 @@ func _lapide_de_areia() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 12
 	var p := POS_LAPIDE
-	# o montinho de areia que algumas crianças trazem para a calçada: um quadrado de areia, o castelo de balde e a placa
-	m.caixa(mv, Vector3(p.x - 2.2, 0.0, p.z - 1.6), Vector3(p.x + 2.2, 0.06, p.z + 1.6), Malha.F_PY, 0.0, areia * 0.9)
+	# o montinho de areia que uma criança trouxe para a calçada: um monte baixo e irregular (antes um quadrado chapado)
+	# e quatro torres de balde (tronco de cone de 8 lados, com ameias de dedo), não caixas com tampa
+	m.bolha(mv, Vector3(p.x, -0.05, p.z - 0.1), Vector3(2.1, 0.2, 1.35), rng, 10, 2, 0.14, areia * 0.95, areia * 0.72)
 	for i in 4:
-		var x: float = p.x + [-1.5, -0.95, 0.95, 1.5][i]
-		var alt := 0.5 + (i % 2) * 0.12
-		m.caixa(mv, Vector3(x - 0.18, 0.06, p.z - 0.2), Vector3(x + 0.18, alt, p.z + 0.16), Malha.F_SEM_BASE, 0.0, Color(0.95, 0.84, 0.6))
-		m.caixa(mv, Vector3(x - 0.2, alt, p.z - 0.22), Vector3(x + 0.2, alt + 0.1, p.z + 0.18), Malha.F_SEM_BASE, 0.0, Color(1.0, 0.9, 0.66))
+		var x: float = p.x + [-1.45, -0.9, 0.9, 1.45][i]
+		var alt := 0.36 + (i % 2) * 0.1
+		_balde_de_areia(m, mv, Vector3(x, 0.08, p.z - 0.05 + (i % 2) * 0.12), 0.21, 0.15, alt, Color(0.92, 0.8, 0.56), Color(0.7, 0.6, 0.4))
 	# a lápide: laje de areia arredondada em cima, com um monte na frente
 	m.bolha(mv, Vector3(p.x, 0.35, p.z), Vector3(0.38, 0.4, 0.14), rng, 8, 3, 0.08, areia * 1.1, areia * 0.8)
 	m.bolha(mv, Vector3(p.x, 0.12, p.z - 0.55), Vector3(0.75, 0.16, 0.5), rng, 8, 2, 0.12, areia * 1.0, areia * 0.8)
@@ -454,6 +556,27 @@ func _lapide_de_areia() -> void:
 	recado.rotation_degrees.x = -90.0
 	recado.pixel_size = 0.005
 	recado.shaded = false
+
+
+## Torre de balde: tronco de cone de 8 lados (mais largo embaixo), tampa e quatro ameias marcadas com o dedo.
+static func _balde_de_areia(m: Malha, mat: Material, base: Vector3, r0: float, r1: float, h: float, cor: Color, cor_baixo: Color) -> void:
+	var n := 8
+	var topo := base + Vector3(0, h, 0)
+	for i in n:
+		var a0 := TAU * i / n
+		var a1 := TAU * (i + 1) / n
+		var b0 := base + Vector3(cos(a0) * r0, 0, sin(a0) * r0)
+		var b1 := base + Vector3(cos(a1) * r0, 0, sin(a1) * r0)
+		var t0 := topo + Vector3(cos(a0) * r1, 0, sin(a0) * r1)
+		var t1 := topo + Vector3(cos(a1) * r1, 0, sin(a1) * r1)
+		var fora := Vector3(cos((a0 + a1) * 0.5), 0.25, sin((a0 + a1) * 0.5))
+		m.tri_cores(mat, b0, b1, t1, fora, cor_baixo, cor_baixo, cor)
+		m.tri_cores(mat, b0, t1, t0, fora, cor_baixo, cor, cor)
+		m.tri_cores(mat, topo, t0, t1, Vector3.UP, cor, cor, cor)
+	for k in 4:
+		var a := TAU * k / 4.0 + 0.4
+		var c := topo + Vector3(cos(a) * r1 * 0.72, 0, sin(a) * r1 * 0.72)
+		m.caixa(mat, c + Vector3(-0.04, 0, -0.04), c + Vector3(0.04, 0.07, 0.04), Malha.F_SEM_BASE, 0.0, cor)
 
 
 func _usar_lapide(_p: Node) -> void:

@@ -26,6 +26,7 @@ func _rodar() -> void:
 	main.tela_titulo.queue_free()
 	gs.novo_jogo()
 	gs.set_flag("porao_semente", sem)
+	gs.set_flag("tem_lanterna")          # no jogo o jogador chega ao porão com a lanterna da visita 3
 	gs.comecar_visita(5)
 	gs.jogando = false
 	await main.carregar_mundo("res://world/niveis/porao.tscn", "Spawn")

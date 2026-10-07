@@ -292,14 +292,16 @@ static func _duas_aguas(m: Malha, mat: Material, mat_oitao: Material, cx_: float
 
 
 # ------------------------------------------------------------------ postes
+## Pé de cada poste de luz (a lâmpada fica 1,35 m para -x, a 6,76 m de altura). O nível usa a lista para a luz da rua.
+const POSTES := [Vector3(-3.0, 0, 2.2), Vector3(-28.0, 0, 2.2), Vector3(-60.0, 0, 2.2), Vector3(2.2, 0, -30.0), Vector3(2.2, 0, -62.0),
+	Vector3(10.0, 0, 18.0), Vector3(-30.0, 0, 18.0), Vector3(9.0, 0, -12.0)]
+
 static func _postes(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var m := g.ext
 	var concreto: Material = Castelinho.mat_cor(Color(0.6, 0.6, 0.58), 0.9)
 	var ferro: Material = c.m.ferro
 	var luz: Material = Castelinho.mat_luz(Color(1.0, 0.95, 0.8), 1.0)
-	var pontos := [Vector3(-3.0, 0, 2.2), Vector3(-28.0, 0, 2.2), Vector3(-60.0, 0, 2.2), Vector3(2.2, 0, -30.0), Vector3(2.2, 0, -62.0),
-		Vector3(10.0, 0, 18.0), Vector3(-30.0, 0, 18.0), Vector3(9.0, 0, -12.0)]
-	for p in pontos:
+	for p in POSTES:
 		m.caixa(concreto, p + Vector3(-0.1, 0, -0.1), p + Vector3(0.1, 7.0, 0.1), Malha.F_SEM_BASE)
 		m.caixa(concreto, p + Vector3(-0.6, 6.6, -0.05), p + Vector3(0.6, 6.75, 0.05), Malha.F_TODAS)
 		m.caixa(ferro, p + Vector3(-1.3, 6.8, -0.05), p + Vector3(0.0, 6.88, 0.05), Malha.F_TODAS)

@@ -255,6 +255,18 @@ static func mat_cor(cor: Color, rug := 0.9, dupla := false) -> StandardMaterial3
 
 
 ## Brilho sem sombreamento (lâmpadas, brasas, tochas): uma só superfície com cor de vértice.
+## Vidro translúcido de duas faces com emissão (desligada = preta). Um material por instância do prédio.
+static func mat_vidro(cor: Color, rug: float) -> StandardMaterial3D:
+	var mt := StandardMaterial3D.new()
+	mt.albedo_color = cor
+	mt.roughness = rug
+	mt.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mt.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mt.emission_enabled = true
+	mt.emission = Color.BLACK
+	return mt
+
+
 static func mat_luz(cor: Color, _energia := 1.6) -> StandardMaterial3D:
 	var chave := "luz|%s" % cor.to_html()
 	if _cache.has(chave):
@@ -300,9 +312,11 @@ func _criar_materiais() -> void:
 		"grade": mat_uv("grade_losango", Color.WHITE, 0.6, "scissor", true),
 		"veneziana": mat_uv("veneziana", Color.WHITE, 0.9, "scissor", true),
 		"letreiro": mat_uv("letreiro_castelinho", Color.WHITE, 0.5, "blend", true),
-		"vidro": mat_cor(Color(0.55, 0.72, 0.78, 0.26), 0.1, true),
-		"vidro_verde": mat_cor(Color(0.35, 0.55, 0.4, 0.7), 0.2, true),
-		"vidro_ambar": mat_cor(Color(0.95, 0.7, 0.2, 0.8), 0.2, true),
+		# vidros com material próprio (sem cor de vértice) e emissão já ligada em preto: na visita 3 o nível acende as
+		# janelas vistas de fora trocando só a cor da emissão (sem recompilar shader). Revisão V2.
+		"vidro": mat_vidro(Color(0.55, 0.72, 0.78, 0.26), 0.1),
+		"vidro_verde": mat_vidro(Color(0.35, 0.55, 0.4, 0.7), 0.2),
+		"vidro_ambar": mat_vidro(Color(0.95, 0.7, 0.2, 0.8), 0.2),
 		"ferro": mat_cor(Color(0.1, 0.1, 0.11), 0.5),
 		"escuro": mat_cor(Color(0.04, 0.035, 0.035), 1.0, true),
 		"luz": mat_luz(Color(1.0, 0.88, 0.62), 1.4),

@@ -252,3 +252,24 @@ por 0,9 s solta (imune por 1,5 s); sem lutar, em 2,6 s `matar_jogador("costela")
 - **Sala 80 (porta zebrada):** o gatilho 80 fica dentro do gatilho 7 (hall); se os dois disparavam no mesmo quadro a ordem era arbitrária e o contador podia cair para 71 (falha intermitente). Agora `_entrou(7)` na visita 4 reaplica a sala 80 se o jogador está na zona da porta.
 - **Checkpoints do porão:** `SALAS_CHECKPOINT` ganhou 86, 91 e 96; `preparar_continuar` devolve `Checkpoint_<maior de 81/86/91/95/96 <= cp>` em `porao.tscn`. `qa_logica_test` cobre os cinco.
 - **Pistas (`pistas_tito`)**, convenção `pista_<id>` + `somar`, uma vez cada, todas com E em cima do objeto: `buraco` e `tito_1967` (só em 1967), `marcas_altura` (só em 1975), `desenho_2`, `desenho_3`, `desenho_4`, `cartaz`, `desenho_2019` (só em 2019) = 8 no Castelinho; só andar não conta. `castelinho_test` confere.
+
+## Revisão de arte e experiência da V2 (diretor de arte técnico)
+
+Relatório completo em `docs/REVISAO_V2.md` (capturas em `build/capturas/revisao_v2/`, não versionada). Nenhuma API
+pública, marcador, id de painel ou regra de criatura mudou. Para cada divisão:
+
+- **Integrador:** `player/player.gd`: lanterna com cone/queda novos e estado que sobrevive à troca de cena (flag de save
+  `lanterna_desligada`, gravada ao apertar F). `tests/captura_cam.gd` (jogador acompanha a câmera, `RELAMPAGO=`) e
+  `tests/captura_porao.gd` (com lanterna).
+- **Visitas:** `world/niveis/castelinho.gd`: luz por visita (`LAMPADAS`, `COR_LAMPADA`, `PRESENTE` 3 e 4), luz da rua
+  (`COR_POSTE`, `_montar_luz_da_rua`), janelas acesas na V3, relâmpagos na V4, apagão da V2 com sussurro e luz falhando,
+  discos que giram e piscam, escada virtual na porta zebrada e no alçapão de 2019 (`_escada_falsa`), câmeras
+  `Cam_calcada` (nova) e `Cam_porta_porao` (movida). `castelinho/castelinho.gd` (`mat_vidro`), `entorno.gd` (`POSTES`),
+  `mobilia.gd` (cavaletes do hall 0,5 m a leste: cobriam a porta zebrada), `obra.gd` (andaime, buraco, barco, canteiro),
+  `tito.gd` (cartaz A3).
+- **Porão:** `porao_salas.gd` (chamas coloridas, `chama`), `braco_morto.gd` (poças aditivas, margem de lá com reflexos,
+  lápide de balde, `Cam_escada`). Shaders novos `escada_falsa` e `reflexo_agua`.
+- **Visor/UI:** `world/visor.gd` (a Figura do slide para a 2,6 m e se debruça), `ui/telefone.gd` (plaquinha de ligação),
+  `ui/volte_sempre.gd` (texto que cabe), `autoload/audio.gd` + `tools/gerar_audio.py` (som `trovao`).
+- **A conferir no navegador:** a visita 4 (porta zebrada, alçapão, relâmpago) e o Braço Morto (reflexos). Só o começo da
+  visita 1 passou pelo `testar_web.py`.

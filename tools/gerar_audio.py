@@ -602,6 +602,23 @@ VERSOES_JINGLE = {
 }
 
 
+def s_trovao():
+    """Trovão distante da madrugada (visita 4, revisão V2): estalo abafado e ronco grave que rola e morre em ~4 s.
+    Usa um gerador próprio para não deslocar a sequência aleatória dos outros sons."""
+    rng = np.random.default_rng(19670312)
+    dur = 4.2
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    branco = rng.uniform(-1, 1, n)
+    ronco = filtro(branco, "banda", 35, 260, 2)
+    rola = 0.55 + 0.45 * np.abs(np.sin(2 * np.pi * 1.3 * t + rng.uniform(0, 6))) * np.abs(np.sin(2 * np.pi * 0.47 * t))
+    env = np.minimum(1, t / 0.18) * np.exp(-t / 1.25)
+    y = ronco * rola * env
+    est = filtro(rng.uniform(-1, 1, int(0.5 * SR)), "banda", 180, 1100, 2) * np.exp(-tt(0.5) / 0.09)
+    y[:len(est)] += est * 0.35
+    return y
+
+
 def s_jingle(versao):
     c = VERSOES_JINGLE[versao]
     r = np.random.default_rng(777 + versao)
@@ -708,6 +725,7 @@ CATALOGO = {
     "jingle_0": (lambda: s_jingle(0), "ogg"),
     "jingle_1": (lambda: s_jingle(1), "ogg"),
     "jingle_2": (lambda: s_jingle(2), "ogg"),
+    "trovao": (s_trovao, "ogg"),
 }
 
 

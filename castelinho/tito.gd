@@ -331,12 +331,13 @@ static func folha(pai: Node, nome: String, pos: Vector3, yaw: float, largura: fl
 	return mi
 
 
-## Cartaz de PROCURA-SE colado "por cima" de um painel: no canto, levemente torto.
+## Cartaz de PROCURA-SE colado "por cima" de um painel, levemente torto. Revisão V2: tamanho de folha A3 (50 cm) e
+## cobrindo um terço do texto do painel (antes 34 cm no canto: a 3 m, à noite, não se lia que era um cartaz).
 static func cartaz_sobre(pai: Node, painel: Node3D, canto := 1, roll := 4.0) -> MeshInstance3D:
 	var yaw := painel.rotation_degrees.y
 	var b := Basis.from_euler(Vector3(0, deg_to_rad(yaw), 0))
-	var off := b * Vector3(0.52 * canto, -0.22, 0.11)
-	return folha(pai, "procura_se", painel.position + off, yaw, 0.34, 2 if _dentro(painel.position) else 1, false, roll * canto)
+	var off := b * Vector3(0.4 * canto, -0.08, 0.11)
+	return folha(pai, "procura_se", painel.position + off, yaw, 0.5, 2 if _dentro(painel.position) else 1, false, roll * canto)
 
 
 static func _dentro(p: Vector3) -> bool:

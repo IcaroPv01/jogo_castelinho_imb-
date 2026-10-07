@@ -180,15 +180,27 @@ func _texto(txt: String, pos: Vector2, tam: Vector2, tamanho_fonte: int, cor: Co
 	l.size = tam
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.add_theme_font_override("font", Flash.fonte_titulo())
 	l.add_theme_font_size_override("font_size", tamanho_fonte)
+	l.set_meta("fonte_base", tamanho_fonte)
 	l.add_theme_color_override("font_color", cor)
 	l.add_theme_color_override("font_outline_color", Flash.NAVY)
 	l.add_theme_constant_override("outline_size", 14)
 	l.pivot_offset = tam / 2.0
 	_placa.add_child(l)
+	_caber(l)
 	return l
+
+
+## Encolhe a fonte até o texto caber numa linha da caixa (revisão V2: na versão estranha "Obrigado... pela... visita"
+## e "Volte sempre..." quebravam em duas linhas e se atropelavam, com "sempre..." caindo fora da placa).
+func _caber(l: Label) -> void:
+	var fonte := l.get_theme_font("font")
+	var tam: int = l.get_meta("fonte_base", 56)
+	while tam > 20 and fonte.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, tam).x + 28.0 > l.size.x:
+		tam -= 2
+	l.add_theme_font_size_override("font_size", tam)
 
 
 func _process(dt: float) -> void:
@@ -226,6 +238,8 @@ func _tremer() -> void:
 		var forte := randf() < 0.45
 		_l2.text = "Volte sempre..." if forte else "Volte sempre!"
 		_l1.text = "Obrigado pela visita!" if randf() < 0.7 else "Obrigado... pela... visita"
+		_caber(_l1)
+		_caber(_l2)
 		_mascote.texture = Flash.mascote("bentinho", randf() < 0.8)
 		if forte:
 			Audio.sfx("glitch", -12.0, randf_range(0.7, 1.0))

@@ -324,7 +324,9 @@ func _atualizar_figura(dt: float) -> void:
 	var t := inverse_lerp(ATENCAO_MIN_FIGURA, 1.0, a)
 	var frente := Vector3(-cam.global_basis.z.x, 0.0, -cam.global_basis.z.z)
 	frente = frente.normalized() if frente.length() > 0.001 else Vector3.FORWARD
-	var dist := lerpf(15.0, 1.15, pow(t, 1.4))
+	# revisão V2: ela para a ~2,6 m e se DEBRUÇA sobre a lente (antes chegava a 1,15 m em pé e a cabeça saía do quadro:
+	# no pico do susto o slide mostrava só duas colunas rosadas)
+	var dist := lerpf(15.0, 2.6, pow(t, 1.4))
 	var dir := frente.rotated(Vector3.UP, deg_to_rad(lerpf(32.0, 0.0, t) * _lado))
 	var pos := cam.global_position + dir * dist
 	pos.y = cam.global_position.y - 1.55   # os pés no chão (altura dos olhos do jogador)
@@ -332,6 +334,7 @@ func _atualizar_figura(dt: float) -> void:
 		pos += Vector3(randf_range(-1, 1), 0.0, randf_range(-1, 1)) * (t - 0.7) * 0.2
 	_figura.global_position = pos
 	_figura.look_at(Vector3(cam.global_position.x, pos.y, cam.global_position.z), Vector3.UP)
+	_figura.rotate_object_local(Vector3.RIGHT, -deg_to_rad(48.0) * smoothstep(0.5, 1.0, t))
 	_figura.scale = Vector3(1.0, lerpf(1.0, 1.18, t), 1.0)
 	_figura.visible = not (t > 0.5 and randf() < t * 0.12)   # pisca (glitch) quando está perto
 	(_figura as FiguraSlide).intensidade = t

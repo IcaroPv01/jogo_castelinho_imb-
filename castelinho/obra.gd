@@ -34,6 +34,7 @@ static func construir(c: Castelinho) -> Dictionary:
 	_barco(c, g)
 	_muro_com_buraco(c, g)
 	_castelo_de_areia(c, g)
+	_canteiro(c, g)
 	_casas(c, g)
 	return info
 
@@ -113,22 +114,27 @@ static func _torre_b(c: Castelinho, g: Castelinho.Grupo, info: Dictionary) -> vo
 # ------------------------------------------------------------------ andaime de madeira (Torre A)
 static func _andaime(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var e := g.ext
-	var madeira: Material = c.m.madeira
+	# revisão V2: o andaime era de madeira_escura com 9 cm (lia como barras pretas de metal). Agora é pinho cru
+	# (claro, com tom por peça), varas de 14 cm e pranchas largas: lê como andaime de madeira de obra dos anos 60.
+	var madeira: Material = Castelinho.mat_cor(Color(0.8, 0.64, 0.44), 0.95)
+	var prancha: Material = Castelinho.mat_tri("tabuas_claras", Vector3(1.5, 1.5, 1.5))
 	var z := -10.35
 	var xs := [-23.3, -21.0, -18.7, -16.4]
 	var ys := [1.7, 3.3, 4.9]
 	for x in xs:
-		e.caixa(madeira, Vector3(x - 0.045, 0.0, z - 0.045), Vector3(x + 0.045, 5.5, z + 0.045), Malha.F_SEM_BASE, 1.0)
+		e.caixa(madeira, Vector3(x - 0.07, 0.0, z - 0.07), Vector3(x + 0.07, 5.5, z + 0.07), Malha.F_SEM_BASE, 1.0)
 	for zz in [-12.2, -14.4]:
-		e.caixa(madeira, Vector3(-23.3 - 0.045, 0.0, zz - 0.045), Vector3(-23.3 + 0.045, 5.5, zz + 0.045), Malha.F_SEM_BASE, 1.0)
+		e.caixa(madeira, Vector3(-23.3 - 0.07, 0.0, zz - 0.07), Vector3(-23.3 + 0.07, 5.5, zz + 0.07), Malha.F_SEM_BASE, 1.0)
 	for y in ys:
-		e.caixa(madeira, Vector3(-23.4, y - 0.035, z - 0.04), Vector3(-16.3, y + 0.035, z + 0.04), Malha.F_TODAS, 1.0)
-		e.caixa(madeira, Vector3(-23.3 - 0.04, y - 0.035, -14.5), Vector3(-23.3 + 0.04, y + 0.035, -10.3), Malha.F_TODAS, 1.0)
-	# pranchas de piso em dois níveis (o de cima só no trecho já usado)
-	e.caixa(c.m.deck, Vector3(-23.4, 1.7, -11.0), Vector3(-16.3, 1.745, -10.3), Malha.F_SEM_BASE, 1.5)
-	e.caixa(c.m.deck, Vector3(-23.4, 3.3, -11.0), Vector3(-19.0, 3.345, -10.3), Malha.F_SEM_BASE, 1.5)
+		e.caixa(madeira, Vector3(-23.45, y - 0.05, z - 0.06), Vector3(-16.25, y + 0.05, z + 0.06), Malha.F_TODAS, 1.0)
+		e.caixa(madeira, Vector3(-23.3 - 0.06, y - 0.05, -14.5), Vector3(-23.3 + 0.06, y + 0.05, -10.3), Malha.F_TODAS, 1.0)
+	# pranchas de piso em dois níveis (o de cima só no trecho já usado), com rodapé e tábuas soltas
+	e.caixa(prancha, Vector3(-23.45, 1.75, -11.05), Vector3(-16.25, 1.82, -10.2), Malha.F_TODAS, 1.5)
+	e.caixa(prancha, Vector3(-23.45, 3.35, -11.05), Vector3(-19.0, 3.42, -10.2), Malha.F_TODAS, 1.5)
+	e.caixa(prancha, Vector3(-23.45, 1.82, -10.24), Vector3(-16.25, 2.0, -10.2), Malha.F_TODAS, 1.5)
+	e.caixa(prancha, Vector3(-19.2, 3.42, -11.0), Vector3(-17.6, 3.47, -10.7), Malha.F_TODAS, 1.5)
 	# diagonais (contraventamento)
-	var d := Vector3(0, 0.07, 0)
+	var d := Vector3(0, 0.1, 0)
 	for i in xs.size() - 1:
 		var a := Vector3(xs[i], ys[0], z)
 		var b := Vector3(xs[i + 1], ys[1], z)
@@ -166,8 +172,10 @@ static func _pilhas(c: Castelinho, g: Castelinho.Grupo, info: Dictionary) -> voi
 
 # ------------------------------------------------------------------ barco de madeira encalhado
 static func _barco(c: Castelinho, g: Castelinho.Grupo) -> void:
-	var madeira: Material = c.m.madeira
-	var pintura := Castelinho.mat_cor(Color(0.2, 0.36, 0.5), 0.9)
+	# revisão V2: o casco era madeira quase preta com o costado azul chapado (de longe, uma mancha azul). Agora:
+	# madeira cinza-clara de barco velho por dentro e no fundo, costado verde-água desbotado.
+	var madeira: Material = Castelinho.mat_cor(Color(0.6, 0.55, 0.48), 0.95)
+	var pintura := Castelinho.mat_cor(Color(0.36, 0.6, 0.58), 0.9)
 	var o := Vector3(-16.6, 0.0, -4.2)
 	var b := Basis.from_euler(Vector3(deg_to_rad(8.0), deg_to_rad(28.0), deg_to_rad(-6.0)))
 	var L := 3.6
@@ -235,6 +243,12 @@ static func _muro_com_buraco(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var xb := BURACO_POS.x
 	# o muro corre ao longo da Garibaldi; a abertura (0,75 m x 0,85 m) é o buraco por onde Tito entrava na obra
 	c.parede_x(g, -1.0, -29.8, -3.6, 1, 0.0, 1.1, [Muros.ab(xb, 0.75, 0.0, 0.85, 0.85, "ret")], "ext", "ext", {"tampa": true}, 0.25)
+	# revisão V2: o vão retangular parecia uma porta. Blocos meio quebrados avançam para dentro do vão (bordas
+	# serrilhadas) e o alto cede: lê como um buraco aberto a chute, do tamanho de uma criança.
+	var dentes := [[-0.38, 0.62, -0.2, 0.85], [-0.16, 0.74, 0.1, 0.85], [0.22, 0.58, 0.38, 0.85], [-0.38, 0.0, -0.26, 0.22],
+		[-0.38, 0.34, -0.3, 0.5], [0.28, 0.12, 0.38, 0.3], [0.3, 0.4, 0.38, 0.52]]
+	for dd in dentes:
+		g.ext.caixa(c.m.parede, Vector3(xb + dd[0], dd[1], -1.28), Vector3(xb + dd[2], dd[3], -0.97), Malha.F_SEM_BASE)
 	# blocos quebrados jogados em volta do buraco
 	for k in 5:
 		var dx := -0.55 + 0.28 * k
@@ -256,6 +270,42 @@ static func _castelo_de_areia(c: Castelinho, g: Castelinho.Grupo) -> void:
 	g.ext.caixa(areia2, o + Vector3(-0.1, 0.18, -0.08), o + Vector3(0.1, 0.34, 0.08), Malha.F_SEM_BASE)
 	# poça de areia revirada e a pazinha
 	g.ext.caixa(areia2, TITO_POS + Vector3(-0.5, 0, -0.35), TITO_POS + Vector3(-0.2, 0.05, -0.05), Malha.F_SEM_BASE)
+
+
+# ------------------------------------------------------------------ canteiro de obra (revisão V2)
+## O que diz "obra" de longe: carrinho de mão, caixa de massa, monte de areia grossa, sacos de cimento e tábuas.
+static func _canteiro(c: Castelinho, g: Castelinho.Grupo) -> void:
+	var e := g.ext
+	var pinho: Material = Castelinho.mat_cor(Color(0.78, 0.62, 0.42), 0.95)
+	var ferro := Castelinho.mat_cor(Color(0.3, 0.32, 0.3), 0.6)
+	var massa := Castelinho.mat_cor(Color(0.6, 0.6, 0.58), 1.0)
+	var saco := Castelinho.mat_cor(Color(0.82, 0.76, 0.6), 1.0)
+	var areia := Castelinho.mat_cor(Color(0.72, 0.6, 0.42), 1.0)
+	# carrinho de mão (caçamba de chapa, roda e dois braços) ao pé do andaime
+	var o := Vector3(-17.6, 0.0, -8.6)
+	e.caixa(ferro, o + Vector3(-0.35, 0.3, -0.3), o + Vector3(0.35, 0.62, 0.3), Malha.F_TODAS)
+	e.caixa(massa, o + Vector3(-0.3, 0.62, -0.25), o + Vector3(0.3, 0.64, 0.25), Malha.F_PY)
+	e.caixa(ferro, o + Vector3(0.45, 0.05, -0.05), o + Vector3(0.65, 0.3, 0.05), Malha.F_TODAS)
+	for lado in [-0.22, 0.22]:
+		e.caixa(pinho, o + Vector3(-1.1, 0.42, lado - 0.025), o + Vector3(0.45, 0.47, lado + 0.025), Malha.F_TODAS, 1.0)
+		e.caixa(ferro, o + Vector3(-0.3, 0.0, lado - 0.02), o + Vector3(-0.26, 0.3, lado + 0.02), Malha.F_TODAS)
+	# caixa de massa (tábuas baixas com argamassa cinza) e a enxada encostada
+	var m0 := Vector3(-13.2, 0.0, -8.4)
+	e.caixa(pinho, m0 + Vector3(-0.7, 0.0, -0.45), m0 + Vector3(0.7, 0.25, 0.45), Malha.F_SEM_BASE, 1.0)
+	e.caixa(massa, m0 + Vector3(-0.64, 0.2, -0.39), m0 + Vector3(0.64, 0.21, 0.39), Malha.F_PY)
+	e.caixa(pinho, m0 + Vector3(0.5, 0.2, -0.03), m0 + Vector3(1.6, 0.24, 0.03), Malha.F_TODAS, 1.0)
+	# monte de areia grossa (pirâmide baixa) e sacos de cimento empilhados
+	e.piramide(areia, Vector3(-11.5, 0.0, -7.2), 2.2, 1.8, 0.9, 1.0)
+	for k in 5:
+		var px := -9.9 + (k % 3) * 0.48
+		var py := 0.0 if k < 3 else 0.18
+		var pz := -7.6 + (0.24 if k >= 3 else 0.0)
+		e.caixa(saco, Vector3(px - 0.22, py, pz - 0.32), Vector3(px + 0.22, py + 0.18, pz + 0.32), Malha.F_SEM_BASE)
+	# tábuas soltas no chão
+	for k in 4:
+		e.caixa(pinho, Vector3(-21.0 + k * 0.05, 0.02 + k * 0.035, -6.4 - k * 0.32), Vector3(-18.0 + k * 0.05, 0.05 + k * 0.035, -6.15 - k * 0.32), Malha.F_TODAS, 1.0)
+	g.ext.col(Vector3(-13.9, 0, -8.9), Vector3(-12.5, 0.3, -7.9))
+	g.ext.col(Vector3(-12.6, 0, -8.1), Vector3(-10.4, 0.7, -6.3))
 
 
 # ------------------------------------------------------------------ casas de madeira em volta (quase ninguém em 1967)

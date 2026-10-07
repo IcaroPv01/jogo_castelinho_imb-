@@ -367,8 +367,10 @@ static func tocha(c: Ctx, pos: Vector3, lado := 0, energia := 1.5, alcance := 8.
 	var mv := mat_vc()
 	caixa(c.vc, mv, pos.x - 0.05, pos.y - 0.28, pos.z - 0.05, pos.x + 0.05, pos.y + 0.12, pos.z + 0.05, Color(0.09, 0.08, 0.07))
 	caixa(c.vc, mv, pos.x - 0.12, pos.y + 0.1, pos.z - 0.12, pos.x + 0.12, pos.y + 0.18, pos.z + 0.12, Color(0.09, 0.08, 0.07))
-	c.luz.piramide(mat_luz(), Vector3(pos.x, pos.y + 0.18, pos.z), 0.13, 0.13, 0.34, 1.0)
-	c.luz.piramide(mat_luz(), Vector3(pos.x, pos.y + 0.18, pos.z), 0.07, 0.07, 0.46, 1.0)
+	# chama em duas pirâmides com cor de vértice (revisão V2: antes eram brancas e pareciam facas): a de fora vai de
+	# laranja na base a vermelho escuro na ponta, a de dentro de amarelo quase branco a laranja
+	chama(c.luz, Vector3(pos.x, pos.y + 0.18, pos.z), 0.15, 0.36, Color(1.0, 0.55, 0.12), Color(0.75, 0.16, 0.04))
+	chama(c.luz, Vector3(pos.x, pos.y + 0.18, pos.z), 0.08, 0.26, Color(1.0, 0.93, 0.62), Color(1.0, 0.6, 0.15))
 	var l := OmniLight3D.new()
 	l.position = pos + Vector3(-lado * 0.45, 0.45, 0.0)
 	l.light_color = cor
@@ -379,6 +381,19 @@ static func tocha(c: Ctx, pos: Vector3, lado := 0, energia := 1.5, alcance := 8.
 	c.raiz.add_child(l)
 	c.luzes.append(l)
 	return l
+
+
+## Pirâmide de 4 faces com cor de vértice da base (`cb`) à ponta (`cp`), levemente torcida (não fica "de régua").
+static func chama(m: Malha, base: Vector3, w: float, h: float, cb: Color, cp: Color) -> void:
+	var ap := base + Vector3(w * 0.12, h, -w * 0.08)
+	var r := w * 0.5
+	var p := [base + Vector3(-r, 0, -r), base + Vector3(r, 0, -r), base + Vector3(r, 0, r), base + Vector3(-r, 0, r)]
+	for i in 4:
+		var a: Vector3 = p[i]
+		var b: Vector3 = p[(i + 1) % 4]
+		var fora := ((a + b) * 0.5 - base)
+		fora.y = 0.0
+		m.tri_cores(mat_luz(), a, b, ap, fora, cb, cb, cp)
 
 
 static func luz_solta(c: Ctx, pos: Vector3, cor: Color, energia: float, alcance: float) -> OmniLight3D:
