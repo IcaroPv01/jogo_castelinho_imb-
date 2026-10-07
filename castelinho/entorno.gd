@@ -20,7 +20,7 @@ const L_CORREDOR := 2.3
 static func construir(raiz: Node3D, c: Castelinho) -> Dictionary:
 	var g_cid := Castelinho.Grupo.new("Cidade", Castelinho.ep_casa())
 	var g_cerca_n := Castelinho.Grupo.new("CercaNorte", [GameState.Epoca.E2019, GameState.Epoca.E2020])
-	var g_areia := Castelinho.Grupo.new("Areia_1950", [GameState.Epoca.E1950])
+	var g_areia := Castelinho.Grupo.new("Areia_1950", [GameState.Epoca.E1950, GameState.Epoca.E1967])     # chão de areia e dunas também em 1967
 	var g_cor := Castelinho.Grupo.new("Corredor_1975", [GameState.Epoca.E1975])
 	_chao(raiz, c, g_cid, g_areia)
 	_ruas(c, g_cid)
@@ -544,7 +544,7 @@ static func _barreiras(raiz: Node3D) -> void:
 	fecho.add_child(cs2)
 	fecho.position = Vector3(X_CORREDOR, 2.5, -34.6)
 	raiz.add_child(fecho)
-	Epocas.marcar(fecho, [GameState.Epoca.E1950, GameState.Epoca.E2019, GameState.Epoca.E2020])
+	Epocas.marcar(fecho, [GameState.Epoca.E1950, GameState.Epoca.E1967, GameState.Epoca.E2019, GameState.Epoca.E2020])
 
 
 # ------------------------------------------------------------------ corredor de 1975 (só em E1975)

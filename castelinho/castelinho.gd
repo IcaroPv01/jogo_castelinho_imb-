@@ -9,7 +9,7 @@ extends Node3D
 ## - Lê castelinho/medidas.json (coordenadas do Godot: x = leste, z = sul, y = altura).
 ## - Junta a geometria estática por material (classe Malha): poucas MeshInstance3D, colisão em caixas.
 ## - Camadas de tempo via Epocas.marcar: casa completa (1975/2019/2020), museu (2020), núcleo (1950),
-##   ruína (2019), mobília de 1975. Nós não marcados existem em todas as épocas.
+##   ruína (2019), mobília de 1975, obra de 1967 (ObraCastelinho). Nós não marcados existem em todas as épocas.
 ## - Malhas internas ficam na camada visual 2 (o Sol, cull_mask = 1, não as ilumina: só luz ambiente
 ##   e as luzes quentes de dentro). Malhas externas ficam na camada 1.
 ## - Detalhes de layout em castelinho/LEIAME.md.
@@ -71,6 +71,8 @@ var g_museu: Grupo             # só 2020: vidros, deck, hortênsias, letreiros,
 var g_1975: Grupo              # só 1975: arcos abertos, mobília de veraneio
 var g_2019: Grupo              # só 2019: ruína (telhado quebrado, mato)
 var g_1950: Grupo              # só 1950: núcleo original de pedra
+var g_1967: Grupo              # só 1967: o Castelinho em obra (castelinho/obra.gd, licença criativa)
+var obra := {}                 # dados da obra para o nível: volumes (sombras), tito_pos, buraco_pos
 var porta_entrada: Node3D      # porta de vidro do arco de entrada (E2020); o nível a abre na sala 6
 var luzes: Array = []          # pontos de luz internos [{pos, sala}]: o nível cria no máximo ~5 OmniLight3D ativas
 var construido := false
@@ -108,10 +110,12 @@ func construir() -> void:
 	g_1975 = Grupo.new("Veraneio_1975", [GameState.Epoca.E1975])
 	g_2019 = Grupo.new("Ruina_2019", [GameState.Epoca.E2019])
 	g_1950 = Grupo.new("Nucleo_1950", [GameState.Epoca.E1950])
+	g_1967 = Grupo.new("Obra_1967", [GameState.Epoca.E1967])
 	CascoCastelinho.construir(self)
 	InteriorCastelinho.construir(self)
 	ExtrasCastelinho.construir(self)
-	for g in [g_base, g_museu, g_1975, g_2019, g_1950]:
+	obra = ObraCastelinho.construir(self)
+	for g in [g_base, g_museu, g_1975, g_2019, g_1950, g_1967]:
 		g.finalizar(self)
 		triangulos_total += g.triangulos()
 	if not GameState.epoca_mudou.is_connected(_on_epoca):

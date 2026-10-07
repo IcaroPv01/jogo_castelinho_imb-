@@ -1,15 +1,17 @@
 extends Node3D
-## Flashback da Barra (sala 14, PLANO §5.2, MVP_ROTEIRO "Flashback da Barra").
+## Flashback da Barra (VISITA 2, V2_ROTEIRO §3.2 e §8.2; antes "sala 14", PLANO §5.2, MVP_ROTEIRO "Flashback da Barra").
+## Contador: `GameState.sala_global(14)` (sala 36 na visita 2) e, na volta, `sala_global(15)` (sala 37), em `Spawn_volta_barra`.
 ## Foz do Rio Tramandaí ao entardecer: areia, molhe de pedra, água com ondas (shader), pescadores
 ## genéricos em silhueta com tarrafas, ponte ao longe com o sol baixo atrás dela.
 ##
 ## Minigame da tarrafa: a Tainá explica; o boto (nadadeira dorsal CORTADA) vem até a margem e
 ## "bate a cabeça" na água; o jogador lança com E ou clique dentro da janela. São 3 lances.
 ## Nos 2 primeiros a rede pega tainhas. No 3º o boto sinaliza na hora errada, a rede puxa o
-## JOGADOR para a água (câmera afunda, tela escurece, "agua_puxa") e a Tainá diz "...era eu na rede?".
-## Depois: flag viu_flashback_barra, sala 15 e volta ao Castelinho em Spawn_volta_barra.
+## JOGADOR para a água (câmera afunda, tela escurece, "agua_puxa"). A rede traz também UMA SANDÁLIA DE CRIANÇA
+## (só o objeto, nó "Sandalia" dentro da rede, sem nenhum drama gráfico) e a Tainá diz "...era eu na rede?".
+## Depois: flag viu_flashback_barra, sala `sala_global(15)` e volta ao Castelinho em Spawn_volta_barra.
 ##
-## O contador fica em "SALA 14" e treme de vez em quando (Efeitos.pulso + tremida no HUD).
+## O contador fica na sala da Barra (`sala_global(14)`) e treme de vez em quando (Efeitos.pulso + tremida no HUD).
 ## Parâmetros de teste/ajuste: espera_min/espera_max (s entre sinais do boto), destino.
 
 signal lance_feito(numero: int, acertou: bool)
@@ -90,10 +92,19 @@ func _ready() -> void:
 	_mat_espuma.cull_mode = BaseMaterial3D.CULL_DISABLED
 
 
+## Sala (global) do flashback e da volta ao Castelinho: 36 e 37 na visita 2 (nada de 14/15 fixos).
+func sala_global_barra() -> int:
+	return GameState.sala_global(14)
+
+
+func sala_global_volta() -> int:
+	return GameState.sala_global(15)
+
+
 # ============================================================================ contrato com o Main
 func iniciar(p: Player) -> void:
 	player = p
-	GameState.entrar_sala(14)
+	GameState.entrar_sala(sala_global_barra())
 	GameState.definir_corruption_manual(0.1)
 	Audio.ambiente("mar", -10.0, 2.0)
 	_hud_pos = _hud_label_pos()
@@ -449,7 +460,7 @@ func _process(dt: float) -> void:
 	if player and Input.is_action_just_pressed("interagir") and (fase == Fase.JANELA \
 			or (fase == Fase.ESPERA and _desde_fase > 0.5 and not Guia.ocupado())):
 		lancar()
-	# tremidas do contador "SALA 14" e pulsos de glitch
+	# tremidas do contador de sala e pulsos de glitch
 	if fase != Fase.INTRO and fase != Fase.FIM:
 		_prox_pulso -= dt
 		if _prox_pulso <= 0.0:
@@ -486,7 +497,7 @@ func _restaurar_hud() -> void:
 		main.hud.lbl_sala.rotation = 0.0
 
 
-## O contador "SALA 14" treme (e a imagem dá um pulso de glitch): este não é um lugar de verdade.
+## O contador de sala treme (e a imagem dá um pulso de glitch): este não é um lugar de verdade.
 func _tremer_contador(forte := false) -> void:
 	Efeitos.pulso(0.55 if forte else 0.25, 0.4 if forte else 0.28)
 	var main := get_tree().get_first_node_in_group("main")
@@ -624,6 +635,7 @@ func _lance_certo(n: int) -> void:
 func _lance_errado(_sozinha: bool) -> void:
 	# o 3º lance: a rede cai perto demais e algo a puxa para o fundo, com o jogador junto
 	_rede_jogador = _lancar_rede(_alvo_lance, 0.5)
+	_sandalia_na_rede(_rede_jogador)
 	lances = TOTAL_LANCES
 	_atualizar_placar()
 	lance_feito.emit(lances, true)
@@ -723,6 +735,21 @@ func _lancar_rede(destino_rede: Vector3, dur: float) -> Node3D:
 		var s := lerpf(0.35, 1.7, minf(k * 1.6, 1.0))
 		rede.scale = Vector3(s, lerpf(s, 0.35, k * k), s), 0.0, 1.0, dur)
 	return rede
+
+
+## A sandália de criança que vem na rede do 3º lance: um objeto pequeno e comum (sola azul, tira amarela), nada mais.
+func _sandalia_na_rede(rede: Node3D) -> void:
+	var sandalia := Node3D.new()
+	sandalia.name = "Sandalia"
+	sandalia.position = Vector3(0.05, -0.1, 0.0)
+	sandalia.rotation_degrees = Vector3(0, 35, 12)
+	rede.add_child(sandalia)
+	var sola := Ato2Pecas.mat_cor(Color(0.3, 0.52, 0.9))
+	var tira := Ato2Pecas.mat_cor(Color(0.95, 0.8, 0.2))
+	Construtor.caixa(sandalia, Vector3(0.09, 0.025, 0.2), Vector3(0, 0, 0), sola, false)
+	Construtor.caixa(sandalia, Vector3(0.09, 0.012, 0.03), Vector3(0, 0.02, -0.02), tira, false)
+	Construtor.caixa(sandalia, Vector3(0.035, 0.012, 0.09), Vector3(0.0, 0.02, 0.03), tira, false)
+	GameState.set_flag("viu_sandalia_barra", true)
 
 
 func _afundar_rede(rede: Node3D) -> void:
@@ -880,9 +907,9 @@ func _puxado() -> void:
 
 func _final() -> void:
 	_entrar_fase(Fase.FIM)
-	await Guia.falar("taina", ["...era eu na rede?"], true)
+	await Guia.falar("taina", ["...era eu na rede?", "...e uma sandalinha. Pequena. De criança."], true)
 	GameState.set_flag("viu_flashback_barra", true)
-	GameState.entrar_sala(15)
+	GameState.entrar_sala(sala_global_volta())
 	terminou.emit()
 	var cena := destino
 	if not ResourceLoader.exists(cena):

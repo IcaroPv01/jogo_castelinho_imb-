@@ -1,6 +1,7 @@
 extends SceneTree
-## Teste automático do flashback da Barra (headless): carrega o nível, confere o chão, joga os 3
-## lances da tarrafa (E/clique), o 3º puxa o jogador para a água e a cena volta ao Castelinho.
+## Teste automático do flashback da Barra, VISITA 2 (headless): carrega o nível, confere o chão e a sala global (36/37),
+## joga os 3 lances da tarrafa (E/clique); o 3º puxa o jogador para a água (a rede traz uma sandália de criança) e a
+## cena volta ao Castelinho.
 ## Uso: godot --headless -s res://tests/barra_test.gd
 ## (não referencie classes do jogo por nome aqui: o script de teste compila antes dos autoloads)
 
@@ -59,6 +60,7 @@ func _ate(cond: Callable, max_frames := 900) -> bool:
 
 
 func _carregar() -> void:
+	GS.comecar_visita(2)    # o flashback da Barra é da visita 2: sala_global(14) = 36
 	await main.carregar_mundo("res://world/niveis/barra.tscn", "Spawn")
 	nivel = main.mundo.get_child(0)
 	player = main.player
@@ -81,7 +83,8 @@ func _passada_completa() -> void:
 	GS.set_flag("viu_flashback_barra", false)
 	await _carregar()
 	_checar(player.is_on_floor() and absf(player.global_position.y) < 0.05, "jogador no chão (y=%.2f)" % player.global_position.y)
-	_checar(GS.sala_atual == 14 and main.hud.lbl_sala.text == "SALA 14", "contador mostra SALA 14 (%s)" % main.hud.lbl_sala.text)
+	_checar(GS.sala_atual == GS.sala_global(14) and GS.sala_atual == 36, "sala global do flashback = 36 (sala %d)" % GS.sala_atual)
+	_checar(main.hud.lbl_sala.text.contains("36"), "contador mostra a sala 36 (%s)" % main.hud.lbl_sala.text)
 	_checar(abs(GS.corruption - 0.1) < 0.02, "corruption manual do flashback (%.2f)" % GS.corruption)
 	_checar(nivel.get_node_or_null("Spawn") != null and nivel.boto != null, "marcador Spawn e boto")
 	_checar(nivel.fase == nivel.Fase.INTRO, "começa na introdução (Tainá explica)")
@@ -117,6 +120,9 @@ func _passada_completa() -> void:
 	_checar(ok, "o 3º lance puxa: fase PUXADO")
 	_checar(nivel.tainhas == tainhas_antes, "o 3º lance não pega tainhas")
 	_checar(not player.pode_mover, "jogador não controla mais nada")
+	var rede = nivel._rede_jogador
+	_checar(rede != null and rede.get_node_or_null("Sandalia") != null, "a rede do 3º lance traz uma sandália de criança")
+	_checar(GS.flag("viu_sandalia_barra"), "flag viu_sandalia_barra")
 	ok = await _ate(func(): return player.global_position.z < nivel.MARGEM_Z - 1.0, 900)
 	_checar(ok, "o jogador é arrastado para dentro da água (z=%.1f)" % player.global_position.z)
 	ok = await _ate(func(): return player.global_position.y < -1.0, 600)
@@ -141,9 +147,9 @@ func _passada_completa() -> void:
 	_checar(ok, "volta ao nível de destino")
 	await _frames(30)
 	_checar(GS.flag("viu_flashback_barra") == true, "flag viu_flashback_barra")
-	_checar(GS.sala_atual == 15, "entra na sala 15 (sala %d)" % GS.sala_atual)
+	_checar(GS.sala_atual == GS.sala_global(15) and GS.sala_atual == 37, "entra na sala 37 (sala %d)" % GS.sala_atual)
 	_checar(GS.corruption_manual == -1.0, "corruption manual liberada ao sair")
-	_checar(main.hud.lbl_sala.text == "SALA 15", "HUD mostra SALA 15")
+	_checar(main.hud.lbl_sala.text.contains("37"), "HUD mostra a sala 37 (%s)" % main.hud.lbl_sala.text)
 
 
 func nivel_vivo() -> bool:
@@ -166,4 +172,4 @@ func _passada_auto() -> void:
 		Gui.avancar()
 		return main.nivel_atual == "res://world/niveis/teste.tscn", 2400)
 	_checar(ok, "e a cena volta ao destino")
-	_checar(GS.flag("viu_flashback_barra") == true and GS.sala_atual == 15, "flag e sala 15")
+	_checar(GS.flag("viu_flashback_barra") == true and GS.sala_atual == 37, "flag e sala 37")

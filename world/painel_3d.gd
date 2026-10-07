@@ -11,6 +11,14 @@ extends Interagivel
 ## A frente da placa é o eixo +Z local (o jogador a vê olhando para -Z local): gire com rotation.y.
 ## Tamanho: 1,6 x 1,1 m, centrada na origem. A placa acompanha GameState.corruption: perde cor
 ## e o título ganha letras trocadas.
+##
+## V2 (docs/V2_ROTEIRO.md §8.4):
+##   - Variantes por visita: Painel3D.new("p05_v2"). Se a variante não existir no JSON, vale "p05" (PainelUI.dados()).
+##     v2 e v3 usam a placa cinza "seca"; v3 ganha o carimbo "EM REVISÃO"; v4 mostra o título riscado, uma palavra
+##     (ou "…") e o desenho do Tito em destaque (campos `riscado` e `desenho` do JSON).
+##   - Imagens: Painel3D.new("desenho_1".."desenho_7" | "procura_se" | "marcas_altura") é uma folha de papel colada
+##     na parede (largura `largura_m` do JSON, altura pela proporção da imagem; a frente é +Z). Interagir abre a
+##     visualização (PainelUI) com a legenda.
 
 signal lido(id: String)
 
@@ -32,15 +40,23 @@ var _foi_lido := false
 var _t := 0.0
 var _tem_quiz := false
 var _seco := false
+var _imagem := false
 
 
 func _init(id_painel := "p00") -> void:
-	super._init("Ler painel", Vector3(LARG + 0.12, ALT + 0.12, 0.16))
+	var d := PainelUI.dados(id_painel)
+	var tam_caixa := Vector3(LARG + 0.12, ALT + 0.12, 0.16)
+	if str(d.get("tipo", "")) == "imagem":
+		var tam_papel := _tamanho_folha(d)
+		tam_caixa = Vector3(tam_papel.x, tam_papel.y, 0.12)
+	super._init("Ler painel", tam_caixa)
 	id = id_painel
-	var d := PainelUI.dados(id)
 	_tem_quiz = d.has("quiz")
 	_seco = bool(d.get("seco", false))
-	if id == "quiz_final":
+	_imagem = str(d.get("tipo", "")) == "imagem"
+	if _imagem:
+		texto_interacao = {"procura_se": "Ler o cartaz", "marcas_altura": "Ver as marcas"}.get(id_painel, "Ver o desenho")
+	elif id == "quiz_final":
 		texto_interacao = "Fazer o quiz final"
 	elif _tem_quiz:
 		texto_interacao = "Ler painel e fazer o quiz"
@@ -128,6 +144,9 @@ func _construir() -> void:
 	_visual.name = "Visual"
 	add_child(_visual)
 	_estrelas.clear()
+	if _imagem:
+		_construir_imagem(PainelUI.dados(id))
+		return
 	if _MAT_PLACA == null:
 		_MAT_PLACA = ShaderMaterial.new()
 		_MAT_PLACA.shader = preload("res://shaders/placa_cor.gdshader")
@@ -159,19 +178,32 @@ func _construir() -> void:
 	var fonte := Flash.fonte_sistema() if _seco else (Flash.fonte_erro() if corr >= 0.75 else Flash.fonte_titulo())
 	var tam := 34 if corr < 0.75 else 44
 	_rotulo(titulo, Vector3(0, 0.225, 0.062), tam if not _seco else 30, Color.WHITE, fonte, LARG - 0.34, 0 if _seco else 7)
+	var riscado := bool(d.get("riscado", false))
+	if riscado:
+		_riscar_titulo()
 
-	# ícone + etiqueta
-	var icone := Flash.icone(str(d.get("icone", "interrogacao")))
-	var spr := _sprite(icone, Vector3(-0.43, -0.2, 0.059), 0.4)
-	if _seco or t > 0.0:
-		spr.modulate = Color.WHITE.lerp(Color(0.6, 0.62, 0.68), maxf(t, 0.8 if _seco else 0.0))
-	var rotulo_n := id.trim_prefix("p").get_slice("_", 0)
-	if id == "quiz_final":
-		rotulo_n = "FINAL"
-	var cor_texto := Flash.dessaturar(Flash.NAVY, t * 0.5)
-	_rotulo("PAINEL " + rotulo_n if rotulo_n.is_valid_int() else rotulo_n, Vector3(0.2, -0.1, 0.062), 38 if not _seco else 30,
-		cor_texto, Flash.fonte_sistema() if _seco else Flash.fonte_titulo(), 0.0, 0)
-	if _tem_quiz:
+	# ícone + etiqueta (v4: o desenho do Tito no lugar do ícone, e a palavra no lugar da etiqueta)
+	var desenho := Flash.textura(str(PainelUI.dados(str(d.get("desenho", ""))).get("imagem", ""))) if riscado else null
+	if desenho != null:
+		_sprite(desenho, Vector3(-0.42, -0.18, 0.059), 0.4)
+		_rotulo(str(d.get("texto", "…")), Vector3(0.24, -0.16, 0.062), 90, Color("20242E"), Flash.fonte_erro(), 0.6, 0)
+	else:
+		var icone := Flash.icone(str(d.get("icone", "interrogacao")))
+		var spr := _sprite(icone, Vector3(-0.43, -0.2, 0.059), 0.4)
+		if _seco or t > 0.0:
+			spr.modulate = Color.WHITE.lerp(Color(0.6, 0.62, 0.68), maxf(t, 0.8 if _seco else 0.0))
+		var rotulo_n := id.trim_prefix("p").get_slice("_", 0)
+		if id == "quiz_final":
+			rotulo_n = "FINAL"
+		var cor_texto := Flash.dessaturar(Flash.NAVY, t * 0.5)
+		if str(d.get("carimbo", "")) == "":   # com carimbo o título já diz "Painel NN"
+			_rotulo("PAINEL " + rotulo_n if rotulo_n.is_valid_int() else rotulo_n, Vector3(0.2, -0.1, 0.062), 38 if not _seco else 30,
+				cor_texto, Flash.fonte_sistema() if _seco else Flash.fonte_titulo(), 0.0, 0)
+	if str(d.get("carimbo", "")) != "":
+		_carimbo(str(d.carimbo))
+	if desenho != null:
+		pass
+	elif _tem_quiz:
 		_caixa(Vector3(0.42, 0.14, 0.08), Vector3(0.26, -0.3, 0.0125), Flash.dessaturar(Flash.LARANJA, t))
 		_rotulo("QUIZ!", Vector3(0.26, -0.3, 0.056), 38, Color.WHITE, Flash.fonte_titulo(), 0.0, 8)
 	elif not _seco:
@@ -188,6 +220,132 @@ func _construir() -> void:
 	_check = _sprite(Flash.icone("check"), Vector3(0.62, -0.38, 0.075), 0.2)
 	_check.visible = _foi_lido
 	set_process(not _seco)
+	if alcance > 0.0:
+		_aplicar_alcance(_visual)
+
+
+## v4: dois riscos de caneta sobre o título (o que estava escrito foi apagado).
+func _riscar_titulo() -> void:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = Color(0.07, 0.05, 0.07)
+	for k in 2:
+		var mi := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = Vector3(LARG - 0.3, 0.014, 0.004)
+		mi.mesh = bm
+		mi.material_override = m
+		mi.position = Vector3(0.0, 0.225 + (k - 0.5) * 0.05, 0.072)
+		mi.rotation = Vector3(0, 0, deg_to_rad(-1.6 + k * 3.0))
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_visual.add_child(mi)
+
+
+## v3: carimbo vermelho "EM REVISÃO" dentro de um filete, no canto da folha.
+func _carimbo(texto: String) -> void:
+	var pos := Vector3(0.22, -0.2, 0.062)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color("B3261E")
+	var lado := [[Vector3(0.0, 0.06, 0.0), Vector3(0.62, 0.012, 0.004)], [Vector3(0.0, -0.06, 0.0), Vector3(0.62, 0.012, 0.004)],
+		[Vector3(0.31, 0.0, 0.0), Vector3(0.012, 0.12, 0.004)], [Vector3(-0.31, 0.0, 0.0), Vector3(0.012, 0.12, 0.004)]]
+	var cx := Node3D.new()
+	cx.position = pos
+	cx.rotation = Vector3(0, 0, deg_to_rad(-5.0))
+	_visual.add_child(cx)
+	for l in lado:
+		var mi := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = l[1]
+		mi.mesh = bm
+		mi.material_override = mat
+		mi.position = l[0]
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		cx.add_child(mi)
+	var lbl := Label3D.new()
+	lbl.text = texto
+	lbl.font = Flash.fonte_titulo()
+	lbl.font_size = 34
+	lbl.pixel_size = 0.0034
+	lbl.modulate = Color("B3261E")
+	lbl.outline_size = 0
+	lbl.shaded = false
+	lbl.double_sided = false
+	lbl.position = Vector3(0, 0, 0.004)
+	cx.add_child(lbl)
+
+
+# ---------------------------------------------------------------- folha de papel (desenhos, cartaz, marcas)
+## Tamanho no mundo (m) de uma entrada "tipo: imagem": largura do JSON e altura pela proporção da imagem.
+static func _tamanho_folha(d: Dictionary) -> Vector2:
+	var larg := float(d.get("largura_m", 0.9))
+	var tex := Flash.textura(str(d.get("imagem", "")))
+	var prop := 1.0
+	if tex != null and tex.get_width() > 0:
+		prop = float(tex.get_height()) / float(tex.get_width())
+	return Vector2(larg, larg * prop)
+
+
+func _construir_imagem(d: Dictionary) -> void:
+	var tam := _tamanho_folha(d)
+	var tex := Flash.textura(str(d.get("imagem", "")))
+	var corr := GameState.corruption
+	var tinta := lerpf(1.0, 0.62, clampf(corr, 0.0, 1.0))
+	# sombra fina atrás do papel (a folha está colada na parede, quase rente)
+	var sombra := MeshInstance3D.new()
+	var sm := QuadMesh.new()
+	sm.size = tam + Vector2(0.03, 0.03)
+	sombra.mesh = sm
+	var ms := StandardMaterial3D.new()
+	ms.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ms.albedo_color = Color(0, 0, 0, 0.35)
+	ms.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	sombra.material_override = ms
+	sombra.position = Vector3(0.012, -0.014, 0.001)
+	sombra.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_visual.add_child(sombra)
+	# o papel: com um pouco de brilho próprio, para ler na sala escura, mas ainda reagindo à lanterna
+	var papel := MeshInstance3D.new()
+	var qm := QuadMesh.new()
+	qm.size = tam
+	papel.mesh = qm
+	var mp := StandardMaterial3D.new()
+	mp.albedo_color = Color(tinta, tinta, tinta)
+	mp.roughness = 1.0
+	mp.cull_mode = BaseMaterial3D.CULL_BACK
+	mp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	if tex != null:
+		mp.albedo_texture = tex
+		mp.emission_enabled = true
+		mp.emission_texture = tex
+		mp.emission_energy_multiplier = 0.28 * tinta
+		if tex.get_image() != null and tex.get_image().detect_alpha() != Image.ALPHA_NONE:
+			mp.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+			mp.alpha_scissor_threshold = 0.5
+	papel.material_override = mp
+	papel.position = Vector3(0, 0, 0.004)
+	papel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_visual.add_child(papel)
+	# fita adesiva nos cantos de cima (menos nas marcas de altura, que são riscos na própria parede)
+	if id != "marcas_altura":
+		var fita := StandardMaterial3D.new()
+		fita.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		fita.albedo_color = Color(0.93, 0.88, 0.62, 0.7)
+		fita.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		for sinal in [-1.0, 1.0]:
+			var f := MeshInstance3D.new()
+			var fm := QuadMesh.new()
+			fm.size = Vector2(0.11, 0.035)
+			f.mesh = fm
+			f.material_override = fita
+			f.position = Vector3(sinal * (tam.x / 2.0 - 0.03), tam.y / 2.0 - 0.012, 0.006)
+			f.rotation = Vector3(0, 0, deg_to_rad(-sinal * 38.0))
+			f.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			_visual.add_child(f)
+	# um leve desalinho (cada folha tem o seu, sempre o mesmo para o mesmo id)
+	_visual.rotation.z = deg_to_rad(float(id.hash() % 300) / 100.0 - 1.5) if id != "marcas_altura" else 0.0
+	_check = null
+	set_process(false)
 	if alcance > 0.0:
 		_aplicar_alcance(_visual)
 

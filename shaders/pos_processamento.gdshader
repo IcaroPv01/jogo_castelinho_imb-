@@ -7,11 +7,13 @@ shader_type canvas_item;
 //                   aberração cromática e (acima de ~0.5) faixas de glitch
 //  pulso      0..1  glitch forte momentâneo (sustos)
 //  visor      0..1  moldura do Visor do Tempo (plástico vermelho, dois olhos redondos, sépia)
+//  atencao    0..1  V2: "algo percebe você" (só dentro do Visor): lentes avermelhadas que pulsam, bordas escuras, tremor
 
 uniform sampler2D tela : hint_screen_texture, repeat_disable, filter_linear;
 uniform float corrupcao : hint_range(0.0, 1.0) = 0.0;
 uniform float pulso : hint_range(0.0, 1.5) = 0.0;
 uniform float visor : hint_range(0.0, 1.0) = 0.0;
+uniform float atencao : hint_range(0.0, 1.0) = 0.0;
 
 const float BAYER[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
 
@@ -61,6 +63,8 @@ void fragment() {
 	uv.x += faixa * (hash11(fatia * 7.7 + 2.0) - 0.5) * (0.07 + 0.2 * p);
 	float tremor = floor(TIME * 30.0);
 	uv += p * (vec2(hash11(tremor), hash11(tremor + 9.0)) - 0.5) * 0.02;
+	float tr2 = floor(TIME * 18.0);
+	uv += atencao * atencao * step(0.001, visor) * (vec2(hash11(tr2), hash11(tr2 + 3.0)) - 0.5) * 0.012;
 
 	// ---------------------------------------------------------- pixelização (resolução efetiva cai)
 	float k = smoothstep(0.1, 0.65, c);
@@ -115,6 +119,11 @@ void fragment() {
 		vec3 sepia = vec3(l2 * 1.12, l2 * 0.88, l2 * 0.64);
 		col = mix(col, sepia, 0.55);
 		col *= 1.0 - 0.55 * smoothstep(-0.14, 0.0, dcirc);
+		if (atencao > 0.001) {
+			float bat = 0.5 + 0.5 * sin(TIME * (4.0 + 10.0 * atencao));
+			col = mix(col, col * vec3(1.4, 0.5, 0.5), 0.5 * atencao * (0.55 + 0.45 * bat));
+			col *= 1.0 - 0.55 * atencao * smoothstep(-0.25, 0.0, dcirc);
+		}
 
 		vec2 n = normalize(q - centro + vec2(1e-5));
 		float anel = smoothstep(0.0, 0.01, dcirc) * (1.0 - smoothstep(0.012, 0.03, dcirc));

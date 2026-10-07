@@ -229,3 +229,58 @@ Ordem de aparição. Todos são assinados "TITO" com o "T" ao contrário:
 | **Visor 2.0, UI e conteúdo** | discos e inventário, atenção e Figura no slide, HUD "VISITA n · SALA nn", textos `_v2`/`_v3`/`_v4` dos painéis, desenhos do Tito (gerados), cartaz PROCURA-SE (gerado), voz do telefone (texto + chiado), tela de dedicatória, sons novos |
 | **Porão e final** | gerador de salas do porão, água subindo, Costela-de-Adão, voz do Tito, quarto do Tito, sequência do último dia, cena do Braço Morto, integração do `ato2` como trecho da visita 3 |
 | **Integrador (Opus)** | contratos, `game_state.gd`, `main.gd`, testes de ponta a ponta, revisão de conteúdo e ética, publicação |
+
+## 8. Contratos técnicos da V2 (para os agentes)
+
+### 8.1 GameState (já implementado)
+
+- **Épocas:**
+  - `Epoca.E1967` e `Epoca.ESEMDATA` são novas e ficam **no fim** do enum (0..3 continuam iguais);
+  - `NOMES_EPOCA` traz os rótulos.
+- **Visitas:**
+  - `visita` (1..4, 5 = porão), `comecar_visita(n)`, sinal `visita_mudou`;
+  - `DESLOCAMENTO_VISITA = {1:0, 2:22, 3:44, 4:66}`, `PRIMEIRA_SALA_PORAO = 81`;
+  - `sala_global(base)`, `entrar_sala_base(base)` (para os gatilhos do Castelinho) e `visita_da_sala(n)`.
+- **Discos do Visor:** `discos: Array[int]` (épocas), `disco_atual`, `ganhar_disco(epoca)`, `selecionar_disco(epoca)`, sinal `discos_mudou`.
+- **Atenção:** `atencao` (0..1), `definir_atencao(v)`, sinal `atencao_mudou`. Quem escreve é o Visor; HUD e níveis só leem.
+- **Corrupção:** nova curva `corruption_por_sala` (§2). A visita 1 inteira fica em 0.
+- **Save:** grava `visita`, `discos` e `disco_atual`.
+- **Checkpoints e "Continuar"** (`entrar_sala` com regra automática, `preparar_continuar`): ficam a cargo do **agente Visitas**, que pode reescrever essas duas funções em `game_state.gd` (e só elas). Elas precisam cobrir as visitas 1–4, o trecho do Ato II na visita 3, o porão e o Braço Morto.
+
+### 8.2 Transições entre cenas
+
+| De | Para | Quem chama |
+|---|---|---|
+| Fim de cada visita (porta de saída) | `GameState.comecar_visita(n+1)`, depois `VolteSempre.mostrar()` (só nas visitas 1→2 e 2→3), depois `Transicao.ir_para("res://world/niveis/castelinho.tscn", "Spawn")` | Visitas |
+| Visita 2, mural da Sala do Pescador (base 14 = sala 36) | `res://world/niveis/barra.tscn` "Spawn". Volta ao Castelinho em "Spawn_volta_barra" (base 15 = sala 37) | Visitas (ida) / Porão (Barra) |
+| Visita 3, base 11 (Salão de Arte, sala 55): a porta abre para 1950 | `res://world/niveis/ato2.tscn` "Spawn": salas 55–60 nas dunas, na casa de 1950 e na arcada. Volta ao Castelinho em "Spawn_volta_ato2" (topo da Torre A, base 17 = sala 61) | Visitas / Porão (ato2) |
+| Visita 4, porta zebrada no hall (sala 80) | `res://world/niveis/porao.tscn` "Spawn" (salas 81–99) | Visitas |
+| Porão, sala 100 | `res://world/niveis/braco_morto.tscn` "Spawn": cena final, depois `Dedicatoria.mostrar()` (créditos + Disque 100), depois o título | Porão / UI |
+
+**Contador nas cenas fora do Castelinho:** Barra, Ato II e porão usam **números globais**, por exemplo `GameState.entrar_sala(55)`. Nada de 14/15/26..30 fixos: use `GameState.sala_global(14)` na Barra.
+
+### 8.3 Arquivos de cada agente (não editar o dos outros; pedidos em `docs/PENDENCIAS.md`)
+
+| Agente | Arquivos |
+|---|---|
+| **Visitas (Castelinho)** | `castelinho/**`, `world/niveis/castelinho.*`, `assets/textures/**`, `tools/gerar_texturas.py`, `tests/castelinho_test.gd`, `tests/qa_logica_test.gd`, `tests/janela_jogador.gd`, e as funções `entrar_sala`/`preparar_continuar` do `game_state.gd` |
+| **Visor 2.0, UI e conteúdo** | `world/visor.gd`, `autoload/efeitos.gd`, `autoload/guia.gd`, `autoload/audio.gd`, `ui/**`, `world/painel_3d.gd`, `data/**`, `assets/ui/**`, `assets/audio/**`, `tools/gerar_audio.py`, `tools/gerar_mascotes.py`, `tools/gerar_desenhos.py` (novo), `tests/ui_test.gd`, `tests/visor_test.gd` (novo) |
+| **Porão e final** | `world/niveis/porao.*`, `world/niveis/braco_morto.*`, `world/niveis/ato2*`, `world/niveis/barra.*`, `creatures/**`, `shaders/**` (exceto `pos_processamento`, que é do Visor/UI), `tests/ato2_test.gd`, `tests/barra_test.gd`, `tests/porao_test.gd` (novo) |
+| **Integrador** | `scenes/main/**`, `player/**`, `project.godot`, `export_presets.cfg`, `.github/**`, `tools/testar*.{sh,py}`, `docs/*.md` (exceto PENDENCIAS/BUGS) |
+
+### 8.4 Nomes que cruzam fronteiras
+
+- **Painéis por visita:** `Painel3D.new("p05_v2")`. Se a variante não existir no JSON, cai para `"p05"` (o Visor/UI implementa o fallback). Desenhos: `"desenho_1"` … `"desenho_7"` (V2 §5). Cartaz: `"procura_se"`.
+- **Texturas geradas pelo Visor/UI:** `assets/ui/tito/desenho_1.png` … `desenho_7.png`, `procura_se.png` e `marcas_altura.png` (usadas pelo Visitas e pelo Porão).
+- **UI:**
+  - `VolteSempre.mostrar()` (await `.terminou`);
+  - `Dedicatoria.mostrar()` (await `.terminou`);
+  - `Telefone.tocar(linhas)`: a voz chiada da mãe, como caixa "???" com chiado.
+- **Sons novos:**
+  - `"chuva"` e `"goteira"` (loops de ambiente);
+  - `"agua_sobe"`, `"crianca_ei"` (sussurro "ei..." sintetizado, ou só ruído com texto na tela), `"telefone_voz"`;
+  - `"atencao"` (batimento que acelera).
+- **Visor:**
+  - `Visor.instalar(nivel)` continua;
+  - novo: o nível pode registrar **revelações**, nós que só aparecem com um disco específico, com `Epocas.marcar(no, [GameState.Epoca.E1967])`, igual às épocas;
+  - a **Figura no slide** (atenção) é responsabilidade do Visor.

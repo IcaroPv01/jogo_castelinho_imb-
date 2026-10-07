@@ -9,6 +9,8 @@ extends CanvasLayer
 ## API estável:
 ##   Efeitos.pulso(intensidade, dur)   glitch forte momentâneo (susto). 1.0 = forte.
 ##   Efeitos.visor(ativo)              moldura do Visor (plástico vermelho, sépia, legenda, clique)
+##                                     V2: a legenda mostra o ano do disco ("1967", "????" para o sem data) e,
+##                                     com GameState.atencao > 0 (visita 3+), as lentes avermelham e pulsam
 ## Extras:
 ##   Efeitos.flash(dur, cor, forca)    clarão de cor sobre a imagem (não cobre o HUD)
 ##   Efeitos.legenda_visor(texto)      frase didática embaixo do ano ("Em 1950, aqui era só areia!")
@@ -24,6 +26,7 @@ var _alvo_c := 0.0
 var _pulso := 0.0
 var _visor := 0.0
 var _visor_alvo := 0.0
+var _atencao := 0.0              # GameState.atencao suavizada (o que o shader usa)
 var _rect: ColorRect
 var _mat: ShaderMaterial
 var _flash: ColorRect
@@ -69,6 +72,7 @@ func _process(dt: float) -> void:
 	# interpola suavemente (aproximação proporcional com velocidade mínima: chega exato)
 	corrupcao_visual = move_toward(corrupcao_visual, _alvo_c, maxf(absf(_alvo_c - corrupcao_visual) * 3.0, 0.08) * dt)
 	_visor = move_toward(_visor, _visor_alvo, dt * (7.0 if _visor_alvo > _visor else 9.0))
+	_atencao = move_toward(_atencao, GameState.atencao if _visor_alvo > 0.5 else 0.0, dt * 2.5)
 	var ligado := corrupcao_visual > 0.003 or _pulso > 0.002 or _visor > 0.002 or _aquecendo > 0
 	if _aquecendo > 0:
 		_aquecendo -= 1
@@ -78,6 +82,7 @@ func _process(dt: float) -> void:
 		_mat.set_shader_parameter("corrupcao", corrupcao_visual)
 		_mat.set_shader_parameter("pulso", _pulso)
 		_mat.set_shader_parameter("visor", _visor)
+		_mat.set_shader_parameter("atencao", _atencao)
 
 
 ## Liga o pós-processamento por alguns quadros (com a tela de carregamento por cima) para o shader ser compilado

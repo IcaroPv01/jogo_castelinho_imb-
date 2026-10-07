@@ -11,9 +11,20 @@ signal corruption_mudou(valor: float)
 signal epoca_mudou(epoca: int)
 signal flag_mudou(nome: String, valor: Variant)
 signal jogador_morreu(causa: String)
+signal visita_mudou(visita: int)
+signal discos_mudou()
+signal atencao_mudou(valor: float)
 
-enum Epoca { E1950, E1975, E2019, E2020 }
-const NOMES_EPOCA := {Epoca.E1950: "1950", Epoca.E1975: "1975", Epoca.E2019: "2019", Epoca.E2020: "hoje"}
+## Épocas novas vão sempre no FIM do enum (os inteiros 0..3 aparecem em saves e ferramentas de captura).
+enum Epoca { E1950, E1975, E2019, E2020, E1967, ESEMDATA }
+const NOMES_EPOCA := {Epoca.E1950: "1950", Epoca.E1975: "1975", Epoca.E2019: "2019", Epoca.E2020: "hoje",
+	Epoca.E1967: "1967", Epoca.ESEMDATA: "????"}
+
+## Versão 2 (docs/V2_ROTEIRO.md §2): quatro visitas ao mesmo Castelinho e depois o porão.
+## No Castelinho os gatilhos são numerados pela sala BASE (1..22); a sala global = base + DESLOCAMENTO_VISITA.
+const DESLOCAMENTO_VISITA := {1: 0, 2: 22, 3: 44, 4: 66}
+const SALAS_POR_VISITA := 22
+const PRIMEIRA_SALA_PORAO := 81
 
 const TOTAL_SALAS := 100      # jogo completo
 const SALAS_DEMO := 30        # MVP
@@ -30,6 +41,10 @@ var contadores := {"paineis_lidos": 0, "quiz_acertos": 0, "mortes": 0, "sustos":
 var checkpoint_sala: int = 1
 var sensibilidade: float = 1.0
 var jogando: bool = false
+var visita: int = 1                   # 1..4 (5 = porão)
+var discos: Array[int] = []           # épocas dos discos do Visor que o jogador tem (V2 §4.1)
+var disco_atual: int = -1             # época do disco selecionado (-1 = nenhum)
+var atencao: float = 0.0              # 0..1: "do outro lado, algo percebe você" (V2 §4.3); escrito pelo Visor
 
 
 func _ready() -> void:
@@ -44,23 +59,84 @@ func entrar_sala(numero: int) -> void:
 		return
 	sala_atual = numero
 	sala_maxima = max(sala_maxima, numero)
-	if numero % 5 == 1 or numero == 1:
+	if numero in SALAS_CHECKPOINT:
 		checkpoint_sala = max(checkpoint_sala, numero)
 	sala_mudou.emit(numero)
 	_atualizar_corruption()
 	salvar()
 
 
-## Curva de corrupção por sala (só MVP; ajustar quando houver as 100 salas).
-## Salas 1-12 limpas, 13-25 sobem devagar, 26-30 sobem rápido.
+## Checkpoints da V2 (números GLOBAIS de sala; o marcador do nível é "Checkpoint_<n>"). Um no início de cada visita
+## (base 1) e mais dois por visita, em salas base fixas: visitas 1 e 2 = bases 10 (corredor) e 16 (pé da escada);
+## visita 3 = base 10 e base 17 (topo da Torre A, onde o Ato II devolve o jogador; as globais 55 a 60 são do trecho
+## do Ato II e NÃO podem ser checkpoint do Castelinho); visita 4 = bases 8 (Povos) e 13 (Pescador), já comprimidas na
+## numeração 67..80 (ver world/niveis/castelinho.gd, V4_SALAS). Porão: 81 (entrada) e 95 (o quarto do Tito).
+## O trecho do Ato II (55) e a Braço Morto (100) têm checkpoint gravado por quem os dispara.
+const SALAS_CHECKPOINT := [1, 10, 16, 23, 32, 38, 45, 54, 61, 67, 72, 77, 81, 95]
+## Cenas de destino do "Continuar" (o Porão cria os marcadores; se não existirem, o main cai no "Spawn").
+const CENA_CASTELINHO := "res://world/niveis/castelinho.tscn"
+const CENA_ATO2 := "res://world/niveis/ato2.tscn"
+const CENA_PORAO := "res://world/niveis/porao.tscn"
+const CENA_BRACO := "res://world/niveis/braco_morto.tscn"
+## Checkpoint gravado ao abrir a porta do Ato II (visita 3, base 11 = sala 55).
+const CHECKPOINT_ATO2 := 55
+
+
+## Curva de corrupção por sala (V2_ROTEIRO §2): a visita 1 é limpa do começo ao fim (ritmo lento, pedido do Icaro).
 func corruption_por_sala(n: int) -> float:
-	if n <= 12:
+	if n <= 22:
 		return 0.0
-	if n <= 25:
-		return remap(n, 12, 25, 0.0, 0.25)
-	if n <= 30:
-		return remap(n, 25, 30, 0.3, 0.6)
-	return clampf(remap(n, 30, TOTAL_SALAS, 0.6, 1.0), 0.0, 1.0)
+	if n <= 44:
+		return remap(n, 23, 44, 0.10, 0.22)
+	if n <= 66:
+		return remap(n, 45, 66, 0.30, 0.45)
+	if n <= 80:
+		return remap(n, 67, 80, 0.50, 0.65)
+	return clampf(remap(n, 81, TOTAL_SALAS, 0.70, 1.0), 0.0, 1.0)
+
+
+# ---------------------------------------------------------------- visitas (V2)
+## Sala global de um gatilho do Castelinho numerado pela sala base (1..22), na visita atual.
+func sala_global(base: int) -> int:
+	return base + DESLOCAMENTO_VISITA.get(visita, 0)
+
+
+func entrar_sala_base(base: int) -> void:
+	entrar_sala(sala_global(base))
+
+
+func visita_da_sala(n: int) -> int:
+	if n >= PRIMEIRA_SALA_PORAO:
+		return 5
+	return clampi((n - 1) / SALAS_POR_VISITA + 1, 1, 4)
+
+
+func comecar_visita(n: int) -> void:
+	visita = n
+	visita_mudou.emit(visita)
+	salvar()
+
+
+# ---------------------------------------------------------------- discos e atenção do Visor (V2 §4)
+func ganhar_disco(epoca_disco: int) -> void:
+	if epoca_disco not in discos:
+		discos.append(epoca_disco)
+		disco_atual = epoca_disco
+		discos_mudou.emit()
+		salvar()
+
+
+func selecionar_disco(epoca_disco: int) -> void:
+	if epoca_disco in discos and epoca_disco != disco_atual:
+		disco_atual = epoca_disco
+		discos_mudou.emit()
+
+
+func definir_atencao(v: float) -> void:
+	v = clampf(v, 0.0, 1.0)
+	if not is_equal_approx(v, atencao):
+		atencao = v
+		atencao_mudou.emit(atencao)
 
 
 func definir_corruption_manual(v: float) -> void:
@@ -115,6 +191,7 @@ func salvar() -> void:
 	var dados := {
 		"sala_maxima": sala_maxima, "checkpoint_sala": checkpoint_sala, "flags": flags,
 		"selos": selos, "contadores": contadores, "sensibilidade": sensibilidade,
+		"visita": visita, "discos": discos, "disco_atual": disco_atual,
 	}
 	var f := FileAccess.open(ARQUIVO_SAVE, FileAccess.WRITE)
 	if f:
@@ -135,6 +212,9 @@ func carregar() -> void:
 	selos.assign(dados.get("selos", []))
 	contadores.merge(dados.get("contadores", {}), true)
 	sensibilidade = float(dados.get("sensibilidade", 1.0))
+	visita = int(dados.get("visita", 1))
+	discos.assign(dados.get("discos", []).map(func(x): return int(x)))
+	disco_atual = int(dados.get("disco_atual", -1))
 
 
 func tem_save() -> bool:
@@ -148,6 +228,9 @@ func novo_jogo() -> void:
 	flags = {}
 	selos.clear()
 	contadores = {"paineis_lidos": 0, "quiz_acertos": 0, "mortes": 0, "sustos": 0}
+	visita = 1
+	discos.clear()
+	disco_atual = -1
 	salvar()
 
 
@@ -158,6 +241,7 @@ func resetar_sessao() -> void:
 	sala_atual = 0
 	corruption_manual = -1.0
 	epoca = Epoca.E2020
+	atencao = 0.0
 	flags.erase("ui_aberta")
 	if not is_equal_approx(corruption, 0.0):
 		corruption = 0.0
@@ -165,17 +249,29 @@ func resetar_sessao() -> void:
 
 
 ## Prepara o estado para retomar do último checkpoint salvo. Devolve [cena, marcador de chegada].
-## Checkpoint 26 em diante é o Ato II; o 25 é o corredor de 1975 (que só existe em 1975: a época precisa estar
-## certa antes de o nível ser montado, senão o jogador nasceria no vazio).
+## Restaura `visita` (a partir do número do checkpoint) e a época (sempre a de hoje: o Visor só mostra outras
+## épocas enquanto Q está apertado). Mapa dos checkpoints (V2_ROTEIRO §2 e SALAS_CHECKPOINT):
+##   1..22 / 23..44 / 45..66 / 67..80 -> Castelinho, "Checkpoint_<n>" (o nível cria o nome global da visita atual e
+##                                        também o nome da sala base "Checkpoint_<base>")
+##   55 (visita 3)                    -> Ato II, "Checkpoint_55" (trecho 55..60 da visita 3)
+##   81..94 / 95..99                  -> Porão, "Checkpoint_81" / "Checkpoint_95"
+##   100                              -> Braço Morto, "Spawn"
 func preparar_continuar() -> Array:
 	resetar_sessao()
 	var cp := checkpoint_sala
-	if cp >= 26:
-		return ["res://world/niveis/ato2.tscn", "Checkpoint_26"]
-	if cp == 25:
-		epoca = Epoca.E1975
 	flags.erase("saindo_para_barra")
-	return ["res://world/niveis/castelinho.tscn", "Checkpoint_%d" % cp]
+	flags.erase("visor_travado")
+	visita = visita_da_sala(cp)
+	visita_mudou.emit(visita)
+	if cp >= TOTAL_SALAS:
+		return [CENA_BRACO, "Spawn"]
+	if cp >= 95:
+		return [CENA_PORAO, "Checkpoint_95"]
+	if cp >= PRIMEIRA_SALA_PORAO:
+		return [CENA_PORAO, "Checkpoint_81"]
+	if cp == CHECKPOINT_ATO2:
+		return [CENA_ATO2, "Checkpoint_%d" % CHECKPOINT_ATO2]
+	return [CENA_CASTELINHO, "Checkpoint_%d" % cp]
 
 
 # ---------------------------------------------------------------- inputs (definidos em código: evita erro de formato no project.godot)

@@ -104,3 +104,68 @@ Relatório completo em `docs/REVISAO_GRAFICA.md`. Arquivos de outras divisões q
 - **`tests/captura.gd`** (integrador): agora imprime draw calls e triângulos, como `captura_cam.gd`.
 - **Para quem cuida da Barra:** a vista `barra_m70` tem ~69 mil triângulos, provavelmente da água ou dos molhes. Os
   prédios do horizonte (vista de costas) são caixas sem janela.
+
+## Agente Visor/UI (V2)
+
+Arquivos meus (V2 §8.3): `world/visor.gd`, `autoload/{efeitos,guia,audio}.gd`, `ui/**`, `world/painel_3d.gd`, `data/**`, `assets/ui/**`, `assets/audio/**`, `tools/{gerar_audio,gerar_desenhos}.py`, `tests/{ui,visor}_test.gd`, `tests/captura_ui.gd`.
+
+### Andamento (checklist; atualizado a cada etapa)
+
+- [ ] 1. Áudio novo (`tools/gerar_audio.py`): chuva, goteira, agua_sobe, crianca_ei, telefone_voz, atencao
+- [ ] 2. Arte gerada (`tools/gerar_desenhos.py`): desenho_1..7, procura_se, marcas_altura
+- [ ] 3. Painéis: variantes _v2/_v3/_v4 + fallback + revisão de P14/15/16/19/21/23
+- [ ] 4. Visor 2.0 (discos, Q por disco, atenção, Figura no slide, bloqueio de 10 s)
+- [ ] 5. HUD (VISITA n · SALA nn, faixa de discos, olho)
+- [ ] 6. Telas: VolteSempre, Telefone, Dedicatoria
+- [ ] 7. Testes (`tests/visor_test.gd`, `tests/ui_test.gd`) e `bash tools/testar.sh`
+- [ ] 8. Capturas de UI revisadas
+
+### Decisões
+(ver abaixo; preenchido conforme avanço)
+
+## Agente Porão (V2)
+
+> Seção viva: atualizada à medida que avanço. Se eu for interrompido, quem continuar começa pelo "Estado" abaixo.
+
+### Estado (atualizado a cada etapa)
+- [ ] 1. Renumerar `ato2` (salas 55 a 60) e `barra` (sala_global(14)/(15), sandália) + `ato2_test`/`barra_test`
+- [ ] 2. `porao.tscn`/`porao.gd` (masmorra, salas 81 a 99)
+- [ ] 3. Criaturas: `creatures/costela.gd`, voz do Tito, Figura Branca ligada ao Visor
+- [ ] 4. `braco_morto.tscn`/`.gd` (sala 100) e finais
+- [ ] 5. `tests/porao_test.gd`, `bash tools/testar.sh`
+- [ ] 6. Capturas e ajustes visuais
+
+## Agente Visitas (V2)
+
+> Seção viva (atualizada à medida que avanço). Se eu for interrompido, quem continuar começa pelo "Estado".
+> Meus arquivos: `castelinho/**`, `world/niveis/castelinho.*`, `assets/textures/**`, `tools/gerar_texturas.py`,
+> `tests/{castelinho,qa_logica}_test.gd`, `tests/janela_jogador.gd`, `GameState.entrar_sala` e `preparar_continuar`.
+
+### Estado
+- [x] 1. `game_state.gd`: regra de checkpoint (`SALAS_CHECKPOINT`) e `preparar_continuar` (visitas, Ato II, porão, Braço Morto)
+- [x] 2. E1967 (obra) gerada: `castelinho/obra.gd`, Tito e desenhos em `castelinho/tito.gd`
+- [ ] 3. Nível `world/niveis/castelinho.gd` em 4 visitas (iluminação, clima, eventos, painéis, discos, loop)
+- [ ] 4. Testes (`castelinho_test`, `qa_logica_test`, `janela_jogador`) e `bash tools/testar.sh`
+- [ ] 5. Capturas de cada visita e da E1967; LEIAME do Castelinho
+
+### Contratos que o Visitas assume (por favor, confirmem ou avisem)
+- **Checkpoints (números globais):** 1, 10, 16 | 23, 32, 38 | 45, 54, 61 | 67, 72, 77 | porão 81 e 95. O nível cria os marcadores
+  `Checkpoint_<base>` (bases 1, 8, 10, 13, 16, 17) **e** `Checkpoint_<global>` da visita atual (a morte em `main.gd`
+  usa `"Checkpoint_%d" % checkpoint_sala`).
+- **Ato II (para o Porão):** ao abrir a porta da visita 3 (base 11 = sala 55) o Castelinho grava `checkpoint_sala = 55` e vai para
+  `ato2.tscn` "Spawn". O "Continuar" com checkpoint 55 devolve `["res://world/niveis/ato2.tscn", "Checkpoint_55"]`: o `ato2`
+  precisa ter um marcador **`Checkpoint_55`** (pode ser igual ao `Spawn`). A volta é em **`Spawn_volta_ato2`** (topo da Torre A).
+  Ao voltar, o `ato2` deve ligar a flag **`v3_ato2_feito`** (`GameState.set_flag("v3_ato2_feito", true)`): sem ela o
+  Castelinho mantém a escada da visita 3 interditada. O Castelinho também liga essa flag ao receber o jogador em `Spawn_volta_ato2`.
+- **Porão:** marcadores `Checkpoint_81` (entrada, `Spawn` também) e `Checkpoint_95` (quarto do Tito). Braço Morto: `Spawn`.
+  Entrada no porão a partir do Castelinho: `Transicao.ir_para("res://world/niveis/porao.tscn", "Spawn")` (porta do hall na visita 4
+  = sala 80; escada da Sala Medieval só em 2019).
+- **Barra:** o mural leva a `barra.tscn` "Spawn" só na visita 2 (sala 36). A volta é em `Spawn_volta_barra` (sala 37).
+- **Visor/UI:** (a) o Castelinho **não** grava mais `epoca_visor`; quem manda é o disco selecionado. (b) O Castelinho chama
+  `GameState.ganhar_disco(E1950|E1967|E1975|E2019)`. (c) Diploma da visita 2: o Castelinho liga a flag `diploma_nome = "TITO"`
+  antes de `Diploma.mostrar()` (e tenta `set("nome", "TITO")` no nó): peço que `ui/diploma.gd` leia a flag. (d) O Castelinho usa
+  `VolteSempre.mostrar()` e `Telefone.tocar(linhas)` se as classes existirem (procura em `ProjectSettings` as classes globais);
+  senão cai em um fade com Label e em `Guia.falar("???", ...)`. (e) Texturas: usa `assets/ui/tito/{desenho_1..7,procura_se,marcas_altura}.png`
+  quando existirem; senão, placeholders gerados em `castelinho/tito.gd` (mesmo estilo).
+- **Painéis por visita:** o nível pede `pNN_vK` (K = visita); se o id não existe em `data/paineis.json` usa `pNN`. Na visita 4 usa
+  `desenho_N` (N = 3..6 conforme a sala). `quiz_final` só existe nas visitas 1 e 2.
