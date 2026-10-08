@@ -394,37 +394,69 @@ static func _correntes(c: Ctx, lado: float, zc: float) -> void:
 	c.vc.caixa(mv, Vector3(x - 0.02, y - 0.32, zc - r), Vector3(x + 0.02, y - 0.28, zc + r), Malha.F_TODAS, 0.0, ferro)
 
 
-## Sala 90: a 3ª passagem para a direita vira uma cela com a grade aberta e, na parede de dentro, um desenho de giz.
+## Sala 90: o nicho k = 1 de `_arcos` vira uma cela com a grade aberta. Na parede de dentro, 4 desenhos de giz, da esquerda
+## para a direita (1 menino, balde, sol e casa; 2 a figura alta de mãos dadas com ele; 3 a figura enorme, o menino pequeno
+## e a água subindo; 4 só a água com o balde boiando), duas frases, 7 grupos de riscos de contar dias (o último incompleto)
+## e marcas de mãos pequenas e molhadas na lateral. Tudo por sugestão: sem violência, sem sangue, sem corpo.
 static func _cela_giz(c: Ctx) -> void:
 	var zc := -2.4 - 1 * 3.6                       # o arco/nicho k = 1 de `_arcos`
 	var x0 := c.w * 0.5 + T
 	var x1 := x0 + 2.2
 	_grade(c, c.w * 0.5, 1.0, zc, 2.4, 2.4, true)
-	var q := quadro(c, tex_giz(), Vector3(x1, 1.35, zc), Vector3(-1, 0, 0), 1.7, 1.275)
-	q.name = "DesenhoGiz"
-	# o giz brilha de leve (sem luz nova): o nicho é escuro e o desenho precisa ser lido
-	var mq := q.material_override as StandardMaterial3D
-	mq.emission_enabled = true
-	mq.emission_texture = mq.albedo_texture
-	mq.emission_energy_multiplier = 0.55
-	var l := rotulo(c, "ELA DISSE QUE O LAGO É LÁ EMBAIXO", Vector3(x1 - 0.04, 0.62, zc), -90.0, 30, Color(0.93, 0.93, 0.88), 0.0032)
-	l.name = "TextoGiz"
 	var todas := [GameState.Epoca.E1950, GameState.Epoca.E1975, GameState.Epoca.E2019, GameState.Epoca.E2020, GameState.Epoca.E1967, GameState.Epoca.ESEMDATA]
-	c.pistas.append({"id": "giz_cela", "no": q, "epocas": todas})
+	for n in 4:
+		var zq := zc - 1.2 + n * 0.8                # +z é a direita de quem olha para a parede do fundo (+x)
+		var q := quadro(c, tex_giz(n + 1), Vector3(x1, 1.55, zq), Vector3(-1, 0, 0), 0.74, 0.555)
+		q.name = "DesenhoGiz_%d" % (n + 1)
+		# o giz brilha de leve (sem luz nova): o nicho é escuro e o desenho precisa ser lido
+		var mq := q.material_override as StandardMaterial3D
+		mq.emission_enabled = true
+		mq.emission_texture = mq.albedo_texture
+		mq.emission_energy_multiplier = 0.55
+		if n == 1:
+			c.pistas.append({"id": "giz_cela", "no": q, "epocas": todas})
+	var giz := Color(0.93, 0.93, 0.88)
+	var l1 := rotulo(c, "ELA DISSE\nQUE O LAGO É\nLÁ EMBAIXO", Vector3(x1 - 0.04, 1.08, zc - 0.4), -90.0, 24, giz, 0.0028)
+	l1.name = "TextoGiz_2"
+	var l2 := rotulo(c, "QUERO IR\nPRA CASA", Vector3(x1 - 0.04, 1.08, zc + 0.4), -90.0, 24, giz, 0.0028)
+	l2.name = "TextoGiz_3"
+	# 7 grupos de riscos (4 verticais e 1 cortando), a ~0,8 m do chão; o último grupo incompleto (3 riscos)
+	var mv := mat_vc()
+	var z := zc - 1.0
+	for g in 7:
+		var riscos := 4 if g < 6 else 3
+		for k in riscos:
+			var zr := z + k * 0.05
+			c.vc.caixa(mv, Vector3(x1 - 0.012, 0.66, zr - 0.007), Vector3(x1 - 0.002, 0.94, zr + 0.007), Malha.F_TODAS, 0.0, giz)
+		if g < 6:
+			c.vc.caixa(mv, Vector3(x1 - 0.012, 0.76, z - 0.03), Vector3(x1 - 0.002, 0.8, z + 0.18), Malha.F_TODAS, 0.0, giz)
+		z += 0.29
+	# marcas de mãos pequenas e molhadas, por dentro da grade aberta, na altura de criança (lateral esquerda do nicho)
+	var molhado := Color(0.02, 0.05, 0.08)
+	var zl := zc - 1.6
+	for h in [[x0 + 0.5, 0.72], [x0 + 0.95, 0.9], [x0 + 1.4, 0.68], [x0 + 1.85, 0.84]]:
+		var hx: float = h[0]
+		var hy: float = h[1]
+		c.vc.caixa(mv, Vector3(hx - 0.035, hy - 0.04, zl), Vector3(hx + 0.035, hy + 0.04, zl + 0.012), Malha.F_TODAS, 0.0, molhado)
+		for f in 4:
+			c.vc.caixa(mv, Vector3(hx - 0.034 + f * 0.0185, hy + 0.04, zl), Vector3(hx - 0.021 + f * 0.0185, hy + 0.1 + (0.01 if f == 1 or f == 2 else 0.0), zl + 0.012), Malha.F_TODAS, 0.0, molhado)
+		c.vc.caixa(mv, Vector3(hx + 0.035, hy - 0.03, zl), Vector3(hx + 0.07, hy, zl + 0.012), Malha.F_TODAS, 0.0, molhado)
+		# escorrido (marca molhada)
+		c.vc.caixa(mv, Vector3(hx - 0.01, hy - 0.2, zl), Vector3(hx + 0.01, hy - 0.04, zl + 0.008), Malha.F_TODAS, 0.0, molhado)
 
 
-## Giz de criança num muro escuro: uma figura alta e branca, de braços compridos, de mãos dadas com um menino pequeno
-## de balde vermelho, indo para uma água azul. Sem violência.
-static func tex_giz() -> Texture2D:
-	if _cache.has("giz"):
-		return _cache["giz"]
-	const W := 136
-	const H := 102
+## Giz de criança num muro escuro (n = 1..4, ver `_cela_giz`).
+static func tex_giz(n: int) -> Texture2D:
+	var chave := "giz_%d" % n
+	if _cache.has(chave):
+		return _cache[chave]
+	const W := 96
+	const H := 72
 	var img := Image.create(W, H, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0.17, 0.18, 0.2))
 	var rng := RandomNumberGenerator.new()
-	rng.seed = 9090
-	for i in 160:
+	rng.seed = 9090 + n
+	for i in 90:
 		img.set_pixel(rng.randi_range(0, W - 1), rng.randi_range(0, H - 1), Color(0.22, 0.23, 0.25))
 	var linha := func(a: Vector2, b: Vector2, cor: Color) -> void:
 		var passos := int(maxf(absf(b.x - a.x), absf(b.y - a.y))) + 1
@@ -436,37 +468,70 @@ static func tex_giz() -> Texture2D:
 					var y := int(p.y) + dy
 					if x >= 0 and y >= 0 and x < W and y < H:
 						img.set_pixel(x, y, cor)
+	var circulo := func(c0: Vector2, r: float, cor: Color) -> void:
+		for a in 28:
+			var ang := a * TAU / 28.0
+			var x := int(c0.x + cos(ang) * r)
+			var y := int(c0.y + sin(ang) * r)
+			if x >= 0 and y >= 0 and x < W and y < H:
+				img.set_pixel(x, y, cor)
 	var branco := Color(0.93, 0.93, 0.88)
 	var azul := Color(0.3, 0.55, 0.95)
 	var verm := Color(0.9, 0.18, 0.12)
 	var amar := Color(0.95, 0.85, 0.3)
-	# água azul à direita (ondas)
-	for k in 6:
-		var y := 56 + k * 7
-		for x in range(86, W - 6, 2):
-			linha.call(Vector2(x, y + (2 if (x / 2) % 2 == 0 else 0)), Vector2(x + 2, y + (0 if (x / 2) % 2 == 0 else 2)), azul)
-	# a figura alta: cabeça, corpo longo, braços compridos (um para o menino, outro caído), pernas
-	for a in 24:      # cabeça (círculo)
-		var ang := a * TAU / 24.0
-		img.set_pixel(int(30 + cos(ang) * 6), int(14 + sin(ang) * 7), branco)
-	linha.call(Vector2(30, 21), Vector2(30, 62), branco)                    # corpo
-	linha.call(Vector2(30, 28), Vector2(8, 58), branco)                     # braço longo caído
-	linha.call(Vector2(30, 28), Vector2(62, 54), branco)                    # braço longo para o menino
-	linha.call(Vector2(30, 62), Vector2(22, 94), branco)
-	linha.call(Vector2(30, 62), Vector2(38, 94), branco)
-	# o menino pequeno: cabeça, corpo, pernas, balde vermelho na mão
-	for a in 18:
-		var ang := a * TAU / 18.0
-		img.set_pixel(int(66 + cos(ang) * 4), int(55 + sin(ang) * 4), amar)
-	linha.call(Vector2(66, 60), Vector2(66, 78), amar)
-	linha.call(Vector2(66, 64), Vector2(62, 54), amar)                      # a mão dada
-	linha.call(Vector2(66, 64), Vector2(76, 70), amar)
-	linha.call(Vector2(66, 78), Vector2(62, 92), amar)
-	linha.call(Vector2(66, 78), Vector2(72, 92), amar)
-	for yy in range(70, 78):
-		linha.call(Vector2(76, yy), Vector2(83, yy), verm)                  # o balde
+	var ondas := func(y0: int, x0: int, x1: int, passo: int) -> void:
+		var y := y0
+		while y < H - 2:
+			for x in range(x0, x1, 2):
+				var par: bool = (x / 2) % 2 == 0
+				linha.call(Vector2(x, y + (1 if par else 0)), Vector2(x + 2, y + (0 if par else 1)), azul)
+			y += passo
+	var menino := func(x: float, base: float, escala: float) -> void:     # menino (amarelo) de pé em y = base
+		circulo.call(Vector2(x, base - 20 * escala), 3.5 * escala, amar)
+		linha.call(Vector2(x, base - 16 * escala), Vector2(x, base - 7 * escala), amar)
+		linha.call(Vector2(x, base - 7 * escala), Vector2(x - 3 * escala, base), amar)
+		linha.call(Vector2(x, base - 7 * escala), Vector2(x + 3 * escala, base), amar)
+		linha.call(Vector2(x, base - 14 * escala), Vector2(x - 5 * escala, base - 8 * escala), amar)
+	var balde := func(x: float, y: float, escala: float) -> void:
+		for yy in range(int(y), int(y + 5 * escala)):
+			linha.call(Vector2(x, yy), Vector2(x + 6 * escala, yy), verm)
+	match n:
+		1:      # o menino de balde vermelho, o sol e a casa
+			circulo.call(Vector2(78, 14), 6.0, amar)
+			for k in 8:
+				var ang := k * TAU / 8.0
+				linha.call(Vector2(78 + cos(ang) * 8, 14 + sin(ang) * 8), Vector2(78 + cos(ang) * 12, 14 + sin(ang) * 12), amar)
+			linha.call(Vector2(8, 66), Vector2(88, 66), branco)
+			linha.call(Vector2(10, 66), Vector2(10, 44), branco)
+			linha.call(Vector2(10, 44), Vector2(34, 44), branco)
+			linha.call(Vector2(34, 44), Vector2(34, 66), branco)
+			linha.call(Vector2(8, 44), Vector2(22, 32), branco)
+			linha.call(Vector2(22, 32), Vector2(36, 44), branco)
+			linha.call(Vector2(20, 66), Vector2(20, 54), branco)
+			menino.call(54.0, 66.0, 1.0)
+			balde.call(60.0, 56.0, 1.0)
+		2:      # a figura alta, branca, ao lado dele, de mãos dadas
+			linha.call(Vector2(6, 67), Vector2(90, 67), branco)
+			circulo.call(Vector2(34, 10), 5.0, branco)
+			linha.call(Vector2(34, 15), Vector2(34, 46), branco)
+			linha.call(Vector2(34, 22), Vector2(12, 50), branco)
+			linha.call(Vector2(34, 22), Vector2(56, 52), branco)
+			linha.call(Vector2(34, 46), Vector2(28, 67), branco)
+			linha.call(Vector2(34, 46), Vector2(40, 67), branco)
+			menino.call(60.0, 67.0, 1.0)
+			balde.call(66.0, 58.0, 1.0)
+		3:      # a figura enorme, o menino pequeno e a água azul subindo; sem sol
+			ondas.call(34, 4, W - 4, 6)
+			circulo.call(Vector2(30, 9), 6.0, branco)
+			linha.call(Vector2(30, 15), Vector2(30, 52), branco)
+			linha.call(Vector2(30, 20), Vector2(4, 56), branco)
+			linha.call(Vector2(30, 20), Vector2(70, 50), branco)
+			menino.call(74.0, 62.0, 0.6)
+		_:      # só a água azul com o balde vermelho boiando
+			ondas.call(18, 4, W - 4, 6)
+			balde.call(44.0, 15.0, 1.4)
 	var t := ImageTexture.create_from_image(img)
-	_cache["giz"] = t
+	_cache[chave] = t
 	return t
 
 

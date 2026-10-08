@@ -38,6 +38,7 @@ func _rodar() -> void:
 	await _teste_figura_pelo_visor()
 	await _teste_ajustes_revisao()
 	await _teste_masmorra()
+	await _teste_sustos()
 	await _teste_morte_e_checkpoint()
 	await _teste_quarto_e_disco()
 	await _teste_slides()
@@ -408,7 +409,12 @@ func _teste_masmorra() -> void:
 		if p["id"] == "giz_cela":
 			achou = GS.Epoca.E2020 in p["epocas"] and GS.Epoca.ESEMDATA in p["epocas"]
 	_checar(achou, "sala 90: pista giz_cela visível em todas as épocas")
-	_checar(c.raiz.get_node_or_null("DesenhoGiz") != null and c.raiz.get_node_or_null("TextoGiz") != null, "sala 90: o desenho de giz e a frase")
+	var n_giz := 0
+	for k in 4:
+		n_giz += 1 if c.raiz.get_node_or_null("DesenhoGiz_%d" % (k + 1)) != null else 0
+	_checar(n_giz == 4, "sala 90: a cela tem os 4 desenhos de giz (%d)" % n_giz)
+	_checar(c.raiz.get_node_or_null("TextoGiz_2") != null and c.raiz.get_node_or_null("TextoGiz_3") != null, "sala 90: as duas frases sob os desenhos 2 e 3")
+	_checar((c.raiz.get_node("TextoGiz_2") as Label3D).text.replace("\n", " ") == "ELA DISSE QUE O LAGO É LÁ EMBAIXO", "frase do desenho 2")
 	var antes: int = GS.contadores.get("pistas_tito", 0)
 	var zc := -2.4 - 3.6
 	player.global_position = c.raiz.to_global(Vector3(0.5, 0.05, zc))
@@ -426,6 +432,114 @@ func _teste_masmorra() -> void:
 		_checar(g != null, "sala %d: geometria montada com as celas" % (81 + i))
 	nivel.ir_para_sala(1)
 	await _frames(3)
+
+
+func _zerar_sustos() -> void:
+	for k in GS.flags.keys():
+		if str(k).begins_with("susto_"):
+			GS.flags.erase(k)
+
+
+func _contar_visuais() -> int:
+	return nivel.get_children().filter(func(n): return (n.has_method("esconder") and n != nivel.figura) or n.name == "SilhuetaSusto").size()
+
+
+func _teste_sustos() -> void:
+	print("-- sustos que não matam (Susto) e os 5 sustos do porão")
+	var Su = load("res://creatures/susto.gd")
+	nivel.ameacas_ligadas = true
+	nivel.ir_para_sala(1)
+	await _frames(3)
+	_zerar_sustos()
+	var mortes0: int = GS.contadores.get("mortes", 0)
+	# o helper não roda com morrendo / afogando / saindo
+	for p in ["morrendo", "afogando", "_saindo"]:
+		nivel.set(p, true)
+		_checar(not Su.disparar(nivel, "t_" + p) and not GS.flag("susto_t_" + p), "helper ignorado com %s" % p)
+		nivel.set(p, false)
+	# não mata (Figura colada na câmera) e some sozinho; uma vez só
+	var fig0: int = get_nodes_figura()
+	_checar(Su.disparar(nivel, "t_ok", {"frente": 0.3, "duracao": 0.5}), "helper dispara")
+	await _frames(4)
+	_checar(_contar_visuais() == 1 and get_nodes_figura() == fig0, "a Figura do susto é só visual (fora do grupo figura_branca)")
+	_checar(not Su.disparar(nivel, "t_ok"), "cada susto só acontece uma vez")
+	await _frames(120)
+	_checar(_contar_visuais() == 0, "o susto some sozinho")
+	_checar(GS.contadores.get("mortes", 0) == mortes0 and not nivel.morrendo, "o susto não mata")
+	# J1 (85): no meio da sala
+	nivel.ir_para_sala(4)
+	await _frames(3)
+	var c4 = nivel.salas[4]
+	player.global_position = c4.raiz.to_global(Vector3(0, 0.05, -c4.L * 0.6))
+	await _frames(3)
+	_checar(GS.flag("susto_porao_j1"), "J1: sala 85, vulto de criança")
+	await _frames(150)
+	_checar(_contar_visuais() == 0, "J1: o vulto some")
+	for k in 3:
+		player.global_position = c4.raiz.to_global(Vector3(0, 0.05, -c4.L * 0.6))
+		await _frames(3)
+	_checar(_contar_visuais() == 0, "J1: não repete")
+	# J2 (86): a água sobe
+	nivel.ir_para_sala(5)
+	await _frames(40)
+	var c5 = nivel.salas[5]
+	player.global_position = c5.raiz.to_global(Vector3(0, 0.05, -4.0))
+	await _frames(5)
+	_checar(GS.flag("susto_porao_j2"), "J2: sala 86, a Figura sobe da água")
+	await _frames(150)
+	# J3 (88): depois do telefone, ao virar para trás
+	nivel.ir_para_sala(7)
+	await _frames(3)
+	var c7 = nivel.salas[7]
+	player.global_position = c7.raiz.to_global(Vector3(0, 0.05, -3.0))
+	player.rotation.y = c7.raiz.global_rotation.y
+	nivel._j3_estado = 1
+	nivel._j3_t = 0.0
+	await _frames(60)
+	_checar(not GS.flag("susto_porao_j3") and nivel._j3_estado == 2, "J3: 2 s de silêncio e depois espera a câmera virar")
+	player.rotation.y = c7.raiz.global_rotation.y + PI
+	await _frames(4)
+	_checar(GS.flag("susto_porao_j3"), "J3: ao virar para a entrada a Figura aparece")
+	_checar(GS.contadores.get("mortes", 0) == mortes0, "J3: sem morte")
+	await _frames(150)
+	player.rotation.y = 0.0
+	# J4 (91): descida da escada
+	nivel.ir_para_sala(10)
+	await _frames(3)
+	var c10 = nivel.salas[10]
+	player.global_position = c10.raiz.to_global(Vector3(0, c10.piso_fn.call(-6.0) + 0.05, -6.0))
+	await _frames(3)
+	_checar(GS.flag("susto_porao_j4"), "J4: sala 91, apagão e a Figura nos degraus")
+	await _frames(250)
+	# J5 (99) antes da fala F; nada nas salas 95 a 98
+	for i in [14, 15, 16, 17]:
+		nivel.ir_para_sala(i)
+		await _frames(5)
+	var extras := []
+	for k in GS.flags.keys():
+		if str(k).begins_with("susto_") and not str(k).begins_with("susto_t_") and not str(k).begins_with("susto_porao_j"):
+			extras.append(k)
+	_checar(extras.is_empty(), "salas 95 a 98 sem susto")
+	GS.flags.erase("porao_fala_f")
+	nivel.ir_para_sala(18)
+	await _frames(5)
+	var c18 = nivel.salas[18]
+	player.global_position = c18.raiz.to_global(Vector3(0, c18.piso_fn.call(-c18.L + 6.0) + 0.05, -c18.L + 6.0))
+	await _frames(3)
+	_checar(GS.flag("susto_porao_j5") and GS.flag("porao_fala_f"), "J5: sala 99, a Figura cai do escuro antes da fala F")
+	await _frames(250)
+	_checar(GS.contadores.get("mortes", 0) == mortes0, "nenhum susto matou")
+	nivel.ameacas_ligadas = false
+	nivel.ir_para_sala(1)
+	await _frames(3)
+
+
+func get_nodes_figura() -> int:
+	return get_nodes_in_group_count("figura_branca")
+
+
+func get_nodes_in_group_count(g: String) -> int:
+	return root.get_tree().get_nodes_in_group(g).size()
 
 
 func _teste_ajustes_revisao() -> void:

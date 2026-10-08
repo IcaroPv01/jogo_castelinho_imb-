@@ -542,7 +542,7 @@ func _susto_telefone(c, dt: float) -> void:
 	var olhar := -player.camera.global_transform.basis.z
 	if olhar.dot(para_entrada) > 0.5:
 		_j3_estado = 0
-		Susto.disparar(self, "porao_j3", {"angulo": 180.0, "frente": 1.0, "duracao": 0.7, "volume_db": 3.0})
+		Susto.disparar(self, "porao_j3", {"angulo": 0.0, "frente": 1.0, "duracao": 0.7, "volume_db": 3.0})
 	elif _j3_t >= 8.0:
 		_j3_estado = 0
 		Susto.disparar(self, "porao_j3", {"angulo": 75.0, "frente": 2.0, "duracao": 0.7, "volume_db": 3.0})
