@@ -151,6 +151,8 @@ func _rodar() -> void:
 		for i in 10:
 			await physics_frame
 		_checar(GameState.sala_atual == s[0], "sala %d: contador (sala %d)" % [s[0], GameState.sala_atual])
+		if s[0] == 10:
+			await _passaporte_na_sala10(nivel, s[1])
 	_checar(GameState.flag("tem_visor"), "visor entregue (sala 10)")
 	_checar(GameState.discos == [GameState.Epoca.E1950] and GameState.disco_atual == GameState.Epoca.E1950, "visita 1: o disco 1950 veio com o Visor (discos %s)" % str(GameState.discos))
 	_checar(GameState.checkpoint_sala == 16, "checkpoint da visita 1 em 16 (pé da escada), não 21/22 (%d)" % GameState.checkpoint_sala)
@@ -296,6 +298,14 @@ func _visitas() -> void:
 	_checar(nivel.find_child("Folha_desenho_1", true, false) != null, "V1: o desenho do Tito (semente 2) no Salão de Arte")
 	_checar(nivel.find_child("MarcasDeAltura", true, false) != null, "V1: marcas de altura existem (só aparecem em 1975)")
 	_checar(nivel._discos_chao.is_empty(), "V1: nenhum disco no chão")
+	# Passaporte: "Continuar" com 1 achado recria só os 2 que faltam; com o disco 1950 (save antigo) não há caça
+	_checar(nivel._passaporte_itens.size() == 3, "V1: Passaporte com 3 objetos num jogo novo")
+	await _carregar_visita(1, {"passaporte_pedra": true}, false)
+	_checar(nivel._passaporte_itens.size() == 2 and not nivel._passaporte_itens.has("pedra") and GameState.passaporte_achados() == 1, "V1: Continuar não recria nem duplica o objeto já achado")
+	GameState.ganhar_disco(GameState.Epoca.E1950)
+	await _carregar_visita(1, {}, false)
+	_checar(nivel._passaporte_itens.is_empty(), "V1: com o disco 1950 (save antigo) a caça não aparece")
+	await _carregar_visita(1)
 	_checar(nivel.find_child("FitaZebrada", true, false) == null and nivel.chuva == null and nivel._bloqueio_escada == null, "V1: sem fita, chuva nem escada interditada")
 	_checar(nivel._paineis.has("quiz_final") and not nivel._paineis.has("p24"), "V1: quiz final presente")
 	_checar(not GameState.flag("tem_lanterna"), "V1: sem lanterna")
@@ -460,6 +470,46 @@ func _visitas() -> void:
 	GameState.sala_maxima = 79
 	var cena_porao := ResourceLoader.exists(GameState.CENA_PORAO)
 	_checar(cena_porao or true, "V4: porao.tscn existe (%s)" % str(cena_porao))
+
+	# A) a porta zebrada do hall NÃO desce (nem em 2020 nem em 2019); só a escada de 2019 desce
+	GameState.sala_maxima = 80
+	GameState.trocar_epoca(GameState.Epoca.E2020)
+	nivel._usar_porta_porao(p)
+	await _frames_f(10)
+	_checar(not nivel._saindo_porao and main.mundo.get_child(0) == nivel and GameState.visita == 4, "V4: porta do hall em 2020 não desce")
+	_guia().cancelar()
+	await _frames_f(3)
+	nivel._porta_falando = false
+	GameState.trocar_epoca(GameState.Epoca.E2019)
+	nivel._usar_porta_porao(p)
+	await _frames_f(10)
+	_checar(not nivel._saindo_porao and GameState.visita == 4, "V4: porta do hall em 2019 também não desce")
+	_guia().cancelar()
+	await _frames_f(3)
+	nivel._porta_falando = false
+	GameState.trocar_epoca(GameState.Epoca.E2020)
+	# C) o Visor estourando na visita 4 cria a Figura perseguidora, que some depois do tempo
+	var vis: Node = nivel.get_node_or_null("Visor")
+	_checar(vis != null and vis.figura_atravessou.is_connected(nivel._on_figura_atravessou), "V4: o castelinho escuta figura_atravessou")
+	if vis:
+		nivel.persegue_s = 0.5
+		vis.figura_atravessou.emit(4)
+		await _frames_f(3)
+		var fg: Node = nivel.get_node_or_null("FiguraPerseguidora")
+		_checar(fg != null and fg.visible and fg.ativa, "V4: figura_atravessou cria a perseguidora ativa")
+		_checar(fg != null and fg.global_position.distance_to(p.global_position) > 4.0, "V4: ela nasce longe (dá para fugir)")
+		await create_timer(1.0).timeout
+		_checar(fg != null and not fg.visible and not fg.ativa, "V4: a perseguidora some depois do tempo")
+	# a escada de 2019 é a única descida
+	nivel._usar_escada_2019(p)
+	await _frames_f(3)
+	_checar(nivel._saindo_porao or not ResourceLoader.exists(GameState.CENA_PORAO), "V4: a escada de 2019 desce para o porão")
+	_guia().cancelar()
+	for i in 600:          # espera a transição para o porão terminar antes de seguir
+		await _frames_f(1)
+		if main.mundo.get_child_count() > 0 and main.mundo.get_child(0) != nivel and not main._carregando and not root.get_node("/root/Transicao").ocupado:
+			break
+	_checar(main.mundo.get_child(0) != nivel and GameState.visita == 5, "V4: a escada levou ao porão (visita %d)" % GameState.visita)
 
 	# --- orçamento de draw calls (estimativa) em cada visita, no ponto de vista do Spawn e dentro do prédio
 	for v in [1, 2, 3, 4]:
@@ -637,6 +687,41 @@ func _fim_da_visita_2() -> void:
 	_checar(GameState.flag("evt_v2_apagao"), "V2: apagão marcado como feito")
 	await _frames_f(10)
 
+
+
+## Passaporte do Museu (visita 1): sem os 3 objetos a sala 10 não dá o disco; com eles, dá; as flags guardam o progresso.
+func _passaporte_na_sala10(nivel: Node3D, pos10: Vector3) -> void:
+	_checar(nivel._passaporte_itens.size() == 3 and GameState.passaporte_achados() == 0, "Passaporte: 3 objetos escondidos, nenhum achado")
+	for id in ["pedra", "foto", "chave"]:
+		_checar(nivel.find_child("InterPassaporte_" + id, true, false) != null, "Passaporte: objeto '%s' existe" % id)
+	_checar(not GameState.discos.has(GameState.Epoca.E1950) and not GameState.flag("tem_visor"), "Passaporte: com 0 objetos a sala 10 não dá o disco")
+	nivel._coletar_passaporte("pedra")
+	nivel._coletar_passaporte("pedra")      # duas vezes: não duplica
+	nivel._coletar_passaporte("foto")
+	await physics_frame
+	_checar(GameState.passaporte_achados() == 2 and GameState.flag("passaporte_pedra") and GameState.flag("passaporte_foto"), "Passaporte: 2 achados, flags salvas (%d)" % GameState.passaporte_achados())
+	_checar(main.hud.lbl_passaporte.visible and main.hud.lbl_passaporte.text == "Passaporte 2/3", "Passaporte: contador no HUD (%s)" % main.hud.lbl_passaporte.text)
+	await _ir_para(Vector3(-20.5, 0.1, -17.2))
+	await _ir_para(pos10)
+	for i in 10:
+		await physics_frame
+	_checar(not GameState.discos.has(GameState.Epoca.E1950), "Passaporte: com 2 objetos a sala 10 não dá o disco")
+	_checar(nivel._passaporte_falando, "Passaporte: o Bentinho avisou que falta 1 (fala em curso)")
+	root.get_node("Guia").cancelar()
+	for i in 10:
+		await physics_frame
+	# "Continuar": o nível recarregado não recria os achados nem duplica
+	nivel._coletar_passaporte("chave")
+	await physics_frame
+	_checar(GameState.passaporte_achados() == 3 and nivel._passaporte_itens.is_empty(), "Passaporte: 3 achados, nada sobrando no nível")
+	_checar(not main.hud.lbl_passaporte.visible, "Passaporte: contador some ao completar")
+	root.get_node("Guia").cancelar()
+	await _ir_para(Vector3(-20.5, 0.1, -17.2))
+	await _ir_para(pos10)
+	for i in 10:
+		await physics_frame
+	_checar(GameState.discos.has(GameState.Epoca.E1950) and GameState.flag("tem_visor"), "Passaporte: com 3 objetos a sala 10 entrega o disco 1950")
+	root.get_node("Guia").cancelar()
 
 func _ir_para(pos: Vector3) -> void:
 	p.global_position = pos

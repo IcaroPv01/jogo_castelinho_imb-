@@ -13,7 +13,7 @@ Decisões do Icaro (07/10/2026):
 |---|---|---|---|---|
 | 0 | Fundação | `CLAUDE.md`, este mapa, instalador do Godot | `CLAUDE.md`, `docs/MODULOS.md`, `tools/instalar_godot.sh` | feito |
 | 1 | QA e bugs | Varredura das 100 salas, corrigir o que o Icaro e os testes acharem | `tests/`, `docs/BUGS.md` (correções pontuais em qualquer arquivo) | varredura automática feita (B15–B24); reabre quando o Icaro jogar |
-| 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | na fila |
+| 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | parte 1 feita (bugs, escada 2019, Figura na V4, caça do disco 1950); caça dos discos 1967–sem data espera o Icaro jogar a do 1950 |
 | 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | na fila |
 | 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | na fila |
 | 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | na fila |
@@ -44,6 +44,26 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 2: Visor do Tempo, parte 1 (08/10/2026)
+
+- Revisão independente do Visor (Sonnet). Corrigido (PR #9): `visor_travado` prendia o jogador ao trocar de disco no
+  corredor de 1975/dunas (agora volta à época de antes, ou à que o nível impôs com o Q apertado); `selecionar_disco`
+  salva; `Efeitos.aviso(texto)` novo ("Você ainda não tem esse disco."); dica de teclas na faixa de discos.
+- **Decisões do Icaro:** (A) visita 4 desce ao porão **só** pela escada da Sala Medieval em 2019 (a porta zebrada do
+  hall só fala); (B) cada disco tem uma pista obrigatória; (C) na visita 4 a Figura **persegue** (12 s) quando o olho
+  enche; e **cada disco se ganha com uma "caça ao objeto"** usando o disco anterior.
+- Feito: A, C e a caça do **1950** ("Passaporte do Museu", salas 1–10: pedra, foto, chave; fatos de
+  `docs/pesquisa/castelinho.md`; flags `passaporte_<id>`, contador no HUD; a sala 10 só entrega o disco com os 3).
+- **Plano aprovado para os próximos discos** (fazer depois que o Icaro jogar a do 1950 e aprovar o formato):
+  1967 = achar 3 coisas que só existem em 1950 (V2, leva à vitrine do Acervo); 1975 = marcas do Tito em 1967, com o
+  buraco no muro virando passagem até a Torre (V3); 2019 = marcas de altura em 1975 apontando o painel solto (V4);
+  sem data = desenhos do Tito em 2019 (porão). Tom: alegre na V1, sinistro no porão.
+- **Para o módulo 3 (Visitas 1 a 4):** `castelinho.gd` ganhou o bloco "Passaporte do Museu", `_on_figura_atravessou`
+  (perseguição V4) e `_exit_tree`; a porta zebrada do hall não desce mais; as falas das salas 21 e 80 da V4 mudaram.
+  Mudar a posição dos discos/objetos mexe com as caças: combine com o módulo 2.
+- Pendente: controles de celular (o Visor só funciona com teclado e mouse); esvaziamento da atenção (9 s) permite
+  "espiar em rajadas" na V4/porão, o Icaro decide ao jogar.
 
 ### Módulo 1: QA e bugs, varredura automática (08/10/2026)
 

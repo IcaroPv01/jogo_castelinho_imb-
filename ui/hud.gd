@@ -10,6 +10,7 @@ var lbl_aviso: Label
 var mira: Label
 var barra_stamina: ProgressBar
 var lbl_pausa: Label
+var lbl_passaporte: Label
 var faixa_discos: FaixaDiscos
 var olho: OlhoAtencao
 var _t_glitch := 0.0
@@ -25,6 +26,17 @@ func _ready() -> void:
 	lbl_sala.add_theme_color_override("font_outline_color", Flash.NAVY)
 	lbl_sala.add_theme_constant_override("outline_size", 10)
 	add_child(lbl_sala)
+
+	lbl_passaporte = Label.new()
+	lbl_passaporte.name = "Passaporte"
+	lbl_passaporte.position = Vector2(26, 66)
+	lbl_passaporte.add_theme_font_override("font", Flash.fonte_texto())
+	lbl_passaporte.add_theme_font_size_override("font_size", 22)
+	lbl_passaporte.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4))
+	lbl_passaporte.add_theme_color_override("font_outline_color", Flash.NAVY)
+	lbl_passaporte.add_theme_constant_override("outline_size", 7)
+	lbl_passaporte.visible = false
+	add_child(lbl_passaporte)
 
 	mira = Label.new()
 	mira.text = "·"
@@ -114,6 +126,7 @@ func _on_sala(n: int) -> void:
 ## Corrupção alta: de vez em quando o contador de salas mostra um número errado por um instante
 ## (a interface "mente sobre o progresso", PLANO §7.4).
 func _process(dt: float) -> void:
+	_atualizar_passaporte()
 	if GameState.sala_atual <= 0 or not visible:
 		return
 	if _t_glitch > 0.0:
@@ -125,6 +138,16 @@ func _process(dt: float) -> void:
 	if c > 0.35 and randf() < dt * remap(c, 0.35, 1.0, 0.03, 0.4):
 		_t_glitch = randf_range(0.08, 0.25)
 		lbl_sala.text = texto_sala(randi_range(1, 99))
+
+
+## "Passaporte 1/3": só na visita 1, depois do convite do Bentinho, até completar (ou ter o disco 1950).
+func _atualizar_passaporte() -> void:
+	var n := GameState.passaporte_achados()
+	var ativo: bool = GameState.visita == 1 and GameState.flag("passaporte_lancado") \
+		and not GameState.discos.has(GameState.Epoca.E1950) and n < GameState.PASSAPORTE_IDS.size()
+	lbl_passaporte.visible = ativo
+	if ativo:
+		lbl_passaporte.text = "Passaporte %d/%d" % [n, GameState.PASSAPORTE_IDS.size()]
 
 
 func mostrar_pausa(v: bool) -> void:
