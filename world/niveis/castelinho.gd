@@ -159,6 +159,11 @@ var _saindo_barra := false
 var _saindo_visita := false
 var _saindo_ato2 := false
 var _saindo_porao := false
+var _porta_falando := false
+var _figura_v4: FiguraBranca          # perseguidora criada sob demanda quando o Visor estoura (visita 4)
+var _visor_v4: Visor
+var _persegue_id := 0                 # invalida o temporizador de uma perseguição anterior
+var persegue_s := 12.0           # s que a Figura persegue na visita 4 (o Visor fica bloqueado por 10 s)
 var _painel_solto: Node3D
 var _lampada_fase := 0.0
 var _t_relampago := 6.0               # visita 4: segundos até o próximo relâmpago
@@ -193,7 +198,10 @@ func _ready() -> void:
 func iniciar(p: Player) -> void:
 	player = p
 	GameState.flags.erase("saindo_para_barra")      # saves antigos podem ter a flag presa
-	Visor.instalar(self)
+	var visor := Visor.instalar(self)
+	if visita == 4 and visor and visor.has_signal("figura_atravessou") and not visor.figura_atravessou.is_connected(_on_figura_atravessou):
+		visor.figura_atravessou.connect(_on_figura_atravessou)
+		_visor_v4 = visor
 	_ambiente_sonoro()
 	if GameState.flag("porta_entrada_aberta"):
 		_abrir_porta_entrada(true)
@@ -1576,12 +1584,59 @@ func _descer_porao() -> void:
 	_saindo_porao = false
 
 
+## A porta zebrada do hall é só clima: não desce. O único caminho é a escada da Sala Medieval, em 2019.
 func _usar_porta_porao(_p: Node) -> void:
-	_descer_porao()
+	if _porta_falando:
+		return
+	_porta_falando = true
+	if GameState.discos.has(E2019):
+		await Guia.falar("???", ["Daqui não. A escada é na Sala Medieval... em 2019."])
+	else:
+		await Guia.falar("???", ["Daqui não. Falta o disco de 2019, atrás do painel solto da Sala dos Povos."])
+	_porta_falando = false
 
 
 func _usar_escada_2019(_p: Node) -> void:
 	_descer_porao()
+
+
+## O Visor estourou a atenção (visita 4): a Figura Branca (a mesma do porão) aparece e persegue por persegue_s.
+## Se pegar, a Figura mata o jogador e o main volta ao checkpoint (recarrega o nível, que some com ela).
+func _on_figura_atravessou(_v: int) -> void:
+	if visita != 4 or player == null or not is_instance_valid(player) or _saindo_porao:
+		return
+	if _figura_v4 == null or not is_instance_valid(_figura_v4):
+		_figura_v4 = FiguraBranca.new()
+		_figura_v4.name = "FiguraPerseguidora"
+		_figura_v4.alvo = player
+		_figura_v4.reaparecer_fn = _reaparecer_figura_v4
+		add_child(_figura_v4)
+	var dir := -player.global_transform.basis.z
+	dir.y = 0.0
+	dir = dir.normalized() if dir.length() > 0.1 else Vector3.FORWARD
+	var p := player.global_position - dir * 7.0           # atrás do jogador
+	_figura_v4.reiniciar(Vector3(p.x, player.global_position.y + 0.05, p.z), true)
+	_figura_v4.velocidade = 2.2
+	_persegue_id += 1
+	var id := _persegue_id
+	await get_tree().create_timer(persegue_s, false).timeout
+	if id == _persegue_id and _figura_v4 and is_instance_valid(_figura_v4) and not _figura_v4.matou:
+		_figura_v4.esconder()
+
+
+func _reaparecer_figura_v4(_f: Node) -> Vector3:
+	var dir := player.global_transform.basis.z
+	dir.y = 0.0
+	var p := player.global_position + dir.normalized() * 8.0
+	return Vector3(p.x, player.global_position.y + 0.05, p.z)
+
+
+func _exit_tree() -> void:
+	_persegue_id += 1
+	if _figura_v4 and is_instance_valid(_figura_v4):
+		_figura_v4.esconder()
+	if _visor_v4 and is_instance_valid(_visor_v4) and _visor_v4.figura_atravessou.is_connected(_on_figura_atravessou):
+		_visor_v4.figura_atravessou.disconnect(_on_figura_atravessou)
 
 
 # ================================================================== loop: luzes, olhos, apito, armadura, Tito, chuva
@@ -1907,7 +1962,10 @@ func _evt_sala21() -> void:
 	if visita == 3:
 		_armadura_estado = 0 if _armadura_estado < 3 else 3
 	elif visita == 4 and _uma_vez("sala21"):
-		await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Olhe como era em 2019."])
+		if GameState.discos.has(E2019):
+			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Segure Q e escolha o disco de 2019: lá ela existe."])
+		else:
+			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Falta o disco de 2019: ele ficou atrás do painel solto, na Sala dos Povos."])
 
 
 func _evt_sala22() -> void:
@@ -1938,7 +1996,7 @@ func _evt_sala25() -> void:
 ## Visita 4, sala 80: a porta zebrada do hall. Água escorrendo pelos degraus.
 func _evt_sala80() -> void:
 	if _uma_vez("sala80"):
-		await Guia.falar("???", ["Essa porta nunca existiu.", "A água desce por baixo do Castelinho, até o Braço Morto."])
+		await Guia.falar("???", ["Essa porta nunca existiu.", "A água desce por baixo do Castelinho, até o Braço Morto.", "Mas a descida de verdade é a escada da Sala Medieval, em 2019."])
 
 
 func _on_painel_lido(id: String) -> void:
