@@ -2088,6 +2088,10 @@ func _usar_porta_saida(_p: Node) -> void:
 
 
 func _abrir_porta_final(_p: Node) -> void:
+	# só a visita 3 sai por aqui; na 4 (o disco de 1975 continua com o jogador) ela pulava o porão e virava "visita 5"
+	if visita != 3:
+		Guia.falar("sistema", ["A porta está trancada."])
+		return
 	_fim_de_visita()
 
 
