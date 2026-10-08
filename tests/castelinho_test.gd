@@ -215,6 +215,7 @@ func _rodar() -> void:
 	GameState.trocar_epoca(GameState.Epoca.E2020)
 
 	await _visitas()
+	await _sustos_castelo()
 
 	print("RESULTADO: ", "OK" if falhas == 0 else "%d FALHA(S)" % falhas)
 	quit(1 if falhas else 0)
@@ -569,6 +570,67 @@ func _pistas_do_tito() -> void:
 
 
 const POS_PORAO_X := -14.0
+
+
+## Sustos do Castelinho (só V3: sala 18, V4: sala 22 e painel p11): ligados, uma vez só, nunca na V1/V2.
+func _sustos_castelo() -> void:
+	var Sus = load("res://creatures/susto.gd")
+	var alvos := {
+		1: [["v3_sala18", Vector3(-10.4, 3.6, -12.6)], ["v4_sala22", Vector3(-15.4, 0.1, -28.0)]],
+		2: [["v3_sala18", Vector3(-10.4, 3.6, -12.6)], ["v4_sala22", Vector3(-15.4, 0.1, -28.0)]],
+	}
+	for v in [1, 2]:
+		await _carregar_visita(v, {"tem_lanterna": true})
+		for a in alvos[v]:
+			await _ir_para(a[1])
+			await _frames_f(180)
+		nivel._on_painel_lido("p11")
+		await _frames_f(150)
+		var algum := false
+		for k in ["v3_sala18", "v4_sala22", "v4_painel11"]:
+			algum = algum or Sus.ja_aconteceu(k)
+		_checar(not algum, "V%d: nenhum susto de pulo (visita calma)" % v)
+	# V3: sala 18 dispara uma vez
+	await _carregar_visita(3, {"tem_lanterna": true})
+	await _ir_para(Vector3(-10.4, 3.6, -12.6))
+	await _frames_f(150)
+	_checar(Sus.ja_aconteceu("v3_sala18"), "V3: susto da sala 18 (lanterna falha, Figura no facho) disparou")
+	await _frames_f(60)
+	var fig := 0
+	for c in nivel.get_children():
+		if c.get_script() == load("res://creatures/figura_branca.gd"):
+			fig += 1
+	_checar(fig == 0, "V3: a Figura do susto some sozinha (%d)" % fig)
+	var sus0: int = int(GameState.contadores.get("sustos", 0))
+	await _ir_para(Vector3(-10.4, 0.1, -12.6))
+	await _ir_para(Vector3(-10.4, 3.6, -12.6))
+	await _frames_f(150)
+	_checar(int(GameState.contadores.get("sustos", 0)) == sus0, "V3: o susto da sala 18 não se repete")
+	# V3 não tem os sustos da V4
+	_checar(not Sus.ja_aconteceu("v4_sala22") and not Sus.ja_aconteceu("v4_painel11"), "V3: sem sustos da V4")
+	# V4: sala 22 e painel p11
+	await _carregar_visita(4, {"tem_lanterna": true})
+	await _ir_para(Vector3(-15.4, 0.1, -28.0))
+	await _frames_f(150)
+	_checar(Sus.ja_aconteceu("v4_sala22"), "V4: susto da sala 22 (luzes piscam, Figura de lado) disparou")
+	await _ir_para(Vector3(-9.8, 0.1, -18.8))
+	await _frames_f(10)
+	p.rotation.y = 0.0
+	nivel._on_painel_lido("p11_v4")
+	await _frames_f(200)
+	_checar(not Sus.ja_aconteceu("v4_painel11"), "V4: p11: sem virar, o susto espera")
+	p.rotation.y = PI
+	await _frames_f(60)
+	_checar(Sus.ja_aconteceu("v4_painel11"), "V4: p11: ao virar mais de 120° o susto disparou")
+	_checar(not Sus.ja_aconteceu("v3_sala18"), "V4: sem o susto da V3")
+	# UI aberta: adia e não dispara
+	GameState.flags.erase("susto_v4_painel11")
+	GameState.set_flag("ui_aberta", true)
+	nivel._on_painel_lido("p11_v4")
+	await _frames_f(120)
+	_checar(not Sus.ja_aconteceu("v4_painel11"), "V4: com UI aberta o susto não dispara")
+	GameState.flags.erase("ui_aberta")
+	GameState.novo_jogo()
 
 
 func find_interagivel(raiz: Node, nome: String) -> Node:

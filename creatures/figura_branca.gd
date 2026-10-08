@@ -48,7 +48,6 @@ var sumida := false
 var matou := false
 
 var _modelo: Node3D
-var _veu: Node3D
 var _braco_e: Node3D
 var _braco_d: Node3D
 var _colisao: CollisionShape3D
@@ -82,103 +81,293 @@ func _ready() -> void:
 
 
 # ---------------------------------------------------------------- visual
-func _material(alfa: float) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = Color(0.96, 0.97, 1.0, alfa)
-	m.emission_enabled = true
-	m.emission = Color(0.55, 0.6, 0.7)
-	m.emission_energy_multiplier = 0.3
-	m.cull_mode = BaseMaterial3D.CULL_DISABLED
-	if alfa < 0.999:
-		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	return m
+## Visual (redesenho "afogada"): ~2,4 m, magra demais, corcunda, braços até abaixo dos joelhos com dedos longos,
+## cabeça pequena e torta, rosto = vazio escuro com mechas de cabelo molhado, vestido rasgado sem pés.
+## 4 malhas (corpo+vestido, cabeça+cabelo, 2 braços), 1 material (shader sem luz, cor por vértice): 4 draw calls.
+## Movimento: poses "estaladas" (sem interpolação), quadros pulados, só mexe quando está andando;
+## olhada = congelada. Corre em arrancos (média = `velocidade`).
+const SHADER := """shader_type spatial;
+render_mode unshaded, cull_disabled;
+uniform float brilho = 1.0;
+uniform float suelo = 0.0;
+varying vec3 vp;
+varying float alt;
+float h3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float vn(vec3 p) {
+	vec3 i = floor(p); vec3 f = fract(p); f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(mix(h3(i), h3(i + vec3(1,0,0)), f.x), mix(h3(i + vec3(0,1,0)), h3(i + vec3(1,1,0)), f.x), f.y),
+		mix(mix(h3(i + vec3(0,0,1)), h3(i + vec3(1,0,1)), f.x), mix(h3(i + vec3(0,1,1)), h3(i + vec3(1,1,1)), f.x), f.y), f.z);
+}
+void vertex() {
+	vp = VERTEX;
+	alt = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y - suelo;
+}
+void fragment() {
+	float n = vn(vp * 7.0) * 0.6 + vn(vp * 19.0 + 3.0) * 0.4;
+	float suja = smoothstep(0.42, 0.72, n);
+	float pingo = smoothstep(0.55, 0.9, vn(vec3(vp.x * 40.0, vp.y * 4.0, vp.z * 40.0)));
+	float umido = smoothstep(1.3, 0.1, alt);
+	float rim = pow(1.0 - abs(dot(normalize(NORMAL), normalize(VIEW))), 2.0);
+	vec3 c = COLOR.rgb;
+	c *= 1.0 - 0.5 * suja - 0.25 * pingo;
+	c = mix(c, c * vec3(0.55, 0.7, 0.65), umido * 0.8);
+	c *= 1.0 - 0.45 * rim;
+	if (COLOR.a < 0.5) {   // tronco: costelas e clavícula sugeridas por sombra
+		float frente = step(vp.z, 0.0);
+		float banda = smoothstep(0.28, 0.36, vp.y) * smoothstep(0.76, 0.66, vp.y);
+		float costela = (sin(vp.y * 52.0) * 0.5 + 0.5);
+		c *= 1.0 - 0.4 * costela * banda * frente;
+		c *= 1.0 - 0.5 * smoothstep(0.014, 0.0, abs(vp.y - 0.76 - 0.05 * abs(vp.x))) * frente;
+	}
+	ALBEDO = c * brilho;
+}
+"""
+const COR_PELE := Color(0.66, 0.74, 0.69)
+const COR_VESTIDO := Color(0.68, 0.73, 0.70)
+const COR_BARRA := Color(0.30, 0.35, 0.35)
+const COR_CABELO := Color(0.12, 0.14, 0.16)
+const COR_VAZIO := Color(0.0, 0.0, 0.0)
+
+var _cabeca: Node3D
+var _corpo: Node3D
+var _mat: ShaderMaterial
+var _nv := 0
+var _snap_t := 0.0
+var _lurch_t := 0.0
+var _arranco := false
+var _olhada_ant := false
+var _dist := 99.0
+var _brilho := 1.0
 
 
-func _peca(pai: Node3D, malha: Mesh, pos: Vector3, mat: Material, rot := Vector3.ZERO, escala := Vector3.ONE) -> MeshInstance3D:
+## Tubo ao longo de `pts` com raio `rad` por ponto, elipse `esc` (largura, profundidade), cor por ponto/direção.
+func _tubo(st: SurfaceTool, pts: Array, rad: Array, seg: int, cor: Callable, esc := Vector2.ONE) -> void:
+	var base := _nv
+	var n := pts.size()
+	for i in n:
+		var t: Vector3 = (pts[mini(i + 1, n - 1)] - pts[maxi(i - 1, 0)]).normalized()
+		var ref := Vector3.FORWARD if absf(t.dot(Vector3.FORWARD)) < 0.9 else Vector3.RIGHT
+		var u := t.cross(ref).normalized()
+		var v := t.cross(u).normalized()
+		for k in seg:
+			var ang := TAU * k / seg
+			var d := u * cos(ang) * esc.x + v * sin(ang) * esc.y
+			st.set_color(cor.call(i, d.normalized()))
+			st.add_vertex(pts[i] + d * float(rad[i]))
+			_nv += 1
+	for i in n - 1:
+		for k in seg:
+			var k2 := (k + 1) % seg
+			var a := base + i * seg + k
+			var b := base + i * seg + k2
+			var c := base + (i + 1) * seg + k
+			var e := base + (i + 1) * seg + k2
+			st.add_index(a); st.add_index(c); st.add_index(b)
+			st.add_index(b); st.add_index(c); st.add_index(e)
+	# tampas
+	for fim: int in [0, n - 1]:
+		st.set_color(cor.call(fim, Vector3.ZERO))
+		st.add_vertex(pts[fim])
+		_nv += 1
+		var cen := _nv - 1
+		var anel := base + fim * seg
+		for k in seg:
+			st.add_index(cen); st.add_index(anel + k); st.add_index(anel + (k + 1) % seg)
+
+
+func _cor_const(c: Color) -> Callable:
+	return func(_i: int, _d: Vector3) -> Color: return c
+
+
+func _malha(st: SurfaceTool) -> ArrayMesh:
+	st.generate_normals()
+	return st.commit()
+
+
+func _no_malha(pai: Node3D, malha: Mesh, pos: Vector3) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = malha
-	mi.material_override = mat
+	mi.material_override = _mat
 	mi.position = pos
-	mi.rotation = rot
-	mi.scale = escala
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	pai.add_child(mi)
 	return mi
 
 
+func _novo_st() -> SurfaceTool:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_nv = 0
+	return st
+
+
+func _braco(lado: float) -> Node3D:
+	var no := Node3D.new()
+	no.position = Vector3(0.15 * lado, 0.80, 0.0)   # ombro estreito e caído
+	_corpo.add_child(no)
+	var st := _novo_st()
+	var pele := _cor_const(COR_PELE)
+	# ombro -> cotovelo (dobra leve) -> pulso, pendendo um pouco para a frente (-Z)
+	var pulso := Vector3(0.05 * lado, -1.0, -0.2)
+	_tubo(st, [Vector3(-0.07 * lado, 0.07, 0.01), Vector3(0, 0.0, 0.01), Vector3(0.015 * lado, -0.3, -0.03), Vector3(0.03 * lado, -0.62, -0.14), Vector3(0.04 * lado, -0.85, -0.17), pulso],
+		[0.018, 0.04, 0.027, 0.02, 0.017, 0.016], 6, pele)
+	# mão: 4 dedos longos, finos e abertos
+	for j in 4:
+		var abre := (float(j) - 1.5)
+		var comp := 0.30 + 0.06 * float(1 - absi(j - 1))
+		var dx := abre * 0.045 * lado
+		_tubo(st, [pulso, pulso + Vector3(dx * 0.5, -comp * 0.5, -0.02 - 0.02 * abs(abre)), pulso + Vector3(dx * 1.0 + 0.02 * lado, -comp, -0.05 - 0.03 * abs(abre))],
+			[0.012, 0.009, 0.004], 4, pele)
+	_no_malha(no, _malha(st), Vector3.ZERO)
+	return no
+
+
 func _construir_visual() -> void:
+	_mat = ShaderMaterial.new()
+	var sh := Shader.new()
+	sh.code = SHADER
+	_mat.shader = sh
 	_modelo = Node3D.new()
 	_modelo.name = "Modelo"
-	_modelo.scale = Vector3(1.0, 1.12, 1.0)   # alta: ~2,5 m
 	add_child(_modelo)
-	var corpo := _material(0.92)
-	var tecido := _material(0.45)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1337
 
-	# vestido longo (saia) e tronco estreito
-	var saia := CylinderMesh.new()
-	saia.top_radius = 0.16
-	saia.bottom_radius = 0.44
-	saia.height = 1.4
-	saia.radial_segments = 12
-	saia.rings = 1
-	_peca(_modelo, saia, Vector3(0, 0.7, 0), corpo)
-	var tronco := CapsuleMesh.new()
-	tronco.radius = 0.15
-	tronco.height = 0.78
-	tronco.radial_segments = 10
-	tronco.rings = 3
-	_peca(_modelo, tronco, Vector3(0, 1.68, 0), corpo)
+	# vestido: anéis + língulas rasgadas na barra, sem pés
+	var st := _novo_st()
+	var aneis := [[1.12, 0.12, COR_VESTIDO], [0.70, 0.2, COR_VESTIDO.lerp(COR_BARRA, 0.25)], [0.34, 0.3, COR_VESTIDO.lerp(COR_BARRA, 0.65)]]
+	var seg := 14
+	var base := _nv
+	for r in aneis.size():
+		for k in seg:
+			var ang := TAU * k / seg
+			var jitter := rng.randf_range(-0.04, 0.04) if r == 2 else 0.0
+			var rr: float = aneis[r][1] * (1.0 + (0.12 * sin(ang * 3.0 + 1.0) if r > 0 else 0.0))
+			st.set_color(aneis[r][2])
+			st.add_vertex(Vector3(cos(ang) * rr * 0.9, float(aneis[r][0]) + jitter, sin(ang) * rr))
+			_nv += 1
+	for r in aneis.size() - 1:
+		for k in seg:
+			var k2 := (k + 1) % seg
+			var a := base + r * seg + k
+			var b := base + r * seg + k2
+			var c := base + (r + 1) * seg + k
+			var e := base + (r + 1) * seg + k2
+			st.add_index(a); st.add_index(c); st.add_index(b)
+			st.add_index(b); st.add_index(c); st.add_index(e)
+	for k in seg:   # tiras rasgadas penduradas
+		var k2 := (k + 1) % seg
+		var ang := TAU * (k + 0.5) / seg
+		var rr := 0.33 + rng.randf_range(0.0, 0.07)
+		st.set_color(COR_BARRA.lerp(COR_VAZIO, 0.5))
+		st.add_vertex(Vector3(cos(ang) * rr * 0.95, rng.randf_range(0.04, 0.2), sin(ang) * rr))
+		_nv += 1
+		st.add_index(base + 2 * seg + k); st.add_index(_nv - 1); st.add_index(base + 2 * seg + k2)
+	_no_malha(_modelo, _malha(st), Vector3.ZERO)
 
-	# cabeça comprida, inclinada, sem rosto
-	var cab := SphereMesh.new()
-	cab.radius = 0.11
-	cab.height = 0.22
-	cab.radial_segments = 10
-	cab.rings = 6
-	_peca(_modelo, cab, Vector3(0.03, 2.16, 0), corpo, Vector3(0, 0, deg_to_rad(-12)), Vector3(0.85, 1.25, 0.9))
+	# corpo (tronco) com pivô no quadril: a corcunda inclina daqui
+	_corpo = Node3D.new()
+	_corpo.position = Vector3(0, 1.0, 0)
+	_modelo.add_child(_corpo)
+	st = _novo_st()
+	_tubo(st, [Vector3(0, -0.12, 0.0), Vector3(0, 0.2, 0.01), Vector3(0, 0.5, 0.04), Vector3(0, 0.72, 0.04), Vector3(0, 0.82, 0.0), Vector3(0, 0.88, -0.01), Vector3(0, 0.92, -0.01)],
+		[0.085, 0.052, 0.095, 0.115, 0.085, 0.04, 0.035], 8, _cor_const(Color(COR_PELE.r, COR_PELE.g, COR_PELE.b, 0.0)), Vector2(1.25, 0.6))
+	_no_malha(_corpo, _malha(st), Vector3.ZERO)
+	_braco_e = _braco(-1.0)
+	_braco_d = _braco(1.0)
 
-	# braços compridos demais, pendurados
-	var braco := CapsuleMesh.new()
-	braco.radius = 0.04
-	braco.height = 1.25
-	braco.radial_segments = 6
-	braco.rings = 2
-	_braco_e = Node3D.new()
-	_braco_e.position = Vector3(-0.2, 1.9, 0)
-	_modelo.add_child(_braco_e)
-	_peca(_braco_e, braco, Vector3(-0.06, -0.55, 0), corpo, Vector3(0, 0, deg_to_rad(6)))
-	_braco_d = Node3D.new()
-	_braco_d.position = Vector3(0.2, 1.9, 0)
-	_modelo.add_child(_braco_d)
-	_peca(_braco_d, braco, Vector3(0.06, -0.55, 0), corpo, Vector3(0, 0, deg_to_rad(-6)))
+	# cabeça pequena e comprida, rosto vazio, cabelo molhado em mechas
+	_cabeca = Node3D.new()
+	_cabeca.position = Vector3(0, 0.9, 0)
+	_corpo.add_child(_cabeca)
+	st = _novo_st()
+	var cor_cab := func(i: int, d: Vector3) -> Color:
+		if i >= 3 and i <= 5:
+			var f := clampf(-d.z, 0.0, 1.0)
+			return COR_PELE.lerp(COR_VAZIO, smoothf(0.25, 0.7, f))
+		if i == 2:   # boca escura sobre o queixo pálido
+			return COR_PELE.lerp(COR_VAZIO, 0.8 * smoothf(0.5, 0.9, clampf(-d.z, 0.0, 1.0)))
+		return COR_PELE
+	_tubo(st, [Vector3(0, 0, 0), Vector3(0, 0.14, -0.01), Vector3(0, 0.2, -0.015), Vector3(0, 0.28, -0.02), Vector3(0, 0.37, -0.015), Vector3(0, 0.45, 0), Vector3(0, 0.48, 0)],
+		[0.035, 0.03, 0.05, 0.08, 0.077, 0.045, 0.01], 8, cor_cab, Vector2(0.9, 1.05))
+	var cab_c := _cor_const(COR_CABELO)
+	var ys := [0.46, 0.38, 0.28, 0.1, -0.15]
+	var rs := [0.02, 0.07, 0.1, 0.098, 0.105]
+	var nm := 22
+	for m in nm:
+		var ang := TAU * m / nm + rng.randf_range(-0.05, 0.05)
+		# frente = -Z (ang = -PI/2): deixa uma fresta ali, onde aparecem o queixo pálido e a boca escura
+		if absf(wrapf(ang + PI / 2.0, -PI, PI)) < 0.5:
+			continue
+		var fr := -sin(ang) * 0.5 + 0.5
+		var fim := -0.28 - 0.3 * fr - rng.randf_range(0.0, 0.28)   # cortina reta até o peito, barra irregular
+		var pts := []
+		for i in ys.size():
+			pts.append(Vector3(cos(ang) * rs[i] * 0.95, ys[i], sin(ang) * rs[i] * 1.02 - 0.015))
+		pts.append(Vector3(cos(ang) * 0.1, fim, sin(ang) * 0.105 - 0.015))
+		_tubo(st, pts, [0.012, 0.022, 0.024, 0.022, 0.02, 0.004], 4, cab_c)
+	_no_malha(_cabeca, _malha(st), Vector3.ZERO)
+	_pose_base()
 
-	# véu: cone aberto, translúcido, da cabeça até quase o chão
-	_veu = Node3D.new()
-	_veu.position = Vector3(0, 0, 0)
-	_modelo.add_child(_veu)
-	var veu := CylinderMesh.new()
-	veu.top_radius = 0.18
-	veu.bottom_radius = 0.66
-	veu.height = 2.3
-	veu.radial_segments = 14
-	veu.rings = 1
-	veu.cap_top = false
-	veu.cap_bottom = false
-	_peca(_veu, veu, Vector3(0, 1.15, 0.02), tecido)
+
+func smoothf(a: float, b: float, x: float) -> float:
+	return smoothstep(a, b, x)
+
+
+## Pose de descanso: corcunda, cabeça pendida para o lado, braços soltos.
+func _pose_base() -> void:
+	_corpo.rotation = Vector3(-0.22, 0.0, 0.04)
+	_cabeca.rotation = Vector3(-0.1, 0.0, 0.16)
+	_braco_e.rotation = Vector3(0.05, 0.0, 0.03)
+	_braco_d.rotation = Vector3(-0.04, 0.0, -0.05)
+	_modelo.position.y = 0.0
+
+
+## Nova pose "estalada" (sem interpolação): chamada em intervalos curtos enquanto ela anda.
+func _pose_nova(forte: bool) -> void:
+	var f := 1.6 if forte else 1.0
+	_corpo.rotation = Vector3(-0.22 - (0.15 if forte else randf_range(-0.05, 0.08)), randf_range(-0.12, 0.12) * f, randf_range(-0.09, 0.09) * f)
+	_cabeca.rotation = Vector3(-0.1 + randf_range(-0.15, 0.2), randf_range(-0.5, 0.5) * f, 0.16 * signf(_cabeca.rotation.z) + randf_range(-0.15, 0.15))
+	if randf() < 0.18:
+		_cabeca.rotation.z = -_cabeca.rotation.z   # estala para o outro lado
+	_braco_e.rotation = Vector3(randf_range(-0.3, 0.35), 0.0, randf_range(-0.05, 0.14) * f)
+	_braco_d.rotation = Vector3(randf_range(-0.35, 0.3), 0.0, randf_range(-0.14, 0.05) * f)   # fora de sincronia
+	_modelo.position.y = randf_range(0.0, 0.025)
+	_modelo.rotation.y = randf_range(-0.07, 0.07)
+
+
+## Ao ser vista: congela com a cabeça virada de vez para o jogador (um estalo só).
+func _pose_olhada() -> void:
+	_pose_base()
+	_cabeca.rotation = Vector3(0.1, 0.0, 0.5 * (1.0 if randf() < 0.5 else -1.0))
+	_corpo.rotation = Vector3(-0.28, 0.0, 0.0)
+	_modelo.rotation.y = 0.0
 
 
 func _process(dt: float) -> void:
 	if _modelo == null:
 		return
 	_t += dt
-	_modelo.position.y = 0.05 + 0.04 * sin(_t * 1.6)       # flutua um pouco
-	_veu.rotation.z = sin(_t * 1.3) * 0.05
-	_veu.scale = Vector3(1.0 + 0.05 * sin(_t * 2.1), 1.0, 1.0 + 0.05 * cos(_t * 1.7))
-	_braco_e.rotation.x = sin(_t * 1.1) * 0.09
-	_braco_d.rotation.x = sin(_t * 1.1 + 1.7) * 0.09
-	var incl := deg_to_rad(-9.0) if _movendo else 0.0
-	_modelo.rotation.x = lerpf(_modelo.rotation.x, incl, 1.0 - exp(-dt * 5.0))
+	_mat.set_shader_parameter("suelo", global_position.y)
+	if _movendo:
+		_snap_t -= dt
+		if _snap_t <= 0.0:
+			_snap_t = randf_range(0.07, 0.2)
+			if _arranco:
+				_arranco = false
+				_pose_nova(true)
+			elif randf() > 0.15:   # 15%: quadro pulado (segura a pose)
+				_pose_nova(false)
+	elif olhada and not _olhada_ant:
+		_pose_olhada()
+	_olhada_ant = olhada
+	# cintilação só de perto, andando
+	var b := 1.0
+	if _movendo and _dist < 6.0 and randf() < 0.1:
+		b = randf_range(0.15, 0.6)
+	if not is_equal_approx(b, _brilho):
+		_brilho = b
+		_mat.set_shader_parameter("brilho", b)
 
 
 # ---------------------------------------------------------------- API
@@ -254,6 +443,7 @@ func _physics_process(dt: float) -> void:
 	var para := pa - global_position
 	para.y = 0.0
 	var dist := para.length()
+	_dist = dist
 	if dist > 0.01:
 		_virar(para, dt)
 

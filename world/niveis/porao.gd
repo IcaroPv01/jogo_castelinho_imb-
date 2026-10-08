@@ -1,9 +1,11 @@
 extends Node3D
 ## O PORÃO (V2_ROTEIRO §6): a masmorra "fora da planta" embaixo do Castelinho. Salas globais 81 a 99.
 ##
-##  - 19 salas sorteadas com SEMENTE FIXA NO SAVE (`GameState.flag("porao_semente")`): a 1ª é a escada da porta zebrada,
-##    a 15ª (sala 95) é o QUARTO DO TITO, as 4 últimas (96 a 99) são o ÚLTIMO DIA (slides do disco sem data) e as 13 do
-##    meio saem dos 11 tipos de `PoraoSalas` + 2 bifurcações (a sala da voz).
+##  - 19 salas em SEQUÊNCIA AUTORAL FIXA (const `PLANO`; sem sorteio, sem semente: toda partida é igual). 81 escada (entrada
+##    pelas fitas), 82-85 calmo (1 sussurro; masmorra com celas na 84), 86 alagado, 87 Costela (celas e correntes velhas),
+##    88 telefone, 89 voz CERTA, 90 a 1ª Figura (cela aberta com o desenho de giz), 91 escada, 92 Costela, 93 voz ERRADA
+##    (a isca da água funda), 94 a perseguição (Figura mais rápida), 95 QUARTO DO TITO e 96-99 o ÚLTIMO DIA (slides do disco
+##    sem data). As falas do "sistema" (const `FALAS`) saem uma vez cada, sem travar o jogador.
 ##  - Só existem 2 ou 3 salas por vez (anterior, atual, próxima): a próxima é montada quando o jogador entra na atual e
 ##    a anterior é descarregada depois que a porta se fecha atrás dele. Orçamento web: < 150 draw calls, <= 6 luzes
 ##    (cada sala tem no máximo 2; as da sala anterior apagam na hora), névoa de profundidade.
@@ -31,20 +33,47 @@ const PRIMEIRA := 81
 const N := 19
 const SALA_QUARTO := 95
 const SALA_ULTIMA := 99
-## Checkpoints internos (a morte volta ao último). O `GameState` só grava 81 e 95 (SALAS_CHECKPOINT); ver PENDENCIAS.
+## Checkpoints internos (a morte volta ao último); o `GameState` (SALAS_CHECKPOINT) grava os mesmos: 81, 86, 91, 95, 96 (e 100).
 const CHECKPOINTS: Array[int] = [81, 86, 91, 95, 96]
 ## Profundidade da água (m acima do piso) em cada nível: nada, tornozelo, joelho, cintura.
 const PROF_AGUA: Array[float] = [0.0, 0.22, 0.55, 0.95]
 const TEMPO_SUBIR := 6.0
-const COSTELA_OK: Array[String] = ["abobada", "colunas", "desenhos", "crianca", "pedras", "arcos", "telefone", "poco"]
-const FIGURA_OK: Array[String] = ["abobada", "colunas", "desenhos", "pedras", "arcos", "poco", "cisterna", "alagado", "crianca", "telefone"]
-const VOZ_OK: Array[String] = ["abobada", "colunas", "pedras", "desenhos", "arcos", "poco"]
+## A SEQUÊNCIA AUTORAL do porão (idx 0 = sala 81). Ameaça: "" nada, "voz" (sussurro), "costela", "figura".
+## Bifurcações: `voz_certa` (o balde vermelho é o caminho) ou errada (a isca da água funda) e o `lado` da passagem.
+const PLANO: Array[Dictionary] = [
+	{"tipo": "escada"},                                                     # 81: entrada pelas fitas
+	{"tipo": "abobada", "ameaca": "voz"},                                   # 82: 1º sussurro, dica do Visor
+	{"tipo": "desenhos"},                                                   # 83
+	{"tipo": "colunas"},                                                    # 84: masmorra, celas
+	{"tipo": "crianca"},                                                    # 85
+	{"tipo": "alagado"},                                                    # 86: checkpoint, água no tornozelo
+	{"tipo": "pedras", "ameaca": "costela"},                                # 87: masmorra, celas e correntes velhas
+	{"tipo": "telefone"},                                                   # 88
+	{"tipo": "bifurcacao", "voz_certa": true, "lado": 1},                   # 89: a voz certa (ensina)
+	{"tipo": "arcos", "ameaca": "figura", "vel_figura": 2.0},               # 90: a 1ª Figura, cela do giz
+	{"tipo": "escada"},                                                     # 91: checkpoint, água no joelho
+	{"tipo": "poco", "ameaca": "costela"},                                  # 92
+	{"tipo": "bifurcacao", "voz_certa": false, "lado": -1},                 # 93: a isca da água funda
+	{"tipo": "cisterna", "ameaca": "figura", "vel_figura": 2.3},            # 94: a perseguição
+	{"tipo": "quarto_tito"},                                                # 95
+	{"tipo": "abobada"}, {"tipo": "arcos"}, {"tipo": "cisterna"},           # 96-98: o último dia
+	{"tipo": "escada_sobe"},                                                # 99
+]
+## Falas do "sistema" (a prefeitura fictícia), uma vez cada: idx da sala -> [flag, linhas].
+const FALAS: Dictionary = {
+	0: ["porao_fala_a", ["Atenção: área fora da visitação.", "Por favor, retorne ao grupo."]],
+	3: ["porao_fala_b", ["Regulamento da visita, item 3: não se afaste do grupo.", "Item 4: não vá até a água."]],
+	10: ["porao_fala_c", ["Item 7: crianças devem estar acompanhadas de um responsável.", "...de um res— ...de um responsável."]],
+	13: ["porao_fala_d", ["Contagem de visitantes:", "um a mais do que entrou."]],
+	14: ["porao_fala_e", ["Esta sala não consta na planta."]],
+}
+## Sussurros do Tito (só sugestão, curtos). Nunca repete a mesma linha duas vezes seguidas.
+const VOZES: Array[String] = ["ei… aqui…", "por aqui…", "tá frio…", "vem ver…", "é por aqui que eu ia…"]
 const T := 0.6
 
 var player: Player
 var figura: FiguraBranca
 var costela: Node3D
-var semente := 1
 var plano: Array = []                 # um Dictionary por sala (índice 0 = sala 81)
 var salas := {}                       # idx -> Ctx (só as carregadas)
 var idx_atual := -1
@@ -67,6 +96,17 @@ var _t := 0.0
 var _ultima_pos := Vector3.ZERO
 var _tem_ultima := false
 var _voz_t := 4.0
+var _voz_ult := -1
+var _prio_legenda := 0                 # prioridade da legenda que está na tela (0 = sussurro)
+var _legenda_fim := 0.0                # até quando (s, tempo do jogo) ela vale
+var _sd := 0.0:                        # 0..1: quanto a água das salas 97-99 já desceu ao tornozelo (disco sem data)
+	set(v):
+		_sd = v
+		_aplicar_agua()
+var _tween_sd: Tween
+var _saindo := false
+var _j3_estado := 0                   # 0 parado, 1 silêncio (2 s), 2 esperando a câmera virar
+var _j3_t := 0.0
 var _passo_agua_t := 0.0
 var _pistas_t := 0.0
 var _causa := ""
@@ -81,7 +121,6 @@ var _epoca_ant := -1
 
 func _ready() -> void:
 	process_physics_priority = 100        # depois do jogador: encolhe o deslocamento dentro d'água
-	_semente()
 	_gerar_plano()
 	_ambiente()
 	_criar_agua_material()
@@ -91,88 +130,22 @@ func _ready() -> void:
 	var sp := Marker3D.new()
 	sp.name = "Spawn"
 	salas[0].raiz.add_child(sp)
-	sp.position = Vector3(0, 0.1, -1.0)
+	sp.position = Vector3(0, 0.1, -0.35)      # as fitas ficam logo à frente (z = -1,55)
 	GameState.epoca_mudou.connect(_ao_mudar_epoca)
 	_atualizar_luzes(0)
 	_aplicar_agua()
 
 
-# ============================================================================ semente e plano das 19 salas
-func _semente() -> void:
-	semente = int(GameState.flag("porao_semente", 0))
-	if semente <= 0:
-		semente = randi_range(1000, 1 << 29)
-		GameState.set_flag("porao_semente", semente)
-
-
-## Sorteia os tipos, as ameaças e as vozes com a semente do save e calcula a posição (no mundo) de cada sala.
+# ============================================================================ o plano das 19 salas (fixo, autoral)
+## Plano calculado da tabela `PLANO`: tipo, ameaça e posição (no mundo) de cada sala. Sem sorteio: toda partida é igual.
 func _gerar_plano() -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = semente
-	var tipos: Array = SalasGd.TIPOS_SORTEIO.duplicate()
-	tipos.append("bifurcacao")
-	tipos.append("bifurcacao")
-	for tentativa in 500:
-		for i in range(tipos.size() - 1, 0, -1):
-			var j := rng.randi_range(0, i)
-			var tmp = tipos[i]
-			tipos[i] = tipos[j]
-			tipos[j] = tmp
-		if _tipos_validos(tipos):
-			break
-	var lista: Array[String] = ["escada"]
-	for t in tipos:
-		lista.append(t)
-	lista.append_array(["quarto_tito", "abobada", "arcos", "cisterna", "escada_sobe"])
 	plano.clear()
 	for i in N:
-		plano.append({"tipo": lista[i], "idx": i, "sala": PRIMEIRA + i, "ultimo": 96 + (i - 15) if i >= 15 and i <= 17 else (99 if i == 18 else 0),
-			"costela": false, "figura": false, "voz_ambiente": false, "voz_certa": true, "lado": 1 if rng.randf() < 0.5 else -1})
-	# vozes: as duas bifurcações, uma certa e uma errada (em ordem aleatória)
-	var certas := [true, false]
-	if rng.randf() < 0.5:
-		certas.reverse()
-	var k := 0
-	for d in plano:
-		if d["tipo"] == "bifurcacao":
-			d["voz_certa"] = certas[k]
-			k += 1
-	# ameaças: nada na 1ª sala de cada bloco com checkpoint (81, 86, 91): quem acabou de morrer não nasce no meio
-	var livres_bloco := [0, 5, 10]
-	var cand_costela := []
-	var cand_figura := []
-	var cand_voz := []
-	for i in range(1, 14):
-		if i in livres_bloco:
-			continue
-		var tp: String = plano[i]["tipo"]
-		if tp in COSTELA_OK:
-			cand_costela.append(i)
-		if tp in FIGURA_OK:
-			cand_figura.append(i)
-		if tp in VOZ_OK:
-			cand_voz.append(i)
-	_embaralhar(cand_costela, rng)
-	for i in mini(4, cand_costela.size()):
-		plano[cand_costela[i]]["costela"] = true
-	_embaralhar(cand_figura, rng)
-	var f := 0
-	for i in cand_figura:
-		if f >= 4:
-			break
-		if plano[i]["costela"]:
-			continue
-		plano[i]["figura"] = true
-		f += 1
-	_embaralhar(cand_voz, rng)
-	var v := 0
-	for i in cand_voz:
-		if v >= 3:
-			break
-		if plano[i]["costela"] or plano[i]["figura"]:
-			continue
-		plano[i]["voz_ambiente"] = true
-		v += 1
+		var e: Dictionary = PLANO[i]
+		var am: String = e.get("ameaca", "")
+		plano.append({"tipo": e["tipo"], "idx": i, "sala": PRIMEIRA + i, "ultimo": 96 + (i - 15) if i >= 15 and i <= 17 else (99 if i == 18 else 0),
+			"costela": am == "costela", "figura": am == "figura", "voz_ambiente": am == "voz",
+			"voz_certa": e.get("voz_certa", true), "lado": e.get("lado", 1), "vel_figura": e.get("vel_figura", 2.0)})
 	# transformações (as salas se encadeiam em linha reta; a escada muda o `y`)
 	var t := Transform3D.IDENTITY
 	var w_prev: float = SalasGd.DIMS["escada"]["w"]
@@ -182,29 +155,6 @@ func _gerar_plano() -> void:
 		plano[i]["w_prev"] = 3.6 if i == 0 else w_prev
 		t = t * Transform3D(Basis(), Vector3(0, dim["dy"], -dim["L"] - T))
 		w_prev = dim["w"]
-
-
-func _tipos_validos(tipos: Array) -> bool:
-	if tipos[0] == "escada" or tipos[0] == "bifurcacao":
-		return false
-	for i in tipos.size() - 1:
-		if tipos[i] == "bifurcacao" and tipos[i + 1] == "bifurcacao":
-			return false
-		if tipos[i] == tipos[i + 1]:
-			return false
-	# a bifurcação não fica colada na escada (a escada desce e esconde o fundo da sala)
-	for i in tipos.size():
-		if tipos[i] == "bifurcacao" and ((i > 0 and tipos[i - 1] == "escada") or (i < tipos.size() - 1 and tipos[i + 1] == "escada")):
-			return false
-	return true
-
-
-func _embaralhar(a: Array, rng: RandomNumberGenerator) -> void:
-	for i in range(a.size() - 1, 0, -1):
-		var j := rng.randi_range(0, i)
-		var tmp = a[i]
-		a[i] = a[j]
-		a[j] = tmp
 
 
 func nivel_da_sala(sala: int) -> int:
@@ -251,7 +201,10 @@ func _aplicar_agua() -> void:
 
 func _agua_y_local(c) -> float:
 	var minimo: float = 0.14 if c.tipo == "alagado" else 0.0
-	return c.base_agua + maxf(prof, minimo)
+	var p := prof
+	if c.idx >= 16:         # salas 97-99 no disco sem data: a água cai ao tornozelo (e segue espelho)
+		p = lerpf(prof, minf(prof, PROF_AGUA[1]), _sd)
+	return c.base_agua + maxf(p, minimo)
 
 
 func _ajustar_agua_sala(c) -> void:
@@ -278,7 +231,7 @@ func _carregar_sala(i: int) -> void:
 	c.tipo = d["tipo"]
 	c.idx = i
 	c.sala = d["sala"]
-	c.rng.seed = semente * 131 + i
+	c.rng.seed = PRIMEIRA + i              # decoração igual em toda partida
 	c.w_prev = d["w_prev"]
 	c.ultimo = d["ultimo"]
 	c.com_costela = d["costela"]
@@ -528,14 +481,79 @@ func _physics_process(dt: float) -> void:
 	var pos := player.global_position
 	_verificar_sala(pos)
 	_lentidao_da_agua(pos, dt)
+	if idx_atual >= 15 and GameState.atencao > 0.0:
+		GameState.definir_atencao(0.0)       # salas 96-99 (último dia): olhar os slides não solta a Figura
 	_voz_t -= dt
 	if _voz_t <= 0.0:
-		_voz_t = randf_range(5.5, 9.0)
+		_voz_t = randf_range(7.0, 11.0)
 		_chamar_voz()
+	_sustos(dt)
 	_pistas_t -= dt
 	if _pistas_t <= 0.0:
 		_pistas_t = 0.2
 		_checar_pistas()
+
+
+## Sustos que não matam (creatures/susto.gd), em escalada e uma vez por partida: J1 85 vulto de criança, J2 86 a Figura
+## sobe da água, J3 88 a Figura atrás de quem desliga o telefone, J4 91 apagão na escada, J5 99 a Figura cai do escuro.
+## As salas 95 a 98 não têm susto (contraste); a 94 já tem a perseguição.
+func _sustos(dt: float) -> void:
+	if not ameacas_ligadas or idx_atual < 0 or not salas.has(idx_atual) or player == null:
+		return
+	var c = salas[idx_atual]
+	var l: Vector3 = c.raiz.to_local(player.global_position)
+	match idx_atual:
+		4:      # 85: no meio da sala a porta de trás bate, a luz apaga 0,4 s e volta com um vulto de criança a 2 m
+			if l.z < -c.L * 0.5:
+				Susto.disparar(self, "porao_j1", {"apagar": 0.4, "luzes": c.luzes, "sfx_antes": "porta", "silhueta": true,
+					"frente": 2.0, "duracao": 0.5, "sfx": "sussurro", "volume_db": 2.0, "pulso": 0.6, "tranco": 0.3, "flash": false})
+		5:      # 86: com a água subindo, rosto e mãos surgem a ~1,5 m e afundam
+			if l.z < -3.0 and prof > 0.03 and not Susto.ja_aconteceu("porao_j2"):
+				var fr := -player.camera.global_transform.basis.z
+				fr.y = 0.0
+				var p := player.global_position + fr.normalized() * 1.5
+				p.y = c.raiz.global_position.y + _agua_y_local(c)
+				Susto.disparar(self, "porao_j2", {"pos": p, "emergir": true, "escala": 1.5, "duracao": 0.9})
+		7:
+			_susto_telefone(c, dt)
+		10:     # 91: no meio da descida as tochas apagam 1,5 s e voltam com a Figura a 2 m, nos degraus
+			if l.z < -5.0 and l.z > -c.L + 2.0 and not Susto.ja_aconteceu("porao_j4"):
+				var zf := l.z - 2.0
+				var pf: Vector3 = c.raiz.to_global(Vector3(clampf(l.x, -0.8, 0.8), c.piso_fn.call(zf) + 0.05, zf))
+				Susto.disparar(self, "porao_j4", {"apagar": 1.5, "luzes": c.luzes, "pos": pf, "duracao": 0.7, "escala": 1.8})
+		18:
+			if l.z < -c.L + 6.5 and not GameState.flag("porao_fala_f"):
+				GameState.set_flag("porao_fala_f", true)
+				_final_99()
+
+
+## J3 (88): depois que a ligação termina, 2 s de silêncio; quando a câmera vira para a entrada a Figura está a 1 m.
+## Se ele não virar em 8 s, ela aparece ao lado, no limite da visão.
+func _susto_telefone(c, dt: float) -> void:
+	if _j3_estado == 0 or Susto.ja_aconteceu("porao_j3"):
+		return
+	_j3_t += dt
+	if _j3_estado == 1:
+		if _j3_t >= 2.0:
+			_j3_estado = 2
+			_j3_t = 0.0
+		return
+	var para_entrada: Vector3 = c.raiz.global_transform.basis.z       # +z local = de volta à porta de entrada
+	var olhar := -player.camera.global_transform.basis.z
+	if olhar.dot(para_entrada) > 0.5:
+		_j3_estado = 0
+		Susto.disparar(self, "porao_j3", {"angulo": 0.0, "frente": 1.2, "duracao": 0.7, "volume_db": 3.0, "escala": 1.3})
+	elif _j3_t >= 8.0:
+		_j3_estado = 0
+		Susto.disparar(self, "porao_j3", {"angulo": 75.0, "frente": 1.6, "duracao": 0.7, "volume_db": 3.0, "escala": 1.4})
+
+
+## J5 (99): perto do topo da escada a Figura despenca do escuro, colada na câmera; depois o silêncio, a fala F e o ar fresco.
+func _final_99() -> void:
+	Susto.disparar(self, "porao_j5", {"frente": 0.85, "cair": true, "duracao": 0.7, "volume_db": 6.0, "pulso": 0.6, "tranco": 1.6, "escala": 1.3})
+	await get_tree().create_timer(2.6, false).timeout
+	if not _saindo and not morrendo:
+		Guia.falar("sistema", ["Fim da área de visitação."])
 
 
 func _process(dt: float) -> void:
@@ -621,9 +639,36 @@ func _ao_entrar_sala(i: int, imediato := false) -> void:
 		nivel_agua = novo
 		prof = PROF_AGUA[novo]
 	_preparar_ameacas(i)
+	_dica_visor(i)
+	_falar_do_sistema(i)
 	_voz_t = minf(_voz_t, 3.0)
 	_tel_t = 1.0
 	sala_entrada.emit(i)
+
+
+## Uma vez só: avisa que as marcas escondidas do porão aparecem pelo Visor (1ª sala com pista ou voz, ou a 82).
+func _dica_visor(i: int) -> void:
+	if i < 1 or GameState.flag("porao_dica_visor") or not salas.has(i) or not _tem_disco_visor():
+		return
+	var c = salas[i]
+	if i == 1 or not c.pistas.is_empty() or not c.voz.is_empty():
+		GameState.set_flag("porao_dica_visor", true)
+		_mostrar_legenda("Pela lente do Visor (Q), o porão mostra o que esconde.", 4.0)
+
+
+## Fala da prefeitura (uma vez, sem travar o jogador): `FALAS` indexa pela sala (idx).
+func _falar_do_sistema(i: int) -> void:
+	if not FALAS.has(i):
+		return
+	var f: Array = FALAS[i]
+	if GameState.flag(f[0]):
+		return
+	GameState.set_flag(f[0], true)
+	Guia.falar("sistema", f[1])
+
+
+func _tem_disco_visor() -> bool:
+	return bool(GameState.flag("tem_visor"))
 
 
 func _fechar_porta(i: int, imediato := false) -> void:
@@ -691,9 +736,7 @@ func profundidade_no_jogador(pos: Vector3) -> float:
 func _lentidao_da_agua(pos: Vector3, dt: float) -> void:
 	var f := 1.0
 	var d := profundidade_no_jogador(pos)
-	if GameState.epoca == GameState.Epoca.ESEMDATA:
-		d = 0.0                      # no slide do último dia a água ainda não subiu (ou é só uma imagem)
-	if d > 0.0:
+	if GameState.epoca != GameState.Epoca.ESEMDATA and d > 0.0:       # no slide do último dia a água não atrapalha
 		f = clampf(1.0 - d * 0.6, 0.42, 1.0)
 	_fator_agua = f
 	if _tem_ultima and f < 0.999:
@@ -724,7 +767,11 @@ func _chamar_voz() -> void:
 		return
 	var pos: Vector3 = c.raiz.to_global(c.voz["pos"])
 	Audio.sfx_3d("crianca_ei", pos, 2.0)
-	_mostrar_legenda("ei… aqui…")
+	var k := randi() % VOZES.size()
+	if k == _voz_ult:
+		k = (k + 1) % VOZES.size()
+	_voz_ult = k
+	_mostrar_legenda(VOZES[k], 2.4, 0)
 
 
 func _hud_proprio() -> void:
@@ -754,7 +801,13 @@ func _hud_proprio() -> void:
 	cam.add_child(_legenda)
 
 
-func _mostrar_legenda(texto: String, dur := 2.4) -> void:
+## `prio`: 0 = sussurro, 1 = aviso importante. Uma legenda de prioridade menor não apaga uma maior que ainda aparece.
+func _mostrar_legenda(texto: String, dur := 2.4, prio := 1) -> void:
+	var agora := Time.get_ticks_msec() / 1000.0
+	if prio < _prio_legenda and agora < _legenda_fim:
+		return
+	_prio_legenda = prio
+	_legenda_fim = agora + dur + 1.0
 	_legenda.text = texto
 	if _tween_legenda and _tween_legenda.is_valid():
 		_tween_legenda.kill()
@@ -806,6 +859,8 @@ func _atender_telefone(_p: Node, c) -> void:
 	else:
 		await Guia.falar("???", linhas, true)
 	_registrar_pista("telefone")
+	_j3_estado = 1
+	_j3_t = 0.0
 
 
 func _pegar_disco(_p: Node, c) -> void:
@@ -825,9 +880,12 @@ func _pegar_disco(_p: Node, c) -> void:
 		if is_instance_valid(it) and it.name == "InteragivelDisco":
 			it.queue_free()
 	_mostrar_legenda("Um disco sem data. Segure Q.", 4.0)
-	# a grade da sala 96 sobe
+	# a grade da sala 96 sobe (e a legenda avisa, depois da primeira)
 	if salas.has(15):
 		_abrir_porta(15)
+		get_tree().create_timer(5.2, false).timeout.connect(func():
+			if not _saindo and not morrendo:
+				_mostrar_legenda("A grade se abriu.", 2.5))
 	disco_pego.emit()
 
 
@@ -878,7 +936,7 @@ func _preparar_ameacas(i: int) -> void:
 	if d["figura"]:
 		var p: Vector3 = c.raiz.to_global(c.pontos["figura"])
 		figura.reiniciar(p, true)
-		figura.velocidade = 2.0
+		figura.velocidade = float(d.get("vel_figura", 2.0))
 
 
 ## Onde a Figura reaparece depois de cercada: atrás do jogador (do lado da entrada), a ~9 m.
@@ -896,6 +954,8 @@ func _reaparecer_figura(_f: Node) -> Vector3:
 
 ## O Visor estourou a atenção (visita 5): a Figura atravessa de verdade e persegue.
 func _on_figura_atravessou(_visita: int) -> void:
+	if _saindo or idx_atual >= 15:
+		return
 	if idx_atual < 0 or not salas.has(idx_atual) or not is_instance_valid(player):
 		return
 	var c = salas[idx_atual]
@@ -914,7 +974,7 @@ func _on_figura_atravessou(_visita: int) -> void:
 # ============================================================================ afogamento, morte e checkpoint
 ## A bifurcação errada: a água funda. Sem gráfico: a tela escurece, a câmera afunda e a morte segue o caminho normal.
 func _afogar() -> void:
-	if afogando or morrendo:
+	if afogando or morrendo or _saindo:
 		return
 	afogando = true
 	player.pode_mover = false
@@ -929,7 +989,7 @@ func _afogar() -> void:
 
 
 func ao_morrer() -> void:
-	if morrendo:
+	if morrendo or _saindo:
 		return
 	morrendo = true
 	if player:
@@ -990,6 +1050,10 @@ func _ao_mudar_epoca(e: int) -> void:
 	if _tween_env and _tween_env.is_valid():
 		_tween_env.kill()
 	_tween_env = create_tween().set_parallel()
+	if _tween_sd and _tween_sd.is_valid():
+		_tween_sd.kill()
+	_tween_sd = create_tween()
+	_tween_sd.tween_property(self, "_sd", 1.0 if sem_data else 0.0, 0.5 if sem_data else 0.4)
 	if sem_data:
 		# o último dia: fim de tarde dourado, água parada como um espelho
 		_tween_env.tween_property(env, "ambient_light_color", Color(0.75, 0.50, 0.34), 0.5)
@@ -1013,9 +1077,20 @@ func _ao_mudar_epoca(e: int) -> void:
 
 
 func _ir_ao_braco_morto() -> void:
-	if morrendo or afogando:
+	if _saindo or morrendo or afogando:
 		return
+	_saindo = true
+	# daqui em diante nada mata o jogador nem solta a Figura
+	figura.esconder()
+	if costela:
+		costela.ativa = false
+	ameacas_ligadas = false
+	player.velocity = Vector3.ZERO
+	player.pode_mover = false
 	saiu_do_porao.emit()
+	_mostrar_legenda("(ar fresco. lá fora, a água corre.)", 2.0)
+	Audio.ambiente("", -8.0, 2.0)
+	await get_tree().create_timer(2.0, false).timeout
 	GameState.entrar_sala(100)
 	var cena := "res://world/niveis/braco_morto.tscn"
 	if not ResourceLoader.exists(cena):

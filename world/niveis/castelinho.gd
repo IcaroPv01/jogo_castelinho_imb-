@@ -167,6 +167,7 @@ var _saindo_porao := false
 var _porta_falando := false
 var _figura_v4: FiguraBranca          # perseguidora criada sob demanda quando o Visor estoura (visita 4)
 var _visor_v4: Visor
+var _visor: Visor
 var _persegue_id := 0                 # invalida o temporizador de uma perseguição anterior
 var persegue_s := 12.0           # s que a Figura persegue na visita 4 (o Visor fica bloqueado por 10 s)
 var _painel_solto: Node3D
@@ -204,6 +205,7 @@ func iniciar(p: Player) -> void:
 	player = p
 	GameState.flags.erase("saindo_para_barra")      # saves antigos podem ter a flag presa
 	var visor := Visor.instalar(self)
+	_visor = visor
 	if visita == 4 and visor and visor.has_signal("figura_atravessou") and not visor.figura_atravessou.is_connected(_on_figura_atravessou):
 		visor.figura_atravessou.connect(_on_figura_atravessou)
 		_visor_v4 = visor
@@ -1948,6 +1950,7 @@ func _evento(base: int) -> void:
 		12: _evt_sala12()
 		13: _evt_sala13()
 		17: _evt_sala17()
+		18: _evt_sala18()
 		19: _evt_sala19()
 		21: _evt_sala21()
 		22: _evt_sala22()
@@ -2275,7 +2278,67 @@ func _evt_sala21() -> void:
 
 
 func _evt_sala22() -> void:
-	pass
+	# Visita 4, sala 22 (cantinho escuro ao lado do quiz final): as luzes piscam e a Figura está logo ali, de lado.
+	if visita == 4:
+		_susto_castelo("v4_sala22", GameState.sala_atual, 1.2,
+			{"apagar": 0.8, "sfx_antes": "clique", "angulo": 35.0, "frente": 2.3, "duracao": 0.6})
+
+
+## Visita 3, sala 18 (hall do andar de cima, trecho quieto): a lanterna e as lâmpadas falham e a Figura está no facho.
+func _evt_sala18() -> void:
+	if visita == 3:
+		_susto_castelo("v3_sala18", GameState.sala_atual, 1.5,
+			{"apagar": 0.5, "sfx_antes": "clique", "angulo": 0.0, "frente": 2.4, "duracao": 0.6, "lanterna": true})
+
+
+## Susto sem morte (creatures/susto.gd) só nas visitas 3 e 4 (a 1 e a 2 ficam sem). Espera `atraso` s e só dispara se
+## o jogador ainda está na sala; adia (até ~10 s) enquanto houver fala do Guia, UI aberta, Visor ligado ou Figura
+## perseguindo. Uma vez por partida (flag do Susto).
+func _susto_castelo(chave: String, sala: int, atraso: float, o: Dictionary) -> void:
+	if visita < 3 or Susto.ja_aconteceu(chave):
+		return
+	var espera := atraso
+	var girar: bool = o.get("girar", false)       # espera o jogador virar >120° (como o J3 do porão); 10 s e vai de canto
+	var olhar0 := Vector3.ZERO
+	if girar and player and is_instance_valid(player):
+		olhar0 = player.direcao_olhar()
+		olhar0.y = 0.0
+		olhar0 = olhar0.normalized()
+	var decorrido := 0.0
+	for _i in (110 if girar else 20):
+		await get_tree().create_timer(espera, false).timeout
+		decorrido += espera
+		espera = 0.1 if girar else 0.5
+		if not is_inside_tree() or player == null or not is_instance_valid(player) or GameState.sala_atual != sala:
+			return
+		if _saindo_barra or _saindo_visita or _saindo_ato2 or _saindo_porao or Susto.ja_aconteceu(chave):
+			return
+		var perseguindo: bool = _figura_v4 != null and is_instance_valid(_figura_v4) and _figura_v4.visible
+		if Guia.ocupado() or GameState.flag("ui_aberta") or (_visor and _visor.ativo) or perseguindo:
+			continue
+		var op := o.duplicate()
+		op.erase("girar")
+		if girar:
+			var agora: Vector3 = player.direcao_olhar()
+			agora.y = 0.0
+			if agora.length() > 0.01 and olhar0.dot(agora.normalized()) < cos(deg_to_rad(120.0)):
+				op["angulo"] = 0.0
+				op["frente"] = 1.2
+			elif decorrido >= 10.0:
+				op["angulo"] = 40.0
+				op["frente"] = 1.8
+			else:
+				continue
+		var luzes: Array = []
+		for l in _luzes:
+			if is_instance_valid(l["no"]):
+				luzes.append(l["no"])
+		if op.erase("lanterna") and player.lanterna and GameState.flag("tem_lanterna"):
+			luzes.append(player.lanterna)
+		op["luzes"] = luzes
+		if Susto.disparar(self, chave, op):
+			GameState.somar("sustos")
+		return
 
 
 func _evt_sala23() -> void:
@@ -2309,6 +2372,10 @@ func _on_painel_lido(id: String) -> void:
 	match id.get_slice("_v", 0):
 		"p06":
 			_abrir_porta_entrada(false)
+		"p11":
+			# Visita 4: depois de ler o painel, ao virar mais de 120°, a Figura está NA FRENTE a 1,2 m (10 s sem virar: no canto da visão) (sala 11, sem outro evento)
+			if visita == 4 and GameState.sala_atual == _global(11):
+				_susto_castelo("v4_painel11", _global(11), 1.8, {"girar": true, "duracao": 0.7})
 		"quiz_final":
 			_diploma()
 
