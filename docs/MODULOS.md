@@ -14,7 +14,7 @@ Decisões do Icaro (07/10/2026):
 | 0 | Fundação | `CLAUDE.md`, este mapa, instalador do Godot | `CLAUDE.md`, `docs/MODULOS.md`, `tools/instalar_godot.sh` | feito |
 | 1 | QA e bugs | Varredura das 100 salas, corrigir o que o Icaro e os testes acharem | `tests/`, `docs/BUGS.md` (correções pontuais em qualquer arquivo) | varredura automática feita (B15–B24); reabre quando o Icaro jogar |
 | 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | parte 1 feita (bugs, escada 2019, Figura na V4, caça do disco 1950); caça dos discos 1967–sem data espera o Icaro jogar a do 1950 |
-| 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | na fila |
+| 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | feito (PR #11): ritmo, quiz V2–V4, bugs, fontes; reabre quando o Icaro jogar |
 | 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | na fila |
 | 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | na fila |
 | 6 | Áudio | Jingle, ambientes e sustos (ninguém ouviu ainda: precisa do ouvido do Icaro) | `autoload/audio.gd`, `tools/gerar_audio.py`, `assets/audio/` | na fila |
@@ -44,6 +44,29 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 3: Visitas 1 a 4 (08/10/2026)
+
+- Revisão de ritmo (Sonnet, relatório resumido abaixo) e correções. O Icaro aprovou todas as recomendações.
+- **Quiz:** V1 normal; V2 "Quiz final: encerrado" (`quiz_final_v2` = `p22_v2`; diploma TITO, apagão e balde seguem);
+  V3 `quiz_final_v3` corrompido (3 perguntas sobre o Tito, opção `qualquer` em `painel_ui.gd`: toda resposta é
+  "CORRETO!", sem selo) e "Diploma indisponível. Visitante não identificado."; V4 sem quiz (painel riscado, desenho_7).
+- **Ritmo:** V2 termina mais forte que o meio (sandália junto do balde, apagão vai a 0,5 e volta à curva; a Barra caiu
+  de 0,5 para 0,35). V3 mais guiada (falas na sala 10, armadura só depois do Ato II) e com fim: a folha das marcas de
+  altura "TITO 6…9" abre ao atravessar a porta de 1975, fala engasgada, fade para a V4. jingle_2 depois do Ato II.
+  V4 com dois acontecimentos fixos: Tito de costas no fim do corredor (sala 74, some quando encarado) e pegadas
+  pequenas molhadas até o mural (sala 77). Dicas do disco 2019 sem repetir (sala 8: painel solto; sala 21: vaga).
+- **Bugs:** lanterna da V3 gravada antes da fala do Quico; telefone da V2 toca de novo até atender; balde e sandália
+  ficam no trono na V3/V4; semente 3 (criança com balde na margem do mural) pintada; "Quase lá" e "pela porta" sem repetir.
+- **Fontes** (`docs/pesquisa/historia_imbe.md`, "Reconfirmação"): 1934 só pela Prefeitura de Tramandaí (mantida a
+  atribuição); "16 mil/80 mil" é da Vitruvius de 2007 (P12 diz "em 2007"; P18 sem os 80 mil). P15_v2, P16_v2 e P19_v2
+  mais precisos. Tom de P14, P15, P16, P19, P21 e P23 conferido: ok.
+- **Só validado por teste automático, não a olho:** o beat final da V3 e as duas cenas da V4. Vale captura no módulo 7.
+- **Para o módulo 4 (Porão):** a V4 entra no porão só pela escada de 2019 (`_descer_porao`), com corrupção ~0,65 e sem
+  música; o jogador chega já tendo visto o Tito de costas, as pegadas molhadas e o balde com a sandália. O porão deve
+  subir a partir daí, sem repetir esses sustos. A sala 80 diz só "Ouça. A água desce por aqui." (não cita mais o
+  Braço Morto). Ainda pendente do módulo 1: água das salas 97–99 com o disco "sem data".
+- Pendente para o Icaro jogar: se o "CORRETO!" da V3 assusta ou soa bobo; se a V4 ficou pesada o bastante.
 
 ### Módulo 2: Visor do Tempo, parte 1 (08/10/2026)
 

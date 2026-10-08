@@ -2453,7 +2453,7 @@ func _apagao_e_balde() -> void:
 	GameState.definir_corruption_manual(-1.0)
 	player.pode_mover = true
 	await get_tree().create_timer(0.8).timeout
-	await Guia.falar("bentinho", ["Hum... alguém deixou um balde no trono.", "Deve ser de alguma criança da visita. Duas, talvez. Vamos sair!"])
+	await Guia.falar("bentinho", ["Hum... alguém deixou um balde no trono.", "Deve ser de alguma criança da visita. Esqueceu a sandália também.", "Vamos sair!"])
 
 
 func _usar_porta_saida(_p: Node) -> void:
