@@ -203,6 +203,24 @@
 		"anfitriao": "sistema",
 		"seco": true
 	},
+	"quiz_final_v2": {
+		"alias": "p22_v2"
+	},
+	"quiz_final_v3": {
+		"titulo": "Quiz final da Visita!",
+		"texto": "Chegou a hora do desafio final! São 3 perguntas sobre tudo o que você aprendeu na visita. Todas as respostas estão corretas. Respire fundo... e boa sorte!",
+		"fonte": "",
+		"icone": "interrogacao",
+		"anfitriao": "bentinho",
+		"quiz": [
+			{"pergunta": "Quantos anos o Tito tinha na última marca da parede?", "opcoes": ["6 anos", "9 anos", "Não há marca nenhuma"], "correta": 1, "qualquer": true, "explicacao": "Nove."},
+			{"pergunta": "De que cor era o balde do Tito?", "opcoes": ["Azul", "Vermelho", "Que balde?"], "correta": 1, "qualquer": true, "explicacao": "Você sabia."},
+			{"pergunta": "Em que ano o Tito desapareceu?", "opcoes": ["1967", "1975", "O Tito não desapareceu"], "correta": 0, "qualquer": true, "explicacao": "Diploma a caminho."}
+		]
+	},
+	"quiz_final_v4": {
+		"alias": "p22_v4"
+	},
 	"quiz_final": {
 		"titulo": "Quiz final da Visita!",
 		"texto": "Chegou a hora do desafio final! São 3 perguntas sobre tudo o que você aprendeu na visita. Acertando, você ganha selos e o diploma da Visita Guiada! Respire fundo... e boa sorte!",
@@ -656,7 +674,7 @@
 		"anfitriao": "",
 		"seco": true,
 		"riscado": true,
-		"desenho": "desenho_6"
+		"desenho": "desenho_7"
 	},
 	"p18_v2": {
 		"titulo": "Para onde desce a água",

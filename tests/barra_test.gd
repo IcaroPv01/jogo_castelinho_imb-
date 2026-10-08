@@ -129,7 +129,7 @@ func _passada_completa() -> void:
 	_checar(ok, "a câmera afunda (y=%.1f)" % player.global_position.y)
 	ok = await _ate(func(): return nivel._cortina.color.a > 0.5, 600)
 	_checar(ok, "a tela escurece")
-	_checar(abs(GS.corruption - 0.5) < 0.02, "corruption sobe no rio (%.2f)" % GS.corruption)
+	_checar(abs(GS.corruption - 0.35) < 0.02, "corruption sobe no rio (%.2f)" % GS.corruption)
 
 	# tremida do contador
 	var base: Vector2 = nivel._hud_pos

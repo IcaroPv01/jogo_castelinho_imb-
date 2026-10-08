@@ -343,7 +343,7 @@ func _construir() -> void:
 
 
 func _rotulo_painel() -> String:
-	if id == "quiz_final":
+	if id.begins_with("quiz_final"):
 		return "QUIZ FINAL"
 	if str(dados_painel.get("tipo", "")) == "imagem":
 		return {"procura_se": "CARTAZ", "marcas_altura": "MARCAS"}.get(id, "DESENHO")
@@ -652,15 +652,17 @@ func responder(indice: int) -> bool:
 	if not _em_quiz or _respondida or _q >= _perguntas.size():
 		return false
 	var p: Dictionary = _perguntas[_q]
-	var correta := indice == int(p.get("correta", 0))
+	var qualquer := bool(p.get("qualquer", false))      # quiz corrompido da V3: toda resposta é "CORRETO!"
+	var correta := qualquer or indice == int(p.get("correta", 0))
 	var botao: BotaoGel = _lista_botoes[indice] if indice >= 0 and indice < _lista_botoes.size() else null
 	quiz_respondido.emit(id, correta)
 	if correta:
 		_respondida = true
 		Audio.sfx("acerto")
-		GameState.somar("quiz_acertos")
+		if not qualquer:
+			GameState.somar("quiz_acertos")
 		var selo := str(p.get("selo", ""))
-		if selo != "":
+		if selo != "" and not qualquer:
 			GameState.ganhar_selo(selo)
 			get_tree().create_timer(0.35).timeout.connect(func(): Audio.sfx("selo", -3.0))
 		for i in _lista_botoes.size():
@@ -668,7 +670,7 @@ func responder(indice: int) -> bool:
 			b.disabled = i != indice
 			if i == indice:
 				b.definir_cor(_cor(Flash.VERDE))
-		var frase: String = FRASES_ACERTO.pick_random()
+		var frase: String = "CORRETO!" if qualquer else FRASES_ACERTO.pick_random()
 		var extra := str(p.get("explicacao", ""))
 		_feedback.text = Flash.corromper(frase + (" " + extra if extra != "" else ""), _corr)
 		_feedback.add_theme_color_override("font_color", _cor(Color("1C7A2B")))

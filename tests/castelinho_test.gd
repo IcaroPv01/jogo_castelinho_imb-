@@ -368,6 +368,8 @@ func _visitas() -> void:
 	nivel._quico_da_lanterna()
 	_checar(GameState.flag("tem_lanterna"), "V3: lanterna gravada antes da fala do Quico")
 	_checar(nivel._balde != null, "V3: o balde vermelho do apagão continua no trono")
+	_checar(nivel._balde != null and nivel._balde.get_node_or_null("SandaliaDeCrianca") != null, "V3: a sandália continua junto do balde")
+	_checar(nivel._paineis.has("quiz_final") and nivel._paineis["quiz_final"].id == "quiz_final_v3", "V3: quiz final corrompido no lugar do quiz")
 	_checar(nivel.find_child("Cartaz_p01", true, false) != null, "V3: cartazes de PROCURA-SE sobre os painéis")
 	_checar(nivel.find_child("FitaZebrada", true, false) != null, "V3: saída com fita zebrada e placa EM REFORMA")
 	_checar(nivel._bloqueio_escada != null and _raio_h(Vector3(-14.0, 1.2, -19.55), Vector3(-11.5, 1.2, -19.55)), "V3: escada interditada até o Ato II")
@@ -435,7 +437,10 @@ func _visitas() -> void:
 	var p01: Node = nivel._paineis["p01"]
 	var dados: Dictionary = load("res://ui/painel_ui.gd").carregar_dados()
 	_checar(p01.id == ("desenho_2" if dados.has("desenho_2") else "p01"), "V4: painéis mostram os desenhos do Tito (%s)" % p01.id)
-	_checar(not nivel._paineis.has("quiz_final") and not nivel._paineis.has("p23"), "V4: sem quiz nem p23")
+	_checar(nivel._pegadas_v4 != null, "V4: pegadas molhadas da Sala do Pescador existem")
+	nivel._evt_tito_corredor()
+	_checar(nivel._tito_corredor != null, "V4: Tito de costas aparece no corredor")
+	_checar(nivel._paineis.has("quiz_final") and nivel._paineis["quiz_final"].id == "quiz_final_v4" and not nivel._paineis.has("p23"), "V4: quiz final riscado (sem quiz) e sem p23")
 	_checar(nivel._painel_solto != null and not GameState.discos.has(GameState.Epoca.E2019), "V4: painel solto na Sala dos Povos; ainda sem o disco 2019")
 	_checar(nivel._bloqueio_escada != null, "V4: escada de cima interditada")
 	_checar(nivel._porta_porao != null and nivel.find_child("PortaZebradaDoHall", true, false) != null, "V4: porta zebrada no hall")
@@ -599,6 +604,9 @@ func _loop_para(prox: int, _ja_diploma := false, pelo_corredor := false) -> void
 	while n < 2500:
 		n += 1
 		_guia().cancelar()
+		var pui = load("res://ui/painel_ui.gd").atual      # beat final da V3: as marcas de altura
+		if pui != null and is_instance_valid(pui):
+			pui.fechar()
 		for no in root.get_children():
 			if no.get_script() and no.get_script().get_global_name() == "VolteSempre":
 				visto_placa = true

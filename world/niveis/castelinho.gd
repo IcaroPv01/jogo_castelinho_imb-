@@ -152,6 +152,9 @@ var _passaporte_falando := false
 var _desenhos := {}                   # nome -> nó
 var _tito: Node3D                     # Tito vivo (E1967)
 var _tito_visor: Node3D               # Tito "no canto da sala", só dentro do Visor (visitas 3 e 4)
+var _tito_corredor: Node3D            # visita 4: Tito de costas no fim do corredor; some quando o jogador o encara
+var _tito_corredor_olhado := 0.0
+var _pegadas_v4: Node3D               # visita 4: pegadas pequenas e molhadas até o mural (Sala do Pescador)
 var _t_apito := 0.0
 var _t_goteira := 4.0
 var _armadura_estado := 0             # 0 = nunca olhou, 1 = olhou, 2 = desviou o olhar, 3 = apareceu
@@ -897,8 +900,8 @@ func _montar_paineis() -> void:
 	_painel("p19", Vector3(-7.78, 4.7, -25.0), 90.0)
 	_painel("p20", Vector3(-15.6, 1.5, -23.04), 0.0)
 	_painel("p21", Vector3(-15.4, 1.5, -23.56), 180.0)
-	if visita <= 2:
-		_painel("quiz_final", Vector3(-16.56, 1.5, -28.3), 90.0)
+	# o quiz final existe nas 4 visitas: V1 normal, V2 "encerrado", V3 corrompido ("tudo correto"), V4 riscado com desenho
+	_painel("quiz_final", Vector3(-16.56, 1.5, -28.3), 90.0)
 	if visita <= 3:
 		_painel("p23", Vector3(-8.64, 1.5, -24.6), -90.0, [E2020, E2019])
 	if visita == 3:
@@ -1119,6 +1122,7 @@ func _montar_visita() -> void:
 			_montar_pedestal_1975()
 			_montar_bloqueio_escada()
 		4:
+			_montar_pegadas_v4()
 			_montar_bloqueio_escada()
 			_montar_porta_porao()
 			_montar_escada_2019()
@@ -1489,6 +1493,17 @@ func _criar_balde_e_desenho3() -> void:
 	_balde.position = Vector3(-9.2, 0.7, -28.2 if visita == 2 else -27.0)
 	add_child(_balde)
 	Epocas.marcar(_balde, [E2020])
+	# a sandália da Barra, junto do balde (só o objeto): duas coisas de criança no mesmo trono
+	var sandalia := Node3D.new()
+	sandalia.name = "SandaliaDeCrianca"
+	sandalia.position = Vector3(0.02, 0.1, 0.24)
+	sandalia.rotation_degrees = Vector3(0, 35, 8)
+	_balde.add_child(sandalia)
+	var sola := Castelinho.mat_cor(Color(0.3, 0.52, 0.9))
+	var tira := Castelinho.mat_cor(Color(0.95, 0.8, 0.2))
+	Construtor.caixa(sandalia, Vector3(0.09, 0.025, 0.2), Vector3.ZERO, sola, false)
+	Construtor.caixa(sandalia, Vector3(0.09, 0.012, 0.03), Vector3(0, 0.02, -0.02), tira, false)
+	Construtor.caixa(sandalia, Vector3(0.035, 0.012, 0.09), Vector3(0, 0.02, 0.03), tira, false)
 	var d3 := TitoCastelinho.folha(self, "desenho_3", Vector3(-16.55, 1.5, -26.0), 90.0, 0.5, 2)
 	_limitar_alcance(d3, 9.0)
 	Epocas.marcar(d3, [E2020])
@@ -1831,6 +1846,8 @@ func _process(dt: float) -> void:
 		_atualizar_janelas()
 	if visita >= 3:
 		_olhos_do_pinguim()
+	if _tito_corredor:
+		_atualizar_tito_corredor(dt)
 	if _tito and _tito.visible:
 		TitoCastelinho.animar(_tito, _t, player.camera.global_position)
 	if _tito_visor and _tito_visor.visible:
@@ -1877,6 +1894,8 @@ func _olhos_do_pinguim() -> void:
 func _atualizar_armadura() -> void:
 	if player == null or visita != 3 or _armadura_estado >= 3 or GameState.sala_atual < _global(21):
 		return
+	if not GameState.flag("v3_ato2_feito"):
+		return              # a armadura só "acorda" depois do Ato II (ordem guiada da visita 3)
 	var p := player.camera.global_position
 	var alvo := Vector3(-9.2, 1.0, -27.6)
 	var dir := alvo - p
@@ -1940,6 +1959,73 @@ func _evento(base: int) -> void:
 func _mover_tito_visor(base: int) -> void:
 	if _tito_visor:
 		_tito_visor.position = _spot_tito_visor(base)
+
+
+## Visita 4, sala 74 (corredor): um menino de costas no fundo, de bermuda e balde. Quando o jogador o encara, some.
+## Só sugestão: ele não se move, não ataca e não faz nada; só deixa de estar lá.
+func _evt_tito_corredor() -> void:
+	if not _uma_vez("tito_corredor"):
+		return
+	_tito_corredor = TitoCastelinho.criar_tito()
+	_tito_corredor.name = "TitoDeCostas"
+	_tito_corredor.position = Vector3(-7.6, 0.0, -21.8)
+	_tito_corredor.rotation_degrees.y = 90.0          # olha para +x (o leste): de costas para quem chega do oeste
+	add_child(_tito_corredor)
+	Epocas.marcar(_tito_corredor, [E2020])
+	_tito_corredor_olhado = 0.0
+
+
+func _atualizar_tito_corredor(dt: float) -> void:
+	if not is_instance_valid(_tito_corredor):
+		_tito_corredor = null
+		return
+	var alvo := _tito_corredor.global_position + Vector3(0, 0.7, 0)
+	var dir := alvo - player.camera.global_position
+	var dist := dir.length()
+	var olhando: bool = dist < 10.0 and player.direcao_olhar().dot(dir.normalized()) > 0.9
+	_tito_corredor_olhado = _tito_corredor_olhado + dt if olhando else maxf(0.0, _tito_corredor_olhado - dt)
+	if _tito_corredor_olhado > 0.7 or dist < 2.0:
+		_tito_corredor.queue_free()
+		_tito_corredor = null
+		Audio.sfx("crianca_ei", -14.0)
+		Efeitos.pulso(0.3, 0.3)
+
+
+## Visita 4, Sala do Pescador (sala 77): pegadas pequenas e molhadas vindas do arco e paradas diante do mural.
+func _montar_pegadas_v4() -> void:
+	_pegadas_v4 = Node3D.new()
+	_pegadas_v4.name = "PegadasMolhadas"
+	_pegadas_v4.visible = false
+	add_child(_pegadas_v4)
+	var mt := StandardMaterial3D.new()
+	mt.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mt.albedo_color = Color(0.1, 0.16, 0.2, 0.7)
+	mt.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var ini := Vector3(-6.5, 0.025, -16.1)
+	var fim := Vector3(-8.6, 0.025, -14.85)
+	var passos := 7
+	var dirp := (fim - ini).normalized()
+	for i in passos:
+		var f := float(i) / float(passos - 1)
+		var lado := -1.0 if i % 2 == 0 else 1.0
+		var qm := QuadMesh.new()
+		qm.size = Vector2(0.075, 0.17)
+		var mi := MeshInstance3D.new()
+		mi.mesh = qm
+		mi.material_override = mt
+		mi.position = ini.lerp(fim, f) + Vector3(-dirp.z, 0, dirp.x) * 0.06 * lado
+		mi.rotation = Vector3(-PI * 0.5, atan2(-dirp.x, -dirp.z), 0)
+		mi.layers = 2
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_pegadas_v4.add_child(mi)
+	Epocas.marcar(_pegadas_v4, [E2020])
+	var it := Interagivel.new("Olhar as pegadas", Vector3(2.0, 0.6, 1.4), Callable())
+	it.position = Vector3(-7.6, 0.3, -15.5)
+	it.name = "PegadasInterativo"
+	it.acao = func(_p: Node) -> void:
+		await Guia.falar("sistema", ["Pegadas pequenas, ainda molhadas.", "Vêm da porta e param diante do mural."])
+	add_child(it)
+	Epocas.marcar(it, [E2020])
 
 
 func _evt_sala1() -> void:
@@ -2013,6 +2099,14 @@ func _evt_sala9() -> void:
 
 
 func _evt_sala10() -> void:
+	if visita == 4:
+		_evt_tito_corredor()
+		return
+	if visita == 3:
+		# ordem guiada: o corredor aponta para o Salão de Arte (a porta nova) antes de o jogador vagar pelo resto
+		if not GameState.flag("v3_ato2_feito") and _uma_vez("corredor_dica"):
+			await Guia.falar("bentinho", ["O Salão de Arte fica no fim do corredor.", "Tem uma porta lá que eu não conheço."])
+		return
 	if visita != 1 or GameState.discos.has(E1950) or _passaporte_falando:
 		return
 	_passaporte_falando = true
@@ -2099,6 +2193,12 @@ func _atender_telefone(_p: Node) -> void:
 
 
 func _evt_sala13() -> void:
+	if visita == 4 and _uma_vez("sala13"):
+		# as pegadas aparecem só agora (e uma gota cai): quem passou por aqui acabou de sair
+		if _pegadas_v4:
+			_pegadas_v4.visible = true
+			Audio.sfx_3d("goteira", _pegadas_v4.global_position + Vector3(0, 0.3, 0))
+		return
 	if visita != 2 or not _uma_vez("sala13"):
 		return
 	await Guia.falar("taina", ["Ainda bem que eu não sou pescada... né?", "Aquele mural é bonito. Dá vontade de entrar nele."])
@@ -2143,6 +2243,8 @@ func _evt_sala15() -> void:
 func _evt_sala17() -> void:
 	if visita == 3:
 		_ato2_concluido()
+		if not GameState.discos.has(E1975) and _uma_vez("dica1975"):
+			await Guia.falar("sistema", ["Algo brilha num pedestal, aqui no topo da torre."])
 
 
 func _evt_sala19() -> void:
@@ -2268,7 +2370,12 @@ func _confete(pos: Vector3) -> void:
 # ================================================================== fim da visita
 ## Diploma da visita (depois do quiz final). Visita 2: sai com o nome "TITO" já escrito, depois o apagão e o balde.
 func _diploma() -> void:
+	if visita >= 4:
+		return                  # V4: o painel do quiz é só um desenho riscado
 	if not _uma_vez("diploma"):
+		return
+	if visita == 3:
+		await _diploma_recusado()
 		return
 	if visita == 2:
 		GameState.set_flag("diploma_nome", "TITO")       # contrato com ui/diploma.gd (ver docs/PENDENCIAS.md)
@@ -2283,6 +2390,16 @@ func _diploma() -> void:
 		await _apagao_e_balde()
 		return
 	await Guia.falar("bentinho", ["Parabéns! Você concluiu a Visita Guiada!", "Agora é só sair pela porta... pela porta..."])
+
+
+## Visita 3: o quiz corrompido aceita qualquer resposta e o diploma não sai (bônus perturbador, não trava nada).
+func _diploma_recusado() -> void:
+	Audio.sfx("erro")
+	Efeitos.pulso(0.5, 0.4)
+	await Guia.falar("sistema", ["Parabéns! Diploma em emissão...", "Diploma indisponível. Visitante não identificado."])
+	await get_tree().create_timer(0.8).timeout
+	Audio.sfx("clique", -4.0, 0.8)
+	await Guia.falar("bentinho", ["Não liga. Era só uma formalidade.", "Ninguém aqui foi identificado. Nem eu."])
 
 
 func _tentar_nome_no_diploma(d: Object, nome: String) -> void:
@@ -2317,10 +2434,11 @@ func _apagao_e_balde() -> void:
 	t.tween_property(rect, "color:a", 1.0, 0.12)
 	await t.finished
 	_criar_balde_e_desenho3()
+	GameState.definir_corruption_manual(0.5)      # o apagão é o pico da visita 2 (a Barra fica em 0,35)
 	# revisão V2: no escuro, um sussurro baixinho (não um grito: é o primeiro medo, ainda é a visita 2), e a luz volta
 	# falhando (acende, apaga, acende) em vez de um fade limpo: o olho procura o que mudou
 	await get_tree().create_timer(0.9).timeout
-	Audio.sfx("sussurro", -15.0, 0.85)
+	Audio.sfx("sussurro", -10.0, 0.85)
 	await get_tree().create_timer(1.1).timeout
 	Audio.sfx("clique")
 	var t2 := create_tween()
@@ -2332,9 +2450,10 @@ func _apagao_e_balde() -> void:
 	t2.tween_property(rect, "color:a", 0.0, 0.3)
 	await t2.finished
 	camada.queue_free()
+	GameState.definir_corruption_manual(-1.0)
 	player.pode_mover = true
 	await get_tree().create_timer(0.8).timeout
-	await Guia.falar("bentinho", ["Hum... alguém deixou um balde no trono.", "Deve ser de alguma criança da visita. Vamos sair!"])
+	await Guia.falar("bentinho", ["Hum... alguém deixou um balde no trono.", "Deve ser de alguma criança da visita. Duas, talvez. Vamos sair!"])
 
 
 func _usar_porta_saida(_p: Node) -> void:
@@ -2364,13 +2483,29 @@ func _fim_de_visita() -> void:
 	_saindo_visita = true
 	var n := visita
 	GameState.set_flag("visor_travado", false)
-	GameState.comecar_visita(n + 1)
+	GameState.comecar_visita(n + 1)      # grava a visita 4 antes do beat: fechar o jogo aqui não perde o progresso
+	if n == 3:
+		await _beat_final_v3()
 	if n <= 2:
 		await _volte_sempre()
 	if n >= 3:
 		GameState.trocar_epoca(GameState.Epoca.E2020)
 	await Transicao.ir_para(GameState.CENA_CASTELINHO, "Spawn")
 	_saindo_visita = false      # só chega aqui se a troca foi recusada
+
+
+## Fim da visita 3 (atravessar a porta do corredor de 1975): as marcas de altura do Tito, "TITO 6, 7, 8, 9" e depois
+## nada, e uma última fala engasgada. Só sugestão; depois disso o fade leva à visita 4.
+func _beat_final_v3() -> void:
+	if player and is_instance_valid(player):
+		player.pode_mover = false
+	Efeitos.pulso(0.4, 0.4)
+	var ui := PainelUI.mostrar("marcas_altura")
+	if ui:
+		await ui.fechado
+	await Guia.falar_engasgado("bentinho", ["Obrigado pela visita...", "Volte sem-sem-sempre. Alguém precisa voltar."], true)
+	if player and is_instance_valid(player):
+		player.pode_mover = true
 
 
 ## A placa "Obrigado pela visita! Volte sempre!": usa VolteSempre (agente Visor/UI) se existir; senão, um plano B nosso.
