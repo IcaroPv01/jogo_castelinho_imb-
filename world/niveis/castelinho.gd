@@ -2169,7 +2169,7 @@ func _evt_sala21() -> void:
 		if GameState.discos.has(E2019):
 			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Segure Q e escolha o disco de 2019: lá ela existe."])
 		else:
-			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Falta o disco de 2019."])
+			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Falta o disco de 2019.", "Ele ficou atrás de algo solto."])
 
 
 func _evt_sala22() -> void:
