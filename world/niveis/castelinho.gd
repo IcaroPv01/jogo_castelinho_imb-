@@ -95,10 +95,10 @@ const BASES_CHECKPOINT := {1: Vector3(-23.0, 0.1, 1.5), 8: Vector3(-24.0, 0.1, -
 
 ## Visita 4: o desenho que cada painel mostra (V2 §3.4 e §5), cada vez mais perturbador ao longo do caminho.
 const V4_DESENHOS := {
-	"p01": "desenho_3", "p02": "desenho_3", "p03": "desenho_4", "p04": "desenho_4", "p05": "desenho_4", "p06": "desenho_5",
-	"p07": "desenho_5", "p08": "desenho_5", "p09": "desenho_5", "p10": "desenho_5", "p11": "desenho_5", "p12": "desenho_5",
-	"p13": "desenho_6", "p14": "desenho_6", "p15": "desenho_6", "p16": "desenho_6", "p17": "desenho_6", "p18": "desenho_6",
-	"p19": "desenho_6", "p20": "desenho_6", "p21": "desenho_6",
+	"p01": "desenho_2", "p02": "desenho_2", "p03": "desenho_3", "p04": "desenho_3", "p05": "desenho_4", "p06": "desenho_4",
+	"p07": "desenho_4", "p08": "desenho_5", "p09": "desenho_5", "p10": "desenho_5", "p11": "desenho_5", "p12": "desenho_5",
+	"p13": "desenho_6", "p14": "desenho_6", "p15": "desenho_6", "p16": "desenho_6", "p17": "desenho_6", "p18": "desenho_7",
+	"p19": "desenho_7", "p20": "desenho_7", "p21": "desenho_7",
 }
 ## Cartazes de PROCURA-SE colados por cima de painéis (visita 3 em diante).
 const CARTAZES_V3 := ["p01", "p04", "p07", "p09", "p11", "p13", "p18", "p20"]
@@ -511,7 +511,8 @@ func _ambiente_sonoro() -> void:
 		2:
 			Audio.musica("jingle")
 		3:
-			Audio.musica("jingle")
+			# depois do Ato II o jingle desafina de vez (jingle_2, roteiro §3.3); antes dele, a versão da corrupção
+			Audio.musica("jingle_2" if GameState.flag("v3_ato2_feito") else "jingle")
 		4:
 			Audio.musica("")      # quase sem música: só chuva, vento e goteiras
 
@@ -1122,6 +1123,8 @@ func _montar_visita() -> void:
 			_montar_porta_porao()
 			_montar_escada_2019()
 			_montar_desenho_oculto_2019()
+	if visita >= 3 and GameState.flag("evt_v2_apagao"):
+		_criar_balde_e_desenho3()      # o balde do fim da visita 2 não some (p21_v3 fala dele)
 	for d in _desenhos.values():
 		if d is Node3D:
 			_limitar_alcance(d, 9.0)
@@ -1481,7 +1484,9 @@ func _criar_balde_e_desenho3() -> void:
 	if _balde != null:
 		return
 	_balde = TitoCastelinho.criar_balde(1.4)
-	_balde.position = Vector3(-9.2, 0.7, -28.2)        # sobre o trono do fundo (z -28,2)
+	# V2: sobre o trono do fundo (z -28,2). V3 e V4: o balde fica (consequência do apagão), no outro trono (z -27,0),
+	# porque a armadura da V3 senta no do fundo.
+	_balde.position = Vector3(-9.2, 0.7, -28.2 if visita == 2 else -27.0)
 	add_child(_balde)
 	Epocas.marcar(_balde, [E2020])
 	var d3 := TitoCastelinho.folha(self, "desenho_3", Vector3(-16.55, 1.5, -26.0), 90.0, 0.5, 2)
@@ -1562,6 +1567,7 @@ func _escada_interditada(_p: Node) -> void:
 
 func _ato2_concluido() -> void:
 	GameState.set_flag("v3_ato2_feito", true)
+	Audio.musica("jingle_2")
 	if _bloqueio_escada and is_instance_valid(_bloqueio_escada):
 		_bloqueio_escada.queue_free()
 		_bloqueio_escada = null
@@ -1753,10 +1759,7 @@ func _usar_porta_porao(_p: Node) -> void:
 	if _porta_falando:
 		return
 	_porta_falando = true
-	if GameState.discos.has(E2019):
-		await Guia.falar("???", ["Daqui não. A escada é na Sala Medieval... em 2019."])
-	else:
-		await Guia.falar("???", ["Daqui não. Falta o disco de 2019, atrás do painel solto da Sala dos Povos."])
+	await Guia.falar("???", ["Daqui não."])
 	_porta_falando = false
 
 
@@ -1959,12 +1962,13 @@ func _evt_sala1() -> void:
 func _quico_da_lanterna() -> void:
 	var q := _recorte("quico", Vector3(-21.4, 0, 0.2), 195.0, false)
 	_quico_lanterna = q
-	await Guia.falar("quico", ["Tá escuro, guri! PIII!", "Leva a lanterna. Aperta F para ligar e desligar."], true)
-	Audio.sfx("apito")
+	# a lanterna é gravada ANTES da fala: se o jogo fechar no meio dela, o "Continuar" não perde a lanterna
 	GameState.set_flag("tem_lanterna")
 	GameState.flags.erase("lanterna_desligada")
 	if player and is_instance_valid(player):
 		player.lanterna.visible = true
+	await Guia.falar("quico", ["Tá escuro, guri! PIII!", "Leva a lanterna. Aperta F para ligar e desligar."], true)
+	Audio.sfx("apito")
 	Audio.sfx("selo")
 	# o Quico some (de repente, sem despedida)
 	await get_tree().create_timer(0.8).timeout
@@ -1990,14 +1994,19 @@ func _evt_sala4() -> void:
 func _evt_sala7() -> void:
 	if visita == 4 and _uma_vez("sala7"):
 		await Guia.falar("???", ["O prédio está errado. Você também sente?"])
+	elif visita == 3 and _uma_vez("sala7"):
+		await Guia.falar("bentinho", ["Eu não devia estar aqui à noite.", "Ninguém me disse quando a visita termina."])
 
 
 func _evt_sala8() -> void:
 	if visita == 4 and _uma_vez("sala8"):
-		await Guia.falar("???", ["Desculpa...", "A gente devia ter procurado melhor."])
+		await Guia.falar("???", ["Desculpa...", "A gente devia ter procurado melhor.", "O painel ali está solto. Olha atrás dele."])
 
 
 func _evt_sala9() -> void:
+	if visita == 3 and _uma_vez("sala9"):
+		await Guia.falar("bentinho", ["O pinguim estava virado para a parede.", "Eu lembro. Eu lembro?"])
+		return
 	if visita != 1 or not _uma_vez("sala9"):
 		return
 	await Guia.falar("bentinho", ["Olha só o pinguim! Ele parece vivo, né?"])
@@ -2009,7 +2018,11 @@ func _evt_sala10() -> void:
 	_passaporte_falando = true
 	var n := GameState.passaporte_achados()
 	if n < GameState.PASSAPORTE_IDS.size():
-		# faltam objetos: o Bentinho diz quantos e onde procurar (sem trava: eles seguem nos lugares)
+		# faltam objetos: o Bentinho diz quantos e onde procurar (sem trava: eles seguem nos lugares).
+		# Uma vez por contagem de carimbos: o corredor é passagem e a fala não pode repetir a cada travessia.
+		if not _uma_vez("quase_%d" % n):
+			_passaporte_falando = false
+			return
 		GameState.set_flag("passaporte_lancado")
 		var falta: Array = []
 		for id in GameState.PASSAPORTE_IDS:
@@ -2049,6 +2062,10 @@ func _evt_sala12() -> void:
 		if not GameState.discos.has(E1967):
 			await get_tree().create_timer(1.0).timeout
 			Guia.falar("sistema", ["Tem um disco numa vitrine do Acervo, com uma etiqueta escrita à mão."])
+	elif visita == 2 and not GameState.flag(_chave("telefone_atendido")) and not _telefone_tocando:
+		# não atendeu (ou o nível foi recriado pela Barra): volta a tocar ao reentrar na sala, até atender
+		_telefone_tocando = true
+		_tocar_telefone()
 	elif visita >= 3 and not GameState.discos.has(E1967) and _uma_vez("dica1967"):
 		await Guia.falar("sistema", ["Na vitrine do Acervo ainda há um disco \"não catalogado\"."])
 
@@ -2059,6 +2076,7 @@ func _tocar_telefone() -> void:
 			return
 		Audio.sfx_3d("telefone", _telefone.global_position)
 		await get_tree().create_timer(2.6).timeout
+	_telefone_tocando = false      # ninguém atendeu: toca de novo quando o jogador reentrar na sala 12
 
 
 func _atender_telefone(_p: Node) -> void:
@@ -2066,6 +2084,7 @@ func _atender_telefone(_p: Node) -> void:
 		Guia.falar("sistema", ["O telefone está mudo."])
 		return
 	_telefone_tocando = false
+	GameState.set_flag(_chave("telefone_atendido"), true)
 	var linhas := ["Alô? É do Castelinho?", "O meu filho... ele vinha sempre brincar aí na obra...", "Vocês viram o Tito?"]
 	var cls := _classe("Telefone")
 	if cls:
@@ -2082,7 +2101,7 @@ func _atender_telefone(_p: Node) -> void:
 func _evt_sala13() -> void:
 	if visita != 2 or not _uma_vez("sala13"):
 		return
-	await Guia.falar("taina", ["Ainda bem que eu não sou pescada... né?"])
+	await Guia.falar("taina", ["Ainda bem que eu não sou pescada... né?", "Aquele mural é bonito. Dá vontade de entrar nele."])
 
 
 func _usar_mural(_p: Node) -> void:
@@ -2144,11 +2163,13 @@ func _surgir_quico19() -> void:
 func _evt_sala21() -> void:
 	if visita == 3:
 		_armadura_estado = 0 if _armadura_estado < 3 else 3
+		if not GameState.flag("v3_ato2_feito") and _uma_vez("sala21_cedo"):
+			await Guia.falar("bentinho", ["Esta sala está pronta. O resto da visita ficou no Salão de Arte.", "Aquela porta que não estava no mapa."])
 	elif visita == 4 and _uma_vez("sala21"):
 		if GameState.discos.has(E2019):
 			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Segure Q e escolha o disco de 2019: lá ela existe."])
 		else:
-			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Falta o disco de 2019: ele ficou atrás do painel solto, na Sala dos Povos."])
+			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Falta o disco de 2019."])
 
 
 func _evt_sala22() -> void:
@@ -2157,11 +2178,11 @@ func _evt_sala22() -> void:
 
 func _evt_sala23() -> void:
 	match visita:
-		1:
-			if GameState.flag(_chave("diploma")) and _uma_vez("fala_saida"):
-				await Guia.falar("bentinho", ["Agora é só sair pela porta... pela porta..."])
 		3:
-			if _uma_vez("sala23"):
+			if not GameState.flag("v3_ato2_feito"):
+				if _uma_vez("sala23_cedo"):
+					await Guia.falar("bentinho", ["Ops! A saída está em reforma!", "A porta nova do Salão de Arte... será que leva a algum lugar?"])
+			elif _uma_vez("sala23"):
 				await Guia.falar("bentinho", ["Ops! A saída está em reforma!", "Mas o Visor mostra outro caminho... Tecle 1 a 5 e escolha o disco de 1975."])
 		4:
 			if _uma_vez("sala23"):
@@ -2179,7 +2200,7 @@ func _evt_sala25() -> void:
 ## Visita 4, sala 80: a porta zebrada do hall. Água escorrendo pelos degraus.
 func _evt_sala80() -> void:
 	if _uma_vez("sala80"):
-		await Guia.falar("???", ["Essa porta nunca existiu.", "A água desce por baixo do Castelinho, até o Braço Morto.", "Mas a descida de verdade é a escada da Sala Medieval, em 2019."])
+		await Guia.falar("???", ["Essa porta nunca existiu.", "Ouça. A água desce por aqui."])
 
 
 func _on_painel_lido(id: String) -> void:

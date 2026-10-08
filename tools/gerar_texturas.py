@@ -627,6 +627,11 @@ def mural_pescador():
         d.text((350, 122), "Imbé/RS", font=fonte2, fill=(20, 20, 24))
     except OSError:
         pass
+    # semente 3 (V2_ROTEIRO §3.1): uma criança na margem, pequena, de costas, no canto; ninguém comenta
+    d.polygon([(404, 256), (512, 226), (512, 256)], fill=(196, 176, 130))                                   # faixa de areia
+    d.ellipse((470, 215, 478, 223), fill=(24, 22, 28))                                                      # cabeça
+    d.polygon([(468, 223), (480, 223), (481, 242), (467, 242)], fill=(24, 22, 28))                          # corpo
+    d.rectangle((486, 234, 491, 240), fill=(150, 30, 26))                                                   # balde
     im = im.resize((w // 2, h // 2), Image.NEAREST).resize((w, h), Image.NEAREST)   # pixels visíveis
     os.makedirs(SAIDA, exist_ok=True)
     im.save(os.path.join(SAIDA, "mural_pescador.png"))
