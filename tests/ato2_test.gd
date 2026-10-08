@@ -145,7 +145,8 @@ func _teste_visor() -> void:
 	_checar(not Ef.visor_ativo and nivel._raiz_hall.visible, "moldura desligada e hall de volta")
 	await _frames(60)
 	_checar(absf(player.global_position.y) < 0.05, "jogador volta ao piso (y=%.3f)" % player.global_position.y)
-	# visor travado: a época não volta
+	# visor travado: a época não volta (fica na de antes de ligar o Visor; aqui a das dunas, 1950)
+	GS.trocar_epoca(GS.Epoca.E1950)
 	GS.set_flag("visor_travado", true)
 	Input.action_press("visor")
 	await _ate(func(): return GS.epoca == GS.Epoca.E1950, 240)

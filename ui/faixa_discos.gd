@@ -115,6 +115,11 @@ func _draw() -> void:
 		var ponta := Vector2(cx - 34.0, base_y + 86.0)
 		draw_string_outline(fonte_n, ponta, txt, HORIZONTAL_ALIGNMENT_CENTER, 68.0, 20, 6, Flash.NAVY)
 		draw_string(fonte_n, ponta, txt, HORIZONTAL_ALIGNMENT_CENTER, 68.0, 20, Color.WHITE if not bloq else Color("C8CCD4"))
+	# dica discreta de teclas, logo acima da plaquinha (não ocupa espaço de outra UI)
+	var dica := "1–5 ou rodinha: trocar · segure Q: ver" if _meus.size() >= 2 else "segure Q: ver"
+	var fd := Flash.fonte_titulo()
+	draw_string_outline(fd, Vector2(4.0, -6.0), dica, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, 4, Color(0, 0, 0, 0.8))
+	draw_string(fd, Vector2(4.0, -6.0), dica, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, Color(1, 1, 1, 0.7))
 	if bloq:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0.05, 0.05, 0.1, 0.35))
 		var frac := clampf(Visor.bloqueio_restante() / Visor.BLOQUEIO_S, 0.0, 1.0)

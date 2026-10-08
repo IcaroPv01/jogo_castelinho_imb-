@@ -13,6 +13,7 @@ extends CanvasLayer
 ##                                     com GameState.atencao > 0 (visita 3+), as lentes avermelham e pulsam
 ## Extras:
 ##   Efeitos.flash(dur, cor, forca)    clarão de cor sobre a imagem (não cobre o HUD)
+##   Efeitos.aviso(texto, dur)         aviso curto no alto da tela, some sozinho (não é fala)
 ##   Efeitos.legenda_visor(texto)      frase didática embaixo do ano ("Em 1950, aqui era só areia!")
 ##   Efeitos.material_psx(cor, tex)    ShaderMaterial PSX (vertex snapping) que segue a corruption
 
@@ -35,6 +36,8 @@ var _tween_flash: Tween
 var _painel_legenda: PanelContainer
 var _lbl_ano: Label
 var _lbl_extra: Label
+var _lbl_aviso: Label            # aviso curto no alto da tela (Efeitos.aviso)
+var _tween_aviso: Tween
 var _psx: Array[ShaderMaterial] = []
 var _aquecendo := 0              # quadros em que o pós-processamento fica ligado só para compilar o shader
 
@@ -61,6 +64,7 @@ func _ready() -> void:
 	add_child(_flash)
 
 	_montar_legenda()
+	_montar_aviso()
 
 	_alvo_c = GameState.corruption
 	corrupcao_visual = _alvo_c
@@ -129,6 +133,21 @@ func legenda_visor(texto: String) -> void:
 	_lbl_extra.visible = texto != ""
 
 
+## Aviso curto e discreto no alto da tela (não bloqueia nada, some sozinho). Não é fala de personagem.
+func aviso(texto: String, dur := 2.0) -> void:
+	if _lbl_aviso == null:
+		return
+	if _tween_aviso and _tween_aviso.is_valid():
+		_tween_aviso.kill()
+	_lbl_aviso.text = texto
+	_lbl_aviso.modulate.a = 1.0
+	_lbl_aviso.visible = true
+	_tween_aviso = create_tween()
+	_tween_aviso.tween_interval(maxf(dur, 0.2))
+	_tween_aviso.tween_property(_lbl_aviso, "modulate:a", 0.0, 0.5)
+	_tween_aviso.tween_callback(func(): _lbl_aviso.visible = false)
+
+
 ## Clarão por cima da imagem (abaixo do HUD). `forca` = opacidade inicial.
 func flash(dur := 0.3, cor := Color.WHITE, forca := 1.0) -> void:
 	if _tween_flash and _tween_flash.is_valid():
@@ -154,6 +173,23 @@ func material_psx(cor := Color.WHITE, textura: Texture2D = null, escala_uv := Ve
 
 func _snap_para(c: float) -> float:
 	return lerpf(900.0, 110.0, smoothstep(0.1, 0.9, c))
+
+
+# ---------------------------------------------------------------- aviso curto
+func _montar_aviso() -> void:
+	_lbl_aviso = Label.new()
+	_lbl_aviso.name = "Aviso"
+	_lbl_aviso.visible = false
+	_lbl_aviso.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lbl_aviso.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_lbl_aviso.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_lbl_aviso.offset_top = 120.0   # abaixo do olho da atenção
+	_lbl_aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_lbl_aviso.add_theme_font_size_override("font_size", 18)
+	_lbl_aviso.add_theme_color_override("font_color", Color(1, 1, 1, 0.92))
+	_lbl_aviso.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_lbl_aviso.add_theme_constant_override("outline_size", 6)
+	add_child(_lbl_aviso)
 
 
 # ---------------------------------------------------------------- legenda do Visor

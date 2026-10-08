@@ -131,6 +131,7 @@ func selecionar_disco(epoca_disco: int) -> void:
 	if epoca_disco in discos and epoca_disco != disco_atual:
 		disco_atual = epoca_disco
 		discos_mudou.emit()
+		salvar()
 
 
 func definir_atencao(v: float) -> void:
