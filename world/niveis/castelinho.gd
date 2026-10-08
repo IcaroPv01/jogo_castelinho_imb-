@@ -2298,9 +2298,17 @@ func _susto_castelo(chave: String, sala: int, atraso: float, o: Dictionary) -> v
 	if visita < 3 or Susto.ja_aconteceu(chave):
 		return
 	var espera := atraso
-	for _i in 20:
+	var girar: bool = o.get("girar", false)       # espera o jogador virar >120° (como o J3 do porão); 10 s e vai de canto
+	var olhar0 := Vector3.ZERO
+	if girar and player and is_instance_valid(player):
+		olhar0 = player.direcao_olhar()
+		olhar0.y = 0.0
+		olhar0 = olhar0.normalized()
+	var decorrido := 0.0
+	for _i in (110 if girar else 20):
 		await get_tree().create_timer(espera, false).timeout
-		espera = 0.5
+		decorrido += espera
+		espera = 0.1 if girar else 0.5
 		if not is_inside_tree() or player == null or not is_instance_valid(player) or GameState.sala_atual != sala:
 			return
 		if _saindo_barra or _saindo_visita or _saindo_ato2 or _saindo_porao or Susto.ja_aconteceu(chave):
@@ -2309,6 +2317,18 @@ func _susto_castelo(chave: String, sala: int, atraso: float, o: Dictionary) -> v
 		if Guia.ocupado() or GameState.flag("ui_aberta") or (_visor and _visor.ativo) or perseguindo:
 			continue
 		var op := o.duplicate()
+		op.erase("girar")
+		if girar:
+			var agora: Vector3 = player.direcao_olhar()
+			agora.y = 0.0
+			if agora.length() > 0.01 and olhar0.dot(agora.normalized()) < cos(deg_to_rad(120.0)):
+				op["angulo"] = 0.0
+				op["frente"] = 1.2
+			elif decorrido >= 10.0:
+				op["angulo"] = 40.0
+				op["frente"] = 1.8
+			else:
+				continue
 		var luzes: Array = []
 		for l in _luzes:
 			if is_instance_valid(l["no"]):
@@ -2353,9 +2373,9 @@ func _on_painel_lido(id: String) -> void:
 		"p06":
 			_abrir_porta_entrada(false)
 		"p11":
-			# Visita 4: depois de ler o painel, ao virar as costas, a Figura está bem atrás (sala 11, sem outro evento)
+			# Visita 4: depois de ler o painel, ao virar mais de 120°, a Figura está NA FRENTE a 1,2 m (10 s sem virar: no canto da visão) (sala 11, sem outro evento)
 			if visita == 4 and GameState.sala_atual == _global(11):
-				_susto_castelo("v4_painel11", _global(11), 1.8, {"angulo": 180.0, "frente": 1.7, "duracao": 0.55})
+				_susto_castelo("v4_painel11", _global(11), 1.8, {"girar": true, "duracao": 0.7})
 		"quiz_final":
 			_diploma()
 

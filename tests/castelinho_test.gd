@@ -615,9 +615,13 @@ func _sustos_castelo() -> void:
 	_checar(Sus.ja_aconteceu("v4_sala22"), "V4: susto da sala 22 (luzes piscam, Figura de lado) disparou")
 	await _ir_para(Vector3(-9.8, 0.1, -18.8))
 	await _frames_f(10)
+	p.rotation.y = 0.0
 	nivel._on_painel_lido("p11_v4")
-	await _frames_f(150)
-	_checar(Sus.ja_aconteceu("v4_painel11"), "V4: susto ao ler o painel p11 e virar as costas disparou")
+	await _frames_f(200)
+	_checar(not Sus.ja_aconteceu("v4_painel11"), "V4: p11: sem virar, o susto espera")
+	p.rotation.y = PI
+	await _frames_f(60)
+	_checar(Sus.ja_aconteceu("v4_painel11"), "V4: p11: ao virar mais de 120° o susto disparou")
 	_checar(not Sus.ja_aconteceu("v3_sala18"), "V4: sem o susto da V3")
 	# UI aberta: adia e não dispara
 	GameState.flags.erase("susto_v4_painel11")

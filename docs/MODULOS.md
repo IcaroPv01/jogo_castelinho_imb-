@@ -15,7 +15,7 @@ Decisões do Icaro (07/10/2026):
 | 1 | QA e bugs | Varredura das 100 salas, corrigir o que o Icaro e os testes acharem | `tests/`, `docs/BUGS.md` (correções pontuais em qualquer arquivo) | varredura automática feita (B15–B24); reabre quando o Icaro jogar |
 | 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | parte 1 feita (bugs, escada 2019, Figura na V4, caça do disco 1950); caça dos discos 1967–sem data espera o Icaro jogar a do 1950 |
 | 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | feito (PR #11): ritmo, quiz V2–V4, bugs, fontes; reabre quando o Icaro jogar |
-| 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | feito (PR do módulo 4): sequência fixa, masmorra, Figura nova, bugs; reabre quando o Icaro jogar |
+| 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | feito (PR #12): sequência fixa, masmorra, Figura nova, sustos (porão e V3/V4), bugs; reabre quando o Icaro jogar |
 | 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | na fila |
 | 6 | Áudio | Jingle, ambientes e sustos (ninguém ouviu ainda: precisa do ouvido do Icaro) | `autoload/audio.gd`, `tools/gerar_audio.py`, `assets/audio/` | na fila |
 | 7 | Arte e gráficos | Acabamento visual mantendo o estilo Flash educativo | `shaders/`, `tools/gerar_texturas.py`, `castelinho/` | na fila |
@@ -63,6 +63,15 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
 - **Figura Branca nova** (`creatures/figura_branca.gd`, vale para o jogo todo): afogada, alta e magra, cabelo molhado
   cobrindo o rosto, dedos longos; mexe aos trancos, congela quando vista com um estalo da cabeça, arranca na perseguição.
   API igual. Captura: `tests/captura_figura.gd` (xvfb, fora do CI).
+- **Sustos (pedido do Icaro: "faltam jumpscares"):** `creatures/susto.gd` (`Susto.disparar(nivel, chave, opções)`, não
+  mata, uma vez por partida com flag `susto_<chave>`, rosto da Figura na altura dos olhos). Porão: J1 85 vulto de
+  criança no apagão · J2 86 a Figura sobe da água · J3 88 atrás do jogador depois do telefone (ao virar) · J4 91 apagão
+  na escada · J5 99 cai do escuro colada na câmera, antes do "ar fresco". 95–98 sem susto (contraste). Visitas
+  (`castelinho.gd`, `_susto_castelo`): V3 sala 18 (apagão, Figura no facho da lanterna), V4 sala 22 (luzes piscam,
+  Figura de lado), V4 painel 11 (ao virar as costas). V1 e V2 sem susto.
+- **Cela da 90 mais pesada (Icaro: "pode ser mais pesado"):** 4 desenhos de giz (menino e sol → a figura segurando a
+  mão, "ELA DISSE QUE O LAGO É LÁ EMBAIXO" → água subindo, "QUERO IR PRA CASA" → só o balde boiando), riscos de contar
+  dias na altura de criança, mãos molhadas na grade. Só sugestão.
 - **Bugs:** voz do poço sobre o poço; Figura nas salas pequenas; morte durante a saída; sussurro repetido e cobrindo
   legendas importantes; grade da 96 sem aviso.
 - **Para o módulo 5 (Braço Morto):** o jogador chega do porão parado, com a legenda do ar fresco e o ambiente já em
