@@ -863,7 +863,7 @@ func _puxado() -> void:
 	player.pode_mover = false
 	await get_tree().create_timer(0.7).timeout   # a rede termina de cair
 	puxado.emit()
-	GameState.definir_corruption_manual(0.5)
+	GameState.definir_corruption_manual(0.35)    # o pico da Barra fica abaixo do apagão do fim da visita
 	Audio.sfx("agua_puxa")
 	player.pode_mover = false
 	# a corda estica entre o jogador e a rede

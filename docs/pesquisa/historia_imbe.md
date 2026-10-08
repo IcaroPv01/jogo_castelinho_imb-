@@ -319,3 +319,17 @@ Todos baseados em fatos acima, para a "virada" do tom educacional para o creepy:
 - Blog Professor Joaquim Dias (fonte fraca): http://professorjoaquimdias.blogspot.com/2019/06/historico-do-municipio-de-tramandairs.html
 
 **Observação final**: não consegui abrir GZH/Zero Hora e Correio do Povo diretamente (sem resultados úteis nas buscas); as notícias acima vêm de veículos regionais. Nenhuma informação foi inventada: o que não foi encontrado está marcado como LACUNA.
+
+## Reconfirmação (módulo 3, 08/10/2026)
+
+- **Primeira ponte, 1934:** só a Prefeitura de Tramandaí dá a data ("Em 1934, foi construída a ponte sobre o Rio
+  Tramandaí, ligando Tramandaí a Imbé", https://tramandai.rs.gov.br/conteudo/11-historia-da-cidade). A Wikipedia dá
+  "décadas de 1950 a 1980" para a ponte atual, sem fonte. Os painéis P11 mantêm a atribuição ("segundo a Prefeitura de
+  Tramandaí") e o P11_v2 mostra o conflito. O artigo da Vitruvius (abaixo) tem a foto "Ponte de madeira demolida que
+  ligava Tramandaí e Imbé" (acervo Gedurb), sem data.
+- **"16 mil para 80 mil" (P12):** a fonte é o artigo da Vitruvius, *Minha Cidade* 08.087 (2007,
+  https://vitruvius.com.br/revistas/read/minhacidade/08.087/1915): "população de 15.856 habitantes [...] nos períodos
+  do verão a sua população chega a ter 80.000 habitantes". É um número de 2007: o Censo de 2022 dá **26.824**. Os
+  painéis P12 agora dizem "em 2007"; o P18 (que usa o Censo 2022) não cita mais os 80 mil, porque não há número de
+  verão recente com fonte.
+- **Tainha para São Pedro (P15_v2):** a fonte (Fundart) é sobre Rio Grande; o painel diz "no litoral gaúcho".

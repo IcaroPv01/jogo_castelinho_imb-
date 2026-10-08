@@ -30,6 +30,7 @@ func _rodar() -> void:
 	await _teste_json()
 	await _teste_painel_quiz()
 	await _teste_quiz_final()
+	await _teste_quiz_final_v3()
 	await _teste_guia()
 	await _teste_audio()
 	await _teste_telas()
@@ -127,6 +128,27 @@ func _teste_quiz_final() -> void:
 	_checar(GameState.selos.size() == 4, "4 selos no total (%d)" % GameState.selos.size())
 	_checar(GameState.contadores.quiz_acertos == 4, "quiz_acertos = 4")
 	_checar(not GameState.flag("ui_aberta"), "quiz_final fechou")
+
+
+func _teste_quiz_final_v3() -> void:
+	print("-- quiz_final_v3 (corrompido: qualquer resposta é CORRETO!) e variantes V2/V4")
+	_checar(PainelUI.dados("quiz_final_v2").get("titulo") == PainelUI.dados("p22_v2").get("titulo"), "quiz_final_v2 é o p22_v2 (encerrado)")
+	_checar(not PainelUI.dados("quiz_final_v2").has("quiz"), "quiz_final_v2 não tem perguntas")
+	_checar(bool(PainelUI.dados("quiz_final_v4").get("riscado", false)), "quiz_final_v4 é o painel riscado")
+	var selos0: int = GameState.selos.size()
+	var acertos0: int = GameState.contadores.quiz_acertos
+	var ui = PainelUI.mostrar("quiz_final_v3")
+	await process_frame
+	await process_frame
+	ui.avancar()
+	ui.avancar()
+	for i in 3:
+		_checar(ui.responder(2), "V3 pergunta %d: a resposta 'errada' vale como certa" % (i + 1))
+		ui.avancar()
+	for i in 4:
+		await process_frame
+	_checar(GameState.selos.size() == selos0 and GameState.contadores.quiz_acertos == acertos0, "quiz da V3 não dá selo nem conta acerto")
+	_checar(not GameState.flag("ui_aberta"), "quiz_final_v3 fechou")
 
 
 # ---------------------------------------------------------------- Guia

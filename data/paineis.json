@@ -100,8 +100,8 @@
 		"anfitriao": "quico"
 	},
 	"p12": {
-		"titulo": "Veraneio: de 16 mil para 80 mil",
-		"texto": "No verão, Imbé muda de tamanho! A cidade passa de cerca de 16 mil para uns 80 mil moradores e visitantes, por causa do veraneio. É gente na praia, no calçadão, na ponte... Já no inverno a cidade fica bem mais tranquila.",
+		"titulo": "Veraneio: a cidade que cresce",
+		"texto": "No verão, Imbé muda de tamanho! Em 2007, a cidade tinha uns 16 mil moradores e chegava a 80 mil pessoas na temporada, por causa do veraneio. É gente na praia, no calçadão, na ponte... Já no inverno a cidade fica bem mais tranquila.",
 		"fonte": "https://vitruvius.com.br/revistas/read/minhacidade/08.087/1915 https://pt.wikipedia.org/wiki/Imbé",
 		"icone": "sol",
 		"anfitriao": "taina"
@@ -143,7 +143,7 @@
 	},
 	"p18": {
 		"titulo": "Imbé hoje",
-		"texto": "Hoje Imbé tem 26.824 habitantes (Censo de 2022) e cerca de 9 km de praias. No verão, a população passa de 80 mil! O animal-símbolo da cidade é o boto. Aqui de cima dá para ver tudo, não é?",
+		"texto": "Hoje Imbé tem 26.824 habitantes (Censo de 2022) e cerca de 9 km de praias. No verão, chega muito mais gente! O animal-símbolo da cidade é o boto. Aqui de cima dá para ver tudo, não é?",
 		"fonte": "https://pt.wikipedia.org/wiki/Imbé https://www.turismo.rs.gov.br/turismo/municipio/visualizar/159",
 		"icone": "pessoas",
 		"anfitriao": "bentinho"
@@ -202,6 +202,24 @@
 		"icone": "alerta",
 		"anfitriao": "sistema",
 		"seco": true
+	},
+	"quiz_final_v2": {
+		"alias": "p22_v2"
+	},
+	"quiz_final_v3": {
+		"titulo": "Quiz final da Visita!",
+		"texto": "Chegou a hora do desafio final! São 3 perguntas sobre tudo o que você aprendeu na visita. Todas as respostas estão corretas. Respire fundo... e boa sorte!",
+		"fonte": "",
+		"icone": "interrogacao",
+		"anfitriao": "bentinho",
+		"quiz": [
+			{"pergunta": "Quantos anos o Tito tinha na última marca da parede?", "opcoes": ["6 anos", "9 anos", "Não há marca nenhuma"], "correta": 1, "qualquer": true, "explicacao": "Nove."},
+			{"pergunta": "De que cor era o balde do Tito?", "opcoes": ["Azul", "Vermelho", "Que balde?"], "correta": 1, "qualquer": true, "explicacao": "Você sabia."},
+			{"pergunta": "Em que ano o Tito desapareceu?", "opcoes": ["1967", "1975", "O Tito não desapareceu"], "correta": 0, "qualquer": true, "explicacao": "Diploma a caminho."}
+		]
+	},
+	"quiz_final_v4": {
+		"alias": "p22_v4"
 	},
 	"quiz_final": {
 		"titulo": "Quiz final da Visita!",
@@ -510,7 +528,7 @@
 	},
 	"p12_v2": {
 		"titulo": "A cidade que esvazia",
-		"texto": "Painel atualizado. No verão, Imbé passa de cerca de 16 mil para uns 80 mil moradores e visitantes. Fora da temporada, a cidade esvazia, e as casas de veraneio ficam fechadas boa parte do ano.",
+		"texto": "Painel atualizado. Num levantamento de 2007, Imbé tinha uns 16 mil moradores e chegava a 80 mil no verão. Fora da temporada, a cidade esvazia, e as casas de veraneio ficam fechadas boa parte do ano.",
 		"fonte": "https://vitruvius.com.br/revistas/read/minhacidade/08.087/1915 https://pt.wikipedia.org/wiki/Imbé",
 		"icone": "sol",
 		"anfitriao": "sistema",
@@ -518,14 +536,14 @@
 	},
 	"p12_v3": {
 		"titulo": "Painel 12 · em revisão",
-		"texto": "CONTEÚDO EM REVISÃO.\nFora da temporada, a cidade tem 16 mil moradores. O Programa não sabe dizer quantos visitantes ainda estão no prédio.\nContagem em revisão. Se você é um deles, siga as setas.",
+		"texto": "CONTEÚDO EM REVISÃO.\nFora da temporada, a cidade tinha 16 mil moradores. O Programa não sabe dizer quantos visitantes ainda estão no prédio.\nContagem em revisão. Se você é um deles, siga as setas.",
 		"icone": "alerta",
 		"anfitriao": "sistema",
 		"seco": true,
 		"carimbo": "EM REVISÃO"
 	},
 	"p12_v4": {
-		"titulo": "Veraneio: de 16 mil para 80 mil",
+		"titulo": "Veraneio: a cidade que cresce",
 		"texto": "…",
 		"icone": "sol",
 		"anfitriao": "",
@@ -585,7 +603,7 @@
 	},
 	"p15_v2": {
 		"titulo": "Oferendas ao mar",
-		"texto": "Painel atualizado. Quem vive do mar pede proteção a ele. Em 29 de junho, a São Pedro: pescadores separavam uma tainha em cada cem como oferenda. Em 2 de fevereiro, a Nossa Senhora dos Navegantes e a Iemanjá, com oferendas levadas ao mar.",
+		"texto": "Painel atualizado. Quem vive do mar pede proteção a ele. Em 29 de junho, a São Pedro: no litoral gaúcho, pescadores separavam uma tainha em cada cem como oferenda. Em 2 de fevereiro, a Nossa Senhora dos Navegantes e a Iemanjá, com oferendas levadas ao mar.",
 		"fonte": "https://fundart.com.br/dt_portfolio/festa-de-sao-pedro/ https://www.brasildefato.com.br/2025/02/01/festas-missas-e-procissoes-marcam-os-festejos-de-iemanja-e-nossa-senhora-dos-navegantes-pelo-rs/",
 		"icone": "peixe",
 		"anfitriao": "sistema",
@@ -609,8 +627,8 @@
 		"desenho": "desenho_5"
 	},
 	"p16_v2": {
-		"titulo": "Ninguém publicou a planta",
-		"texto": "Painel atualizado. As torres foram construídas em momentos diferentes, segundo a Secretaria de Cultura. Nenhuma planta ou projeto foi divulgado. As visitas às torres existem desde 20 de fevereiro de 2026, aos sábados, das 9h às 17h.",
+		"titulo": "Cadê a planta?",
+		"texto": "Painel atualizado. As torres foram construídas em momentos diferentes, segundo a Secretaria de Cultura. O Programa não encontrou nenhuma planta ou projeto publicado. As visitas às torres existem desde 20 de fevereiro de 2026, aos sábados, das 9h às 17h.",
 		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/ https://www.correiodoimbe.com.br/noticia/castelinho-da-cultura-em-imbe-estara-aberto-aos-sabados-para-visitacao https://jornaldimensao.com.br/castelinho-de-imbe-amplia-acesso-ao-publico-e-abre-portas-aos-sabados-com-visitas-guiadas/",
 		"icone": "torre",
 		"anfitriao": "sistema",
@@ -656,7 +674,7 @@
 		"anfitriao": "",
 		"seco": true,
 		"riscado": true,
-		"desenho": "desenho_6"
+		"desenho": "desenho_7"
 	},
 	"p18_v2": {
 		"titulo": "Para onde desce a água",
@@ -685,7 +703,7 @@
 	},
 	"p19_v2": {
 		"titulo": "O que ia ser demolido",
-		"texto": "Painel atualizado. Em 02/10/2019, o município pagou R$ 703 mil por um imóvel de cerca de 290 m², num terreno de mais de 900 m², avaliado em R$ 850 mil. A reportagem da época diz que ele estava prestes a virar ruínas e que a demolição estava prestes a acontecer.",
+		"texto": "Painel atualizado. Em 02/10/2019, o município pagou R$ 703 mil por um imóvel de cerca de 290 m², num terreno de mais de 900 m², avaliado em R$ 850 mil. As reportagens contam que ele estava quase em ruínas, perto de ser demolido.",
 		"fonte": "https://jplitoral.com.br/patrimonio-historico-prefeitura-de-imbe-fecha-compra-do-castelinho/ https://litoralnarede.com.br/castelinho-de-imbe-sera-transformado-em-centro-cultural/ https://jplitoral.com.br/imbe-inaugura-casa-de-cultura-e-museu-municipal/",
 		"icone": "pedra",
 		"anfitriao": "sistema",

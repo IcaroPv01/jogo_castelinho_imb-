@@ -56,7 +56,7 @@ func _init(id_painel := "p00") -> void:
 	_imagem = str(d.get("tipo", "")) == "imagem"
 	if _imagem:
 		texto_interacao = {"procura_se": "Ler o cartaz", "marcas_altura": "Ver as marcas"}.get(id_painel, "Ver o desenho")
-	elif id == "quiz_final":
+	elif id.begins_with("quiz_final"):
 		texto_interacao = "Fazer o quiz final"
 	elif _tem_quiz:
 		texto_interacao = "Ler painel e fazer o quiz"
@@ -193,7 +193,7 @@ func _construir() -> void:
 		if _seco or t > 0.0:
 			spr.modulate = Color.WHITE.lerp(Color(0.6, 0.62, 0.68), maxf(t, 0.8 if _seco else 0.0))
 		var rotulo_n := id.trim_prefix("p").get_slice("_", 0)
-		if id == "quiz_final":
+		if id.begins_with("quiz_final"):
 			rotulo_n = "FINAL"
 		var cor_texto := Flash.dessaturar(Flash.NAVY, t * 0.5)
 		if str(d.get("carimbo", "")) == "":   # com carimbo o título já diz "Painel NN"
