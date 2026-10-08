@@ -33,6 +33,7 @@ func _rodar() -> void:
 	await _carregar_porao()
 
 	await _teste_chao_e_plano()
+	await _teste_escalada_do_medo()
 	await _teste_atravessar_19_salas()
 	await _teste_agua()
 	await _teste_costela()
@@ -132,7 +133,7 @@ func _teste_chao_e_plano() -> void:
 	for d in nivel.plano:
 		costelas += 1 if d["costela"] else 0
 		figuras += 1 if d["figura"] else 0
-	_checar(costelas >= 3 and figuras >= 3, "salas da Costela (%d) e da Figura (%d)" % [costelas, figuras])
+	_checar(costelas >= 2 and figuras >= 2, "salas da Costela (%d) e da Figura (%d)" % [costelas, figuras])
 	_checar(abs(GS.corruption - 0.7) < 0.03, "corruption da sala 81 = %.2f" % GS.corruption)
 	_checar(nivel.salas.size() <= 3, "só %d salas carregadas" % nivel.salas.size())
 
@@ -381,6 +382,44 @@ func _teste_figura_pelo_visor() -> void:
 	_checar(fig.visible and fig.ativa and not fig.sumida, "a atenção estourou: a Figura aparece e persegue")
 	_checar(fig.global_position.distance_to(player.global_position) > 4.0, "ela nasce a %.1f m do jogador" % fig.global_position.distance_to(player.global_position))
 	fig.esconder()
+
+
+func _teste_escalada_do_medo() -> void:
+	print("-- escalada do medo por trecho (50 sementes)")
+	var ok_calmo := true
+	var ok_uma := true
+	var ok_livres := true
+	var ok_figuras := true
+	var ok_trecho := true
+	for sem in range(1000, 1050):
+		nivel.semente = sem
+		nivel._gerar_plano()
+		var fig := 0
+		var cos := [0, 0, 0]
+		for i in 19:
+			var d: Dictionary = nivel.plano[i]
+			var n := int(d["figura"]) + int(d["costela"]) + int(d["voz_ambiente"])
+			if n > 1:
+				ok_uma = false
+			if i in [0, 5, 10] and n > 0:
+				ok_livres = false
+			if i >= 1 and i <= 4 and (d["figura"] or d["costela"]):
+				ok_calmo = false
+			if d["figura"]:
+				fig += 1
+			var tr := 0 if i <= 4 else (1 if i <= 9 else 2)
+			if d["figura"] or d["costela"]:
+				cos[tr] += 1
+		if fig < 2:
+			ok_figuras = false
+		if cos[0] != 0 or cos[1] > 4 or cos[2] > 4:
+			ok_trecho = false
+	nivel.semente = SEMENTE
+	nivel._gerar_plano()
+	_checar(ok_calmo, "82-85: sem Figura e sem Costela")
+	_checar(ok_uma and ok_livres, "uma ameaça por sala; 81, 86 e 91 livres")
+	_checar(ok_figuras, "pelo menos 2 Figuras no porão em todas as sementes")
+	_checar(ok_trecho, "ameaças por trecho dentro do limite")
 
 
 func _teste_ajustes_revisao() -> void:

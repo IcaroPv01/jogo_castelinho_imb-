@@ -11,6 +11,8 @@ extends Node3D
 ##    conforme a profundidade, com o som "agua_sobe" e a ambiência "goteira".
 ##  - ÉPOCA SEM DATA: pistas e passagens que só existem com o disco sem data (ou 1967) via `Epocas.marcar`.
 ##  - CHECKPOINTS nas salas 81, 86, 91 e 96 (`Checkpoint_81`...); `ao_morrer()` volta ao último.
+##  - O MEDO ESCALA por trecho: 82-85 calmo (no máx. 1 voz), 87-90 primeiras ameaças (2 Costelas, 1 Figura, 1 voz),
+##    92-94 perseguição (2 Figuras, 1 Costela, 1 voz); 81, 86 e 91 livres; uma ameaça por sala.
 ##  - AMEAÇAS: Figura Branca (regra de sempre + a que o Visor solta com a atenção cheia), Costela-de-Adão (cipós que
 ##    crescem se o jogador fica parado) e a voz do Tito (certa ou fatal: a bifurcação com água funda).
 ##  - Sala 99: sobe por uma escada ao luar e vai para `braco_morto.tscn` (sala 100).
@@ -148,42 +150,34 @@ func _gerar_plano() -> void:
 		if d["tipo"] == "bifurcacao":
 			d["voz_certa"] = certas[k]
 			k += 1
-	# ameaças: nada na 1ª sala de cada bloco com checkpoint (81, 86, 91): quem acabou de morrer não nasce no meio
-	var livres_bloco := [0, 5, 10]
-	var cand_costela := []
-	var cand_figura := []
-	var cand_voz := []
-	for i in range(1, 14):
-		if i in livres_bloco:
-			continue
-		var tp: String = plano[i]["tipo"]
-		if tp in COSTELA_OK:
-			cand_costela.append(i)
-		if tp in FIGURA_OK:
-			cand_figura.append(i)
-		if tp in VOZ_OK:
-			cand_voz.append(i)
-	_embaralhar(cand_costela, rng)
-	for i in mini(4, cand_costela.size()):
-		plano[cand_costela[i]]["costela"] = true
-	_embaralhar(cand_figura, rng)
-	var f := 0
-	for i in cand_figura:
-		if f >= 4:
-			break
-		if plano[i]["costela"]:
-			continue
-		plano[i]["figura"] = true
-		f += 1
-	_embaralhar(cand_voz, rng)
-	var v := 0
-	for i in cand_voz:
-		if v >= 3:
-			break
-		if plano[i]["costela"] or plano[i]["figura"]:
-			continue
-		plano[i]["voz_ambiente"] = true
-		v += 1
+	# ameaças por TRECHO (o medo escala): 82-85 calmo (só 1 voz), 87-90 primeiras ameaças, 92-94 perseguição.
+	# As salas 81, 86 e 91 (idx 0, 5, 10) ficam livres: quem acabou de morrer não nasce no meio de uma ameaça.
+	# Uma ameaça por sala; se faltar candidato num trecho, a sobra passa para o trecho seguinte (nunca para o anterior).
+	var trechos := [
+		{"salas": [1, 2, 3, 4], "costela": 0, "figura": 0, "voz": 1},
+		{"salas": [6, 7, 8, 9], "costela": 2, "figura": 1, "voz": 1},
+		{"salas": [11, 12, 13], "costela": 1, "figura": 2, "voz": 1},
+	]
+	var sobra := {"costela": 0, "figura": 0, "voz": 0}
+	for tr in trechos:
+		for ameaca in ["figura", "costela", "voz"]:
+			var ok_tipos: Array = {"costela": COSTELA_OK, "figura": FIGURA_OK, "voz": VOZ_OK}[ameaca]
+			var chave: String = "voz_ambiente" if ameaca == "voz" else ameaca
+			var cand := []
+			for i in tr["salas"]:
+				if plano[i]["tipo"] in ok_tipos:
+					cand.append(i)
+			_embaralhar(cand, rng)
+			var quero: int = int(tr[ameaca]) + int(sobra[ameaca])
+			sobra[ameaca] = 0
+			for i in cand:
+				if quero <= 0:
+					break
+				if plano[i]["costela"] or plano[i]["figura"] or plano[i]["voz_ambiente"]:
+					continue
+				plano[i][chave] = true
+				quero -= 1
+			sobra[ameaca] = quero
 	# transformações (as salas se encadeiam em linha reta; a escada muda o `y`)
 	var t := Transform3D.IDENTITY
 	var w_prev: float = SalasGd.DIMS["escada"]["w"]
@@ -207,7 +201,14 @@ func _tipos_validos(tipos: Array) -> bool:
 	for i in tipos.size():
 		if tipos[i] == "bifurcacao" and ((i > 0 and tipos[i - 1] == "escada") or (i < tipos.size() - 1 and tipos[i + 1] == "escada")):
 			return false
-	return true
+	# o medo escala: o trecho 87-90 (tipos 5..8) precisa de lugar para 1 Figura e o 92-94 (tipos 10..12) para 2
+	var fig_b := 0
+	var fig_c := 0
+	for i in range(5, 9):
+		fig_b += 1 if tipos[i] in FIGURA_OK else 0
+	for i in range(10, 13):
+		fig_c += 1 if tipos[i] in FIGURA_OK else 0
+	return fig_b >= 1 and fig_c >= 2
 
 
 func _embaralhar(a: Array, rng: RandomNumberGenerator) -> void:
