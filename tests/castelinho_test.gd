@@ -598,7 +598,7 @@ func _sustos_castelo() -> void:
 	await _frames_f(60)
 	var fig := 0
 	for c in nivel.get_children():
-		if c is FiguraBranca:
+		if c.get_script() == load("res://creatures/figura_branca.gd"):
 			fig += 1
 	_checar(fig == 0, "V3: a Figura do susto some sozinha (%d)" % fig)
 	var sus0: int = int(GameState.contadores.get("sustos", 0))
