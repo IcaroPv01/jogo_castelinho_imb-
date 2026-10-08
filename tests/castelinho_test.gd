@@ -151,6 +151,8 @@ func _rodar() -> void:
 		for i in 10:
 			await physics_frame
 		_checar(GameState.sala_atual == s[0], "sala %d: contador (sala %d)" % [s[0], GameState.sala_atual])
+		if s[0] == 10:
+			await _passaporte_na_sala10(nivel, s[1])
 	_checar(GameState.flag("tem_visor"), "visor entregue (sala 10)")
 	_checar(GameState.discos == [GameState.Epoca.E1950] and GameState.disco_atual == GameState.Epoca.E1950, "visita 1: o disco 1950 veio com o Visor (discos %s)" % str(GameState.discos))
 	_checar(GameState.checkpoint_sala == 16, "checkpoint da visita 1 em 16 (pé da escada), não 21/22 (%d)" % GameState.checkpoint_sala)
@@ -296,6 +298,14 @@ func _visitas() -> void:
 	_checar(nivel.find_child("Folha_desenho_1", true, false) != null, "V1: o desenho do Tito (semente 2) no Salão de Arte")
 	_checar(nivel.find_child("MarcasDeAltura", true, false) != null, "V1: marcas de altura existem (só aparecem em 1975)")
 	_checar(nivel._discos_chao.is_empty(), "V1: nenhum disco no chão")
+	# Passaporte: "Continuar" com 1 achado recria só os 2 que faltam; com o disco 1950 (save antigo) não há caça
+	_checar(nivel._passaporte_itens.size() == 3, "V1: Passaporte com 3 objetos num jogo novo")
+	await _carregar_visita(1, {"passaporte_pedra": true}, false)
+	_checar(nivel._passaporte_itens.size() == 2 and not nivel._passaporte_itens.has("pedra") and GameState.passaporte_achados() == 1, "V1: Continuar não recria nem duplica o objeto já achado")
+	GameState.ganhar_disco(GameState.Epoca.E1950)
+	await _carregar_visita(1, {}, false)
+	_checar(nivel._passaporte_itens.is_empty(), "V1: com o disco 1950 (save antigo) a caça não aparece")
+	await _carregar_visita(1)
 	_checar(nivel.find_child("FitaZebrada", true, false) == null and nivel.chuva == null and nivel._bloqueio_escada == null, "V1: sem fita, chuva nem escada interditada")
 	_checar(nivel._paineis.has("quiz_final") and not nivel._paineis.has("p24"), "V1: quiz final presente")
 	_checar(not GameState.flag("tem_lanterna"), "V1: sem lanterna")
@@ -677,6 +687,41 @@ func _fim_da_visita_2() -> void:
 	_checar(GameState.flag("evt_v2_apagao"), "V2: apagão marcado como feito")
 	await _frames_f(10)
 
+
+
+## Passaporte do Museu (visita 1): sem os 3 objetos a sala 10 não dá o disco; com eles, dá; as flags guardam o progresso.
+func _passaporte_na_sala10(nivel: Node3D, pos10: Vector3) -> void:
+	_checar(nivel._passaporte_itens.size() == 3 and GameState.passaporte_achados() == 0, "Passaporte: 3 objetos escondidos, nenhum achado")
+	for id in ["pedra", "foto", "chave"]:
+		_checar(nivel.find_child("InterPassaporte_" + id, true, false) != null, "Passaporte: objeto '%s' existe" % id)
+	_checar(not GameState.discos.has(GameState.Epoca.E1950) and not GameState.flag("tem_visor"), "Passaporte: com 0 objetos a sala 10 não dá o disco")
+	nivel._coletar_passaporte("pedra")
+	nivel._coletar_passaporte("pedra")      # duas vezes: não duplica
+	nivel._coletar_passaporte("foto")
+	await physics_frame
+	_checar(GameState.passaporte_achados() == 2 and GameState.flag("passaporte_pedra") and GameState.flag("passaporte_foto"), "Passaporte: 2 achados, flags salvas (%d)" % GameState.passaporte_achados())
+	_checar(main.hud.lbl_passaporte.visible and main.hud.lbl_passaporte.text == "Passaporte 2/3", "Passaporte: contador no HUD (%s)" % main.hud.lbl_passaporte.text)
+	await _ir_para(Vector3(-20.5, 0.1, -17.2))
+	await _ir_para(pos10)
+	for i in 10:
+		await physics_frame
+	_checar(not GameState.discos.has(GameState.Epoca.E1950), "Passaporte: com 2 objetos a sala 10 não dá o disco")
+	_checar(nivel._passaporte_falando, "Passaporte: o Bentinho avisou que falta 1 (fala em curso)")
+	root.get_node("Guia").cancelar()
+	for i in 10:
+		await physics_frame
+	# "Continuar": o nível recarregado não recria os achados nem duplica
+	nivel._coletar_passaporte("chave")
+	await physics_frame
+	_checar(GameState.passaporte_achados() == 3 and nivel._passaporte_itens.is_empty(), "Passaporte: 3 achados, nada sobrando no nível")
+	_checar(not main.hud.lbl_passaporte.visible, "Passaporte: contador some ao completar")
+	root.get_node("Guia").cancelar()
+	await _ir_para(Vector3(-20.5, 0.1, -17.2))
+	await _ir_para(pos10)
+	for i in 10:
+		await physics_frame
+	_checar(GameState.discos.has(GameState.Epoca.E1950) and GameState.flag("tem_visor"), "Passaporte: com 3 objetos a sala 10 entrega o disco 1950")
+	root.get_node("Guia").cancelar()
 
 func _ir_para(pos: Vector3) -> void:
 	p.global_position = pos

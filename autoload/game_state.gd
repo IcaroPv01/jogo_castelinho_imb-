@@ -169,6 +169,18 @@ func set_flag(nome: String, valor: Variant = true) -> void:
 	salvar()
 
 
+## Passaporte do Museu (visita 1): os 3 objetos achados ficam nas flags "passaporte_<id>".
+const PASSAPORTE_IDS := ["pedra", "foto", "chave"]
+
+
+func passaporte_achados() -> int:
+	var n := 0
+	for id in PASSAPORTE_IDS:
+		if flags.get("passaporte_" + id, false):
+			n += 1
+	return n
+
+
 func flag(nome: String, padrao: Variant = false) -> Variant:
 	return flags.get(nome, padrao)
 

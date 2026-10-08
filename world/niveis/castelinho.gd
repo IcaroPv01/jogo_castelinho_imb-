@@ -147,6 +147,8 @@ var _escada_2019: Interagivel
 var _bloqueio_escada: StaticBody3D
 var _discos_chao := {}                # época -> [raiz, interagível]
 var _balde: Node3D
+var _passaporte_itens := {}           # id -> [raiz, interagível] dos objetos do Passaporte ainda não achados (visita 1)
+var _passaporte_falando := false
 var _desenhos := {}                   # nome -> nó
 var _tito: Node3D                     # Tito vivo (E1967)
 var _tito_visor: Node3D               # Tito "no canto da sala", só dentro do Visor (visitas 3 e 4)
@@ -1101,6 +1103,7 @@ func _montar_visita() -> void:
 		1:
 			# semente nº 2: um desenho de criança entre os quadros dos artistas locais (Salão de Arte, sala 11)
 			_desenhos["desenho_1"] = TitoCastelinho.folha(self, "desenho_1", Vector3(-9.62, 1.25, -20.01), 0.0, 0.46, 2)
+			_montar_passaporte()
 		2:
 			_desenhos["desenho_2"] = TitoCastelinho.folha(self, "desenho_2", Vector3(-6.45, 1.45, -20.01), 0.0, 0.5, 2)
 			_interagivel_pista("Olhar o desenho", Vector3(-6.45, 1.45, -19.9), Vector3(0.6, 0.6, 0.3), "desenho_2",
@@ -1296,6 +1299,167 @@ func _pegar_disco(epoca: int, fala: Array) -> void:
 	Audio.sfx("selo")
 	Efeitos.flash(0.25, Color(1, 1, 1), 0.35)
 	await Guia.falar("sistema", fala)
+
+
+# ---------------------------------------------------------------- Passaporte do Museu (visita 1: ganhar o disco 1950)
+## Fatos: docs/pesquisa/castelinho.md. pedra = §2.3 (pedra de barco pelo Tramandaí, fonte [1]); foto = §2.1/2.3 (obra a partir
+## de 1950, "só o miolo", torres em momentos diferentes, fonte [1]); chave = §2.1/2.4 (compra em 2019, quase ruínas, inauguração
+## em 23/12/2020, fontes [2][4][5]).
+const PASSAPORTE := {
+	"pedra": {"texto": "Examinar a pedra velha", "pos": Vector3(-11.0, 0.62, -7.3), "interno": false,
+		"fato": ["Uma pedra do Castelinho! Ela veio de barco pelo rio Tramandaí.", "Imagina carregar isso tudo no barco!"],
+		"dica": "Uma pedra velha brilha lá fora, perto do deck e da arcada (salas 4 e 5)."},
+	"foto": {"texto": "Examinar a foto antiga", "pos": Vector3(-21.5, 0.95, -12.9), "interno": true,
+		"fato": ["Uma foto antiga! No começo, a partir de 1950, era só o miolo da casa.", "As torres vieram depois, em épocas diferentes."],
+		"dica": "Uma foto antiga está na sala dos Povos Originários, depois do hall (sala 8)."},
+	"chave": {"texto": "Examinar a chave velha", "pos": Vector3(-20.3, 0.8, -18.4), "interno": true,
+		"fato": ["Uma chave velha! Em 2019 o prédio foi comprado e salvo, porque quase virou ruínas.", "Em dezembro de 2020 ele abriu como Casa de Cultura e Museu."],
+		"dica": "Uma chave velha brilha na sala do Meio Ambiente, perto do pinguim (sala 9)."},
+}
+
+
+func _montar_passaporte() -> void:
+	if GameState.discos.has(E1950):
+		return                      # save antigo (ou caça concluída): sem caça
+	for id in PASSAPORTE:
+		if GameState.flag("passaporte_" + id):
+			continue
+		var d: Dictionary = PASSAPORTE[id]
+		var raiz := Node3D.new()
+		raiz.name = "Passaporte_" + id
+		raiz.position = d["pos"]
+		var modelo := _modelo_passaporte(id)
+		modelo.name = "Modelo"
+		raiz.add_child(modelo)
+		var brilho := Sprite3D.new()
+		brilho.name = "Brilho"
+		brilho.texture = _tex_brilho()
+		brilho.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		brilho.shaded = false
+		brilho.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		brilho.pixel_size = 0.014
+		brilho.position = Vector3(0.14, 0.16, 0.05)
+		brilho.modulate = Color(1.0, 0.9, 0.35)
+		raiz.add_child(brilho)
+		add_child(raiz)
+		if d["interno"]:
+			_camada_interna(raiz)
+		Epocas.marcar(raiz, [E2020])
+		var it := Interagivel.new(d["texto"], Vector3(0.7, 0.7, 0.7), Callable())
+		it.name = "InterPassaporte_" + id
+		it.position = d["pos"]
+		it.acao = func(_p: Node) -> void: _coletar_passaporte(id)
+		add_child(it)
+		Epocas.marcar(it, [E2020])
+		_passaporte_itens[id] = [raiz, it]
+
+
+func _camada_interna(no: Node) -> void:
+	if no is VisualInstance3D:
+		(no as VisualInstance3D).layers = 2
+	for c in no.get_children():
+		_camada_interna(c)
+
+
+func _peca(pai: Node3D, malha: Mesh, cor: Color, pos: Vector3, rot := Vector3.ZERO) -> MeshInstance3D:
+	var m := MeshInstance3D.new()
+	m.mesh = malha
+	m.material_override = Castelinho.mat_cor(cor, 0.7)
+	m.position = pos
+	m.rotation_degrees = rot
+	pai.add_child(m)
+	return m
+
+
+## Modelos simples, de cor viva (jogo educativo Flash): pedra ferrugem, foto sépia com moldura, chave dourada.
+func _modelo_passaporte(id: String) -> Node3D:
+	var n := Node3D.new()
+	match id:
+		"pedra":
+			# pedra grés bruta, lascada (não um tijolo: o bloco liso com junta lia como baú)
+			var r := SphereMesh.new()
+			r.radius = 0.16
+			r.height = 0.22
+			r.radial_segments = 7
+			r.rings = 3
+			_peca(n, r, Color(0.72, 0.4, 0.3), Vector3.ZERO, Vector3(12, 25, 8))
+			var lasca := SphereMesh.new()
+			lasca.radius = 0.1
+			lasca.height = 0.14
+			lasca.radial_segments = 5
+			lasca.rings = 2
+			_peca(n, lasca, Color(0.62, 0.34, 0.26), Vector3(0.11, 0.03, 0.05), Vector3(0, 40, 20))
+		"foto":
+			var mold := BoxMesh.new()
+			mold.size = Vector3(0.42, 0.32, 0.03)
+			_peca(n, mold, Color(0.35, 0.18, 0.08), Vector3.ZERO)
+			var papel := BoxMesh.new()
+			papel.size = Vector3(0.36, 0.26, 0.035)
+			_peca(n, papel, Color(0.93, 0.85, 0.62), Vector3.ZERO)
+			var casa := BoxMesh.new()
+			casa.size = Vector3(0.14, 0.07, 0.04)
+			_peca(n, casa, Color(0.45, 0.32, 0.2), Vector3(-0.04, -0.03, 0))
+			var teto := BoxMesh.new()
+			teto.size = Vector3(0.16, 0.025, 0.045)
+			_peca(n, teto, Color(0.3, 0.2, 0.14), Vector3(-0.04, 0.02, 0))
+		"chave":
+			var anel := TorusMesh.new()
+			anel.inner_radius = 0.045
+			anel.outer_radius = 0.08
+			_peca(n, anel, Color(1.0, 0.78, 0.15), Vector3(-0.12, 0, 0), Vector3(90, 0, 0))
+			var haste := BoxMesh.new()
+			haste.size = Vector3(0.24, 0.04, 0.04)
+			_peca(n, haste, Color(1.0, 0.78, 0.15), Vector3(0.06, 0, 0))
+			var dente := BoxMesh.new()
+			dente.size = Vector3(0.04, 0.09, 0.04)
+			_peca(n, dente, Color(1.0, 0.78, 0.15), Vector3(0.14, -0.04, 0))
+			_peca(n, dente, Color(1.0, 0.78, 0.15), Vector3(0.07, -0.04, 0))
+	return n
+
+
+func _animar_passaporte(dt: float) -> void:
+	for id in _passaporte_itens:
+		var raiz: Node3D = _passaporte_itens[id][0]
+		if not is_instance_valid(raiz) or not raiz.visible:
+			continue
+		var m := raiz.get_node_or_null("Modelo") as Node3D
+		if m:
+			m.rotation.y += dt * 1.1
+			m.position.y = sin(_t * 2.0 + float(id.length())) * 0.04
+		var b := raiz.get_node_or_null("Brilho") as Sprite3D
+		if b:
+			var f := pow(maxf(0.0, sin(_t * 2.2 + float(id.length()))), 4.0)
+			b.scale = Vector3.ONE * (0.5 + 0.9 * f)
+			b.rotation.z = _t * 1.5
+
+
+## O Bentinho lança o Passaporte (sala 1 da visita 1). Sem caça se o jogador já tem o disco 1950.
+func _lancar_passaporte() -> void:
+	if GameState.discos.has(E1950) or GameState.flag("passaporte_lancado"):
+		return
+	GameState.set_flag("passaporte_lancado")
+	await Guia.falar("bentinho", ["Hoje você ganha o Passaporte do Museu!", "Ache 3 objetos antigos escondidos pelo caminho e ganhe carimbos!", "Eles brilham de leve. Procure nas salas de 1 a 10!"])
+
+
+func _coletar_passaporte(id: String) -> void:
+	var par: Array = _passaporte_itens.get(id, [])
+	if par.is_empty():
+		return
+	_passaporte_itens.erase(id)
+	for n in par:
+		if is_instance_valid(n):
+			(n as Node).queue_free()
+	GameState.set_flag("passaporte_" + id)
+	GameState.set_flag("passaporte_lancado")
+	Audio.sfx("selo")                       # o carimbo
+	Efeitos.flash(0.2, Color(1, 0.95, 0.6), 0.3)
+	var n := GameState.passaporte_achados()
+	var linhas: Array = PASSAPORTE[id]["fato"].duplicate()
+	if n >= GameState.PASSAPORTE_IDS.size():
+		linhas.append("Carimbo %d de 3! Passaporte completo: fale com o Bentinho no corredor, sala 10." % n)
+	else:
+		linhas.append("Carimbo %d de 3!" % n)
+	await Guia.falar("bentinho", linhas)
 
 
 ## Pedestal de madeira no topo da Torre A (visita 3) onde fica o disco 1975.
@@ -1642,6 +1806,7 @@ func _exit_tree() -> void:
 # ================================================================== loop: luzes, olhos, apito, armadura, Tito, chuva
 func _process(dt: float) -> void:
 	_t += dt
+	_animar_passaporte(dt)
 	_t_luzes -= dt
 	if _t_luzes <= 0.0:
 		_t_luzes = 0.3
@@ -1780,6 +1945,7 @@ func _evt_sala1() -> void:
 	match visita:
 		1:
 			await Guia.falar("bentinho", ["Oi! Eu sou o Bentinho!", "Bem-vindo à Visita Guiada do Castelinho!"])
+			await _lancar_passaporte()
 			# o recorte de papelão virado para a parede não é comentado por ninguém
 		2:
 			await Guia.falar("bentinho", ["Bem-vindo de volta!", "Atualizamos as informações da visita. Agora com mais verdade!"])
@@ -1838,13 +2004,30 @@ func _evt_sala9() -> void:
 
 
 func _evt_sala10() -> void:
-	if visita != 1 or not _uma_vez("sala10"):
+	if visita != 1 or GameState.discos.has(E1950) or _passaporte_falando:
 		return
-	# o Visor do Tempo vem com o Disco 1950, um "brinde educativo" (V2 §3.1)
+	_passaporte_falando = true
+	var n := GameState.passaporte_achados()
+	if n < GameState.PASSAPORTE_IDS.size():
+		# faltam objetos: o Bentinho diz quantos e onde procurar (sem trava: eles seguem nos lugares)
+		GameState.set_flag("passaporte_lancado")
+		var falta: Array = []
+		for id in GameState.PASSAPORTE_IDS:
+			if not GameState.flag("passaporte_" + id):
+				falta.append(id)
+		var dica: String = PASSAPORTE[falta[0]]["dica"]
+		await Guia.falar("bentinho", ["Quase lá! Seu Passaporte tem %d de 3 carimbos." % n, "Falta%s %d. %s" % ["m" if falta.size() > 1 else "", falta.size(), dica]])
+		_passaporte_falando = false
+		return
+	# Passaporte completo: o Visor do Tempo vem com o Disco 1950, um "brinde educativo" (V2 §3.1)
+	_uma_vez("sala10")
 	GameState.set_flag("tem_visor")
 	GameState.ganhar_disco(GameState.Epoca.E1950)
+	Audio.sfx("fanfarra")
+	await Guia.falar("bentinho", ["Três carimbos! Passaporte completo, parabéns!"])
 	Audio.sfx("selo")
 	await Guia.falar("bentinho", ["Presente! O Visor do Tempo!", "Segure Q para ver como era em 1950!"])
+	_passaporte_falando = false
 
 
 func _evt_sala11() -> void:
