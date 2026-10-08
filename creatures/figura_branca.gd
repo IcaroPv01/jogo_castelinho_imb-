@@ -89,19 +89,43 @@ func _ready() -> void:
 const SHADER := """shader_type spatial;
 render_mode unshaded, cull_disabled;
 uniform float brilho = 1.0;
+uniform float suelo = 0.0;
 varying vec3 vp;
-void vertex() { vp = VERTEX; }
+varying float alt;
+float h3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float vn(vec3 p) {
+	vec3 i = floor(p); vec3 f = fract(p); f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(mix(h3(i), h3(i + vec3(1,0,0)), f.x), mix(h3(i + vec3(0,1,0)), h3(i + vec3(1,1,0)), f.x), f.y),
+		mix(mix(h3(i + vec3(0,0,1)), h3(i + vec3(1,0,1)), f.x), mix(h3(i + vec3(0,1,1)), h3(i + vec3(1,1,1)), f.x), f.y), f.z);
+}
+void vertex() {
+	vp = VERTEX;
+	alt = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y - suelo;
+}
 void fragment() {
-	float fio = sin(vp.x * 55.0 + sin(vp.y * 9.0 + vp.z * 30.0) * 2.5) * 0.5 + 0.5;
+	float n = vn(vp * 7.0) * 0.6 + vn(vp * 19.0 + 3.0) * 0.4;
+	float suja = smoothstep(0.42, 0.72, n);
+	float pingo = smoothstep(0.55, 0.9, vn(vec3(vp.x * 40.0, vp.y * 4.0, vp.z * 40.0)));
+	float umido = smoothstep(1.3, 0.1, alt);
 	float rim = pow(1.0 - abs(dot(normalize(NORMAL), normalize(VIEW))), 2.0);
-	float molhado = mix(0.72, 1.0, fio) * (1.0 - 0.45 * rim);
-	ALBEDO = COLOR.rgb * molhado * brilho;
+	vec3 c = COLOR.rgb;
+	c *= 1.0 - 0.5 * suja - 0.25 * pingo;
+	c = mix(c, c * vec3(0.55, 0.7, 0.65), umido * 0.8);
+	c *= 1.0 - 0.45 * rim;
+	if (COLOR.a < 0.5) {   // tronco: costelas e clavícula sugeridas por sombra
+		float frente = step(vp.z, 0.0);
+		float banda = smoothstep(0.28, 0.36, vp.y) * smoothstep(0.76, 0.66, vp.y);
+		float costela = (sin(vp.y * 52.0) * 0.5 + 0.5);
+		c *= 1.0 - 0.4 * costela * banda * frente;
+		c *= 1.0 - 0.5 * smoothstep(0.014, 0.0, abs(vp.y - 0.76 - 0.05 * abs(vp.x))) * frente;
+	}
+	ALBEDO = c * brilho;
 }
 """
-const COR_PELE := Color(0.80, 0.84, 0.82)
-const COR_VESTIDO := Color(0.74, 0.78, 0.77)
+const COR_PELE := Color(0.66, 0.74, 0.69)
+const COR_VESTIDO := Color(0.68, 0.73, 0.70)
 const COR_BARRA := Color(0.30, 0.35, 0.35)
-const COR_CABELO := Color(0.16, 0.18, 0.21)
+const COR_CABELO := Color(0.12, 0.14, 0.16)
 const COR_VAZIO := Color(0.0, 0.0, 0.0)
 
 var _cabeca: Node3D
@@ -179,20 +203,21 @@ func _novo_st() -> SurfaceTool:
 
 func _braco(lado: float) -> Node3D:
 	var no := Node3D.new()
-	no.position = Vector3(0.21 * lado, 0.86, 0.0)
+	no.position = Vector3(0.15 * lado, 0.80, 0.0)   # ombro estreito e caído
 	_corpo.add_child(no)
 	var st := _novo_st()
 	var pele := _cor_const(COR_PELE)
-	# ombro -> cotovelo -> pulso (comprido demais), levemente curvo
-	_tubo(st, [Vector3(0, 0.02, 0), Vector3(0.02 * lado, -0.4, -0.03), Vector3(0.035 * lado, -0.85, 0.02), Vector3(0.04 * lado, -1.2, -0.01), Vector3(0.04 * lado, -1.27, -0.01)],
-		[0.05, 0.034, 0.027, 0.02, 0.03], 6, pele)
-	# 4 dedos longos e tortos
+	# ombro -> cotovelo (dobra leve) -> pulso, pendendo um pouco para a frente (-Z)
+	var pulso := Vector3(0.05 * lado, -1.0, -0.2)
+	_tubo(st, [Vector3(-0.07 * lado, 0.07, 0.01), Vector3(0, 0.0, 0.01), Vector3(0.015 * lado, -0.3, -0.03), Vector3(0.03 * lado, -0.62, -0.14), Vector3(0.04 * lado, -0.85, -0.17), pulso],
+		[0.018, 0.04, 0.027, 0.02, 0.017, 0.016], 6, pele)
+	# mão: 4 dedos longos, finos e abertos
 	for j in 4:
-		var ox := (float(j) - 1.5) * 0.022 * lado
-		var comp := 0.30 + 0.05 * float(1 - absi(j - 1))
-		var curva := 0.03 + 0.02 * float(j % 2)
-		_tubo(st, [Vector3(0.04 * lado + ox, -1.27, -0.01), Vector3(0.04 * lado + ox * 1.5, -1.27 - comp * 0.5, -0.01 - curva), Vector3(0.04 * lado + ox * 2.0, -1.27 - comp, -0.01 - curva * 2.2)],
-			[0.011, 0.008, 0.003], 4, pele)
+		var abre := (float(j) - 1.5)
+		var comp := 0.30 + 0.06 * float(1 - absi(j - 1))
+		var dx := abre * 0.045 * lado
+		_tubo(st, [pulso, pulso + Vector3(dx * 0.5, -comp * 0.5, -0.02 - 0.02 * abs(abre)), pulso + Vector3(dx * 1.0 + 0.02 * lado, -comp, -0.05 - 0.03 * abs(abre))],
+			[0.012, 0.009, 0.004], 4, pele)
 	_no_malha(no, _malha(st), Vector3.ZERO)
 	return no
 
@@ -245,8 +270,8 @@ func _construir_visual() -> void:
 	_corpo.position = Vector3(0, 1.0, 0)
 	_modelo.add_child(_corpo)
 	st = _novo_st()
-	_tubo(st, [Vector3(0, -0.12, 0), Vector3(0, 0.2, 0), Vector3(0, 0.55, 0), Vector3(0, 0.78, 0), Vector3(0, 0.86, 0), Vector3(0, 0.92, 0)],
-		[0.10, 0.075, 0.12, 0.15, 0.085, 0.04], 8, _cor_const(COR_PELE.lerp(COR_VESTIDO, 0.5)), Vector2(1.3, 0.55))
+	_tubo(st, [Vector3(0, -0.12, 0.0), Vector3(0, 0.2, 0.01), Vector3(0, 0.5, 0.04), Vector3(0, 0.72, 0.04), Vector3(0, 0.82, 0.0), Vector3(0, 0.88, -0.01), Vector3(0, 0.92, -0.01)],
+		[0.085, 0.052, 0.095, 0.115, 0.085, 0.04, 0.035], 8, _cor_const(Color(COR_PELE.r, COR_PELE.g, COR_PELE.b, 0.0)), Vector2(1.25, 0.6))
 	_no_malha(_corpo, _malha(st), Vector3.ZERO)
 	_braco_e = _braco(-1.0)
 	_braco_d = _braco(1.0)
@@ -257,25 +282,30 @@ func _construir_visual() -> void:
 	_corpo.add_child(_cabeca)
 	st = _novo_st()
 	var cor_cab := func(i: int, d: Vector3) -> Color:
-		if i >= 2 and i <= 5:
+		if i >= 3 and i <= 5:
 			var f := clampf(-d.z, 0.0, 1.0)
 			return COR_PELE.lerp(COR_VAZIO, smoothf(0.25, 0.7, f))
+		if i == 2:   # boca escura sobre o queixo pálido
+			return COR_PELE.lerp(COR_VAZIO, 0.8 * smoothf(0.5, 0.9, clampf(-d.z, 0.0, 1.0)))
 		return COR_PELE
 	_tubo(st, [Vector3(0, 0, 0), Vector3(0, 0.14, -0.01), Vector3(0, 0.2, -0.015), Vector3(0, 0.28, -0.02), Vector3(0, 0.37, -0.015), Vector3(0, 0.45, 0), Vector3(0, 0.48, 0)],
 		[0.035, 0.03, 0.05, 0.08, 0.077, 0.045, 0.01], 8, cor_cab, Vector2(0.9, 1.05))
 	var cab_c := _cor_const(COR_CABELO)
-	for m in 16:
-		var ang := TAU * m / 16.0 + rng.randf_range(-0.1, 0.1)
-		var fr := -sin(ang) * 0.5 + 0.5   # mechas da frente descem mais (cobrem o rosto)
-		if fr > 0.75 and m % 2 == 0:
-			continue   # deixa uma fresta: o vazio do rosto aparece entre as mechas
-		var r0 := 0.07
-		var comp := 0.5 + 0.35 * fr + rng.randf_range(0.0, 0.2)
-		var x0 := cos(ang) * r0
-		var z0 := sin(ang) * r0
-		var pts := [Vector3(x0 * 0.4, 0.43, z0 * 0.4), Vector3(x0 * 1.35, 0.3, z0 * 1.4 - 0.01), Vector3(x0 * 1.5, 0.12, z0 * 1.5 - 0.01),
-			Vector3(x0 * 1.3, 0.28 - comp * 0.55 + 0.12, z0 * 1.4 - 0.02), Vector3(x0 * 1.1 + rng.randf_range(-0.03, 0.03), 0.28 - comp, z0 * 1.2 - 0.02)]
-		_tubo(st, pts, [0.012, 0.016, 0.016, 0.014, 0.004], 4, cab_c)
+	var ys := [0.46, 0.38, 0.28, 0.1, -0.15]
+	var rs := [0.02, 0.07, 0.1, 0.098, 0.105]
+	var nm := 22
+	for m in nm:
+		var ang := TAU * m / nm + rng.randf_range(-0.05, 0.05)
+		# frente = -Z (ang = -PI/2): deixa uma fresta ali, onde aparecem o queixo pálido e a boca escura
+		if absf(wrapf(ang + PI / 2.0, -PI, PI)) < 0.5:
+			continue
+		var fr := -sin(ang) * 0.5 + 0.5
+		var fim := -0.28 - 0.3 * fr - rng.randf_range(0.0, 0.28)   # cortina reta até o peito, barra irregular
+		var pts := []
+		for i in ys.size():
+			pts.append(Vector3(cos(ang) * rs[i] * 0.95, ys[i], sin(ang) * rs[i] * 1.02 - 0.015))
+		pts.append(Vector3(cos(ang) * 0.1, fim, sin(ang) * 0.105 - 0.015))
+		_tubo(st, pts, [0.012, 0.022, 0.024, 0.022, 0.02, 0.004], 4, cab_c)
 	_no_malha(_cabeca, _malha(st), Vector3.ZERO)
 	_pose_base()
 
@@ -287,7 +317,7 @@ func smoothf(a: float, b: float, x: float) -> float:
 ## Pose de descanso: corcunda, cabeça pendida para o lado, braços soltos.
 func _pose_base() -> void:
 	_corpo.rotation = Vector3(-0.22, 0.0, 0.04)
-	_cabeca.rotation = Vector3(-0.2, 0.0, 0.38)
+	_cabeca.rotation = Vector3(-0.1, 0.0, 0.16)
 	_braco_e.rotation = Vector3(0.05, 0.0, 0.03)
 	_braco_d.rotation = Vector3(-0.04, 0.0, -0.05)
 	_modelo.position.y = 0.0
@@ -297,7 +327,7 @@ func _pose_base() -> void:
 func _pose_nova(forte: bool) -> void:
 	var f := 1.6 if forte else 1.0
 	_corpo.rotation = Vector3(-0.22 - (0.15 if forte else randf_range(-0.05, 0.08)), randf_range(-0.12, 0.12) * f, randf_range(-0.09, 0.09) * f)
-	_cabeca.rotation = Vector3(-0.2 + randf_range(-0.2, 0.25), randf_range(-0.5, 0.5) * f, 0.38 * signf(_cabeca.rotation.z) + randf_range(-0.25, 0.25))
+	_cabeca.rotation = Vector3(-0.1 + randf_range(-0.15, 0.2), randf_range(-0.5, 0.5) * f, 0.16 * signf(_cabeca.rotation.z) + randf_range(-0.15, 0.15))
 	if randf() < 0.18:
 		_cabeca.rotation.z = -_cabeca.rotation.z   # estala para o outro lado
 	_braco_e.rotation = Vector3(randf_range(-0.3, 0.35), 0.0, randf_range(-0.05, 0.14) * f)
@@ -309,7 +339,7 @@ func _pose_nova(forte: bool) -> void:
 ## Ao ser vista: congela com a cabeça virada de vez para o jogador (um estalo só).
 func _pose_olhada() -> void:
 	_pose_base()
-	_cabeca.rotation = Vector3(0.1, 0.0, 0.85 * (1.0 if randf() < 0.5 else -1.0))
+	_cabeca.rotation = Vector3(0.1, 0.0, 0.5 * (1.0 if randf() < 0.5 else -1.0))
 	_corpo.rotation = Vector3(-0.28, 0.0, 0.0)
 	_modelo.rotation.y = 0.0
 
@@ -318,6 +348,7 @@ func _process(dt: float) -> void:
 	if _modelo == null:
 		return
 	_t += dt
+	_mat.set_shader_parameter("suelo", global_position.y)
 	if _movendo:
 		_snap_t -= dt
 		if _snap_t <= 0.0:

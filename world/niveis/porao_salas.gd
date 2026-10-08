@@ -402,6 +402,11 @@ static func _cela_giz(c: Ctx) -> void:
 	_grade(c, c.w * 0.5, 1.0, zc, 2.4, 2.4, true)
 	var q := quadro(c, tex_giz(), Vector3(x1, 1.35, zc), Vector3(-1, 0, 0), 1.7, 1.275)
 	q.name = "DesenhoGiz"
+	# o giz brilha de leve (sem luz nova): o nicho é escuro e o desenho precisa ser lido
+	var mq := q.material_override as StandardMaterial3D
+	mq.emission_enabled = true
+	mq.emission_texture = mq.albedo_texture
+	mq.emission_energy_multiplier = 0.55
 	var l := rotulo(c, "ELA DISSE QUE O LAGO É LÁ EMBAIXO", Vector3(x1 - 0.04, 0.62, zc), -90.0, 30, Color(0.93, 0.93, 0.88), 0.0032)
 	l.name = "TextoGiz"
 	var todas := [GameState.Epoca.E1950, GameState.Epoca.E1975, GameState.Epoca.E2019, GameState.Epoca.E2020, GameState.Epoca.E1967, GameState.Epoca.ESEMDATA]
