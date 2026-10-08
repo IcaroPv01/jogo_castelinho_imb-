@@ -204,6 +204,7 @@ static func construir(c: Ctx) -> void:
 		"quarto_tito": _quarto().quarto(c)
 	if c.ultimo > 0:
 		_quarto().vinheta(c)
+	_masmorra(c)
 	_porta_entrada(c)
 	_finalizar(c)
 
@@ -309,6 +310,206 @@ static func casca(c: Ctx, o: Dictionary = {}) -> void:
 	if c.lamina_saida:
 		var ab2 := [MurosGd.ab(0.0, PORTA_L, c.dy, c.dy + PORTA_VS, c.dy + PORTA_VC, "arco")]
 		MurosGd.muro_x(c.pedra, c.pedra, mp, mp, -L, -X, X, 1, T, base, c.dy + maxf(topo, PORTA_VC + 0.4), ab2, {})
+
+
+# ============================================================================ entrada pelas fitas e masmorra (sequência fixa)
+## Só as salas da masmorra e da entrada: 81 (fitas), 84 e 87 (celas; correntes na 87) e 90 (cela aberta com o giz).
+static func _masmorra(c: Ctx) -> void:
+	match c.idx:
+		0: _fitas_entrada(c)
+		3:
+			for z in [-6.6, -11.0]:
+				_cela(c, -1, z)
+			for z in [-5.0, -7.4]:
+				_cela(c, 1, z)
+		6:
+			_cela(c, -1, -6.2)
+			_cela(c, 1, -2.5)
+			_cela(c, 1, -10.5)
+			_correntes(c, -1, -10.6)
+			_correntes(c, -1, -11.5)
+		9: _cela_giz(c)
+
+
+## Grade de ferro (barras finas e enferrujadas) diante de um nicho escuro na parede lateral `lado` (-1 esquerda, +1 direita).
+## `aberta`: metade da grade (a folha da direita) fica escancarada, encostada na lateral do nicho.
+static func _grade(c: Ctx, x_face: float, lado: float, zc: float, larg: float, alt: float, aberta := false) -> void:
+	var mv := mat_vc()
+	var d := -lado                                  # sentido para dentro da sala
+	var xb := x_face + d * 0.14                     # plano das barras
+	var ferro := Color(0.36, 0.19, 0.1)
+	var meia := larg * 0.5
+	# fundo escuro do nicho e moldura de pedra (viga em cima, soleira embaixo)
+	c.vc.caixa(mv, Vector3(x_face, 0.0, zc - meia), Vector3(x_face + d * 0.02, alt, zc + meia), Malha.F_TODAS, 0.0, Color(0.012, 0.012, 0.016))
+	c.vc.caixa(mv, Vector3(x_face, alt, zc - meia - 0.1), Vector3(x_face + d * 0.22, alt + 0.2, zc + meia + 0.1), Malha.F_TODAS, 0.0, Color(0.32, 0.3, 0.3))
+	c.vc.caixa(mv, Vector3(x_face, 0.0, zc - meia - 0.1), Vector3(x_face + d * 0.22, 0.12, zc + meia + 0.1), Malha.F_TODAS, 0.0, Color(0.32, 0.3, 0.3))
+	for lat in [-1.0, 1.0]:
+		c.vc.caixa(mv, Vector3(x_face, 0.0, zc + lat * meia - 0.05), Vector3(x_face + d * 0.22, alt, zc + lat * meia + 0.05), Malha.F_TODAS, 0.0, Color(0.32, 0.3, 0.3))
+	# barras verticais (a cada ~14 cm) e duas travessas
+	var n := int(larg / 0.14)
+	var z_ini := zc - meia + 0.06
+	var passo := (larg - 0.12) / n
+	for k in n + 1:
+		var z := z_ini + k * passo
+		if aberta and z > zc + 0.05:
+			continue                                 # a folha da direita foi aberta
+		c.vc.caixa(mv, Vector3(xb - 0.015, 0.12, z - 0.015), Vector3(xb + 0.015, alt, z + 0.015), Malha.F_TODAS, 0.0, ferro)
+	var z_fim := zc + 0.05 if aberta else zc + meia - 0.06
+	for y in [0.35, alt - 0.3]:
+		c.vc.caixa(mv, Vector3(xb - 0.02, y, zc - meia + 0.06), Vector3(xb + 0.02, y + 0.05, z_fim), Malha.F_TODAS, 0.0, ferro)
+	if aberta:
+		# a folha aberta: encostada na lateral do nicho (barras ao longo de x)
+		var zl := zc + meia - 0.1
+		for k in 7:
+			var xo := xb + d * k * 0.15
+			c.vc.caixa(mv, Vector3(xo - 0.015, 0.12, zl - 0.015), Vector3(xo + 0.015, alt, zl + 0.015), Malha.F_TODAS, 0.0, ferro)
+		for y in [0.35, alt - 0.3]:
+			c.vc.caixa(mv, Vector3(xb, y, zl - 0.02), Vector3(xb + d * 0.9, y + 0.05, zl + 0.02), Malha.F_TODAS, 0.0, ferro)
+
+
+static func _cela(c: Ctx, lado: float, zc: float) -> void:
+	_grade(c, lado * c.w * 0.5, lado, zc, 1.5, 2.2)
+
+
+## Correntes velhas penduradas na parede: argolas grandes de adulto (elos de 18 cm, algemas de 30 cm), nada de criança.
+static func _correntes(c: Ctx, lado: float, zc: float) -> void:
+	var mv := mat_vc()
+	var d := -lado
+	var x := lado * c.w * 0.5 + d * 0.06
+	var ferro := Color(0.2, 0.15, 0.12)
+	c.vc.caixa(mv, Vector3(x - 0.05, 2.62, zc - 0.12), Vector3(x + d * 0.1, 2.74, zc + 0.12), Malha.F_TODAS, 0.0, ferro)      # suporte
+	var y := 2.62
+	for k in 6:
+		var alt := 0.18
+		for lat in [-1.0, 1.0]:
+			if k % 2 == 0:       # elo de frente: dois lados ao longo de z
+				c.vc.caixa(mv, Vector3(x - 0.012, y - alt, zc + lat * 0.045 - 0.012), Vector3(x + 0.012, y, zc + lat * 0.045 + 0.012), Malha.F_TODAS, 0.0, ferro)
+			else:                # elo de lado: dois lados ao longo de x
+				c.vc.caixa(mv, Vector3(x + lat * 0.045 - 0.012, y - alt, zc - 0.012), Vector3(x + lat * 0.045 + 0.012, y, zc + 0.012), Malha.F_TODAS, 0.0, ferro)
+		y -= alt * 0.85
+	# algema grande (aro de ~30 cm) na ponta
+	var r := 0.15
+	for lado_z in [-1.0, 1.0]:
+		c.vc.caixa(mv, Vector3(x - 0.02, y - 0.3, zc + lado_z * r - 0.02), Vector3(x + 0.02 + d * 0.0, y, zc + lado_z * r + 0.02), Malha.F_TODAS, 0.0, ferro)
+	c.vc.caixa(mv, Vector3(x - 0.02, y - 0.32, zc - r), Vector3(x + 0.02, y - 0.28, zc + r), Malha.F_TODAS, 0.0, ferro)
+
+
+## Sala 90: a 3ª passagem para a direita vira uma cela com a grade aberta e, na parede de dentro, um desenho de giz.
+static func _cela_giz(c: Ctx) -> void:
+	var zc := -2.4 - 1 * 3.6                       # o arco/nicho k = 1 de `_arcos`
+	var x0 := c.w * 0.5 + T
+	var x1 := x0 + 2.2
+	_grade(c, c.w * 0.5, 1.0, zc, 2.4, 2.4, true)
+	var q := quadro(c, tex_giz(), Vector3(x1, 1.35, zc), Vector3(-1, 0, 0), 1.7, 1.275)
+	q.name = "DesenhoGiz"
+	var l := rotulo(c, "ELA DISSE QUE O LAGO É LÁ EMBAIXO", Vector3(x1 - 0.04, 0.62, zc), -90.0, 30, Color(0.93, 0.93, 0.88), 0.0032)
+	l.name = "TextoGiz"
+	var todas := [GameState.Epoca.E1950, GameState.Epoca.E1975, GameState.Epoca.E2019, GameState.Epoca.E2020, GameState.Epoca.E1967, GameState.Epoca.ESEMDATA]
+	c.pistas.append({"id": "giz_cela", "no": q, "epocas": todas})
+
+
+## Giz de criança num muro escuro: uma figura alta e branca, de braços compridos, de mãos dadas com um menino pequeno
+## de balde vermelho, indo para uma água azul. Sem violência.
+static func tex_giz() -> Texture2D:
+	if _cache.has("giz"):
+		return _cache["giz"]
+	const W := 136
+	const H := 102
+	var img := Image.create(W, H, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0.17, 0.18, 0.2))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9090
+	for i in 160:
+		img.set_pixel(rng.randi_range(0, W - 1), rng.randi_range(0, H - 1), Color(0.22, 0.23, 0.25))
+	var linha := func(a: Vector2, b: Vector2, cor: Color) -> void:
+		var passos := int(maxf(absf(b.x - a.x), absf(b.y - a.y))) + 1
+		for i in passos + 1:
+			var p := a.lerp(b, float(i) / passos)
+			for dx in 2:
+				for dy in 2:
+					var x := int(p.x) + dx
+					var y := int(p.y) + dy
+					if x >= 0 and y >= 0 and x < W and y < H:
+						img.set_pixel(x, y, cor)
+	var branco := Color(0.93, 0.93, 0.88)
+	var azul := Color(0.3, 0.55, 0.95)
+	var verm := Color(0.9, 0.18, 0.12)
+	var amar := Color(0.95, 0.85, 0.3)
+	# água azul à direita (ondas)
+	for k in 6:
+		var y := 56 + k * 7
+		for x in range(86, W - 6, 2):
+			linha.call(Vector2(x, y + (2 if (x / 2) % 2 == 0 else 0)), Vector2(x + 2, y + (0 if (x / 2) % 2 == 0 else 2)), azul)
+	# a figura alta: cabeça, corpo longo, braços compridos (um para o menino, outro caído), pernas
+	for a in 24:      # cabeça (círculo)
+		var ang := a * TAU / 24.0
+		img.set_pixel(int(30 + cos(ang) * 6), int(14 + sin(ang) * 7), branco)
+	linha.call(Vector2(30, 21), Vector2(30, 62), branco)                    # corpo
+	linha.call(Vector2(30, 28), Vector2(8, 58), branco)                     # braço longo caído
+	linha.call(Vector2(30, 28), Vector2(62, 54), branco)                    # braço longo para o menino
+	linha.call(Vector2(30, 62), Vector2(22, 94), branco)
+	linha.call(Vector2(30, 62), Vector2(38, 94), branco)
+	# o menino pequeno: cabeça, corpo, pernas, balde vermelho na mão
+	for a in 18:
+		var ang := a * TAU / 18.0
+		img.set_pixel(int(66 + cos(ang) * 4), int(55 + sin(ang) * 4), amar)
+	linha.call(Vector2(66, 60), Vector2(66, 78), amar)
+	linha.call(Vector2(66, 64), Vector2(62, 54), amar)                      # a mão dada
+	linha.call(Vector2(66, 64), Vector2(76, 70), amar)
+	linha.call(Vector2(66, 78), Vector2(62, 92), amar)
+	linha.call(Vector2(66, 78), Vector2(72, 92), amar)
+	for yy in range(70, 78):
+		linha.call(Vector2(76, yy), Vector2(83, yy), verm)                  # o balde
+	var t := ImageTexture.create_from_image(img)
+	_cache["giz"] = t
+	return t
+
+
+## Sala 81: um batente de madeira com fitas zebradas (amarelo e preto) cruzadas e rasgadas, sem colisão, e a placa
+## "EM REFORMA" caída no chão. As fitas são iguais às da porta do hall (castelinho.gd, `_fita_zebrada`).
+static func _fitas_entrada(c: Ctx) -> void:
+	var mv := mat_vc()
+	var z := -1.55
+	var madeira := Color(0.3, 0.2, 0.13)
+	for lado in [-1.0, 1.0]:
+		c.vc.caixa(mv, Vector3(lado * 1.2 - 0.09, 0.0, z - 0.09), Vector3(lado * 1.2 + 0.09, 2.6, z + 0.09), Malha.F_TODAS, 0.0, madeira)
+	c.vc.caixa(mv, Vector3(-1.3, 2.5, z - 0.09), Vector3(1.3, 2.68, z + 0.09), Malha.F_TODAS, 0.0, madeira)
+	# a placa caída no chão (de frente para quem chega) e o texto deitado nela
+	c.vc.caixa(mv, Vector3(-1.05, 0.0, -1.42), Vector3(-0.25, 0.04, -0.98), Malha.F_TODAS, 0.0, Color(0.55, 0.43, 0.28))
+	var l := rotulo(c, "EM REFORMA", Vector3(-0.65, 0.055, -1.2), 0.0, 34, Color(0.12, 0.08, 0.05), 0.0026)
+	l.rotation_degrees.x = -90.0
+	# as fitas
+	var mat: StandardMaterial3D
+	if _cache.has("fita"):
+		mat = _cache["fita"]
+	else:
+		var img := Image.create(64, 16, false, Image.FORMAT_RGBA8)
+		for y in 16:
+			for x in 64:
+				img.set_pixel(x, y, Color(0.95, 0.8, 0.1) if int((x + y) / 8) % 2 == 0 else Color(0.08, 0.08, 0.08))
+		mat = StandardMaterial3D.new()
+		mat.albedo_texture = ImageTexture.create_from_image(img)
+		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_cache["fita"] = mat
+	var m: Malha = MalhaGd.new()
+	var tiras := [
+		[Vector3(-1.2, 2.1, z + 0.05), Vector3(1.2, 1.3, z + 0.05)],         # cruzadas
+		[Vector3(1.2, 1.95, z + 0.07), Vector3(-0.35, 1.45, z + 0.07)],      # a segunda, rasgada no meio
+	]
+	for t in tiras:
+		var a: Vector3 = t[0]
+		var b: Vector3 = t[1]
+		var comp := a.distance_to(b)
+		m.quad_uv(mat, a, b, b + Vector3(0, 0.14, 0), a + Vector3(0, 0.14, 0), Vector3(0, 0, 1), Vector2(0, 0), Vector2(comp * 2.5, 0), Vector2(comp * 2.5, 1), Vector2(0, 1))
+	# pedaços rasgados pendurados no batente
+	for pend in [[-0.8, 0.9], [-0.15, 0.55], [0.55, 1.15], [1.0, 0.7]]:
+		var x: float = pend[0]
+		var len: float = pend[1]
+		var a2 := Vector3(x, 2.5, z + 0.1)
+		var b2 := Vector3(x + 0.05, 2.5 - len, z + 0.12)
+		m.quad_uv(mat, a2, b2, b2 + Vector3(0.14, 0, 0), a2 + Vector3(0.14, 0, 0), Vector3(0, 0, 1), Vector2(0, 0), Vector2(len * 2.5, 0), Vector2(len * 2.5, 1), Vector2(0, 1))
+	m.construir_instancia(c.raiz, "FitasEntrada")
 
 
 # ============================================================================ porta de entrada (a que se fecha atrás do jogador)

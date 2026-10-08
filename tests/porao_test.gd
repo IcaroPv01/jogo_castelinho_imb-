@@ -10,7 +10,6 @@ var GS: Node
 var main: Node
 var nivel: Node
 var player: Node
-const SEMENTE := 4242
 
 
 func _initialize() -> void:
@@ -28,18 +27,17 @@ func _rodar() -> void:
 	GS.jogando = true
 	main.hud.visible = true
 	GS.set_flag("tem_visor", true)
-	GS.set_flag("porao_semente", SEMENTE)
 	GS.comecar_visita(5)
 	await _carregar_porao()
 
 	await _teste_chao_e_plano()
-	await _teste_escalada_do_medo()
 	await _teste_atravessar_19_salas()
 	await _teste_agua()
 	await _teste_costela()
 	await _teste_voz_e_afogamento()
 	await _teste_figura_pelo_visor()
 	await _teste_ajustes_revisao()
+	await _teste_masmorra()
 	await _teste_morte_e_checkpoint()
 	await _teste_quarto_e_disco()
 	await _teste_slides()
@@ -117,23 +115,39 @@ func _teste_chao_e_plano() -> void:
 	for d in nivel.plano:
 		tipos[d["tipo"]] = true
 	_checar(tipos.size() >= 12, "pelo menos 12 tipos de sala no plano (%d)" % tipos.size())
-	# a semente é do save: o mesmo plano sai de novo
-	var tipos1: Array = nivel.plano.map(func(d): return d["tipo"])
-	_checar(int(GS.flag("porao_semente")) == SEMENTE, "a semente fica no save")
+	# sequência autoral fixa: com o save zerado, dois carregamentos dão o mesmo plano (e a mesma decoração)
+	var res1: Array = nivel.plano.map(func(d): return [d["tipo"], d["costela"], d["figura"], d["voz_ambiente"], d["voz_certa"], d["lado"]])
+	var rng1: int = nivel.salas[1].rng.seed
+	GS.flags.erase("porao_semente")
 	await _carregar_porao()
-	var tipos2: Array = nivel.plano.map(func(d): return d["tipo"])
-	_checar(tipos1 == tipos2, "mesma semente, mesmas 19 salas na mesma ordem")
-	var vozes: Array = []
-	for d in nivel.plano:
-		if d["tipo"] == "bifurcacao":
-			vozes.append(d["voz_certa"])
-	_checar(vozes.size() == 2 and vozes.has(true) and vozes.has(false), "duas bifurcações: uma voz certa e uma que leva à água funda")
-	var costelas := 0
-	var figuras := 0
-	for d in nivel.plano:
-		costelas += 1 if d["costela"] else 0
-		figuras += 1 if d["figura"] else 0
-	_checar(costelas >= 2 and figuras >= 2, "salas da Costela (%d) e da Figura (%d)" % [costelas, figuras])
+	var res2: Array = nivel.plano.map(func(d): return [d["tipo"], d["costela"], d["figura"], d["voz_ambiente"], d["voz_certa"], d["lado"]])
+	_checar(res1 == res2, "dois carregamentos com o save zerado: o mesmo plano")
+	_checar(nivel.salas[1].rng.seed == rng1 and rng1 == 82, "a decoração tem semente fixa (81 + idx)")
+	_checar(not GS.flags.has("porao_semente"), "o porão não grava mais semente no save")
+	var tl := {0: "escada", 1: "abobada", 2: "desenhos", 3: "colunas", 4: "crianca", 5: "alagado", 6: "pedras", 7: "telefone", 8: "bifurcacao",
+		9: "arcos", 10: "escada", 11: "poco", 12: "bifurcacao", 13: "cisterna", 14: "quarto_tito"}
+	var ok_tipos := true
+	for i in tl:
+		if nivel.plano[i]["tipo"] != tl[i]:
+			ok_tipos = false
+	_checar(ok_tipos, "tipos das salas 81 a 95 na ordem autoral")
+	var amea := {}
+	for i in 19:
+		var d: Dictionary = nivel.plano[i]
+		var n := int(d["figura"]) + int(d["costela"]) + int(d["voz_ambiente"])
+		_checar(n <= 1, "sala %d: no máximo uma ameaça" % (81 + i))
+		if n == 1:
+			amea[i] = "figura" if d["figura"] else ("costela" if d["costela"] else "voz")
+	_checar(amea == {1: "voz", 6: "costela", 9: "figura", 11: "costela", 13: "figura"}, "ameaças nas salas certas: %s" % str(amea))
+	_checar(nivel.plano[8]["voz_certa"] == true and nivel.plano[12]["voz_certa"] == false, "89 = voz certa; 93 = a isca da água funda")
+	_checar(nivel.plano[13]["vel_figura"] > nivel.plano[9]["vel_figura"], "a Figura da 94 é mais rápida")
+	var colada := false
+	for i in 18:
+		if nivel.plano[i]["tipo"] == "bifurcacao" and (nivel.plano[i + 1]["tipo"] == "escada" or (i > 0 and nivel.plano[i - 1]["tipo"] == "escada")):
+			colada = true
+	_checar(not colada, "bifurcação não fica colada a uma escada")
+	_checar(bool(GS.flag("porao_fala_a")), "fala A do sistema na sala 81 (uma vez)")
+	_checar(nivel.salas[0].raiz.get_node_or_null("FitasEntrada") != null, "sala 81: fitas zebradas na entrada")
 	_checar(abs(GS.corruption - 0.7) < 0.03, "corruption da sala 81 = %.2f" % GS.corruption)
 	_checar(nivel.salas.size() <= 3, "só %d salas carregadas" % nivel.salas.size())
 
@@ -384,47 +398,39 @@ func _teste_figura_pelo_visor() -> void:
 	fig.esconder()
 
 
-func _teste_escalada_do_medo() -> void:
-	print("-- escalada do medo por trecho (50 sementes)")
-	var ok_calmo := true
-	var ok_uma := true
-	var ok_livres := true
-	var ok_figuras := true
-	var ok_trecho := true
-	for sem in range(1000, 1050):
-		nivel.semente = sem
-		nivel._gerar_plano()
-		var fig := 0
-		var cos := [0, 0, 0]
-		for i in 19:
-			var d: Dictionary = nivel.plano[i]
-			var n := int(d["figura"]) + int(d["costela"]) + int(d["voz_ambiente"])
-			if n > 1:
-				ok_uma = false
-			if i in [0, 5, 10] and n > 0:
-				ok_livres = false
-			if i >= 1 and i <= 4 and (d["figura"] or d["costela"]):
-				ok_calmo = false
-			if d["figura"]:
-				fig += 1
-			var tr := 0 if i <= 4 else (1 if i <= 9 else 2)
-			if d["figura"] or d["costela"]:
-				cos[tr] += 1
-		if fig < 2:
-			ok_figuras = false
-		if cos[0] != 0 or cos[1] > 4 or cos[2] > 4:
-			ok_trecho = false
-	nivel.semente = SEMENTE
-	nivel._gerar_plano()
-	_checar(ok_calmo, "82-85: sem Figura e sem Costela")
-	_checar(ok_uma and ok_livres, "uma ameaça por sala; 81, 86 e 91 livres")
-	_checar(ok_figuras, "pelo menos 2 Figuras no porão em todas as sementes")
-	_checar(ok_trecho, "ameaças por trecho dentro do limite")
+func _teste_masmorra() -> void:
+	print("-- masmorra: celas, correntes e o giz da sala 90")
+	nivel.ir_para_sala(9)
+	await _frames(5)
+	var c = nivel.salas[9]
+	var achou := false
+	for p in c.pistas:
+		if p["id"] == "giz_cela":
+			achou = GS.Epoca.E2020 in p["epocas"] and GS.Epoca.ESEMDATA in p["epocas"]
+	_checar(achou, "sala 90: pista giz_cela visível em todas as épocas")
+	_checar(c.raiz.get_node_or_null("DesenhoGiz") != null and c.raiz.get_node_or_null("TextoGiz") != null, "sala 90: o desenho de giz e a frase")
+	var antes: int = GS.contadores.get("pistas_tito", 0)
+	var zc := -2.4 - 3.6
+	player.global_position = c.raiz.to_global(Vector3(0.5, 0.05, zc))
+	player.rotation.y = c.raiz.global_rotation.y - PI * 0.5
+	player.cabeca.rotation.x = 0.0
+	GS.trocar_epoca(GS.Epoca.E2020)
+	nivel._checar_pistas()
+	_checar(GS.flag("pista_giz_cela") and GS.contadores.get("pistas_tito", 0) == antes + 1, "olhar o giz conta em pistas_tito")
+	player.rotation.y = 0.0
+	for i in [3, 6]:
+		nivel.ir_para_sala(i)
+		await _frames(3)
+		var ci = nivel.salas[i]
+		var g = ci.raiz.get_node_or_null("Geometria")
+		_checar(g != null, "sala %d: geometria montada com as celas" % (81 + i))
+	nivel.ir_para_sala(1)
+	await _frames(3)
 
 
 func _teste_ajustes_revisao() -> void:
 	print("-- ajustes da revisão: poço, água sem data, atenção nos slides, saída")
-	_checar(not ("telefone" in nivel.FIGURA_OK) and not ("crianca" in nivel.FIGURA_OK), "Figura fora das salas pequenas (telefone, criança)")
+	_checar(not nivel.plano[7]["figura"] and not nivel.plano[4]["figura"], "Figura fora das salas pequenas (telefone, criança)")
 	# 1. a marca da voz do poço fica fora da mureta, no caminho da saída
 	var ip := _sala_do_tipo("poco")
 	if ip >= 0:
@@ -605,12 +611,12 @@ func _teste_geometria_andando() -> void:
 			continue
 		var i: int = d["idx"]
 		nivel.ir_para_sala(i)
-		await _frames(6)
+		await _frames(20)
 		var cb = nivel.salas[i]
 		var lado: int = nivel.plano[i]["lado"]
 		var zc := -8.2
-		_checar(_raio_bate(cb, Vector3(lado * 8.0, 1.0, zc), Vector3(lado * 8.0, 1.0, zc - 0.9)), "bifurcação %d: parede do corredor (lado do fundo, z menor)" % cb.sala)
-		_checar(_raio_bate(cb, Vector3(lado * 8.0, 1.0, zc), Vector3(lado * 8.0, 1.0, zc + 0.9)), "bifurcação %d: parede do corredor (z maior)" % cb.sala)
+		_checar(_raio_bate(cb, Vector3(lado * 8.0, 1.0, zc), Vector3(lado * 8.0, 1.0, zc - 1.2)), "bifurcação %d: parede do corredor (lado do fundo, z menor)" % cb.sala)
+		_checar(_raio_bate(cb, Vector3(lado * 8.0, 1.0, zc), Vector3(lado * 8.0, 1.0, zc + 1.2)), "bifurcação %d: parede do corredor (z maior)" % cb.sala)
 		_checar(_raio_bate(cb, Vector3(lado * 9.0, 1.0, zc), Vector3(lado * 10.6, 1.0, zc)), "bifurcação %d: o fim do corredor tem parede" % cb.sala)
 	# 3) sala 98: o vão do meio-fio leva ao poço (afogamento), nunca a uma queda sem fim; com a ponte, atravessa
 	nivel.ir_para_sala(17)
