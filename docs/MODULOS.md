@@ -15,7 +15,7 @@ Decisões do Icaro (07/10/2026):
 | 1 | QA e bugs | Varredura das 100 salas, corrigir o que o Icaro e os testes acharem | `tests/`, `docs/BUGS.md` (correções pontuais em qualquer arquivo) | varredura automática feita (B15–B24); reabre quando o Icaro jogar |
 | 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | parte 1 feita (bugs, escada 2019, Figura na V4, caça do disco 1950); caça dos discos 1967–sem data espera o Icaro jogar a do 1950 |
 | 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | feito (PR #11): ritmo, quiz V2–V4, bugs, fontes; reabre quando o Icaro jogar |
-| 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | na fila |
+| 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | feito (PR do módulo 4): sequência fixa, masmorra, Figura nova, bugs; reabre quando o Icaro jogar |
 | 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | na fila |
 | 6 | Áudio | Jingle, ambientes e sustos (ninguém ouviu ainda: precisa do ouvido do Icaro) | `autoload/audio.gd`, `tools/gerar_audio.py`, `assets/audio/` | na fila |
 | 7 | Arte e gráficos | Acabamento visual mantendo o estilo Flash educativo | `shaders/`, `tools/gerar_texturas.py`, `castelinho/` | na fila |
@@ -44,6 +44,34 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 4: Porão (08/10/2026)
+
+- **Decisões do Icaro:** o porão é história com começo, meio e fim: **toda partida é igual** (acabou o sorteio e a
+  `porao_semente`; a tabela `PLANO` em `porao.gd` manda). História do Tito: **afogamento**, com um "sequestro"
+  sobrenatural sugerido (a Figura chama o menino para a água), nunca uma pessoa. A escada de 2019 desce até o outro
+  lado de fitas zebradas "EM REFORMA" (sala 81). Água 97–99 com o disco "sem data": baixa ao tornozelo, espelho dourado,
+  sem lentidão (B25). Porão de 15 a 20 min. O Icaro ainda **não jogou** o porão.
+- **Sequência fixa:** 81 escada e fitas (fala "área fora da visitação") · 82 abóbada (sussurro, dica do Visor) ·
+  83 desenhos · 84 colunas com celas (regulamento: "não vá até a água") · 85 criança · 86 alagado (tornozelo, checkpoint)
+  · 87 pedras com celas e correntes, Costela · 88 telefone · 89 bifurcação com a voz certa (o balde vermelho ensina o
+  caminho) · 90 arcos, 1ª Figura, cela aberta com o giz "ELA DISSE QUE O LAGO É LÁ EMBAIXO" (pista `giz_cela`) ·
+  91 escada (joelho, checkpoint, "de um res— responsável") · 92 poço, Costela · 93 bifurcação com a isca (a voz imita o
+  Tito e leva à água funda) · 94 cisterna, Figura mais rápida ("um a mais do que entrou") · 95 quarto ("não consta na
+  planta") · 96–99 último dia (Visor não solta a Figura ali) · topo da 99 "Fim da área de visitação", pausa com
+  "(ar fresco. lá fora, a água corre.)" e o fade.
+- **Figura Branca nova** (`creatures/figura_branca.gd`, vale para o jogo todo): afogada, alta e magra, cabelo molhado
+  cobrindo o rosto, dedos longos; mexe aos trancos, congela quando vista com um estalo da cabeça, arranca na perseguição.
+  API igual. Captura: `tests/captura_figura.gd` (xvfb, fora do CI).
+- **Bugs:** voz do poço sobre o poço; Figura nas salas pequenas; morte durante a saída; sussurro repetido e cobrindo
+  legendas importantes; grade da 96 sem aviso.
+- **Para o módulo 5 (Braço Morto):** o jogador chega do porão parado, com a legenda do ar fresco e o ambiente já em
+  silêncio; `GameState.entrar_sala(100)` só roda logo antes da troca de cena. Falta uma fala ou legenda de chegada no
+  lago (hoje a 1ª dica só vem na lápide). Pistas possíveis para o final "Encontrado" agora incluem `giz_cela`
+  (reveja o limite de 6). O slide 98 (porão) ainda desenha a Figura antiga, de braços abertos: vale alinhar com a nova no módulo 7.
+- Pendentes: `tests/varredura/porao.gd` e `tests/captura_porao.gd` ainda gravam `porao_semente` (ignorada; fora do CI).
+  `docs/V2_ROTEIRO.md` §6 ainda fala em salas sorteadas: a verdade agora é a tabela `PLANO`. Movimento da Figura e
+  correntes da 87 só vistos por teste e captura parada: vale olhar no módulo 7.
 
 ### Módulo 3: Visitas 1 a 4 (08/10/2026)
 
