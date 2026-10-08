@@ -79,7 +79,7 @@ func _esp(v: int, b: int) -> int:
 	return mini(b, 22) + (v - 1) * 22
 
 
-func _dentro(t: Node, pos: Vector3) -> bool:
+func _dentro(t, pos: Vector3) -> bool:
 	var tam: Vector3 = t.tamanho
 	var c: Vector3 = t.global_position + Vector3(0, tam.y * 0.5, 0)
 	var d: Vector3 = (pos - c).abs()
@@ -104,7 +104,7 @@ func _varrer_visita(v: int) -> void:
 		if not nivel._triggers.has(b):
 			infos.append("V%d: sem gatilho base %d" % [v, b])
 			continue
-		var t: Node = nivel._triggers[b]
+		var t = nivel._triggers[b]
 		var alvo: Vector3 = t.global_position + Vector3(0, 0.1, 0)
 		# saia de dentro do gatilho alvo antes de teleportar (senão body_entered não dispara)
 		if _dentro(t, p.global_position):
@@ -114,14 +114,14 @@ func _varrer_visita(v: int) -> void:
 		for u in nivel._triggers:
 			if u != b and _dentro(nivel._triggers[u], alvo):
 				extras.append(u)
-		var eh_25 := b == 25
+		var eh_25: bool = b == 25
 		await _teleporte(alvo)
 		var esperado: int = _esp(v, b)
 		if b == 20 and not visto19:
 			esperado = ants            # gatilho 20 só liga depois da 19
 		if eh_25:
 			esperado = ants            # corredor de 1975: só ativo na época 1975
-		var y_ok := absf(p.global_position.y - alvo.y) < 0.6 and p.is_on_floor()
+		var y_ok: bool = absf(p.global_position.y - alvo.y) < 0.6 and p.is_on_floor()
 		var caiu: bool = p.global_position.y < -1.0
 		if extras.is_empty():
 			_checar(GameState.sala_atual == esperado,
