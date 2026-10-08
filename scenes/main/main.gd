@@ -30,6 +30,7 @@ func _ready() -> void:
 	# voltou do "Fim da demonstração" (reload da cena): zera sala, corrupção e época da partida anterior
 	GameState.jogando = false
 	GameState.resetar_sessao()
+	Guia.cancelar()
 	_mostrar_titulo()
 
 
@@ -97,6 +98,7 @@ func carregar_mundo(caminho: String, spawn := "Spawn") -> void:
 			tela_titulo.queue_free()     # a tela de carregamento (camada 130) já cobre o título no mesmo quadro
 		await tela.aguardar_desenho()
 		tela.definir(0.12, "Arrumando o mundo")
+	Guia.cancelar()   # fala que sobrou na fila do nível anterior não pode vazar (nem segurar Guia.ocupado()) no novo
 	for c in mundo.get_children():
 		c.queue_free()
 	await get_tree().process_frame

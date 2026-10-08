@@ -71,8 +71,9 @@ func entrar_sala(numero: int) -> void:
 ## visita 3 = base 10 e base 17 (topo da Torre A, onde o Ato II devolve o jogador; as globais 55 a 60 são do trecho
 ## do Ato II e NÃO podem ser checkpoint do Castelinho); visita 4 = bases 8 (Povos) e 13 (Pescador), já comprimidas na
 ## numeração 67..80 (ver world/niveis/castelinho.gd, V4_SALAS). Porão: 81 (entrada), 86, 91, 95 (o quarto do Tito) e 96 (o porão cria `Checkpoint_N` sob demanda).
-## O trecho do Ato II (55) e a Braço Morto (100) têm checkpoint gravado por quem os dispara.
-const SALAS_CHECKPOINT := [1, 10, 16, 23, 32, 38, 45, 54, 61, 67, 72, 77, 81, 86, 91, 95, 96]
+## O trecho do Ato II (55) tem checkpoint gravado por quem o dispara. A Braço Morto (100) entra na lista: antes ninguém
+## o gravava e "Continuar" depois do fim voltava ao porão (sala 96).
+const SALAS_CHECKPOINT := [1, 10, 16, 23, 32, 38, 45, 54, 61, 67, 72, 77, 81, 86, 91, 95, 96, 100]
 ## Cenas de destino do "Continuar" (o Porão cria os marcadores; se não existirem, o main cai no "Spawn").
 const CENA_CASTELINHO := "res://world/niveis/castelinho.tscn"
 const CENA_ATO2 := "res://world/niveis/ato2.tscn"
@@ -205,16 +206,26 @@ func carregar() -> void:
 	var dados = JSON.parse_string(f.get_as_text()) if f else null
 	if typeof(dados) != TYPE_DICTIONARY:
 		return
-	sala_maxima = int(dados.get("sala_maxima", 0))
-	checkpoint_sala = int(dados.get("checkpoint_sala", 1))
-	flags = dados.get("flags", {})
+	# um campo com tipo errado (save editado ou de outra versão) usa o padrão em vez de abortar a leitura dos demais
+	sala_maxima = int(_campo(dados, "sala_maxima", 0))
+	checkpoint_sala = clampi(int(_campo(dados, "checkpoint_sala", 1)), 1, TOTAL_SALAS)
+	flags = _campo(dados, "flags", {})
 	flags.erase("ui_aberta")
-	selos.assign(dados.get("selos", []))
-	contadores.merge(dados.get("contadores", {}), true)
-	sensibilidade = float(dados.get("sensibilidade", 1.0))
-	visita = int(dados.get("visita", 1))
-	discos.assign(dados.get("discos", []).map(func(x): return int(x)))
-	disco_atual = int(dados.get("disco_atual", -1))
+	selos.assign(_campo(dados, "selos", []).map(func(x): return str(x)))
+	contadores.merge(_campo(dados, "contadores", {}), true)
+	sensibilidade = float(_campo(dados, "sensibilidade", 1.0))
+	visita = clampi(int(_campo(dados, "visita", 1)), 1, 5)
+	discos.assign(_campo(dados, "discos", []).map(func(x): return int(x)))
+	disco_atual = int(_campo(dados, "disco_atual", -1))
+
+
+## Valor de `chave` no save se tiver o mesmo tipo de `padrao` (int e float valem como número); senão, `padrao`.
+func _campo(dados: Dictionary, chave: String, padrao: Variant) -> Variant:
+	var v: Variant = dados.get(chave, padrao)
+	var numero := func(x): return typeof(x) == TYPE_INT or typeof(x) == TYPE_FLOAT
+	if typeof(v) == typeof(padrao) or (numero.call(v) and numero.call(padrao)):
+		return v
+	return padrao
 
 
 func tem_save() -> bool:

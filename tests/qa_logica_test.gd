@@ -12,6 +12,12 @@ extends SceneTree
 ##      entrar no prédio pelos fundos do lote e pular as salas 7 a 20 (inclusive o Visor)
 ##  B12 o aviso "[E] ..." e a barra de fôlego do jogador anterior ficavam na tela depois da troca de nível
 ##  B08 tela "Carregando..." + aquecimento: fluxo, restauração do estado e eventos só depois que ela some
+##  B15 Braço Morto: o calçadão (z -8..-3) não tinha colisão e o jogador caía sem fim; rede de segurança em _process
+##  B16 a sala 100 (Braço Morto) não entrava em SALAS_CHECKPOINT: "Continuar" depois do fim voltava ao porão
+##  B17 a porta final da visita 4 fechava a visita e pulava o porão (virava "visita 5")
+##  B18 um lance no quadro em que a janela da Barra já fechou contava como lance certo
+##  B19 save com tipos errados (flags e checkpoint_sala) derrubava a leitura; checkpoint 0 vira 1
+##  B20 carregar_mundo não cancelava a fala do Guia do nível anterior (Guia.ocupado() ficava true)
 ## Uso: godot --headless -s res://tests/qa_logica_test.gd
 ## Obs.: classes e autoloads são acessados por load()/get_node em runtime (ver tests/ui_test.gd).
 
@@ -43,6 +49,12 @@ func _rodar() -> void:
 	await _b12_hud_ao_trocar_de_nivel()
 	await _b13_entradas_fechadas()
 	await _b08_carregamento()
+	await _b15_bracomorto_chao()
+	await _b16_checkpoint_100()
+	await _b17_porta_final_visita4()
+	await _b18_lance_fora_da_janela()
+	await _b19_save_tipos_errados()
+	await _b20_fala_some_ao_trocar_nivel()
 	GS.novo_jogo()
 	print("RESULTADO: ", "OK" if falhas == 0 else "%d FALHA(S)" % falhas)
 	quit(1 if falhas else 0)
@@ -437,3 +449,112 @@ func _b08_carregamento() -> void:
 		_checar(is_instance_valid(main.player) and not is_instance_valid(TelaCarregando.ultima) and main.player.is_on_floor() or nivel == BARRA,
 			"%s carregou com aquecimento (jogador no chão: %s)" % [nivel.get_file(), str(main.player.is_on_floor())])
 	main.aquecer_ativo = false
+
+
+# ---------------------------------------------------------------- B15
+func _b15_bracomorto_chao() -> void:
+	print("-- B15 Braço Morto: calçadão com colisão e rede de segurança (volta à margem)")
+	const BRACO := "res://world/niveis/braco_morto.tscn"
+	GS.novo_jogo()
+	GS.jogando = true
+	await main.carregar_mundo(BRACO, "Spawn")
+	await _frames(20)
+	p = main.player
+	p.global_position = Vector3(0, 0.5, -5.5)          # em cima do calçadão (z -8..-3)
+	await _frames(60)
+	_checar(p.global_position.y > -0.5, "em cima do calçadão o jogador não cai (y=%.2f)" % p.global_position.y)
+	p.global_position = Vector3(0, -20, 0)             # buraco: a rede de segurança devolve à margem
+	await _frames(5)
+	var perto := Vector2(p.global_position.x + 14.0, p.global_position.z - 6.0).length() < 1.6
+	_checar(perto and p.global_position.y > -1.0, "y=-20 volta para perto de (-14, 6) (%s)" % str(p.global_position))
+
+
+# ---------------------------------------------------------------- B16
+func _b16_checkpoint_100() -> void:
+	print("-- B16 sala 100 (Braço Morto) é checkpoint")
+	const BRACO := "res://world/niveis/braco_morto.tscn"
+	GS.novo_jogo()
+	GS.checkpoint_sala = 1
+	GS.entrar_sala(100)
+	_checar(GS.checkpoint_sala == 100, "entrar_sala(100) grava checkpoint 100 (%d)" % GS.checkpoint_sala)
+	var destino: Array = GS.preparar_continuar()
+	_checar(destino[0] == BRACO, "Continuar leva ao Braço Morto (%s)" % str(destino[0]).get_file())
+	GS.novo_jogo()
+
+
+# ---------------------------------------------------------------- B17
+func _b17_porta_final_visita4() -> void:
+	print("-- B17 porta final na visita 4 não fecha a visita")
+	GS.novo_jogo()
+	GS.visita = 4
+	GS.jogando = true
+	await main.carregar_mundo(CASTELINHO, "Spawn")
+	await _frames(20)
+	p = main.player
+	var nivel = main.mundo.get_child(0)
+	nivel._abrir_porta_final(p)
+	await _frames(10)
+	_checar(GS.visita == 4, "visita 4 continua depois da porta final (visita %d)" % GS.visita)
+
+
+# ---------------------------------------------------------------- B18
+func _b18_lance_fora_da_janela() -> void:
+	print("-- B18 lance no quadro em que a janela da Barra fecha não conta")
+	const BARRA_GD := "res://world/niveis/barra.gd"
+	const FASE_JANELA := 2      # enum Fase { INTRO, ESPERA, JANELA, LANCADO, ... } de barra.gd
+	const FASE_LANCADO := 3
+	GS.novo_jogo()
+	GS.comecar_visita(2)
+	await main.carregar_mundo(BARRA, "Spawn")
+	var nivel = main.mundo.get_child(0)
+	# sem await entre os passos: o _process da Barra não roda no meio do teste
+	nivel.janela_aberta = false
+	nivel._entrar_fase(FASE_JANELA)
+	nivel.lancar()
+	_checar(nivel.fase == FASE_JANELA, "lance com a janela já fechada não muda a fase (fase %d)" % nivel.fase)
+	# controle: com a janela aberta o mesmo lance vale
+	nivel._abrir_janela()
+	nivel.lancar()
+	_checar(nivel.fase == FASE_LANCADO, "lance com a janela aberta vale (fase %d)" % nivel.fase)
+	await _frames(5)
+	GS.novo_jogo()
+
+
+# ---------------------------------------------------------------- B19
+func _b19_save_tipos_errados() -> void:
+	print("-- B19 save com tipos errados lê só os campos válidos")
+	var f := FileAccess.open(GS.ARQUIVO_SAVE, FileAccess.WRITE)
+	f.store_string('{"checkpoint_sala":12,"flags":5,"visita":2}')
+	f.close()
+	GS.flags = {"lixo": true}
+	GS.checkpoint_sala = 99
+	GS.visita = 5
+	GS.carregar()
+	_checar(GS.flags is Dictionary and GS.flags.is_empty(), "flags 5 vira {} (%s)" % str(GS.flags))
+	_checar(GS.checkpoint_sala == 12, "checkpoint_sala 12 lido (%d)" % GS.checkpoint_sala)
+	_checar(GS.visita == 2, "visita 2 (campo válido) lida (%d)" % GS.visita)
+	f = FileAccess.open(GS.ARQUIVO_SAVE, FileAccess.WRITE)
+	f.store_string('{"checkpoint_sala":0,"visita":"dois"}')
+	f.close()
+	GS.carregar()
+	_checar(GS.checkpoint_sala == 1, "checkpoint_sala 0 vira 1 (%d)" % GS.checkpoint_sala)
+	_checar(GS.visita == 1, "visita com texto cai no padrão 1 (%d)" % GS.visita)
+	GS.novo_jogo()
+
+
+# ---------------------------------------------------------------- B20
+func _b20_fala_some_ao_trocar_nivel() -> void:
+	print("-- B20 fala do Guia não segura o nível seguinte")
+	var Guia = root.get_node("/root/Guia")
+	await _novo_castelinho()
+	Guia.falar("sistema", ["Uma fala que ficou na fila do nível anterior."])
+	var antes: bool = Guia.ocupado()
+	await main.carregar_mundo(CASTELINHO, "Spawn")
+	# a fala que está na tela só termina no próximo caractere (cancelar() não a conclui): espera até 1 s
+	var n := 0
+	while Guia.ocupado() and n < 60:
+		await physics_frame
+		n += 1
+	_checar(antes, "a fala estava ocupando o Guia antes da troca")
+	_checar(not Guia.ocupado(), "Guia.ocupado() false depois de carregar_mundo (%d quadros)" % n)
+	GS.novo_jogo()

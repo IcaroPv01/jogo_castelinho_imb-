@@ -201,12 +201,14 @@ func iniciar(p: Player) -> void:
 	if visita >= 3 and GameState.flag("tem_lanterna"):
 		player.lanterna.visible = not GameState.flag("lanterna_desligada")
 	# volta da Barra (visita 2): os gatilhos 13/14 não podem derrubar o contador de 15
-	if visita == 2 and GameState.flag("viu_flashback_barra") and not GameState.flag(_chave("sala15")):
+	# (também ao "Continuar" depois da volta: antes o gatilho 13 voltava a valer e a sala caía de 38 para 35)
+	if visita == 2 and GameState.flag("viu_flashback_barra"):
 		if _triggers.has(13):
 			_triggers[13].monitoring = false
-		GameState.entrar_sala(_global(15))
-		if _uma_vez("sala15"):
-			_evt_sala15()
+		if not GameState.flag(_chave("sala15")):
+			GameState.entrar_sala(_global(15))
+			if _uma_vez("sala15"):
+				_evt_sala15()
 	# volta do Ato II (visita 3): o jogador nasce no topo da Torre A; a escada passa a ficar aberta
 	var mk := find_child("Spawn_volta_ato2", true, false) as Node3D
 	if visita == 3 and mk and player.global_position.distance_to(mk.global_position) < 2.5:
@@ -2086,6 +2088,10 @@ func _usar_porta_saida(_p: Node) -> void:
 
 
 func _abrir_porta_final(_p: Node) -> void:
+	# só a visita 3 sai por aqui; na 4 (o disco de 1975 continua com o jogador) ela pulava o porão e virava "visita 5"
+	if visita != 3:
+		Guia.falar("sistema", ["A porta está trancada."])
+		return
 	_fim_de_visita()
 
 

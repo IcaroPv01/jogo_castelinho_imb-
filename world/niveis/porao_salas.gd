@@ -580,6 +580,7 @@ static func _cisterna(c: Ctx) -> void:
 		var x0: float = half if lado > 0 else -c.w * 0.5
 		var x1: float = c.w * 0.5 if lado > 0 else -half
 		c.piso.caixa(mpi, Vector3(x0, fundo - 0.5, -c.L), Vector3(x1, fundo, 0.0), Malha.F_PY, 0.0, Color(0.6, 0.6, 0.6))
+		c.col(Vector3(x0, fundo - 0.5, -c.L), Vector3(x1, fundo, 0.0))          # o fundo do poço tem chão: ninguém cai sem fim
 		# parede lateral da passarela (voltada para o poço) e meio-fio que impede de cair
 		var xe: float = lado * half
 		c.pedra.quad(mp, Vector3(xe, fundo, -c.L), Vector3(xe, fundo, 0.0), Vector3(xe, 0.0, 0.0), Vector3(xe, 0.0, -c.L), Vector3(lado, 0, 0), Vector2.ZERO, Color(0.8, 0.8, 0.8))
@@ -597,6 +598,20 @@ static func _cisterna(c: Ctx) -> void:
 			caixa(c.pedra, mp, x - 0.75, h - 0.6, z - 0.75, x + 0.75, h - 0.3, z + 0.75, Color(0.7, 0.68, 0.68))
 	if c.ultimo == 98:
 		_ponte_semdata(c, half, fundo)
+		# quem cai pelo vão do meio-fio (sem a ponte) cai na água do poço: afogamento, como na bifurcação errada
+		var area := Area3D.new()
+		area.name = "AguaPoco"
+		area.collision_layer = 0
+		area.collision_mask = 2
+		area.monitorable = false
+		var cs := CollisionShape3D.new()
+		var bs := BoxShape3D.new()
+		bs.size = Vector3(c.w * 0.5 - half, 1.6, c.L)
+		cs.shape = bs
+		cs.position = Vector3((half + c.w * 0.5) * 0.5, -1.4, -c.L * 0.5)
+		area.add_child(cs)
+		c.raiz.add_child(area)
+		c.afogar = area
 	tocha(c, Vector3(-half + 0.0, 1.5, -4.5), 0, 1.5, 12.0)
 	tocha(c, Vector3(half - 0.0, 1.5, -10.0), 0, 1.3, 12.0)
 	c.pontos["figura"] = Vector3(0, 0.05, -c.L + 1.5)
@@ -665,9 +680,11 @@ static func _escada(c: Ctx, sobe: bool) -> void:
 		var y_top := dy * float(i + 1) / n
 		var cor := Color(0.78, 0.74, 0.74) * (0.9 + 0.12 * float(i % 2))
 		c.piso.caixa(mpi, Vector3(-w * 0.5, y_top - 0.3 if not sobe else y_top - 0.3, zb), Vector3(w * 0.5, y_top, za), Malha.F_PY | Malha.F_NZ | Malha.F_PZ, 0.0, cor)
+	# a base fica abaixo do ponto mais baixo (se subisse junto com dy, o pé da rampa viraria uma parede vertical)
+	var base_r := minf(0.0, dy) - 0.5
 	var rampa := PackedVector3Array([
 		Vector3(-w * 0.5, 0.0, -z_ini), Vector3(w * 0.5, 0.0, -z_ini), Vector3(-w * 0.5, dy, -z_fim), Vector3(w * 0.5, dy, -z_fim),
-		Vector3(-w * 0.5, dy - 0.5, -z_ini), Vector3(w * 0.5, dy - 0.5, -z_ini), Vector3(-w * 0.5, dy - 0.5, -z_fim), Vector3(w * 0.5, dy - 0.5, -z_fim)])
+		Vector3(-w * 0.5, base_r, -z_ini), Vector3(w * 0.5, base_r, -z_ini), Vector3(-w * 0.5, base_r, -z_fim), Vector3(w * 0.5, base_r, -z_fim)])
 	c.pedra.rampa(rampa)
 	# teto inclinado
 	c.pedra.quad_auto(mp, Vector3(-w * 0.5, alt, 0.0), Vector3(w * 0.5, alt, 0.0), Vector3(w * 0.5, topo_saida, -L), Vector3(-w * 0.5, topo_saida, -L), Vector3.DOWN)
@@ -999,10 +1016,10 @@ static func _bifurcacao(c: Ctx) -> void:
 	for zz in [zl, zr]:
 		var s2 := -1.0 if zz == zl else 1.0
 		c.pedra.quad(mp, Vector3(xa, fund - 0.5, zz), Vector3(xb, fund - 0.5, zz), Vector3(xb, 2.8, zz), Vector3(xa, 2.8, zz), Vector3(0, 0, -s2), Vector2.ZERO, Color(0.7, 0.7, 0.7))
-		c.col(Vector3(xa, fund - 0.5, zz - 0.1 * s2 - 0.1), Vector3(xb, 2.8, zz + 0.1 * s2 + 0.1))
+		c.col(Vector3(xa, fund - 0.5, zz - 0.2), Vector3(xb, 2.8, zz + 0.2))
 	c.pedra.quad(mp, Vector3(xa, 2.8, zl), Vector3(xb, 2.8, zl), Vector3(xb, 2.8, zr), Vector3(xa, 2.8, zr), Vector3.DOWN, Vector2.ZERO, Color(0.7, 0.7, 0.7))
 	c.pedra.quad(mp, Vector3(x1, fund - 0.5, zl), Vector3(x1, fund - 0.5, zr), Vector3(x1, 2.8, zr), Vector3(x1, 2.8, zl), Vector3(-lado, 0, 0), Vector2.ZERO, Color(0.5, 0.5, 0.5))
-	c.col(Vector3(x1 - 0.1 * lado - 0.1, fund - 0.5, zl), Vector3(x1 + 0.1 * lado + 0.1, 2.8, zr))
+	c.col(Vector3(x1 - 0.2, fund - 0.5, zl), Vector3(x1 + 0.2, 2.8, zr))
 	# piso: patamar de 1,4 m, rampa até o fundo (lâmina d'água escura sobe até aqui), resto submerso
 	var xp := x0 + lado * 1.4
 	var xq := x0 + lado * 3.4

@@ -12,7 +12,7 @@ Decisões do Icaro (07/10/2026):
 | # | Módulo | Objetivo | Arquivos principais | Situação |
 |---|---|---|---|---|
 | 0 | Fundação | `CLAUDE.md`, este mapa, instalador do Godot | `CLAUDE.md`, `docs/MODULOS.md`, `tools/instalar_godot.sh` | feito |
-| 1 | QA e bugs | Varredura das 100 salas, corrigir o que o Icaro e os testes acharem | `tests/`, `docs/BUGS.md` (correções pontuais em qualquer arquivo) | na fila |
+| 1 | QA e bugs | Varredura das 100 salas, corrigir o que o Icaro e os testes acharem | `tests/`, `docs/BUGS.md` (correções pontuais em qualquer arquivo) | varredura automática feita (B15–B24); reabre quando o Icaro jogar |
 | 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | na fila |
 | 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | na fila |
 | 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | na fila |
@@ -44,6 +44,20 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 1: QA e bugs, varredura automática (08/10/2026)
+
+- O Icaro ainda não jogou a versão 2; esta sessão só fez a varredura automática (8 agentes Haiku em paralelo, um
+  Sonnet no porão). Scripts em `tests/varredura/` (fora do CI, ver o LEIA-ME de lá).
+- 10 bugs corrigidos com teste (`docs/BUGS.md` B15–B24). Os graves: o jogo **não terminava** (escada da sala 99 era
+  uma parede), **queda sem fim** no calçadão do Braço Morto, na bifurcação e na cisterna do porão, e a **porta de 1975
+  na visita 4 pulava o porão**.
+- Limpos: os 19 checkpoints do "Continuar", o console em todas as cenas e os shaders WebGL em todas as épocas.
+- Pendente para o Icaro: água das salas 97–99 com o disco "sem data" (ver "Sem correção" no BUGS.md). Para o módulo 3:
+  o quiz final só existe nas visitas 1 e 2.
+- Ferramenta: `tools/testar_web_cenas.sh` precisa do Playwright de Python, que não vem na nuvem (`pip` falhou);
+  a varredura usou o Playwright de Node. Vale consertar quando alguém mexer em shader.
+- Próximo: quando o Icaro jogar, uma sessão do módulo 1 (ou do módulo do problema) registra e corrige o que ele achar.
 
 ### Módulo 0: Fundação (07/10/2026)
 
