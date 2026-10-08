@@ -41,6 +41,7 @@ func _rodar() -> void:
 	await _teste_morte_e_checkpoint()
 	await _teste_quarto_e_disco()
 	await _teste_slides()
+	await _teste_geometria_andando()
 	await _teste_saida_para_braco_morto()
 	await _teste_braco_morto("encontrado")
 	await _teste_braco_morto("visita_concluida")
@@ -479,6 +480,78 @@ func _teste_slides() -> void:
 	await _frames(40)
 	_checar(nivel.mat_agua.get_shader_parameter("ondas") < 0.05, "no slide do último dia a água fica parada (ondas = 0)")
 	GS.trocar_epoca(GS.Epoca.E2020)
+
+
+## Raio de colisão entre dois pontos locais da sala (camada 1 = mundo). true = bateu em algo.
+func _raio_bate(c, a: Vector3, b: Vector3) -> bool:
+	var q := PhysicsRayQueryParameters3D.create(c.raiz.to_global(a), c.raiz.to_global(b), 1)
+	return not player.get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+
+
+## Geometria conferida ANDANDO (ou com raios), sem teleporte até o fim: escada que sobe, corredor lateral da bifurcação
+## e o vão do meio-fio da cisterna (sala 98).
+func _teste_geometria_andando() -> void:
+	print("-- geometria andando: escada que sobe, corredor da bifurcação, vão da sala 98")
+	nivel.ameacas_ligadas = false
+	GS.trocar_epoca(GS.Epoca.E2020)
+	# 1) escada que sobe (sala 99): entra pelo patamar e sobe até perto do topo, sem teleportar
+	nivel.ir_para_sala(18)
+	await _frames(10)
+	var c = nivel.salas[18]
+	player.global_position = c.raiz.to_global(Vector3(0, 0.1, -0.6))
+	player.rotation.y = c.raiz.global_rotation.y
+	player.velocity = Vector3.ZERO
+	await _frames(4)
+	Input.action_press("frente")
+	var subiu: bool = await _ate(func(): return c.raiz.to_local(player.global_position).z < -c.L + 4.0, 900)
+	Input.action_release("frente")
+	var lp: Vector3 = c.raiz.to_local(player.global_position)
+	_checar(subiu and lp.y > c.dy - 1.5, "sala 99: sobe a escada andando (z=%.1f y=%.2f de %.1f)" % [lp.z, lp.y, c.dy])
+	# 2) bifurcações: paredes laterais e do fundo do corredor lateral (raios, nas duas)
+	for d in nivel.plano:
+		if d["tipo"] != "bifurcacao":
+			continue
+		var i: int = d["idx"]
+		nivel.ir_para_sala(i)
+		await _frames(6)
+		var cb = nivel.salas[i]
+		var lado: int = nivel.plano[i]["lado"]
+		var zc := -8.2
+		_checar(_raio_bate(cb, Vector3(lado * 8.0, 1.0, zc), Vector3(lado * 8.0, 1.0, zc - 0.9)), "bifurcação %d: parede do corredor (lado do fundo, z menor)" % cb.sala)
+		_checar(_raio_bate(cb, Vector3(lado * 8.0, 1.0, zc), Vector3(lado * 8.0, 1.0, zc + 0.9)), "bifurcação %d: parede do corredor (z maior)" % cb.sala)
+		_checar(_raio_bate(cb, Vector3(lado * 9.0, 1.0, zc), Vector3(lado * 10.6, 1.0, zc)), "bifurcação %d: o fim do corredor tem parede" % cb.sala)
+	# 3) sala 98: o vão do meio-fio leva ao poço (afogamento), nunca a uma queda sem fim; com a ponte, atravessa
+	nivel.ir_para_sala(17)
+	await _frames(10)
+	var c98 = nivel.salas[17]
+	player.global_position = c98.raiz.to_global(Vector3(0.9, 0.1, -5.5))
+	player.rotation.y = c98.raiz.global_rotation.y - PI * 0.5       # de frente para +x da sala (o vão)
+	player.velocity = Vector3.ZERO
+	await _frames(4)
+	Input.action_press("frente")
+	var caiu: bool = await _ate(func(): return nivel.afogando or nivel.morrendo, 300)
+	Input.action_release("frente")
+	await _frames(40)
+	var y98: float = c98.raiz.to_local(player.global_position).y
+	_checar(caiu and y98 > -3.3, "sala 98: cair no vão do meio-fio vira afogamento, com fundo no poço (y=%.2f)" % y98)
+	await _esperar_morte_terminar()
+	await _frames(20)
+	nivel.ir_para_sala(17)
+	await _frames(10)
+	c98 = nivel.salas[17]
+	GS.trocar_epoca(GS.Epoca.ESEMDATA)
+	await _frames(4)
+	player.global_position = c98.raiz.to_global(Vector3(0.9, 0.1, -5.5))
+	player.rotation.y = c98.raiz.global_rotation.y - PI * 0.5
+	player.velocity = Vector3.ZERO
+	await _frames(4)
+	Input.action_press("frente")
+	var passou: bool = await _ate(func(): return c98.raiz.to_local(player.global_position).x > 3.6, 400)
+	Input.action_release("frente")
+	var l98: Vector3 = c98.raiz.to_local(player.global_position)
+	_checar(passou and l98.y > -0.3 and not nivel.afogando, "sala 98: no disco sem data a passarela leva à plataforma da sandália (x=%.1f y=%.2f)" % [l98.x, l98.y])
+	GS.trocar_epoca(GS.Epoca.E2020)
+	await _frames(10)
 
 
 func _teste_saida_para_braco_morto() -> void:

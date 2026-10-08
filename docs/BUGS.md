@@ -22,8 +22,30 @@ Gravidade: **A** = trava/perde progresso, **M** = errado mas dá para seguir, **
 | B10 | B | Depois de morrer no Ato II (dunas), o jingle não voltava ao reaparecer no hall. | Chegar às dunas (sala 27, a música para), morrer, reaparecer. | `_resetar_estado` não religava a música. | `Audio.musica("jingle")` em `_resetar_estado`. | `ato2_test` (reaparecer) |
 | B11 | M | No desktop, **Alt-Tab com o mouse capturado não pausava**: o jogo seguia rodando em segundo plano (a Figura Branca podia matar o jogador). | Jogar no Windows/Linux e trocar de janela. | O `_process` só pausa se o mouse deixa de estar capturado, e no desktop o foco perdido não solta o mouse. | `main._notification` solta o mouse ao perder o foco (cai no caminho normal de pausa). | `janela_jogador` C |
 | B14 | M | O painel **P08** (Sala dos Povos Originários, com quiz e selo) estava enterrado na parede: invisível e impossível de ler. | Ir à Sala dos Povos e olhar a parede oeste. | `Painel3D` em x = -26,76; a face interna do anexo é x = -26,4 (parede de 0,4 m a partir de -26,8). | x = -26,35. | `castelinho_test` (todo painel visível é alcançável pelo raio, V1 e V4) |
+| B15 | A | **Braço Morto: o calçadão junto ao lago era um buraco.** O jogador caía para sempre, sem morte e sem volta, e a lápide (necessária para o final "Encontrado") fica justamente ali. | Sala 100: sair do poço da escada e andar em direção ao lago (z < -3). | `braco_morto.gd` `_terreno()`: o calçadão (z -8..-3) só tinha malha visual; a colisão da grama começa em z = -3 e a do meio-fio só cobre z -9..-8. | Colisão no calçadão e uma rede de segurança no `_process` (y < -8 devolve o jogador à margem). | `qa_logica_test` B15 |
+| B16 | M | "Continuar" depois de chegar ao Braço Morto (ou depois de qualquer final) voltava ao porão, sala 96. | Chegar à sala 100, voltar ao título, "Continuar". | Ninguém gravava o checkpoint 100 (o comentário dizia que "quem dispara" gravaria). | 100 entrou em `SALAS_CHECKPOINT`. | `qa_logica_test` B16 |
+| B17 | A | **Visita 4: a porta do fim do corredor de 1975 encerrava a visita e pulava o porão inteiro**, devolvendo o jogador à calçada como "visita 5". | Visita 4, disco de 1975 no Visor: segurar Q, ir ao fim do corredor de 1975 e abrir a porta. | `_abrir_porta_final` (castelinho.gd) chamava `_fim_de_visita` em qualquer visita; a porta é criada em todas. | Só sai na visita 3; nas outras diz "A porta está trancada." | `qa_logica_test` B17 |
+| B18 | B | Barra: um lance no exato quadro em que a janela do boto fecha contava como lance, mas sem rede; a contagem do minigame ficava dessincronizada (o 3º lance não puxava a sandália). | Apertar E/clique no último quadro da janela. | `lancar()` mudava a fase para LANCADO antes de ver se o lance estava dentro da janela. | Fora da janela, a fase fica em JANELA e vale como "perdeu a hora". | `qa_logica_test` B18 |
+| B19 | B | Um save com um campo de tipo errado (editado à mão ou de outra versão) parava a leitura no meio; `checkpoint_sala` 0 era aceito. | Save `{"checkpoint_sala":12,"flags":5,"visita":2}`. | `carregar()` atribuía sem conferir tipos. | `_campo()` confere o tipo de cada campo e usa o padrão; checkpoint e visita limitados à faixa válida. | `qa_logica_test` B19 |
+| B20 | M | Uma fala que sobrava na fila do Guia passava para o nível seguinte (ou para a tela de título) e mantinha `Guia.ocupado()` ligado, o que trava o minigame da Barra e o apito da sala 16. | Trocar de nível com uma fala sem `await` na fila. | `Guia.cancelar()` só era chamado na morte. | `main.carregar_mundo` e a volta ao título chamam `Guia.cancelar()`. | `qa_logica_test` B20 |
+| B21 | B | Visita 2: depois de "Continuar" após a volta da Barra, passar pela Sala do Pescador baixava o contador de 38 para 35. | Voltar da Barra, salvar (checkpoint 38), "Continuar", andar até o Pescador. | `castelinho.gd` `iniciar()` só desligava o gatilho 13 na primeira volta. | O gatilho 13 fica desligado sempre que `viu_flashback_barra` estiver ligada. | `tests/varredura/v12.gd` |
+| B22 | A | **Porão: a escada que sobe da sala 99 (saída para o Braço Morto) não deixava subir andando**: o pé da rampa era uma parede. O jogo não podia ser terminado. | Sala 99, andar até a escada. | `porao_salas.gd` `_escada()`: a base da rampa de colisão acompanhava o topo (`dy - 0.5`) e virava uma face vertical no começo. | Base em `min(0, dy) - 0.5`. | `porao_test` (sobe a escada andando) |
+| B23 | A | Porão, bifurcação: o corredor lateral não tinha uma das paredes (e, quando a bifurcação abre para o outro lado, também não tinha a do fim): o jogador saía do mapa e caía para sempre. | Sala da bifurcação, andar pelo corredor lateral até o fim. | `_bifurcacao()`: caixas de colisão de espessura zero (`zz - 0.1*s2 - 0.1` a `zz + 0.1*s2 + 0.1`) que a malha descarta. | Paredes de 0,4 m. | `porao_test` (raios nas paredes da bifurcação) |
+| B24 | A | Porão, sala 98, sem o disco "sem data": o vão do meio-fio deixava cair no poço da cisterna, sem fundo e sem morte. | Sala 98 em 2020, andar para o vão do meio-fio. | `_cisterna()`: os poços não tinham colisão de fundo. | Chão no fundo de todo poço e, na 98, água que afoga e devolve ao checkpoint (como a bifurcação errada). | `porao_test` (vão da cisterna) |
 
 ## Verificado e sem problema
+
+Varredura automática do módulo 1 (08/10/2026, versão 2): 8 frentes em paralelo, scripts em `tests/varredura/` (fora do CI).
+
+- Os 19 checkpoints (17 da lista + 55 + 100): "Continuar" leva ao marcador certo, no chão, fora da parede, com a sala, a visita, a época e os discos certos. Save vazio, quebrado ou antigo (sem visita e discos) não quebra.
+- Gatilhos de sala das visitas 1 a 4 e do Ato II dão o número global certo; rota a pé do Spawn à saída em todas as visitas sem queda nem trava; ida e volta do Ato II e da Barra; fim da visita 4 leva ao porão.
+- Porão: chão nas 19 salas, "Continuar" em 81/86/91/95/96, morte em 9 pontos volta ao último checkpoint, água e Visor dentro d'água não prendem.
+- Braço Morto: os dois finais, dedicatória com Disque 100 (não fecha antes de 6 s), volta ao título.
+- Console: nenhum SCRIPT ERROR em nenhuma cena (só vazamentos ao sair, normais nos testes).
+- WebGL2 (Chromium, SwiftShader): todas as cenas em todas as épocas com câmera em cada shader do jogo, pós-processamento forçado no máximo: nenhum erro de shader.
+- O travamento (SIGSEGV) que a varredura viu no porão era do próprio script de teste (usava uma sala já liberada), não do jogo.
+
+Da rodada anterior:
 
 - Pointer lock no navegador (Chromium headful sob xvfb): capturado no clique de "Começar a visita" e no Enter; Esc solta e mostra "PAUSADO"; clique recaptura.
 - Pausa com Esc no desktop (Esc não solta o mouse sozinho: o `main.gd` o solta de propósito): pausa, W não anda pausado, clique retoma; Esc com painel aberto só fecha o painel.
@@ -33,6 +55,12 @@ Gravidade: **A** = trava/perde progresso, **M** = errado mas dá para seguir, **
 - Correr até cansar: fôlego acaba, barra aparece, só anda, recarrega.
 
 ## Sem correção (decisão de design ou fora do escopo)
+
+- **Para o Icaro decidir:** no porão, com o disco "sem data", a água das salas 97 a 99 continua visível mas não deixa mais lento (só a da 96 some). O slide da 99 mostra "a água parada e o balde boiando", então ficou.
+- O quiz final (com diploma) só existe nas visitas 1 e 2 (`castelinho.gd`, `visita <= 2`); os painéis `p22*` e `desenho_7` não são usados. Parece de propósito; fica para o módulo 3.
+- Código morto e flags que só são escritas (`viu_tito_final`, `final_encontrado`, `final_visita_concluida`, `viu_sandalia_barra`, `tem_disco_semdata`; bloco `atendido` em `porao.gd`): inofensivos, ficam para quem mexer nesses arquivos.
+- Barra: pausar durante a espera do boto deixa a espera correr (a janela não fecha na pausa, então o jogador não perde nada).
+- `tools/testar_web_cenas.sh` precisa do Playwright para Python, que não está na imagem da nuvem; a varredura usou o Playwright de Node.
 
 - O contador "SALA nn" **desce** quando o jogador volta por salas já visitadas (ex.: depois da Barra, 15 → 12 → 11 → 16), e a corrupção acompanha o número atual. `GameState.entrar_sala` aceita números menores de propósito (a morte no Ato II volta para a 26), então não mexi.
 - Áudio nunca foi ouvido (a nuvem não tem placa de som). A lógica (troca de música por corrupção, ambiente por época, silêncio na troca de nível) foi conferida por teste.
