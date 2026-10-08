@@ -140,11 +140,12 @@ func _caso(cp: int) -> void:
 	var hy := _chao_em(p.global_position)
 	_checar(p.is_on_floor() and hy > -900.0 and absf(hy - p.global_position.y) < 0.25,
 		"%s: sobre chão (y jogador %.2f, chão %.2f, on_floor %s)" % [tag, p.global_position.y, hy, str(p.is_on_floor())])
-	_checar(p.global_position.y > -0.5, "%s: não caiu após 120 frames (y %.2f)" % [tag, p.global_position.y])
+	_checar(m != null and absf(p.global_position.y - m.global_position.y) < 0.5, "%s: não caiu após 120 frames (y %.2f, marcador %.2f)" % [tag, p.global_position.y, m.global_position.y if m != null else -999.0])
 	_checar(_livre(p.global_position), "%s: não está dentro de parede" % tag)
 	_checar(GS.sala_atual == cp, "%s: sala_atual == checkpoint após 120 frames (sala %d)" % [tag, GS.sala_atual])
-	_checar(absf(GS.corruption - GS.corruption_por_sala(cp)) < 0.01,
-		"%s: corrupção = curva da sala %d (%.2f, esperado %.2f)" % [tag, cp, GS.corruption, GS.corruption_por_sala(cp)])
+	var cor_esp: float = 0.4 if cp >= 100 else GS.corruption_por_sala(cp)   # Braço Morto fixa 0,4 (braco_morto.gd:78)
+	_checar(absf(GS.corruption - cor_esp) < 0.01,
+		"%s: corrupção = %.2f (esperado %.2f)" % [tag, GS.corruption, cor_esp])
 	_checar(GS.epoca == GS.Epoca.E2020, "%s: época de hoje (época %d)" % [tag, GS.epoca])
 	_checar(GS.visita == esp[2], "%s: GameState.visita %d após carregar" % [tag, GS.visita])
 	var vn: Variant = nivel.get("visita")
@@ -205,6 +206,14 @@ func _b_saves_ruins() -> void:
 	GS.carregar()
 	_checar(GS.checkpoint_sala == 12, "save com 'flags': 5: checkpoint 12 lido (%d)" % GS.checkpoint_sala)
 	_checar(typeof(GS.flags) == TYPE_DICTIONARY, "save com 'flags': 5: flags continua dicionário (%s)" % str(typeof(GS.flags)))
+	GS.visita = 4
+	_escrever('{"checkpoint_sala": 12, "flags": 5, "visita": 2}')
+	GS.carregar()
+	_checar(GS.visita == 2, "save com 'flags': 5: campos depois do erro ainda são lidos (visita %d, esperada 2)" % GS.visita)
+	GS.disco_atual = -1
+	_escrever('{"checkpoint_sala": 45, "discos": null, "disco_atual": 1}')
+	GS.carregar()
+	_checar(GS.disco_atual == 1, "save com 'discos': null: disco_atual depois do erro ainda é lido (%d, esperado 1)" % GS.disco_atual)
 	# checkpoint 0 no arquivo
 	_escrever('{"checkpoint_sala": 0}')
 	GS.carregar()
