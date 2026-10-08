@@ -588,11 +588,11 @@ func lancar(sozinha := false) -> void:
 		return
 	var n := lances + 1
 	var dentro := janela_aberta or sozinha
+	if not dentro:
+		return   # a janela fechou neste quadro: fica em JANELA e _aguardar_lance trata como "perdeu a hora"
 	janela_aberta = false
 	_exclama.visible = false
 	_entrar_fase(Fase.LANCADO)
-	if not dentro:
-		return
 	if n < TOTAL_LANCES:
 		_lance_certo(n)
 	else:
