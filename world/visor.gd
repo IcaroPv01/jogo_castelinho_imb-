@@ -57,6 +57,8 @@ var ativo := false
 var figura_visivel := false   # a Figura está sendo mostrada no slide agora (para testes)
 var _ultima_troca := -10.0
 var _epoca_mostrada := -1
+var _epoca_antes := 0   # época de antes de ligar (com `visor_travado`, soltar o Q volta para ela)
+var _aviso_disco_t := 0.0   # s até poder avisar de novo "sem esse disco"
 var _figura: Node3D
 var _lado := 1.0
 var _bat_t := 0.0
@@ -115,6 +117,7 @@ static func atencao_ligada() -> bool:
 func _ready() -> void:
 	add_to_group(GRUPO)
 	registrar_inputs()
+	GameState.flag_mudou.connect(_on_flag)
 	if GameState.sala_atual <= 0:   # nova partida (ainda sem sala): nada de bloqueio herdado
 		_bloqueio = 0.0
 
@@ -145,6 +148,7 @@ func _process(dt: float) -> void:
 	elif ativo:
 		_acompanhar_disco()
 	_aviso_t = maxf(0.0, _aviso_t - dt)
+	_aviso_disco_t = maxf(0.0, _aviso_disco_t - dt)
 	if _bloqueio > 0.0:
 		var antes := _bloqueio
 		_bloqueio = maxf(0.0, _bloqueio - dt)
@@ -163,12 +167,24 @@ func _exit_tree() -> void:
 		ativo = false
 		if is_instance_valid(Efeitos):
 			Efeitos.visor(false)
-		if is_instance_valid(GameState) and not GameState.flag("visor_travado"):
-			GameState.trocar_epoca(GameState.Epoca.E2020)
+		if is_instance_valid(GameState):
+			GameState.trocar_epoca(_epoca_antes if GameState.flag("visor_travado") else GameState.Epoca.E2020)
 	if is_instance_valid(GameState):
 		GameState.definir_atencao(0.0)
 	if is_instance_valid(_figura):
 		_figura.queue_free()
+
+
+## O nível travou o Visor com o Q apertado (ex.: entrou no corredor de 1975 olhando pelo Visor): a época de
+## "antes" passa a ser a que o nível impôs. Adiado para o fim do quadro porque uns níveis ligam a flag antes de
+## trocar a época e outros depois.
+func _on_flag(nome: String, valor: Variant) -> void:
+	if nome == "visor_travado" and bool(valor) and ativo:
+		_capturar_travada.call_deferred()
+
+
+func _capturar_travada() -> void:
+	_epoca_antes = int(GameState.epoca)
 
 
 # ---------------------------------------------------------------- discos
@@ -193,6 +209,9 @@ func selecionar_slot(slot: int) -> bool:
 	var ep: int = ORDEM_DISCOS[slot]
 	if ep not in GameState.discos:
 		Audio.sfx("erro", -14.0, 1.3)
+		if _aviso_disco_t <= 0.0:   # legenda curta, sem dizer o ano (sem spoiler), no máximo a cada 3 s
+			_aviso_disco_t = 3.0
+			Efeitos.aviso("Você ainda não tem esse disco.")
 		return false
 	_escolher(ep)
 	return true
@@ -249,6 +268,7 @@ func _ligar() -> void:
 	_lado = -1.0 if randf() < 0.5 else 1.0
 	var alvo := epoca_alvo()
 	_epoca_mostrada = alvo
+	_epoca_antes = int(GameState.epoca)
 	GameState.trocar_epoca(alvo)
 	Efeitos.visor(true)
 	ativado.emit(alvo)
@@ -257,8 +277,8 @@ func _ligar() -> void:
 func _desligar() -> void:
 	ativo = false
 	_epoca_mostrada = -1
-	if not GameState.flag("visor_travado"):
-		GameState.trocar_epoca(GameState.Epoca.E2020)
+	# travado (o Visor "mente"): volta para a época de antes, não para 2020 (senão o corredor some e o jogador fica preso)
+	GameState.trocar_epoca(_epoca_antes if GameState.flag("visor_travado") else GameState.Epoca.E2020)
 	Efeitos.visor(false)
 	desativado.emit(int(GameState.epoca))
 

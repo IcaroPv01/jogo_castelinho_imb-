@@ -34,6 +34,7 @@ func _rodar() -> void:
 	await _teste_susto_e_bloqueio()
 	await _teste_figura_atravessou()
 	await _teste_b06()
+	await _teste_visor_travado()
 	await _teste_hud()
 	await _teste_paineis_3d()
 
@@ -216,11 +217,12 @@ func _teste_q_por_disco() -> void:
 	v._process(0.016)
 	_checar(v.ativo and GS.epoca == GS.Epoca.E1967, "trocar de disco com Q apertado troca a época")
 	await _q(false)
-	# visor_travado: soltar não volta
+	# visor_travado: soltar não volta para 2020 (fica na época de antes; ver _teste_visor_travado)
+	GS.trocar_epoca(GS.Epoca.E1975)
 	GS.set_flag("visor_travado", true)
 	await _q(true)
 	await _q(false)
-	_checar(GS.epoca != GS.Epoca.E2020, "visor_travado: a época não volta ao soltar")
+	_checar(GS.epoca == GS.Epoca.E1975, "visor_travado: a época não volta para 2020 ao soltar")
 	GS.set_flag("visor_travado", false)
 	GS.trocar_epoca(GS.Epoca.E2020)
 	# o painel de UI aberto impede o Q
@@ -358,6 +360,39 @@ func _teste_b06() -> void:
 	Input.action_release("visor")
 	v = VisorCls.instalar(mundo)
 	v.set_process(false)
+
+
+## visor_travado: segurar Q com OUTRO disco e soltar volta para a época de antes (não fica no disco); troca de disco salva.
+func _teste_visor_travado() -> void:
+	print("-- visor_travado: soltar o Q volta para a época de antes; selecionar_disco salva")
+	_zerar(1)
+	GS.ganhar_disco(GS.Epoca.E1975)
+	GS.ganhar_disco(GS.Epoca.E1950)
+	GS.trocar_epoca(GS.Epoca.E1975)   # o corredor de 1975 (época de antes)
+	GS.flags["visor_travado"] = true
+	await _q(true)
+	_checar(v.ativo and GS.epoca == GS.Epoca.E1950, "Q com o disco 1950 mostra 1950")
+	await _q(false)
+	_checar(not v.ativo and GS.epoca == GS.Epoca.E1975, "travado: soltar volta para 1975, não fica em 1950 (%d)" % GS.epoca)
+	await _q(true)
+	v._exit_tree()   # o nível acaba com o Q apertado
+	_checar(GS.epoca == GS.Epoca.E1975, "travado: sair do nível também volta para 1975")
+	Input.action_release("visor")
+	GS.flags.erase("visor_travado")
+	GS.trocar_epoca(GS.Epoca.E2020)
+	v.ativo = false
+	# o nível trava o Visor com o Q apertado (o jogador entra no corredor olhando pelo Visor, com o disco 1950)
+	await _q(true)
+	GS.set_flag("visor_travado", true)
+	GS.trocar_epoca(GS.Epoca.E1975)
+	await _q(false)
+	_checar(GS.epoca == GS.Epoca.E1975, "travado com o Q apertado: soltar fica na época do nível (%d)" % GS.epoca)
+	GS.flags.erase("visor_travado")
+	GS.trocar_epoca(GS.Epoca.E2020)
+	GS.selecionar_disco(GS.Epoca.E1975)
+	var f := FileAccess.open(GS.ARQUIVO_SAVE, FileAccess.READ)
+	var dados = JSON.parse_string(f.get_as_text()) if f else null
+	_checar(typeof(dados) == TYPE_DICTIONARY and int(dados.get("disco_atual", -9)) == GS.Epoca.E1975, "selecionar_disco grava disco_atual no save")
 
 
 # ---------------------------------------------------------------- HUD
