@@ -31,14 +31,16 @@ const PRIMEIRA := 81
 const N := 19
 const SALA_QUARTO := 95
 const SALA_ULTIMA := 99
-## Checkpoints internos (a morte volta ao último). O `GameState` só grava 81 e 95 (SALAS_CHECKPOINT); ver PENDENCIAS.
+## Checkpoints internos (a morte volta ao último); o `GameState` (SALAS_CHECKPOINT) grava os mesmos: 81, 86, 91, 95, 96 (e 100).
 const CHECKPOINTS: Array[int] = [81, 86, 91, 95, 96]
 ## Profundidade da água (m acima do piso) em cada nível: nada, tornozelo, joelho, cintura.
 const PROF_AGUA: Array[float] = [0.0, 0.22, 0.55, 0.95]
 const TEMPO_SUBIR := 6.0
 const COSTELA_OK: Array[String] = ["abobada", "colunas", "desenhos", "crianca", "pedras", "arcos", "telefone", "poco"]
-const FIGURA_OK: Array[String] = ["abobada", "colunas", "desenhos", "pedras", "arcos", "poco", "cisterna", "alagado", "crianca", "telefone"]
+const FIGURA_OK: Array[String] = ["abobada", "colunas", "desenhos", "pedras", "arcos", "poco", "cisterna", "alagado"]
 const VOZ_OK: Array[String] = ["abobada", "colunas", "pedras", "desenhos", "arcos", "poco"]
+## Sussurros do Tito (só sugestão, curtos). Nunca repete a mesma linha duas vezes seguidas.
+const VOZES: Array[String] = ["ei… aqui…", "por aqui…", "tá frio…", "vem ver…", "é por aqui que eu ia…"]
 const T := 0.6
 
 var player: Player
@@ -67,6 +69,15 @@ var _t := 0.0
 var _ultima_pos := Vector3.ZERO
 var _tem_ultima := false
 var _voz_t := 4.0
+var _voz_ult := -1
+var _prio_legenda := 0                 # prioridade da legenda que está na tela (0 = sussurro)
+var _legenda_fim := 0.0                # até quando (s, tempo do jogo) ela vale
+var _sd := 0.0:                        # 0..1: quanto a água das salas 97-99 já desceu ao tornozelo (disco sem data)
+	set(v):
+		_sd = v
+		_aplicar_agua()
+var _tween_sd: Tween
+var _saindo := false
 var _passo_agua_t := 0.0
 var _pistas_t := 0.0
 var _causa := ""
@@ -251,7 +262,10 @@ func _aplicar_agua() -> void:
 
 func _agua_y_local(c) -> float:
 	var minimo: float = 0.14 if c.tipo == "alagado" else 0.0
-	return c.base_agua + maxf(prof, minimo)
+	var p := prof
+	if c.idx >= 16:         # salas 97-99 no disco sem data: a água cai ao tornozelo (e segue espelho)
+		p = lerpf(prof, minf(prof, PROF_AGUA[1]), _sd)
+	return c.base_agua + maxf(p, minimo)
 
 
 func _ajustar_agua_sala(c) -> void:
@@ -528,9 +542,11 @@ func _physics_process(dt: float) -> void:
 	var pos := player.global_position
 	_verificar_sala(pos)
 	_lentidao_da_agua(pos, dt)
+	if idx_atual >= 15 and GameState.atencao > 0.0:
+		GameState.definir_atencao(0.0)       # salas 96-99 (último dia): olhar os slides não solta a Figura
 	_voz_t -= dt
 	if _voz_t <= 0.0:
-		_voz_t = randf_range(5.5, 9.0)
+		_voz_t = randf_range(7.0, 11.0)
 		_chamar_voz()
 	_pistas_t -= dt
 	if _pistas_t <= 0.0:
@@ -621,9 +637,24 @@ func _ao_entrar_sala(i: int, imediato := false) -> void:
 		nivel_agua = novo
 		prof = PROF_AGUA[novo]
 	_preparar_ameacas(i)
+	_dica_visor(i)
 	_voz_t = minf(_voz_t, 3.0)
 	_tel_t = 1.0
 	sala_entrada.emit(i)
+
+
+## Uma vez só: avisa que as marcas escondidas do porão aparecem pelo Visor (1ª sala com pista ou voz, ou a 82).
+func _dica_visor(i: int) -> void:
+	if i < 1 or GameState.flag("porao_dica_visor") or not salas.has(i) or not _tem_disco_visor():
+		return
+	var c = salas[i]
+	if i == 1 or not c.pistas.is_empty() or not c.voz.is_empty():
+		GameState.set_flag("porao_dica_visor", true)
+		_mostrar_legenda("Pela lente do Visor (Q), o porão mostra o que esconde.", 4.0)
+
+
+func _tem_disco_visor() -> bool:
+	return bool(GameState.flag("tem_visor"))
 
 
 func _fechar_porta(i: int, imediato := false) -> void:
@@ -691,9 +722,7 @@ func profundidade_no_jogador(pos: Vector3) -> float:
 func _lentidao_da_agua(pos: Vector3, dt: float) -> void:
 	var f := 1.0
 	var d := profundidade_no_jogador(pos)
-	if GameState.epoca == GameState.Epoca.ESEMDATA:
-		d = 0.0                      # no slide do último dia a água ainda não subiu (ou é só uma imagem)
-	if d > 0.0:
+	if GameState.epoca != GameState.Epoca.ESEMDATA and d > 0.0:       # no slide do último dia a água não atrapalha
 		f = clampf(1.0 - d * 0.6, 0.42, 1.0)
 	_fator_agua = f
 	if _tem_ultima and f < 0.999:
@@ -724,7 +753,11 @@ func _chamar_voz() -> void:
 		return
 	var pos: Vector3 = c.raiz.to_global(c.voz["pos"])
 	Audio.sfx_3d("crianca_ei", pos, 2.0)
-	_mostrar_legenda("ei… aqui…")
+	var k := randi() % VOZES.size()
+	if k == _voz_ult:
+		k = (k + 1) % VOZES.size()
+	_voz_ult = k
+	_mostrar_legenda(VOZES[k], 2.4, 0)
 
 
 func _hud_proprio() -> void:
@@ -754,7 +787,13 @@ func _hud_proprio() -> void:
 	cam.add_child(_legenda)
 
 
-func _mostrar_legenda(texto: String, dur := 2.4) -> void:
+## `prio`: 0 = sussurro, 1 = aviso importante. Uma legenda de prioridade menor não apaga uma maior que ainda aparece.
+func _mostrar_legenda(texto: String, dur := 2.4, prio := 1) -> void:
+	var agora := Time.get_ticks_msec() / 1000.0
+	if prio < _prio_legenda and agora < _legenda_fim:
+		return
+	_prio_legenda = prio
+	_legenda_fim = agora + dur + 1.0
 	_legenda.text = texto
 	if _tween_legenda and _tween_legenda.is_valid():
 		_tween_legenda.kill()
@@ -825,9 +864,12 @@ func _pegar_disco(_p: Node, c) -> void:
 		if is_instance_valid(it) and it.name == "InteragivelDisco":
 			it.queue_free()
 	_mostrar_legenda("Um disco sem data. Segure Q.", 4.0)
-	# a grade da sala 96 sobe
+	# a grade da sala 96 sobe (e a legenda avisa, depois da primeira)
 	if salas.has(15):
 		_abrir_porta(15)
+		get_tree().create_timer(5.2, false).timeout.connect(func():
+			if not _saindo and not morrendo:
+				_mostrar_legenda("A grade se abriu.", 2.5))
 	disco_pego.emit()
 
 
@@ -896,6 +938,8 @@ func _reaparecer_figura(_f: Node) -> Vector3:
 
 ## O Visor estourou a atenção (visita 5): a Figura atravessa de verdade e persegue.
 func _on_figura_atravessou(_visita: int) -> void:
+	if _saindo or idx_atual >= 15:
+		return
 	if idx_atual < 0 or not salas.has(idx_atual) or not is_instance_valid(player):
 		return
 	var c = salas[idx_atual]
@@ -914,7 +958,7 @@ func _on_figura_atravessou(_visita: int) -> void:
 # ============================================================================ afogamento, morte e checkpoint
 ## A bifurcação errada: a água funda. Sem gráfico: a tela escurece, a câmera afunda e a morte segue o caminho normal.
 func _afogar() -> void:
-	if afogando or morrendo:
+	if afogando or morrendo or _saindo:
 		return
 	afogando = true
 	player.pode_mover = false
@@ -929,7 +973,7 @@ func _afogar() -> void:
 
 
 func ao_morrer() -> void:
-	if morrendo:
+	if morrendo or _saindo:
 		return
 	morrendo = true
 	if player:
@@ -990,6 +1034,10 @@ func _ao_mudar_epoca(e: int) -> void:
 	if _tween_env and _tween_env.is_valid():
 		_tween_env.kill()
 	_tween_env = create_tween().set_parallel()
+	if _tween_sd and _tween_sd.is_valid():
+		_tween_sd.kill()
+	_tween_sd = create_tween()
+	_tween_sd.tween_property(self, "_sd", 1.0 if sem_data else 0.0, 0.5 if sem_data else 0.4)
 	if sem_data:
 		# o último dia: fim de tarde dourado, água parada como um espelho
 		_tween_env.tween_property(env, "ambient_light_color", Color(0.75, 0.50, 0.34), 0.5)
@@ -1013,9 +1061,20 @@ func _ao_mudar_epoca(e: int) -> void:
 
 
 func _ir_ao_braco_morto() -> void:
-	if morrendo or afogando:
+	if _saindo or morrendo or afogando:
 		return
+	_saindo = true
+	# daqui em diante nada mata o jogador nem solta a Figura
+	figura.esconder()
+	if costela:
+		costela.ativa = false
+	ameacas_ligadas = false
+	player.velocity = Vector3.ZERO
+	player.pode_mover = false
 	saiu_do_porao.emit()
+	_mostrar_legenda("(ar fresco. lá fora, a água corre.)", 2.0)
+	Audio.ambiente("", -8.0, 2.0)
+	await get_tree().create_timer(2.0, false).timeout
 	GameState.entrar_sala(100)
 	var cena := "res://world/niveis/braco_morto.tscn"
 	if not ResourceLoader.exists(cena):

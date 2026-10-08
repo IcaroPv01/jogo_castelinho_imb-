@@ -38,6 +38,7 @@ func _rodar() -> void:
 	await _teste_costela()
 	await _teste_voz_e_afogamento()
 	await _teste_figura_pelo_visor()
+	await _teste_ajustes_revisao()
 	await _teste_morte_e_checkpoint()
 	await _teste_quarto_e_disco()
 	await _teste_slides()
@@ -309,6 +310,7 @@ func _teste_costela() -> void:
 
 func _teste_voz_e_afogamento() -> void:
 	print("-- a voz do Tito: caminho certo e água funda")
+	GS.set_flag("porao_dica_visor", true)
 	var errada := _sala_do_tipo("bifurcacao", "voz_certa", false)
 	var certa := _sala_do_tipo("bifurcacao", "voz_certa", true)
 	nivel.ir_para_sala(certa)
@@ -335,7 +337,20 @@ func _teste_voz_e_afogamento() -> void:
 	# a legenda "ei… aqui…" e o som saem na sala da voz
 	nivel._voz_t = 0.0
 	await _frames(5)
-	_checar(nivel._legenda.text.begins_with("ei") and nivel._legenda.modulate.a > 0.0, "legenda 'ei… aqui…'")
+	_checar(nivel._legenda.text in nivel.VOZES and nivel._legenda.modulate.a > 0.0, "legenda de sussurro da lista de vozes")
+	# a mesma linha não repete duas vezes seguidas
+	var repetiu := false
+	var ant: int = nivel._voz_ult
+	for k in 40:
+		nivel._chamar_voz()
+		if nivel._voz_ult == ant:
+			repetiu = true
+		ant = nivel._voz_ult
+	_checar(not repetiu, "o sussurro nunca repete a mesma linha em seguida")
+	# prioridade: o sussurro não apaga uma legenda importante que ainda aparece
+	nivel._mostrar_legenda("Um disco sem data. Segure Q.", 4.0)
+	nivel._chamar_voz()
+	_checar(nivel._legenda.text == "Um disco sem data. Segure Q.", "sussurro não sobrescreve legenda importante")
 	# afogamento: entra na água funda
 	var mortes0: int = GS.contadores.get("mortes", 0)
 	player.global_position = c2.raiz.to_global(c2.pontos["armadilha"] + Vector3(0, 0.2, 0))
@@ -366,6 +381,44 @@ func _teste_figura_pelo_visor() -> void:
 	_checar(fig.visible and fig.ativa and not fig.sumida, "a atenção estourou: a Figura aparece e persegue")
 	_checar(fig.global_position.distance_to(player.global_position) > 4.0, "ela nasce a %.1f m do jogador" % fig.global_position.distance_to(player.global_position))
 	fig.esconder()
+
+
+func _teste_ajustes_revisao() -> void:
+	print("-- ajustes da revisão: poço, água sem data, atenção nos slides, saída")
+	_checar(not ("telefone" in nivel.FIGURA_OK) and not ("crianca" in nivel.FIGURA_OK), "Figura fora das salas pequenas (telefone, criança)")
+	# 1. a marca da voz do poço fica fora da mureta, no caminho da saída
+	var ip := _sala_do_tipo("poco")
+	if ip >= 0:
+		nivel.ir_para_sala(ip)
+		await _frames(3)
+		var cp = nivel.salas[ip]
+		var vz: Vector3 = cp.voz["pos"] if not cp.voz.is_empty() else cp.pontos["voz"]
+		_checar(absf(vz.z - (-5.5)) > 1.6 + 0.4, "poço: a marca da voz fica fora do poço (z=%.1f)" % vz.z)
+	# 2. água 97-99 com disco sem data cai ao tornozelo; volta ao normal
+	GS.trocar_epoca(GS.Epoca.E2020)
+	nivel.ir_para_sala(17)
+	await _frames(5)
+	var c17 = nivel.salas[17]
+	_fixar_agua(3)
+	var y_normal: float = nivel._agua_y_local(c17)
+	GS.trocar_epoca(GS.Epoca.ESEMDATA)
+	await _frames(60)
+	var y_sd: float = nivel._agua_y_local(c17)
+	_checar(is_equal_approx(y_sd, c17.base_agua + nivel.PROF_AGUA[1]) and y_sd < y_normal, "sala 98, sem data: água ao tornozelo (%.2f < %.2f)" % [y_sd, y_normal])
+	GS.trocar_epoca(GS.Epoca.E2020)
+	await _frames(60)
+	_checar(is_equal_approx(nivel._agua_y_local(c17), y_normal), "fora do sem data a água volta à profundidade normal")
+	# 3. salas 96-99: segurar o Visor não enche a atenção nem solta a Figura
+	GS.trocar_epoca(GS.Epoca.ESEMDATA)
+	GS.definir_atencao(0.9)
+	nivel.figura.esconder()
+	await _frames(5)
+	_checar(GS.atencao < 0.05, "salas 96-99: a atenção do Visor é zerada")
+	nivel._on_figura_atravessou(5)
+	_checar(not nivel.figura.visible, "salas 96-99: a Figura não atravessa")
+	GS.trocar_epoca(GS.Epoca.E2020)
+	nivel.ir_para_sala(1)
+	await _frames(3)
 
 
 func _teste_morte_e_checkpoint() -> void:
@@ -561,6 +614,13 @@ func _teste_saida_para_braco_morto() -> void:
 	var c = nivel.salas[18]
 	var area: Area3D = c.raiz.get_node("SaidaFinal")
 	player.global_position = area.get_child(0).global_position
+	await _frames(3)
+	_checar(nivel._saindo, "a saída ativa o guarda _saindo")
+	var mortes_s: int = GS.contadores.get("mortes", 0)
+	nivel._afogar()
+	nivel.ao_morrer()
+	nivel._ir_ao_braco_morto()
+	_checar(not nivel.afogando and not nivel.morrendo and GS.contadores.get("mortes", 0) == mortes_s, "saindo: afogar e morrer são ignorados")
 	var ok: bool = await _ate(func(): return main.nivel_atual == "res://world/niveis/braco_morto.tscn", 1200)
 	_checar(ok, "chegar ao topo da escada leva para braco_morto.tscn")
 	await _frames(30)

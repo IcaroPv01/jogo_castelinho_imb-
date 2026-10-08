@@ -32,6 +32,7 @@ Gravidade: **A** = trava/perde progresso, **M** = errado mas dá para seguir, **
 | B22 | A | **Porão: a escada que sobe da sala 99 (saída para o Braço Morto) não deixava subir andando**: o pé da rampa era uma parede. O jogo não podia ser terminado. | Sala 99, andar até a escada. | `porao_salas.gd` `_escada()`: a base da rampa de colisão acompanhava o topo (`dy - 0.5`) e virava uma face vertical no começo. | Base em `min(0, dy) - 0.5`. | `porao_test` (sobe a escada andando) |
 | B23 | A | Porão, bifurcação: o corredor lateral não tinha uma das paredes (e, quando a bifurcação abre para o outro lado, também não tinha a do fim): o jogador saía do mapa e caía para sempre. | Sala da bifurcação, andar pelo corredor lateral até o fim. | `_bifurcacao()`: caixas de colisão de espessura zero (`zz - 0.1*s2 - 0.1` a `zz + 0.1*s2 + 0.1`) que a malha descarta. | Paredes de 0,4 m. | `porao_test` (raios nas paredes da bifurcação) |
 | B24 | A | Porão, sala 98, sem o disco "sem data": o vão do meio-fio deixava cair no poço da cisterna, sem fundo e sem morte. | Sala 98 em 2020, andar para o vão do meio-fio. | `_cisterna()`: os poços não tinham colisão de fundo. | Chão no fundo de todo poço e, na 98, água que afoga e devolve ao checkpoint (como a bifurcação errada). | `porao_test` (vão da cisterna) |
+| B25 | M | Porão, salas 97 a 99 com o disco "sem data": a água continuava alta (cintura) mesmo sem deixar lento; só a da 96 sumia. | Pegar o disco, ir à sala 97-99 e segurar Q. | `_lentidao_da_agua` zerava a lentidão em ESEMDATA, mas o plano d'água não acompanhava. | Em ESEMDATA, nas salas 97-99, a água desce suavemente ao tornozelo (continua espelho, sem lentidão, passos com splash leve); fora dele volta ao normal. | `porao_test` (ajustes da revisão) |
 
 ## Verificado e sem problema
 
@@ -56,7 +57,6 @@ Da rodada anterior:
 
 ## Sem correção (decisão de design ou fora do escopo)
 
-- **Para o Icaro decidir:** no porão, com o disco "sem data", a água das salas 97 a 99 continua visível mas não deixa mais lento (só a da 96 some). O slide da 99 mostra "a água parada e o balde boiando", então ficou.
 - O quiz final (com diploma) só existe nas visitas 1 e 2 (`castelinho.gd`, `visita <= 2`); os painéis `p22*` e `desenho_7` não são usados. Parece de propósito; fica para o módulo 3.
 - Código morto e flags que só são escritas (`viu_tito_final`, `final_encontrado`, `final_visita_concluida`, `viu_sandalia_barra`, `tem_disco_semdata`; bloco `atendido` em `porao.gd`): inofensivos, ficam para quem mexer nesses arquivos.
 - Barra: pausar durante a espera do boto deixa a espera correr (a janela não fecha na pausa, então o jogador não perde nada).

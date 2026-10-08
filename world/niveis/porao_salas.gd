@@ -979,7 +979,7 @@ static func _poco(c: Ctx) -> void:
 	tocha(c, Vector3(-c.w * 0.5 + 0.12, 2.4, -2.0), -1, 1.3, 10.0)
 	c.pontos["figura"] = Vector3(0, 0.05, -c.L + 1.4)
 	c.pontos["costela"] = Vector3(-3.0, 0.0, -c.L * 0.5)
-	c.pontos["voz"] = Vector3(0, 1.4, zc)
+	c.pontos["voz"] = Vector3(0, 1.4, -c.L + 2.4)      # no caminho da saída, no chão fora da mureta (não sobre o poço)
 
 
 # ============================================================================ 12. bifurcação (a sala da voz)
