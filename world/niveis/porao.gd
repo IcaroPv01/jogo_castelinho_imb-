@@ -105,6 +105,8 @@ var _sd := 0.0:                        # 0..1: quanto a água das salas 97-99 j�
 		_aplicar_agua()
 var _tween_sd: Tween
 var _saindo := false
+var _j3_estado := 0                   # 0 parado, 1 silêncio (2 s), 2 esperando a câmera virar
+var _j3_t := 0.0
 var _passo_agua_t := 0.0
 var _pistas_t := 0.0
 var _causa := ""
@@ -485,15 +487,73 @@ func _physics_process(dt: float) -> void:
 	if _voz_t <= 0.0:
 		_voz_t = randf_range(7.0, 11.0)
 		_chamar_voz()
-	if idx_atual == N - 1 and salas.has(idx_atual) and not GameState.flag("porao_fala_f"):
-		var cu = salas[idx_atual]
-		if cu.raiz.to_local(player.global_position).z < -cu.L + 4.5:      # perto do topo da escada da 99
-			GameState.set_flag("porao_fala_f", true)
-			Guia.falar("sistema", ["Fim da área de visitação."])
+	_sustos(dt)
 	_pistas_t -= dt
 	if _pistas_t <= 0.0:
 		_pistas_t = 0.2
 		_checar_pistas()
+
+
+## Sustos que não matam (creatures/susto.gd), em escalada e uma vez por partida: J1 85 vulto de criança, J2 86 a Figura
+## sobe da água, J3 88 a Figura atrás de quem desliga o telefone, J4 91 apagão na escada, J5 99 a Figura cai do escuro.
+## As salas 95 a 98 não têm susto (contraste); a 94 já tem a perseguição.
+func _sustos(dt: float) -> void:
+	if not ameacas_ligadas or idx_atual < 0 or not salas.has(idx_atual) or player == null:
+		return
+	var c = salas[idx_atual]
+	var l: Vector3 = c.raiz.to_local(player.global_position)
+	match idx_atual:
+		4:      # 85: no meio da sala a porta de trás bate, a luz apaga 0,4 s e volta com um vulto de criança a 2 m
+			if l.z < -c.L * 0.5:
+				Susto.disparar(self, "porao_j1", {"apagar": 0.4, "luzes": c.luzes, "sfx_antes": "porta", "silhueta": true,
+					"frente": 2.0, "duracao": 0.5, "sfx": "sussurro", "volume_db": 2.0, "pulso": 0.6, "tranco": 0.3, "flash": false})
+		5:      # 86: com a água subindo, rosto e mãos surgem a ~1,5 m e afundam
+			if l.z < -3.0 and prof > 0.03 and not Susto.ja_aconteceu("porao_j2"):
+				var fr := -player.camera.global_transform.basis.z
+				fr.y = 0.0
+				var p := player.global_position + fr.normalized() * 1.5
+				p.y = c.raiz.global_position.y + _agua_y_local(c)
+				Susto.disparar(self, "porao_j2", {"pos": p, "emergir": 1.3, "duracao": 0.8})
+		7:
+			_susto_telefone(c, dt)
+		10:     # 91: no meio da descida as tochas apagam 1,5 s e voltam com a Figura a 2 m, nos degraus
+			if l.z < -5.0 and l.z > -c.L + 2.0 and not Susto.ja_aconteceu("porao_j4"):
+				var zf := l.z - 2.0
+				var pf: Vector3 = c.raiz.to_global(Vector3(clampf(l.x, -0.8, 0.8), c.piso_fn.call(zf) + 0.05, zf))
+				Susto.disparar(self, "porao_j4", {"apagar": 1.5, "luzes": c.luzes, "pos": pf, "duracao": 0.7})
+		18:
+			if l.z < -c.L + 6.5 and not GameState.flag("porao_fala_f"):
+				GameState.set_flag("porao_fala_f", true)
+				_final_99()
+
+
+## J3 (88): depois que a ligação termina, 2 s de silêncio; quando a câmera vira para a entrada a Figura está a 1 m.
+## Se ele não virar em 8 s, ela aparece ao lado, no limite da visão.
+func _susto_telefone(c, dt: float) -> void:
+	if _j3_estado == 0 or Susto.ja_aconteceu("porao_j3"):
+		return
+	_j3_t += dt
+	if _j3_estado == 1:
+		if _j3_t >= 2.0:
+			_j3_estado = 2
+			_j3_t = 0.0
+		return
+	var para_entrada: Vector3 = c.raiz.global_transform.basis.z       # +z local = de volta à porta de entrada
+	var olhar := -player.camera.global_transform.basis.z
+	if olhar.dot(para_entrada) > 0.5:
+		_j3_estado = 0
+		Susto.disparar(self, "porao_j3", {"angulo": 180.0, "frente": 1.0, "duracao": 0.7, "volume_db": 3.0})
+	elif _j3_t >= 8.0:
+		_j3_estado = 0
+		Susto.disparar(self, "porao_j3", {"angulo": 75.0, "frente": 2.0, "duracao": 0.7, "volume_db": 3.0})
+
+
+## J5 (99): perto do topo da escada a Figura despenca do escuro, colada na câmera; depois o silêncio, a fala F e o ar fresco.
+func _final_99() -> void:
+	Susto.disparar(self, "porao_j5", {"frente": 0.6, "cair": true, "duracao": 0.7, "volume_db": 6.0, "pulso": 1.5, "tranco": 1.6})
+	await get_tree().create_timer(2.6, false).timeout
+	if not _saindo and not morrendo:
+		Guia.falar("sistema", ["Fim da área de visitação."])
 
 
 func _process(dt: float) -> void:
@@ -799,6 +859,8 @@ func _atender_telefone(_p: Node, c) -> void:
 	else:
 		await Guia.falar("???", linhas, true)
 	_registrar_pista("telefone")
+	_j3_estado = 1
+	_j3_t = 0.0
 
 
 func _pegar_disco(_p: Node, c) -> void:
