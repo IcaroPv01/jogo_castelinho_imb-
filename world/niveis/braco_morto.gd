@@ -52,6 +52,10 @@ var _tween_legenda: Tween
 var _tween_env: Tween
 var _visto_t := 0.0
 var _t := 0.0
+var _visor: Visor
+var _tito_concluido := false    # a cena do Tito acabou: só então a lápide encerra o jogo
+var _t_superficie := 0.0         # segundos na superfície (y > -0.5), para a dica da lápide
+var _dica_dada := false
 
 
 func _ready() -> void:
@@ -77,9 +81,19 @@ func iniciar(p: Player) -> void:
 	GameState.entrar_sala(100)
 	GameState.definir_corruption_manual(0.4)     # a cena final é calma: o pós-processamento do porão (1.0) não cabe aqui
 	GameState.set_flag("visor_travado", false)
-	Visor.instalar(self)
+	_visor = Visor.instalar(self)
 	Audio.musica("", 1.0)
 	Audio.ambiente("rio", -14.0, 3.0)
+	_legenda_de_chegada()
+
+
+## O jogador chega parado no pé da escada, ambiente em silêncio. O porão já mostrou "(ar fresco...)" por 2 s antes da
+## transição de 1,4 s; 1,5 s depois do fade a legenda anterior já sumiu e esta não se sobrepõe a nada.
+func _legenda_de_chegada() -> void:
+	await get_tree().create_timer(1.5, false).timeout
+	if encerrando or cena_feita or not is_inside_tree():
+		return
+	_mostrar_legenda("(lá em cima, um lago. alguém deixou um castelinho de areia na beira.)", 4.5)
 
 
 func pontos_aquecer() -> Array:
@@ -89,10 +103,12 @@ func pontos_aquecer() -> Array:
 
 ## Sem morte aqui, mas o Main chama se alguma coisa matar: volta ao começo da margem.
 func ao_morrer() -> void:
+	if encerrando:
+		return     # o fim já está rolando: não teletransporta nem devolve o controle
 	await Transicao.fade_out(0.3)
-	if player:
+	if player and not encerrando:
 		player.global_position = Vector3(-14, 0.05, 6)
-		player.pode_mover = true
+		player.pode_mover = not (cena_feita and not _tito_concluido)     # no meio da cena do Tito o controle continua travado
 	await Transicao.fade_in(0.6)
 
 
@@ -549,6 +565,15 @@ func _lapide_de_areia() -> void:
 		l.shaded = false
 		if i == 0:
 			l.rotation_degrees.z = 180.0
+	# uma luz quente baixa para o castelinho de areia ser achado de longe à noite (uma luz só, sem sombra)
+	var luz := OmniLight3D.new()
+	luz.name = "LuzDaLapide"
+	luz.position = Vector3(p.x, 1.6, p.z - 0.6)
+	luz.light_color = Color(1.0, 0.8, 0.5)
+	luz.light_energy = 1.4
+	luz.omni_range = 6.0
+	luz.shadow_enabled = false
+	add_child(luz)
 	lapide = Interagivel.new("Ver a lápide de areia", Vector3(1.4, 1.0, 0.9), _usar_lapide)
 	lapide.position = Vector3(p.x, 0.5, p.z)
 	add_child(lapide)
@@ -581,8 +606,8 @@ static func _balde_de_areia(m: Malha, mat: Material, base: Vector3, r0: float, r
 
 
 func _usar_lapide(_p: Node) -> void:
-	if encerrando:
-		return
+	if encerrando or (cena_feita and not _tito_concluido):
+		return     # durante a cena do Tito a lápide não faz nada (senão o fim atropelava a cena)
 	_registrar_pista("lapide")
 	if cena_feita:
 		_encerrar()
@@ -608,6 +633,13 @@ func _process(dt: float) -> void:
 		player.velocity = Vector3.ZERO
 	if player == null or cena_feita or encerrando:
 		return
+	# dica gentil, uma vez só: 45 s na superfície sem ter usado a lápide
+	if not _dica_dada and player.global_position.y > -0.5:
+		_t_superficie += dt
+		if _t_superficie > 45.0:
+			_dica_dada = true
+			if not GameState.flag("pista_lapide"):
+				_mostrar_legenda("(o castelinho de areia, perto da água, brilha sob o poste.)", 4.5)
 	# vê o Tito: o Visor mostra a época dele, ele está a menos de 14 m e na frente da câmera por ~1 s
 	var vendo := GameState.epoca in EPOCAS_TITO and tito.is_visible_in_tree()
 	if vendo:
@@ -624,6 +656,8 @@ func _cena_tito() -> void:
 		return
 	cena_feita = true
 	player.pode_mover = false
+	# soltar o Q no meio da cena devolveria 2020 e o Tito sumiria falando: segura a época até o fim
+	GameState.set_flag("visor_travado", true)
 	var menino := tito.get_node("Menino") as Node3D
 	Audio.sfx("slide", -6.0)
 	# ele se vira devagar para o jogador
@@ -647,7 +681,12 @@ func _cena_tito() -> void:
 		await get_tree().create_timer(1.2, false).timeout
 		GameState.set_flag("final_visita_concluida", true)
 	GameState.set_flag("viu_tito_final", true)
-	player.pode_mover = true
+	_tito_concluido = true
+	GameState.set_flag("visor_travado", false)
+	if not (_visor and _visor.ativo) and GameState.epoca in EPOCAS_TITO:
+		GameState.trocar_epoca(GameState.Epoca.E2020)     # o Visor foi solto durante a cena: volta ao hoje
+	if not encerrando:
+		player.pode_mover = true
 	cena_tito_terminou.emit()
 	# o jogador solta o Visor e olha em volta: depois de um tempo o fim chega sozinho
 	await get_tree().create_timer(4.0, false).timeout
