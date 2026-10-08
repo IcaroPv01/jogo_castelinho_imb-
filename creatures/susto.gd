@@ -11,8 +11,10 @@ extends RefCounted
 ##   "pos": Vector3 global (senão: à frente da câmera por `frente` m, girado `angulo` graus: 0 frente, 180 atrás)
 ##   "frente" 1.8, "angulo" 0.0, "duracao" 0.6 (s visível; 0,4 a 0,8), "volume_db" 0.0, "sfx" "susto" ("" = mudo)
 ##   "apagar": s com as `luzes` apagadas antes (0 = não apaga), "sfx_antes": som quando apaga ("porta" etc.)
-##   "silhueta": true = vulto pequeno de criança em vez da Figura; "emergir": m que sobem da água (pos.y = a superfície);
-##   "cair": true = despenca de cima; "tranco" 1.0 (força do tranco de câmera), "pulso" 1.5, "flash": true.
+##   "silhueta": true = vulto pequeno de criança em vez da Figura; "emergir": true = sobe da água e afunda;
+##   "cair": true = despenca de cima; "tranco" 1.0 (força do tranco de câmera), "pulso" 0.35 (glitch leve),
+##   "escala" 1.0 (a Figura é só a cabeça pequena: aumenta para o rosto encher a tela), "flash": true (só um corte preto
+##   no FIM; na revelação nunca há clarão). A Figura é abaixada para o ROSTO ficar na altura dos olhos da câmera.
 ## Devolve true se o susto foi disparado.
 
 const FLAG := "susto_"
@@ -73,6 +75,7 @@ static func _rodar(nivel: Node, o: Dictionary) -> void:
 		frente = frente.normalized().rotated(Vector3.UP, deg_to_rad(float(o.get("angulo", 0.0))))
 		pos = jogador.global_position + frente * float(o.get("frente", 1.8))
 	var no: Node3D
+	var escala: float = o.get("escala", 1.0)
 	if o.get("silhueta", false):
 		no = _silhueta()
 	else:
@@ -83,43 +86,43 @@ static func _rodar(nivel: Node, o: Dictionary) -> void:
 		f.collision_mask = 0
 		no = f
 	nivel.add_child(no)
+	var y_final := pos.y
 	if no is FiguraBranca:
 		no.remove_from_group("figura_branca")
 		no.set_physics_process(false)             # só visual: não anda, não vira, não mata
 		no.olhada = true                          # pose congelada, "estalada"
-	var topo := pos
+		no._mat.set_shader_parameter("brilho", 1.5)       # mais clara só durante o susto
+		no.scale = Vector3.ONE * escala
+		y_final = cam.global_position.y - 2.12 * escala  # o rosto (a ~2,12 m do pé) na altura dos olhos da câmera
 	var para := jogador.global_position - pos
-	no.rotation.y = atan2(-para.x, -para.z)
-	var emergir: float = o.get("emergir", 0.0)
-	if emergir > 0.0:
-		no.global_position = pos - Vector3(0, 2.4, 0)
+	no.rotation.y = atan2(-para.x, -para.z)         # de frente para quem olha
+	var emergir: bool = o.get("emergir", false)
+	if emergir:
+		no.global_position = Vector3(pos.x, y_final - 2.4 * escala, pos.z)
 	elif o.get("cair", false):
-		no.global_position = pos + Vector3(0, 1.6, 0)
+		no.global_position = Vector3(pos.x, y_final + 1.6, pos.z)
 	else:
-		no.global_position = pos
+		no.global_position = Vector3(pos.x, y_final, pos.z)
 	var vol: float = o.get("volume_db", 0.0)
 	var som: String = o.get("sfx", "susto")
 	if som != "":
 		Audio.sfx(som, vol)
-	Efeitos.pulso(float(o.get("pulso", 1.5)), 0.5)
-	if o.get("flash", true):
-		Efeitos.flash(0.18, Color(1, 1, 1), 0.35)
+	Efeitos.pulso(float(o.get("pulso", 0.35)), 0.4)
 	_tranco(cam, float(o.get("tranco", 1.0)))
 	var dur := clampf(float(o.get("duracao", 0.6)), 0.3, 1.0)
-	if emergir > 0.0:
-		var alto := pos.y - emergir
+	if emergir:
 		var tw2 := nivel.create_tween()
-		tw2.tween_property(no, "global_position:y", alto, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw2.tween_property(no, "global_position:y", y_final, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw2.tween_interval(maxf(dur - 0.5, 0.05))
-		tw2.tween_property(no, "global_position:y", pos.y - 2.4, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw2.tween_property(no, "global_position:y", y_final - 2.4 * escala, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	elif o.get("cair", false):
 		var tw3 := nivel.create_tween()
-		tw3.tween_property(no, "global_position:y", topo.y, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw3.tween_property(no, "global_position:y", y_final, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await arvore.create_timer(dur, false).timeout
 	if is_instance_valid(no):
 		no.queue_free()
 	if o.get("flash", true):
-		Efeitos.flash(0.12, Color(0, 0, 0), 0.5)         # corte seco
+		Efeitos.flash(0.12, Color(0, 0, 0), 0.6)         # corte seco, preto, só no fim
 
 
 ## Tranco curto de câmera: giro de lado e aperto de FOV que voltam rápido.
