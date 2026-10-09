@@ -180,6 +180,7 @@ func _susto(nome: String, base: int, pos: Vector3, alvo: Vector3) -> void:
 			if not antes.has(c) and c is Node3D and c.get_script() != null \
 					and str(c.get_script().resource_path).ends_with("figura_branca.gd"):
 				achou = true
+				print("  figura em ", c.global_position, " jogador em ", player.global_position, " yaw ", player.rotation_degrees.y)
 		if achou:
 			break
 	print(nome, ": figura apareceu=", achou, " em t=", t)
@@ -195,4 +196,5 @@ func _susto18() -> void:
 
 func _susto22() -> void:
 	await _subir(4, 3, 0.3)
-	await _susto("v4_susto22", 22, Vector3(-15.4, 0.05, -28.0), Vector3(-10.0, 1.6, -28.0))
+	# o painel do quiz final fica em x=-16,56 virado para o leste: o jogador lê olhando para o oeste
+	await _susto("v4_susto22", 22, Vector3(-15.0, 0.05, -28.0), Vector3(-20.0, 1.6, -28.0))
