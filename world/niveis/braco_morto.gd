@@ -199,7 +199,7 @@ func _ambiente() -> void:
 
 ## A lua: um disco de 20 lados (claro, sem neblina) mais um halo fraco, virados para o jogador.
 func _lua_disco(lua_pos: Vector3, r: float) -> void:
-	for par in [[r * 1.9, 0.10, Color(0.75, 0.82, 1.0)], [r, 1.0, Color(0.93, 0.94, 0.88)]]:
+	for par in [[r * 1.9, 0.07, Color(0.75, 0.82, 1.0)], [r, 1.0, Color(0.93, 0.94, 0.88)]]:
 		var disco := CylinderMesh.new()
 		disco.top_radius = par[0]
 		disco.bottom_radius = par[0]

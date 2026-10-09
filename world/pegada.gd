@@ -6,6 +6,7 @@ extends RefCounted
 
 const W := 64
 const H := 128
+const TAM_BASE := Vector2(0.24, 0.42)     # plano base (largura x comprimento)
 const COR_AGUA := Color(0.05, 0.085, 0.12)
 
 static var _tex := {}     # esquerdo(bool) -> ImageTexture
@@ -72,13 +73,19 @@ static func material(esquerdo: bool, forca := 1.0) -> StandardMaterial3D:
 	return m
 
 
+static var _plano: PlaneMesh
+
+
 ## Uma pegada deitada no chão em `pos` (mundo/local do pai), com a ponta dos dedos para onde `dir` (plano XZ) aponta.
 ## `comp` = comprimento do pé em metros. `forca` > 1 = mais contraste.
 static func criar(pos: Vector3, dir: Vector3, esquerdo: bool, comp := 0.22, forca := 1.0) -> MeshInstance3D:
+	if _plano == null:
+		_plano = PlaneMesh.new()
+		_plano.size = TAM_BASE     # uma malha só, compartilhada; o tamanho final vem da escala do nó
 	var mi := MeshInstance3D.new()
-	var pl := PlaneMesh.new()
-	pl.size = Vector2(comp * float(W) / float(H) * 1.0, comp)
-	mi.mesh = pl
+	mi.name = "Pegada"
+	mi.mesh = _plano
+	mi.scale = Vector3.ONE * (comp / TAM_BASE.y)
 	mi.material_override = material(esquerdo, forca)
 	mi.position = pos
 	mi.rotation.y = atan2(-dir.x, -dir.z)     # -Z local (ponta dos dedos) aponta para `dir`
