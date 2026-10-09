@@ -43,6 +43,31 @@ No celular o jogo usa um modo leve (imagem 3D um pouco mais baixa, 30 quadros po
 
 **Versão 2:** Quatro visitas ao Castelinho (salas 1–80), um porão com salas 81–99, e o Braço Morto (sala 100). O jogo salva sozinho no navegador. A história se desdobra em cada visita, com ritmo lento na visita 1 e complexidade crescente.
 
+## Modo debug
+
+Para testar o jogo sem sofrer. Fica **desligado** para quem joga normalmente: ninguém vê nada.
+
+**Como ligar**
+- No computador ou celular: abra https://icaropv01.github.io/jogo_castelinho_imb-/?debug=1
+- Sem o link: na tela de título, dê **5 toques rápidos no "Visitantes: ..."** (embaixo, à esquerda). Vale só até fechar a página; toque 5 vezes de novo para desligar.
+- No computador instalado: rode o jogo com `--debug` no fim da linha de comando.
+
+**Como abrir o painel**
+- Teclado: tecla **'** (apóstrofo; no teclado brasileiro é a tecla à esquerda do 1). A mesma tecla fecha.
+- Celular: botão **DBG**, no meio do topo da tela.
+- O jogo fica pausado enquanto o painel está aberto.
+
+**O que tem no painel**
+- **Imortal:** nada mata você (a Figura e a água não fazem efeito).
+- **Figura Branca desligada:** ela some e fica parada.
+- **Atenção do Visor congelada:** o "olho" do Visor não sobe mais.
+- **Mostrar informações:** escreve no topo da tela a sala, a época, a visita e os quadros por segundo.
+- **Ganhar tudo:** os 5 discos, a lanterna e o Visor de uma vez.
+- **Pular para:** escolha a visita (ou Porão, ou Braço Morto) e a sala, e toque em "Ir para lá". O jogo só tem pontos de chegada em alguns lugares (checkpoints): se a sala escolhida não for um deles, você nasce no checkpoint mais perto **antes** dela, e o painel avisa qual.
+- **Ver um final:** leva direto ao Braço Morto e começa o final "Encontrado", "Visita concluída" ou "Sala 101".
+
+**O save normal não é mexido.** Com o debug ligado o jogo lê e grava em outro arquivo (`save_debug.json`); o seu progresso de verdade fica guardado como estava. Desligando o debug, tudo volta ao save normal.
+
 ## Documentação
 
 - **Plano do projeto:** [`docs/PLANO.md`](docs/PLANO.md)

@@ -50,6 +50,7 @@ var atencao: float = 0.0              # 0..1: "do outro lado, algo percebe você
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_registrar_inputs()
+	Debug.detectar()      # modo debug (?debug=1 / --debug): tem de vir ANTES do carregar(), que escolhe o arquivo do save
 	carregar()
 
 
@@ -196,6 +197,8 @@ func ganhar_selo(id: String) -> void:
 
 
 func matar_jogador(causa: String) -> void:
+	if Debug.imortal:     # modo debug: todas as mortes passam por aqui, então basta ignorar
+		return
 	somar("mortes")
 	jogador_morreu.emit(causa)
 
@@ -207,15 +210,33 @@ func salvar() -> void:
 		"selos": selos, "contadores": contadores, "sensibilidade": sensibilidade,
 		"visita": visita, "discos": discos, "disco_atual": disco_atual,
 	}
-	var f := FileAccess.open(ARQUIVO_SAVE, FileAccess.WRITE)
+	var f := FileAccess.open(arquivo_save(), FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(dados))
 
 
+## Arquivo do save em uso: com o modo debug ligado é um arquivo À PARTE, para o save normal nunca ser tocado.
+func arquivo_save() -> String:
+	return Debug.ARQUIVO_SAVE if Debug.ligado else ARQUIVO_SAVE
+
+
+## Troca de arquivo de save (modo debug ligou ou desligou): zera o que vive no save SEM gravar nada e lê o arquivo atual.
+func recarregar_save() -> void:
+	sala_maxima = 0
+	checkpoint_sala = 1
+	flags = {}
+	selos.clear()
+	contadores = {"paineis_lidos": 0, "quiz_acertos": 0, "mortes": 0, "sustos": 0}
+	visita = 1
+	discos.clear()
+	disco_atual = -1
+	carregar()
+
+
 func carregar() -> void:
-	if not FileAccess.file_exists(ARQUIVO_SAVE):
+	if not FileAccess.file_exists(arquivo_save()):
 		return
-	var f := FileAccess.open(ARQUIVO_SAVE, FileAccess.READ)
+	var f := FileAccess.open(arquivo_save(), FileAccess.READ)
 	var dados = JSON.parse_string(f.get_as_text()) if f else null
 	if typeof(dados) != TYPE_DICTIONARY:
 		return

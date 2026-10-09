@@ -27,6 +27,9 @@ func _ready() -> void:
 	hud.visible = false
 	add_child(hud)
 	GameState.jogador_morreu.connect(_on_morte)
+	if Debug.ligado:      # modo debug (?debug=1 / --debug / gesto no título): painel por cima de tudo
+		var painel_debug := PainelDebug.new()
+		add_child(painel_debug)
 	# voltou do "Fim da demonstração" (reload da cena): zera sala, corrupção e época da partida anterior
 	GameState.jogando = false
 	GameState.resetar_sessao()
