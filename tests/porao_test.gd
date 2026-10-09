@@ -46,6 +46,7 @@ func _rodar() -> void:
 	await _teste_saida_para_braco_morto()
 	await _teste_braco_morto("encontrado")
 	await _teste_braco_morto("visita_concluida")
+	await _teste_braco_morto_lago()
 
 	Engine.time_scale = 1.0
 	print("RESULTADO: ", "OK" if falhas == 0 else "%d FALHA(S)" % falhas)
@@ -789,6 +790,45 @@ func _teste_saida_para_braco_morto() -> void:
 	_checar(player.is_on_floor(), "nasce no chão do poço da escada (y=%.2f)" % player.global_position.y)
 
 
+func _teste_braco_morto_lago() -> void:
+	print("-- Braço Morto: final opcional sala_101 (entrar no lago)")
+	await main.carregar_mundo("res://world/niveis/braco_morto.tscn", "Spawn")
+	nivel = main.mundo.get_child(0)
+	player = main.player
+	await _frames(10)
+	GS.flags.erase("final_sala_101")
+	GS.contadores["pistas_tito"] = 0
+	nivel.voltar_ao_titulo = false
+	var fim := [""]
+	nivel.fim.connect(func(f): fim[0] = f)
+	# o meio-fio barra a água fora da rampa
+	player.global_position = Vector3(10.0, 0.05, -7.0)
+	player.rotation.y = 0.0
+	Input.action_press("frente")
+	await _frames(90)
+	Input.action_release("frente")
+	_checar(player.global_position.z > -8.2 and player.global_position.y > -0.2, "fora da rampa o jogador não entra no lago (z=%.2f)" % player.global_position.z)
+	_checar(nivel._convite_dado, "perto da água: convite do Tito")
+	_checar(not nivel.encerrando, "nada acontece sem entrar de propósito")
+	# pela rampa: aviso no primeiro passo, depois o final
+	player.global_position = Vector3((nivel.RAMPA_X0 + nivel.RAMPA_X1) * 0.5, 0.05, -6.5)
+	player.rotation.y = 0.0
+	await _frames(5)
+	Input.action_press("frente")
+	var avisou: bool = await _ate(func(): return nivel._legenda.text == "(a água está gelada.)", 600)
+	_checar(avisou and not nivel.encerrando, "primeiro passo na água: aviso, sem final ainda")
+	var ok: bool = await _ate(func(): return nivel.encerrando, 600)
+	Input.action_release("frente")
+	_checar(ok and nivel.final == "sala_101" and not player.pode_mover, "~3,5 m adentro: final sala_101 e controle travado")
+	var ok2: bool = await _ate(func(): return nivel.dedicatoria != null, 6000)
+	_checar(ok2 and fim[0] == "sala_101" and GS.flag("final_sala_101"), "sala_101: sinal fim e dedicatória")
+	if nivel.dedicatoria != null:
+		nivel.dedicatoria.queue_free()
+	load("res://ui/flash.gd").resetar_ui()
+	GS.set_flag("visor_travado", false)
+	player.set_physics_process(true)
+
+
 func _teste_braco_morto(final: String) -> void:
 	print("-- Braço Morto: final '%s'" % final)
 	await main.carregar_mundo("res://world/niveis/braco_morto.tscn", "Spawn")
@@ -798,6 +838,7 @@ func _teste_braco_morto(final: String) -> void:
 	GS.flags.erase("viu_tito_final")
 	GS.flags.erase("final_encontrado")
 	GS.flags.erase("final_visita_concluida")
+	GS.flags.erase("final_sala_101")
 	GS.contadores["pistas_tito"] = nivel.PISTAS_ENCONTRADO if final == "encontrado" else 1
 	nivel.voltar_ao_titulo = false
 	GS.set_flag("tem_visor", true)
@@ -830,14 +871,30 @@ func _teste_braco_morto(final: String) -> void:
 	_checar(absf(menino.rotation.y - PI) < 0.05 and antes_rot == 0.0, "Tito se vira para o jogador")
 	await _ate(func(): return nivel._legenda.text == "Você veio me procurar.", 120)
 	_checar(nivel._legenda.text == "Você veio me procurar.", "ele diz: 'Você veio me procurar.'")
-	var ok2: bool = await _ate(func(): return GS.flag("viu_tito_final"), 1200)
+	_checar(nivel.PISTAS_ENCONTRADO == 8, "Encontrado exige 8 pistas")
+	if final == "encontrado":
+		var vistas := {}
+		var fim_falas := await _ate(func():
+			vistas[nivel._legenda.text] = true
+			return GS.flag("viu_tito_final"), 4000)
+		_checar(vistas.has("Disseram que eu fugi de casa.") and vistas.has("Ninguém olhou na água.") and vistas.has("Agora alguém sabe."), "Encontrado: as três falas do Tito")
+		_checar(fim_falas and nivel.get_child_count() > 0 and nivel._t_lapide.rotation_degrees.z < 0.5, "Encontrado: o T da lápide ficou certo")
+		var pegadas := 0
+		for c in nivel.get_children():
+			if c is MeshInstance3D and c.mesh is PlaneMesh and (c.mesh as PlaneMesh).size.is_equal_approx(Vector2(0.24, 0.42)):
+				pegadas += 1
+		_checar(pegadas >= 3, "Encontrado: pegadas molhadas deixadas (%d)" % pegadas)
+	else:
+		var viu := await _ate(func(): return nivel._legenda.text == "Você também vai embora.", 600)
+		_checar(viu, "Visita concluída: 'Você também vai embora.'")
+	var ok2: bool = await _ate(func(): return GS.flag("viu_tito_final"), 4000)
 	_checar(ok2 and nivel.final == final, "final decidido pelas pistas: %s (pistas_tito=%d)" % [nivel.final, GS.contadores.get("pistas_tito", 0)])
 	if final == "encontrado":
 		_checar(menino.scale.x < 0.01 and GS.flag("final_encontrado") and (menino.get_node("Boca") as Label3D).text == ")", "Encontrado: Tito sorri e some")
 	else:
 		_checar(menino.scale.x > 0.9 and GS.flag("final_visita_concluida") and not GS.flag("final_encontrado"), "Visita concluída: Tito continua ali")
 	# o fim chega: título do final, dedicatória, e depois o título (aqui desligado para o teste)
-	var ok3: bool = await _ate(func(): return nivel.dedicatoria != null, 2400)
+	var ok3: bool = await _ate(func(): return nivel.dedicatoria != null, 6000)
 	_checar(ok3 and fim[0] == final, "depois do final aparece a dedicatória (Dedicatoria.mostrar)")
 	_checar(nivel.dedicatoria != null and nivel.dedicatoria.has_signal("terminou"), "a dedicatória tem o sinal `terminou`")
 	if nivel.dedicatoria != null and nivel.dedicatoria.has_method("texto_dedicatoria"):

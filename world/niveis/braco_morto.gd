@@ -8,12 +8,22 @@ extends Node3D
 ## baixo, como em todos os desenhos dele). Com o Visor (disco sem data, ou o de 1967) vê-se Tito sentado na margem,
 ## de costas. Ele se vira e diz "Você veio me procurar." Depois: o final, a dedicatória e o título.
 ##
-## FINAIS (contagem invisível):
-##   "Encontrado"        `GameState.contadores["pistas_tito"] >= PISTAS_ENCONTRADO`: Tito sorri e some.
-##   "Visita concluída"  o padrão: Tito olha para o jogador e continua ali, olhando a água.
+## FINAIS (contagem invisível; `fim` emite exatamente "encontrado", "visita_concluida" ou "sala_101"):
+##   "Encontrado"        `pistas_tito >= PISTAS_ENCONTRADO` (8): Tito conta o que houve ("Disseram que eu fugi de casa. /
+##                       Ninguém olhou na água. / Agora alguém sabe."), levanta, anda até a luz do calçadão deixando pegadas
+##                       molhadas e some. A Figura Branca, parada na água do outro lado, afunda e o lago aquieta. O T da
+##                       lápide, de cabeça para baixo, fica certo.
+##   "Visita concluída"  o padrão (< 8 pistas): "Você também vai embora." Tito se vira para a água; a cortina escurece, a
+##                       Figura sobe atrás dele e uma mão longa pousa em seu ombro (nada além disso); corta para o preto.
+##                       Título com cartão alegre da prefeitura: "Obrigado pela visita! Volte sempre!" (contraste irônico).
+##   "Sala 101"          opcional e NUNCA por acidente: o jogador entra no lago de propósito pela rampa do atracadouro dos
+##                       pedalinhos (convite do Tito + aviso "(a água está gelada.)" no primeiro passo; ~3,5 m adentro o
+##                       controle trava e a câmera afunda). No fundo, só sugestão: sapatinhos e um balde vermelho; os dedos
+##                       longos da Figura fecham sobre a lente; preto. "VOCÊ FICOU." e o cartão "Sala 101 - Visitante registrado."
+## Peso só por sugestão: nenhuma violência explícita contra criança. Dedicatória (Disque 100) igual nos três finais.
 ## Contadores/flags que este nível LÊ: `pistas_tito` (contador; quem acha uma pista com o Visor faz
 ## `set_flag("pista_<id>")` + `somar("pistas_tito")`, uma vez por pista). Que ESCREVE: flags `viu_tito_final`,
-## `final_encontrado` ou `final_visita_concluida`, e `pista_lapide`.
+## `final_encontrado`, `final_visita_concluida` ou `final_sala_101`, e `pista_lapide`.
 ## Sem som de susto e sem nada violento: é um lugar triste e bonito. A tela final é `Dedicatoria.mostrar()` (UI).
 
 signal cena_tito_terminou
@@ -23,7 +33,7 @@ const SalasGd := preload("res://world/niveis/porao_salas.gd")
 const QuartoGd := preload("res://world/niveis/porao_quarto.gd")
 const MalhaGd := preload("res://castelinho/malha.gd")
 
-const PISTAS_ENCONTRADO := 6
+const PISTAS_ENCONTRADO := 8
 const LAGO_X := 100.0              # meia extensão do lago (200 m)
 const LAGO_Z0 := -44.0
 const LAGO_Z1 := -8.0              # margem (muro do calçadão)
@@ -31,6 +41,12 @@ const AGUA_Y := -0.3
 const POS_TITO := Vector3(3.0, 0.0, -7.2)
 const POS_LAPIDE := Vector3(8.5, 0.0, -5.6)
 const EPOCAS_TITO: Array[int] = [5, 4]     # ESEMDATA, E1967
+# rampa do atracadouro dos pedalinhos: o único jeito de entrar no lago (o resto do meio-fio tem parede de colisão)
+const RAMPA_X0 := 37.2
+const RAMPA_X1 := 40.6
+const RAMPA_Z_FIM := -16.0         # onde a rampa chega ao fundo raso (y = RAMPA_Y_FIM)
+const RAMPA_Y_FIM := -1.5
+const DIST_AFUNDAR := 3.5          # m adentro (a partir do primeiro passo na água) até o final "sala 101"
 
 ## Os testes desligam para conferir a dedicatória sem recarregar a cena principal.
 var voltar_ao_titulo := true
@@ -52,6 +68,20 @@ var _tween_legenda: Tween
 var _tween_env: Tween
 var _visto_t := 0.0
 var _t := 0.0
+var _visor: Visor
+var _tito_concluido := false    # a cena do Tito acabou: só então a lápide encerra o jogo
+var _t_superficie := 0.0         # segundos na superfície (y > -0.5), para a dica da lápide
+var _dica_dada := false
+var _t_lapide: Label3D            # o "T" de cabeça para baixo da lápide (vira certo no final Encontrado)
+var _tito_em_pe: Node3D           # Tito de pé (só aparece no final Encontrado)
+var _figura: FiguraBranca
+var _tinta: ColorRect             # tinta azul-escura de debaixo d'água
+var _cartao: PanelContainer       # cartão alegre da prefeitura (finais Visita concluída e Sala 101)
+var _convite_dado := false
+var _entrou_na_agua := false
+var _entrada_pos := Vector3.ZERO
+var _filtro: AudioEffectLowPassFilter
+var _ult_pegada := -1.0           # fração do caminho da última pegada deixada
 
 
 func _ready() -> void:
@@ -61,6 +91,7 @@ func _ready() -> void:
 	_calcadao_e_mobiliario()
 	_pontilhoes()
 	_pedalinhos()
+	_atracadouro()
 	_arvores_e_casas()
 	_margem_de_la()
 	_obra()
@@ -77,9 +108,19 @@ func iniciar(p: Player) -> void:
 	GameState.entrar_sala(100)
 	GameState.definir_corruption_manual(0.4)     # a cena final é calma: o pós-processamento do porão (1.0) não cabe aqui
 	GameState.set_flag("visor_travado", false)
-	Visor.instalar(self)
+	_visor = Visor.instalar(self)
 	Audio.musica("", 1.0)
 	Audio.ambiente("rio", -14.0, 3.0)
+	_legenda_de_chegada()
+
+
+## O jogador chega parado no pé da escada, ambiente em silêncio. O porão já mostrou "(ar fresco...)" por 2 s antes da
+## transição de 1,4 s; 1,5 s depois do fade a legenda anterior já sumiu e esta não se sobrepõe a nada.
+func _legenda_de_chegada() -> void:
+	await get_tree().create_timer(1.5, false).timeout
+	if encerrando or cena_feita or not is_inside_tree():
+		return
+	_mostrar_legenda("(lá em cima, um lago. alguém deixou um castelinho de areia na beira.)", 4.5)
 
 
 func pontos_aquecer() -> Array:
@@ -89,10 +130,12 @@ func pontos_aquecer() -> Array:
 
 ## Sem morte aqui, mas o Main chama se alguma coisa matar: volta ao começo da margem.
 func ao_morrer() -> void:
+	if encerrando:
+		return     # o fim já está rolando: não teletransporta nem devolve o controle
 	await Transicao.fade_out(0.3)
-	if player:
+	if player and not encerrando:
 		player.global_position = Vector3(-14, 0.05, 6)
-		player.pode_mover = true
+		player.pode_mover = not (cena_feita and not _tito_concluido)     # no meio da cena do Tito o controle continua travado
 	await Transicao.fade_in(0.6)
 
 
@@ -101,6 +144,7 @@ func _exit_tree() -> void:
 		GameState.definir_corruption_manual(-1.0)
 	if is_instance_valid(Audio):
 		Audio.ambiente("", -8.0, 0.5)
+	_abafar(false)
 
 
 # ============================================================================ céu, luzes e materiais
@@ -183,8 +227,10 @@ func _terreno() -> void:
 	m.col(Vector3(gx0, -1.0, LAGO_Z1), Vector3(gx1, 0.02, gz0))     # sem isto o calçadão (e a lápide) era um buraco
 	m.caixa(asfalto, Vector3(gx0, -0.05, 30.0), Vector3(gx1, 0.0, 38.0), Malha.F_PY, 0.0, Color.WHITE)
 	# meio-fio do lago: parede de concreto de -0,9 a 0 e a calçada que o cobre
-	m.caixa(concreto, Vector3(gx0, -1.0, LAGO_Z1 - 0.3), Vector3(gx1, 0.02, LAGO_Z1), Malha.F_PZ | Malha.F_PY, 0.0, Color(0.7, 0.7, 0.7))
-	m.col(Vector3(gx0, -2.0, LAGO_Z1 - 1.0), Vector3(gx1, 1.2, LAGO_Z1 + 0.05))      # impede de cair no lago
+	# (com uma abertura na rampa do atracadouro: ver _atracadouro)
+	for seg in [[gx0, RAMPA_X0], [RAMPA_X1, gx1]]:
+		m.caixa(concreto, Vector3(seg[0], -1.0, LAGO_Z1 - 0.3), Vector3(seg[1], 0.02, LAGO_Z1), Malha.F_PZ | Malha.F_PY, 0.0, Color(0.7, 0.7, 0.7))
+		m.col(Vector3(seg[0], -2.0, LAGO_Z1 - 1.0), Vector3(seg[1], 1.2, LAGO_Z1 + 0.05))      # impede de cair no lago
 	# fundo e margens do lago (terra escura, só visual)
 	var lama := SalasGd.mat_vc()
 	m.caixa(lama, Vector3(-LAGO_X - 20.0, -2.4, LAGO_Z0 - 20.0), Vector3(LAGO_X + 20.0, -2.0, LAGO_Z1), Malha.F_PY, 0.0, Color(0.05, 0.07, 0.05))
@@ -206,6 +252,7 @@ func _lago() -> void:
 	mat_agua.set_shader_parameter("cor_ceu", Color(0.10, 0.13, 0.22))
 	mat_agua.set_shader_parameter("opacidade", 0.97)
 	mat_agua.set_shader_parameter("velocidade", 0.35)
+	mat_agua.set_shader_parameter("ondas", 1.0)
 	var plano := PlaneMesh.new()
 	plano.size = Vector2(LAGO_X * 2.0, LAGO_Z1 - LAGO_Z0)
 	var mi := MeshInstance3D.new()
@@ -323,6 +370,41 @@ func _pedalinhos() -> void:
 		# a corda para a margem
 		m.caixa(mv, Vector3(x - 0.01, y + 0.4, z), Vector3(x + 0.01, y + 0.42, LAGO_Z1 - 0.1), Malha.F_SEM_BASE, 0.0, Color(0.2, 0.18, 0.15))
 	m.construir_instancia(self, "Pedalinhos")
+
+
+# ============================================================================ atracadouro: a rampa para dentro d'água
+## Rampa de concreto de pedalinho, com grades e placa, ao lado dos cisnes. É a única abertura no meio-fio. Desce de y=0 até
+## -1,5 em 8 m e segue num fundo raso plano, entre paredes de colisão; a água (y=-0,3) chega no peito. Nada aqui é armadilha:
+## entrar é sempre um ato deliberado (ver `_vigiar_lago`).
+func _atracadouro() -> void:
+	var m: Malha = MalhaGd.new()
+	var mv := SalasGd.mat_vc()
+	var x0 := RAMPA_X0
+	var x1 := RAMPA_X1
+	var concreto := Color(0.42, 0.45, 0.42)
+	var n := 8
+	for i in n:
+		var za := LAGO_Z1 - i
+		var ytopo := 0.02 + (RAMPA_Y_FIM - 0.02) * float(i + 1) / n
+		m.caixa(mv, Vector3(x0, -2.2, za - 1.0), Vector3(x1, ytopo, za), Malha.F_SEM_BASE, 0.0, concreto * (0.9 + 0.1 * (i % 2)))
+	m.caixa(mv, Vector3(x0, -2.2, RAMPA_Z_FIM - 4.0), Vector3(x1, RAMPA_Y_FIM, RAMPA_Z_FIM), Malha.F_SEM_BASE, 0.0, concreto * 0.8)
+	# colisão: a rampa (prisma), o fundo raso, e paredes dos lados e do fundo
+	m.rampa(PackedVector3Array([Vector3(x0, 0.02, LAGO_Z1), Vector3(x1, 0.02, LAGO_Z1), Vector3(x0, RAMPA_Y_FIM, RAMPA_Z_FIM), Vector3(x1, RAMPA_Y_FIM, RAMPA_Z_FIM),
+		Vector3(x0, -2.2, LAGO_Z1), Vector3(x1, -2.2, LAGO_Z1), Vector3(x0, -2.2, RAMPA_Z_FIM), Vector3(x1, -2.2, RAMPA_Z_FIM)]))
+	m.col(Vector3(x0, -2.2, RAMPA_Z_FIM - 4.0), Vector3(x1, RAMPA_Y_FIM, RAMPA_Z_FIM))
+	m.col(Vector3(x0 - 0.2, -2.5, RAMPA_Z_FIM - 4.0), Vector3(x0, 1.4, LAGO_Z1))
+	m.col(Vector3(x1, -2.5, RAMPA_Z_FIM - 4.0), Vector3(x1 + 0.2, 1.4, LAGO_Z1))
+	m.col(Vector3(x0, -2.5, RAMPA_Z_FIM - 4.2), Vector3(x1, 1.4, RAMPA_Z_FIM - 4.0))
+	# grades amarelas nos dois lados da parte seca, e a placa do atracadouro
+	for lado in [x0 - 0.1, x1 + 0.1]:
+		m.caixa(mv, Vector3(lado - 0.05, 0.0, LAGO_Z1 - 2.0), Vector3(lado + 0.05, 0.95, LAGO_Z1 + 0.6), Malha.F_SEM_BASE, 0.0, Color(0.85, 0.7, 0.2))
+	m.caixa(mv, Vector3(x0 - 1.4, 0.0, -6.6), Vector3(x0 - 1.3, 1.9, -6.5), Malha.F_SEM_BASE, 0.0, Color(0.15, 0.15, 0.17))
+	m.caixa(mv, Vector3(x0 - 2.2, 1.2, -6.5), Vector3(x0 - 0.5, 1.9, -6.44), Malha.F_SEM_BASE, 0.0, Color(0.2, 0.4, 0.75))
+	m.construir_instancia(self, "Atracadouro")
+	m.construir_colisao(self, "ColisaoAtracadouro")
+	var placa := Construtor.rotulo(self, "PEDALINHOS\nEMBARQUE", Vector3(x0 - 1.35, 1.55, -6.42), 30, Color(0.95, 0.95, 0.9))
+	placa.shaded = false
+	placa.pixel_size = 0.004
 
 
 # ============================================================================ árvores, casas e o resto
@@ -517,6 +599,15 @@ func _escada_do_porao() -> void:
 	l.omni_range = 7.0
 	l.shadow_enabled = false
 	add_child(l)
+	# luz de preenchimento fria no pé da escada, para os degraus aparecerem
+	var l2 := OmniLight3D.new()
+	l2.name = "LuzDosDegraus"
+	l2.position = Vector3(-14.0, -1.0, 11.2)
+	l2.light_color = Color(0.6, 0.75, 1.0)
+	l2.light_energy = 1.1
+	l2.omni_range = 7.0
+	l2.shadow_enabled = false
+	add_child(l2)
 
 
 # ============================================================================ a lápide de areia (feita por criança)
@@ -544,11 +635,23 @@ func _lapide_de_areia() -> void:
 	# TITO riscado na lápide, com o T de cabeça para baixo (o jeito dele assinar)
 	var letras := ["T", "I", "T", "O"]
 	for i in 4:
-		var l := Construtor.rotulo(self, letras[i], Vector3(p.x - 0.18 + i * 0.12, 0.41, p.z + 0.145), 34, Color(0.3, 0.22, 0.12))
+		var l := Construtor.rotulo(self, letras[i], Vector3(p.x - 0.27 + i * 0.18, 0.4, p.z + 0.2), 64, Color(0.13, 0.08, 0.04))
 		l.pixel_size = 0.0035
 		l.shaded = false
+		l.outline_size = 6
+		l.outline_modulate = Color(0.95, 0.85, 0.6)
 		if i == 0:
 			l.rotation_degrees.z = 180.0
+			_t_lapide = l
+	# uma luz quente baixa para o castelinho de areia ser achado de longe à noite (uma luz só, sem sombra)
+	var luz := OmniLight3D.new()
+	luz.name = "LuzDaLapide"
+	luz.position = Vector3(p.x, 1.4, p.z + 0.9)
+	luz.light_color = Color(1.0, 0.78, 0.45)
+	luz.light_energy = 2.8
+	luz.omni_range = 7.0
+	luz.shadow_enabled = false
+	add_child(luz)
 	lapide = Interagivel.new("Ver a lápide de areia", Vector3(1.4, 1.0, 0.9), _usar_lapide)
 	lapide.position = Vector3(p.x, 0.5, p.z)
 	add_child(lapide)
@@ -581,8 +684,8 @@ static func _balde_de_areia(m: Malha, mat: Material, base: Vector3, r0: float, r
 
 
 func _usar_lapide(_p: Node) -> void:
-	if encerrando:
-		return
+	if encerrando or (cena_feita and not _tito_concluido):
+		return     # durante a cena do Tito a lápide não faz nada (senão o fim atropelava a cena)
 	_registrar_pista("lapide")
 	if cena_feita:
 		_encerrar()
@@ -608,6 +711,14 @@ func _process(dt: float) -> void:
 		player.velocity = Vector3.ZERO
 	if player == null or cena_feita or encerrando:
 		return
+	# dica gentil, uma vez só: 45 s na superfície sem ter usado a lápide
+	if not _dica_dada and player.global_position.y > -0.5:
+		_t_superficie += dt
+		if _t_superficie > 45.0:
+			_dica_dada = true
+			if not GameState.flag("pista_lapide"):
+				_mostrar_legenda("(o castelinho de areia, perto da água, brilha sob o poste.)", 4.5)
+	_vigiar_lago(dt)
 	# vê o Tito: o Visor mostra a época dele, ele está a menos de 14 m e na frente da câmera por ~1 s
 	var vendo := GameState.epoca in EPOCAS_TITO and tito.is_visible_in_tree()
 	if vendo:
@@ -624,6 +735,8 @@ func _cena_tito() -> void:
 		return
 	cena_feita = true
 	player.pode_mover = false
+	# soltar o Q no meio da cena devolveria 2020 e o Tito sumiria falando: segura a época até o fim
+	GameState.set_flag("visor_travado", true)
 	var menino := tito.get_node("Menino") as Node3D
 	Audio.sfx("slide", -6.0)
 	# ele se vira devagar para o jogador
@@ -634,23 +747,176 @@ func _cena_tito() -> void:
 	_mostrar_legenda("Você veio me procurar.", 4.2, 40)
 	await get_tree().create_timer(3.2, false).timeout
 	if GameState.contadores.get("pistas_tito", 0) >= PISTAS_ENCONTRADO:
-		final = "encontrado"
-		(menino.get_node("Boca") as Label3D).text = ")"
-		(menino.get_node("Boca") as Label3D).rotation_degrees.z = -90.0
-		await get_tree().create_timer(1.8, false).timeout
-		var tw2 := create_tween()
-		tw2.tween_property(menino, "scale", Vector3(0.001, 0.001, 0.001), 2.0).set_trans(Tween.TRANS_SINE)
-		await tw2.finished
-		GameState.set_flag("final_encontrado", true)
+		await _final_encontrado(menino)
 	else:
-		final = "visita_concluida"
-		await get_tree().create_timer(1.2, false).timeout
-		GameState.set_flag("final_visita_concluida", true)
+		await _final_visita_concluida(menino)
+
+
+# ---------------------------------------------------------------- final "Encontrado"
+func _final_encontrado(menino: Node3D) -> void:
+	final = "encontrado"
+	var boca := menino.get_node("Boca") as Label3D
+	boca.text = ")"
+	boca.rotation_degrees.z = -90.0
+	await get_tree().create_timer(1.0, false).timeout
+	_mostrar_legenda("Disseram que eu fugi de casa.", 3.0, 34)
+	await get_tree().create_timer(4.0, false).timeout
+	_mostrar_legenda("Ninguém olhou na água.", 3.0, 34)
+	await get_tree().create_timer(4.0, false).timeout
+	_mostrar_legenda("Agora alguém sabe.", 3.0, 34)
+	await get_tree().create_timer(3.6, false).timeout
+	# do outro lado do lago, a Figura em pé na água, parada; ele se levanta e anda para a luz do calçadão
+	var perto := Vector3(POS_TITO.x - 2.5, AGUA_Y - 0.15, player.global_position.z - 11.0)     # ~13 m do jogador, na água
+	var fig := _figura_na_agua(perto, 0.0)
+	var em_pe := _levantar_tito(menino)
+	var origem := em_pe.position
+	var destino := Vector3(2.2, 0.0, -4.7)
+	_ult_pegada = -1.0
+	var dist_total := Vector2(destino.x - origem.x, destino.z - origem.z).length()
+	var tw := create_tween()
+	tw.tween_method(_passo_tito.bind(em_pe, origem, destino, dist_total), 0.0, 1.0, 5.0)
+	await tw.finished
+	await get_tree().create_timer(0.6, false).timeout
+	var tw2 := create_tween()
+	tw2.tween_property(em_pe, "scale", Vector3(0.001, 0.001, 0.001), 2.0).set_trans(Tween.TRANS_SINE)
+	await tw2.finished
+	menino.scale = Vector3(0.001, 0.001, 0.001)
+	# a Figura afunda devagar e o lago fica parado
+	await get_tree().create_timer(0.8, false).timeout
+	var tw3 := create_tween()
+	tw3.tween_property(fig, "position:y", AGUA_Y - 3.4, 4.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	await tw3.finished
+	fig.visible = false
+	var tw4 := create_tween().set_parallel()
+	tw4.tween_property(mat_agua, "shader_parameter/ondas", 0.0, 3.0)
+	tw4.tween_property(mat_agua, "shader_parameter/velocidade", 0.04, 3.0)
+	# o T de cabeça para baixo da lápide fica certo
+	if _t_lapide:
+		tw4.tween_property(_t_lapide, "rotation_degrees:z", 0.0, 2.5).set_trans(Tween.TRANS_SINE)
+	await tw4.finished
+	await get_tree().create_timer(1.0, false).timeout
+	GameState.set_flag("final_encontrado", true)
+	_fechar_cena_tito(true)
+
+
+## Um passo da caminhada do Tito (f = 0..1 do caminho): anda, balança de leve e deixa pegada.
+func _passo_tito(f: float, em_pe: Node3D, origem: Vector3, destino: Vector3, dist_total: float) -> void:
+	var pos: Vector3 = origem.lerp(destino, f)
+	var alvo_pos := pos
+	alvo_pos.y = absf(sin(f * dist_total * 5.0 * PI)) * 0.025
+	em_pe.position = alvo_pos
+	_deixar_pegada(pos, f, dist_total)
+
+
+## Troca o Tito sentado por um de pé no mesmo lugar (olhando para o jogador).
+func _levantar_tito(menino: Node3D) -> Node3D:
+	menino.visible = false
+	_tito_em_pe = QuartoGd.menino(tito, POS_TITO, PI, false, true)
+	_tito_em_pe.name = "TitoEmPe"
+	(_tito_em_pe.get_node("Boca") as Label3D).text = ")"
+	(_tito_em_pe.get_node("Boca") as Label3D).rotation_degrees.z = -90.0
+	return _tito_em_pe
+
+
+## Pegadinhas molhadas, pequenas, a cada ~0,45 m andados (marcas escuras e achatadas no chão, alternando os pés).
+func _deixar_pegada(pos: Vector3, f: float, dist_total: float) -> void:
+	var passo_f: float = 0.45 / maxf(0.01, dist_total)
+	if _ult_pegada >= 0.0 and f - _ult_pegada < passo_f:
+		return
+	_ult_pegada = f
+	var lado := 1.0 if int(f / passo_f) % 2 == 0 else -1.0
+	var dir := Vector3(2.2 - POS_TITO.x, 0.0, -4.7 - POS_TITO.z).normalized()
+	var mi := MeshInstance3D.new()
+	var pl := PlaneMesh.new()
+	pl.size = Vector2(0.24, 0.42)
+	mi.mesh = pl
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.02, 0.02, 0.03, 0.95)
+	mat.albedo_texture = _tex_pegada()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.roughness = 0.05
+	mat.metallic_specular = 1.0
+	mat.metallic = 0.35
+	mi.material_override = mat
+	mi.position = Vector3(pos.x + lado * 0.1, 0.04, pos.z)
+	mi.rotation.y = atan2(dir.x, dir.z)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+
+
+## Mancha oval molhada (alfa radial) para as pegadas do Tito.
+static var _tex_pg: Texture2D
+static func _tex_pegada() -> Texture2D:
+	if _tex_pg == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.set_color(1, Color(1, 1, 1, 0))
+		g.set_offset(0, 0.8)
+		g.set_offset(1, 1.0)
+		var t := GradientTexture2D.new()
+		t.gradient = g
+		t.fill = GradientTexture2D.FILL_RADIAL
+		t.fill_from = Vector2(0.5, 0.5)
+		t.fill_to = Vector2(1.0, 0.5)
+		t.width = 64
+		t.height = 64
+		_tex_pg = t
+	return _tex_pg
+
+
+## A Figura em pé na água (parada, sem avançar nem matar). `yaw` 0 = de frente para o sul (para o jogador).
+func _figura_na_agua(pos: Vector3, yaw: float) -> FiguraBranca:
+	if _figura == null:
+		_figura = FiguraBranca.new()
+		_figura.ativa = false
+		_figura.som_ativo = false
+		add_child(_figura)
+		_figura.set_physics_process(false)     # sem gravidade nem toque: é só uma presença
+	_figura.visible = true
+	_figura.global_position = pos
+	_figura.rotation.y = yaw
+	_figura.scale = Vector3.ONE * 1.2     # alta, para ler de longe
+	_figura._mat.set_shader_parameter("brilho", 1.9)     # pálida e legível mesmo à noite
+	if _figura.get_node_or_null("LuzFria") == null:
+		var lf := OmniLight3D.new()
+		lf.name = "LuzFria"
+		lf.position = Vector3(0.0, 1.9, 1.6)
+		lf.light_color = Color(0.7, 0.85, 1.0)
+		lf.light_energy = 3.0
+		lf.omni_range = 7.0
+		lf.shadow_enabled = false
+		_figura.add_child(lf)
+	return _figura
+
+
+# ---------------------------------------------------------------- final "Visita concluída"
+func _final_visita_concluida(menino: Node3D) -> void:
+	final = "visita_concluida"
+	_mostrar_legenda("Você também vai embora.", 3.0, 34)
+	await get_tree().create_timer(2.6, false).timeout
+	# ele se vira de volta para a água (o rosto sai de cena)
+	var tw := create_tween()
+	tw.tween_property(menino, "rotation:y", 0.0, 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await tw.finished
+	await get_tree().create_timer(0.8, false).timeout
+	GameState.set_flag("final_visita_concluida", true)
+	_fechar_cena_tito(false)
+
+
+## Fim da fala do Tito. No "Encontrado" o jogador ganha o controle por uns segundos; na "Visita concluída" a cena segue
+## trancada: o fim vem direto.
+func _fechar_cena_tito(devolver_controle: bool) -> void:
 	GameState.set_flag("viu_tito_final", true)
-	player.pode_mover = true
+	_tito_concluido = true
+	if devolver_controle:
+		GameState.set_flag("visor_travado", false)
+		if not (_visor and _visor.ativo) and GameState.epoca in EPOCAS_TITO:
+			GameState.trocar_epoca(GameState.Epoca.E2020)     # o Visor foi solto durante a cena: volta ao hoje
+		if not encerrando:
+			player.pode_mover = true
 	cena_tito_terminou.emit()
 	# o jogador solta o Visor e olha em volta: depois de um tempo o fim chega sozinho
-	await get_tree().create_timer(4.0, false).timeout
+	await get_tree().create_timer(4.0 if devolver_controle else 0.5, false).timeout
 	if not encerrando:
 		_encerrar()
 
@@ -663,21 +929,396 @@ func _encerrar() -> void:
 	if final == "":
 		final = "visita_concluida"
 	player.pode_mover = false
+	if final == "visita_concluida":
+		await _beat_visita_concluida()
+	else:
+		var tw := create_tween()
+		tw.tween_property(_cortina, "color:a", 1.0, 1.6)
+		await tw.finished
+	await _titulos_e_dedicatoria()
+
+
+## Escurece devagar; a Figura sobe da água atrás do Tito e uma mão longa pousa no ombro dele. Só isso. Corta para o preto.
+func _beat_visita_concluida() -> void:
+	var pos_m: Vector3 = tito.global_position + POS_TITO
+	# a câmera se afasta para ~4,5 m de lado, para ver o Tito e quem vem atrás
+	var cam_pos := Vector3(pos_m.x - 2.9, 0.05, pos_m.z + 3.5)
+	var tw0 := create_tween()
+	tw0.tween_property(player, "global_position", cam_pos, 1.4).set_trans(Tween.TRANS_SINE)
+	await tw0.finished
+	player.olhar_para(pos_m + Vector3(0.1, 0.9, -0.9), 0.5)
+	await get_tree().create_timer(0.6, false).timeout
 	var tw := create_tween()
-	tw.tween_property(_cortina, "color:a", 1.0, 1.6)
-	await tw.finished
+	tw.tween_property(_cortina, "color:a", 0.4, 4.0).set_trans(Tween.TRANS_SINE)
+	await get_tree().create_timer(1.0, false).timeout
+	var fig := _figura_na_agua(Vector3(pos_m.x + 0.15, AGUA_Y - 3.0, pos_m.z - 1.7), PI * 0.06)
+	Audio.sfx("agua_sobe", -8.0)
+	var tw2 := create_tween()
+	tw2.tween_property(fig, "position:y", AGUA_Y - 0.2, 3.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	await tw2.finished
+	await get_tree().create_timer(0.5, false).timeout
+	# a mão longa pousa no ombro dele
+	var ombro := pos_m + Vector3(0.0, 0.62, -0.05)
+	var mao := _mao_longa(fig.global_position + Vector3(-0.15, 1.75, 0.2), ombro)
+	mao.scale = Vector3(1, 1, 0.01)
+	var tw3 := create_tween()
+	tw3.tween_property(mao, "scale:z", 1.0, 1.8).set_trans(Tween.TRANS_SINE)
+	await tw3.finished
+	await get_tree().create_timer(2.8, false).timeout     # fica visível antes de escurecer
+	var tw4 := create_tween()
+	tw4.tween_property(_cortina, "color:a", 1.0, 1.8).set_trans(Tween.TRANS_SINE)
+	await tw4.finished
+	await get_tree().create_timer(0.6, false).timeout
+
+
+## Braço fino de `de` até `ate` (mundo) com quatro dedos longos dobrados sobre o fim dele. Devolve o nó (escala em Z = alcance).
+func _mao_longa(de: Vector3, ate: Vector3) -> Node3D:
+	var raiz := Node3D.new()
+	add_child(raiz)
+	raiz.global_position = de
+	raiz.look_at(ate, Vector3.UP)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = FiguraBranca.COR_PELE * 1.45
+	var mat_unha := StandardMaterial3D.new()
+	mat_unha.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat_unha.albedo_color = Color(0.08, 0.09, 0.1)
+	var comp: float = de.distance_to(ate)
+	var braco := CylinderMesh.new()
+	braco.top_radius = 0.05
+	braco.bottom_radius = 0.032
+	braco.height = comp
+	braco.radial_segments = 8
+	var mb := MeshInstance3D.new()
+	mb.mesh = braco
+	mb.material_override = mat
+	mb.rotation.x = PI * 0.5
+	mb.position = Vector3(0, 0, -comp * 0.5)
+	raiz.add_child(mb)
+	# mão: palma estreita e quatro dedos compridos, de três falanges, que se curvam sobre o ombro
+	var palma := MeshInstance3D.new()
+	var sp := SphereMesh.new()
+	sp.radius = 0.06
+	sp.height = 0.12
+	sp.radial_segments = 8
+	sp.rings = 4
+	palma.mesh = sp
+	palma.material_override = mat
+	palma.scale = Vector3(1.0, 0.5, 1.2)
+	palma.position = Vector3(0, 0, -comp)
+	raiz.add_child(palma)
+	for i in 4:
+		var pivo := Node3D.new()
+		pivo.position = Vector3((i - 1.5) * 0.034, -0.02, -comp - 0.05)
+		pivo.rotation_degrees = Vector3(-8.0, (i - 1.5) * -6.0, 0.0)
+		raiz.add_child(pivo)
+		var cur := pivo
+		var fal := [0.13, 0.11, 0.09]
+		var rad := 0.014
+		for k in 3:
+			var seg := MeshInstance3D.new()
+			var cm := CylinderMesh.new()
+			cm.top_radius = rad * 0.8
+			cm.bottom_radius = rad
+			cm.height = fal[k]
+			cm.radial_segments = 5
+			seg.mesh = cm
+			seg.material_override = mat
+			seg.rotation.x = PI * 0.5
+			seg.position = Vector3(0, 0, -fal[k] * 0.5)
+			cur.add_child(seg)
+			var junta := Node3D.new()
+			junta.position = Vector3(0, 0, -fal[k])
+			junta.rotation_degrees.x = -28.0     # cada junta dobra um pouco para baixo (para o ombro)
+			cur.add_child(junta)
+			cur = junta
+			rad *= 0.8
+		var unha := MeshInstance3D.new()
+		var bu := BoxMesh.new()
+		bu.size = Vector3(0.014, 0.004, 0.026)
+		unha.mesh = bu
+		unha.material_override = mat_unha
+		unha.position = Vector3(0, 0.008, 0.012)
+		cur.add_child(unha)
+	return raiz
+
+
+## Título do final (+ cartão alegre da prefeitura quando é o caso), sinal `fim`, dedicatória e volta ao título.
+func _titulos_e_dedicatoria() -> void:
 	if Audio.has_method("silenciar"):
 		Audio.silenciar(0.5)
-	_titulo_final.text = "ENCONTRADO" if final == "encontrado" else "VISITA CONCLUÍDA"
+	var textos := {"encontrado": "ENCONTRADO", "visita_concluida": "VISITA CONCLUÍDA", "sala_101": "VOCÊ FICOU."}
+	_titulo_final.text = textos.get(final, "VISITA CONCLUÍDA")
+	var tem_cartao := final == "visita_concluida" or final == "sala_101"
+	if tem_cartao:
+		_titulo_final.offset_bottom = -200.0     # o título sobe para o cartão ficar no centro
+		_montar_cartao("Obrigado pela visita! Volte sempre!" if final == "visita_concluida" else "Sala 101 - Visitante registrado.\nVolte sempre!")
 	var tw2 := create_tween()
 	tw2.tween_property(_titulo_final, "modulate:a", 1.0, 1.2)
-	tw2.tween_interval(2.6)
-	tw2.tween_property(_titulo_final, "modulate:a", 0.0, 0.8)
+	if tem_cartao:
+		tw2.tween_interval(1.0)
+		tw2.tween_property(_cartao, "modulate:a", 1.0, 0.5)
+		tw2.tween_interval(3.4)
+		tw2.tween_property(_cartao, "modulate:a", 0.0, 0.8)
+		tw2.parallel().tween_property(_titulo_final, "modulate:a", 0.0, 0.8)
+	else:
+		tw2.tween_interval(2.6)
+		tw2.tween_property(_titulo_final, "modulate:a", 0.0, 0.8)
 	await tw2.finished
 	fim.emit(final)
 	await _mostrar_dedicatoria()
 	if voltar_ao_titulo:
 		_voltar_ao_titulo()
+
+
+## Cartão de folheto de prefeitura: fundo amarelo-claro, borda azul, levemente torto como um carimbo. Alegre de propósito.
+func _montar_cartao(linha: String) -> void:
+	if _cartao:
+		_cartao.queue_free()
+	_cartao = PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.99, 0.93, 0.55)
+	sb.border_color = Color(0.15, 0.45, 0.8)
+	sb.set_border_width_all(8)
+	sb.set_corner_radius_all(18)
+	sb.content_margin_left = 28
+	sb.content_margin_right = 28
+	sb.content_margin_top = 14
+	sb.content_margin_bottom = 14
+	_cartao.add_theme_stylebox_override("panel", sb)
+	var caixa := VBoxContainer.new()
+	_cartao.add_child(caixa)
+	var topo := Label.new()
+	topo.text = "PROGRAMA MUNICIPAL DE MEMÓRIA INTERATIVA"
+	topo.add_theme_font_size_override("font_size", 26)
+	topo.add_theme_color_override("font_color", Color(0.15, 0.45, 0.8))
+	topo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caixa.add_child(topo)
+	var l := Label.new()
+	l.text = linha
+	l.add_theme_font_size_override("font_size", 52)
+	l.add_theme_color_override("font_color", Color(0.1, 0.4, 0.2))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caixa.add_child(l)
+	_cartao.modulate.a = 0.0
+	_cartao.set_anchors_preset(Control.PRESET_CENTER)
+	_cartao.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_cartao.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_cartao.offset_top = 90.0
+	_cartao.offset_bottom = 90.0
+	_cartao.rotation_degrees = -3.0
+	_cartao.resized.connect(func(): _cartao.pivot_offset = _cartao.size * 0.5)
+	_titulo_final.get_parent().add_child(_cartao)
+
+
+# ============================================================================ final opcional "Sala 101": o lago
+## Vigia o jogador perto da água. Convite do Tito ao chegar na beira (uma vez); aviso no primeiro passo dentro da rampa;
+## ~DIST_AFUNDAR m mais adiante começa o final. Voltar para a margem cancela tudo.
+func _vigiar_lago(_dt: float) -> void:
+	var p := player.global_position
+	if not _convite_dado and p.z < LAGO_Z1 + 1.7 and p.y > -0.2:
+		_convite_dado = true
+		Audio.sfx_3d("crianca_ei", Vector3(p.x, 0.0, LAGO_Z1 - 4.0), 0.0)
+		_mostrar_legenda("(vem. aqui embaixo é quietinho.)", 4.0)
+	var na_rampa: bool = p.z < LAGO_Z1 and p.x > RAMPA_X0 and p.x < RAMPA_X1
+	if na_rampa and p.y < AGUA_Y - 0.03:
+		if not _entrou_na_agua:
+			_entrou_na_agua = true
+			_entrada_pos = p
+			Audio.sfx("splash", -8.0)
+			_mostrar_legenda("(a água está gelada.)", 3.2)
+		elif Vector2(p.x - _entrada_pos.x, p.z - _entrada_pos.z).length() >= DIST_AFUNDAR:
+			_afundar()
+	elif p.y > AGUA_Y + 0.15:
+		_entrou_na_agua = false
+
+
+func _afundar() -> void:
+	if encerrando:
+		return
+	encerrando = true
+	final = "sala_101"
+	GameState.set_flag("final_sala_101", true)
+	GameState.set_flag("visor_travado", true)
+	player.pode_mover = false
+	player.velocity = Vector3.ZERO
+	player.set_physics_process(false)     # sem colisão: o corpo desce pelo "chão" da rampa
+	var ini := player.global_position
+	Audio.sfx("agua_puxa", -4.0)
+	_abafar(true)
+	Audio.ambiente("rio", -26.0, 2.0)
+	# tinta azul-escura sobe; a névoa fecha
+	var camada := _cortina.get_parent()
+	_tinta = ColorRect.new()
+	_tinta.color = Color(0.02, 0.09, 0.17, 0.0)
+	_tinta.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tinta.set_anchors_preset(Control.PRESET_FULL_RECT)
+	camada.add_child(_tinta)
+	camada.move_child(_tinta, _cortina.get_index())
+	env.fog_sky_affect = 1.0
+	var tw := create_tween().set_parallel()
+	tw.tween_property(_tinta, "color:a", 0.5, 4.0)
+	tw.tween_property(env, "fog_light_color", Color(0.01, 0.04, 0.08), 3.0)
+	tw.tween_property(env, "fog_depth_begin", 0.5, 3.0)
+	tw.tween_property(env, "fog_depth_end", 12.0, 3.0)
+	tw.tween_property(player, "global_position", Vector3(ini.x, RAMPA_Y_FIM - 1.4, ini.z - 3.0), 6.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(player, "rotation:y", 0.0, 2.0)
+	tw.tween_property(player.cabeca, "rotation:x", 0.35, 3.0)     # olha para cima, para a luz que fica para trás
+	await tw.finished
+	# no fundo: sapatinhos e um balde vermelho. Só isso.
+	var fundo: Vector3 = Vector3(ini.x, RAMPA_Y_FIM + 0.02, ini.z - 3.0)
+	_pecas_do_fundo(fundo)
+	var tw2 := create_tween()
+	tw2.tween_property(player.cabeca, "rotation:x", -0.3, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await tw2.finished
+	await get_tree().create_timer(2.6, false).timeout
+	# os dedos compridos da Figura entram pelas bordas e fecham sobre a lente
+	var mao := _mao_na_camera()
+	var tw3 := create_tween()
+	tw3.tween_method(_fechar_mao.bind(mao), 0.0, 1.0, 2.4).set_trans(Tween.TRANS_SINE)
+	await tw3.finished
+	await get_tree().create_timer(0.6, false).timeout
+	var tw4 := create_tween()
+	tw4.tween_property(_cortina, "color:a", 1.0, 0.7)
+	await tw4.finished
+	mao.queue_free()
+	await get_tree().create_timer(0.8, false).timeout
+	await _titulos_e_dedicatoria()
+
+
+## Um par de tênis pequenos e um balde vermelho de areia tombado no fundo, à frente da câmera.
+func _pecas_do_fundo(fundo: Vector3) -> void:
+	var raiz := Node3D.new()
+	raiz.name = "FundoDoLago"
+	add_child(raiz)
+	raiz.global_position = fundo
+	raiz.scale = Vector3.ONE * 1.5
+	var azul := Construtor.material(Color(0.2, 0.35, 0.8), 0.9)
+	var branco := Construtor.material(Color(0.85, 0.85, 0.8), 0.9)
+	for i in 2:
+		var sola := MeshInstance3D.new()
+		var bs := BoxMesh.new()
+		bs.size = Vector3(0.09, 0.025, 0.2)
+		sola.mesh = bs
+		sola.material_override = branco
+		sola.position = Vector3(-0.25 + i * 0.16, 0.02, -1.4 - i * 0.08)
+		sola.rotation.y = 0.25 - i * 0.7
+		raiz.add_child(sola)
+		var topo := MeshInstance3D.new()
+		var bt := BoxMesh.new()
+		bt.size = Vector3(0.08, 0.06, 0.13)
+		topo.mesh = bt
+		topo.material_override = azul
+		topo.position = Vector3(0, 0.04, -0.03)
+		sola.add_child(topo)
+	var balde := MeshInstance3D.new()
+	var cil := CylinderMesh.new()
+	cil.top_radius = 0.17
+	cil.bottom_radius = 0.12
+	cil.height = 0.26
+	cil.radial_segments = 10
+	balde.mesh = cil
+	balde.material_override = Construtor.material(Color(0.9, 0.1, 0.07), 0.8)
+	balde.position = Vector3(0.45, 0.1, -1.55)
+	balde.rotation_degrees = Vector3(0, 0, 80)
+	raiz.add_child(balde)
+	var luz := OmniLight3D.new()
+	luz.position = Vector3(0.1, 0.8, -1.0)
+	luz.light_color = Color(0.55, 0.78, 1.0)
+	luz.light_energy = 3.2
+	luz.omni_range = 5.0
+	luz.shadow_enabled = false
+	raiz.add_child(luz)
+
+
+## A mão da Figura diante da câmera: cinco dedos longos, afilados e articulados, que entram pelas bordas da tela
+## (sem palma). `_fechar_mao(t)` os traz para o centro e os dobra (0 = fora da tela, 1 = fechados sobre a lente).
+const DEDOS_BORDA := [Vector2(-0.22, 0.30), Vector2(0.0, 0.32), Vector2(0.24, 0.30), Vector2(-0.52, 0.02), Vector2(0.52, -0.02)]
+
+
+func _mao_na_camera() -> Node3D:
+	var mao := Node3D.new()
+	player.camera.add_child(mao)
+	mao.position = Vector3(0, 0, -0.34)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = FiguraBranca.COR_PELE * 1.25
+	mat.no_depth_test = true
+	mat.render_priority = 10
+	var mat_unha := StandardMaterial3D.new()
+	mat_unha.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat_unha.albedo_color = Color(0.07, 0.08, 0.09)
+	mat_unha.no_depth_test = true
+	mat_unha.render_priority = 11
+	for i in 5:
+		var piv := Node3D.new()
+		piv.name = "Dedo%d" % i
+		mao.add_child(piv)
+		var cur: Node3D = piv
+		var fal := [0.17, 0.14, 0.11]
+		var rad := 0.016
+		for k in 3:
+			var seg := MeshInstance3D.new()
+			var cm := CylinderMesh.new()
+			cm.top_radius = rad * 0.78
+			cm.bottom_radius = rad
+			cm.height = fal[k]
+			cm.radial_segments = 6
+			cm.rings = 1
+			seg.mesh = cm
+			seg.material_override = mat
+			seg.position = Vector3(0, -fal[k] * 0.5, 0)
+			cur.add_child(seg)
+			var junta := Node3D.new()
+			junta.name = "J%d" % k
+			junta.position = Vector3(0, -fal[k], 0)
+			cur.add_child(junta)
+			cur = junta
+			rad *= 0.78
+		var unha := MeshInstance3D.new()
+		var bu := BoxMesh.new()
+		bu.size = Vector3(0.011, 0.02, 0.004)
+		unha.mesh = bu
+		unha.material_override = mat_unha
+		unha.position = Vector3(0, 0.012, 0.01)
+		cur.add_child(unha)
+	_fechar_mao(0.0, mao)
+	return mao
+
+
+func _fechar_mao(t: float, mao: Node3D) -> void:
+	for i in 5:
+		var piv := mao.get_node("Dedo%d" % i) as Node3D
+		var borda: Vector2 = DEDOS_BORDA[i]
+		var fora := borda * 2.1
+		var pos := fora.lerp(borda * 0.85, t)
+		piv.position = Vector3(pos.x, pos.y, 0.0)
+		# o dedo aponta (-y local) para o centro da tela
+		var para := -borda.normalized()
+		var ang := atan2(para.x, -para.y)     # rotação em z que leva -y para `para`
+		piv.rotation = Vector3(0.0, 0.0, ang + (i - 2) * 0.05)
+		var curl := lerpf(6.0, 34.0, t)
+		# articulações: cada junta dobra um pouco para a frente (para a lente)
+		var cur: Node3D = mao.get_node("Dedo%d" % i)
+		for k in 3:
+			var j := cur.get_node("J%d" % k) as Node3D
+			j.rotation_degrees.x = -curl * (1.0 + k * 0.25)
+			cur = j
+
+
+## Abafa o som (filtro passa-baixa no Master) enquanto o jogador está debaixo d'água; `false` tira o filtro.
+func _abafar(ligar: bool) -> void:
+	var bus := AudioServer.get_bus_index("Master")
+	if ligar and _filtro == null:
+		_filtro = AudioEffectLowPassFilter.new()
+		_filtro.cutoff_hz = 600.0
+		AudioServer.add_bus_effect(bus, _filtro)
+	elif not ligar and _filtro != null:
+		for i in AudioServer.get_bus_effect_count(bus):
+			if AudioServer.get_bus_effect(bus, i) == _filtro:
+				AudioServer.remove_bus_effect(bus, i)
+				break
+		_filtro = null
 
 
 ## A tela de dedicatória (UI: `Dedicatoria.mostrar()`); se a classe não existir, um Label com o texto exato do roteiro.

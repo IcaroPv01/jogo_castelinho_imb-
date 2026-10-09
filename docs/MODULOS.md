@@ -16,7 +16,7 @@ Decisões do Icaro (07/10/2026):
 | 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | parte 1 feita (bugs, escada 2019, Figura na V4, caça do disco 1950); caça dos discos 1967–sem data espera o Icaro jogar a do 1950 |
 | 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | feito (PR #11): ritmo, quiz V2–V4, bugs, fontes; reabre quando o Icaro jogar |
 | 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | feito (PR #12): sequência fixa, masmorra, Figura nova, sustos (porão e V3/V4), bugs; reabre quando o Icaro jogar |
-| 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | na fila |
+| 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | feito (PR #14): três finais (Encontrado ≥8 pistas, Visita concluída, Sala 101), menu do Esc, contador de pistas, título muda após zerar; reabre quando o Icaro jogar |
 | 6 | Áudio | Jingle, ambientes e sustos (ninguém ouviu ainda: precisa do ouvido do Icaro) | `autoload/audio.gd`, `tools/gerar_audio.py`, `assets/audio/` | na fila |
 | 7 | Arte e gráficos | Acabamento visual mantendo o estilo Flash educativo | `shaders/`, `tools/gerar_texturas.py`, `castelinho/` | na fila |
 
@@ -44,6 +44,33 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 5: Braço Morto e final (09/10/2026)
+
+- **Decisões do Icaro:** pistas para o Encontrado = 8 (de 15: 8 castelinho, 6 porão, 1 lápide); contador visível (T de
+  giz invertido + número, sem total); finais "o mais pesado possível" só por sugestão; 3º final sim; título muda após
+  zerar; menu no Esc. O Icaro ainda **não jogou** o final.
+- **Chegada:** legenda "(lá em cima, um lago...)" 1,5 s depois; dica única aos 45 s; luz quente na lápide.
+- **Bugs:** lápide durante a cena do Tito; soltar Q no meio da cena (Visor travado); `ao_morrer` durante o fim.
+- **Finais** (`world/niveis/braco_morto.gd`, `fim(final)` = `encontrado` / `visita_concluida` / `sala_101`):
+  - Encontrado: falas "Disseram que eu fugi de casa." / "Ninguém olhou na água." / "Agora alguém sabe."; Tito anda para
+    a luz com pegadas, a Figura afunda, o T da lápide se endireita.
+  - Visita concluída: "Você também vai embora."; a Figura sobe atrás dele e pousa a mão no ombro; cartão "Obrigado pela
+    visita! Volte sempre!".
+  - Sala 101: atracadouro de pedalinhos é a única entrada no lago; convite "(vem. aqui embaixo é quietinho.)"; aviso
+    "(a água está gelada.)"; a ~3,5 m afunda (filtro passa-baixa no Master, tirado no `_exit_tree`); sapatinhos e balde
+    no fundo; dedos da Figura na lente; "VOCÊ FICOU." + cartão "Sala 101".
+  - Dedicatória com Disque 100 em todos.
+- **UI:** `ui/menu_pausa.gd` (Continuar, Opções, Voltar ao título com confirmação); `ui/opcoes.gd` (`user://opcoes.cfg`:
+  volume, sensibilidade); contador de pistas em `ui/hud.gd` (escuta `flag_mudou` "pista_*"); `ui/finais.gd`
+  (`user://finais.cfg`) e lápide na tela de título; contador "Visitantes" do título vira 000101 após o final Sala 101.
+  `main.gd`: 2 linhas ligam `fim` a `Finais.registrar`.
+- **Captura:** `tests/captura_final.gd` (xvfb, fora do CI; modos titulos|pausa|chegada|encontrado|visita_concluida|sala_101).
+- **Para o módulo 6 (Áudio):** falta som próprio para Tito falando as falas novas, o afundar (Sala 101), a Figura
+  subindo/afundando e o pulso do contador (hoje `blip_misterio`); conferir volume do menu de Opções no navegador.
+- **Para o módulo 7 (Arte):** mão/dedos da Figura (Sala 101 e ombro do Tito), pegadas molhadas, Figura do outro lado do
+  lago, lápide de areia (título e lago), escada escura de chegada, slide 98 do porão com a Figura antiga.
+- Pendente: menu do Esc só testado no xvfb, não no navegador (recaptura do mouse no clique).
 
 ### Módulo 4: Porão (08/10/2026)
 

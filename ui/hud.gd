@@ -10,6 +10,13 @@ var lbl_aviso: Label
 var mira: Label
 var barra_stamina: ProgressBar
 var lbl_pausa: Label
+var menu_pausa: MenuPausa
+## Contador das pistas do Tito (canto de cima à direita): escondido até a primeira.
+var pistas_box: Control
+var _lbl_pistas_n: Label
+var _lbl_pistas_aviso: Label
+var _n_pistas := 0
+var _tween_pista: Tween
 var lbl_passaporte: Label
 var faixa_discos: FaixaDiscos
 var olho: OlhoAtencao
@@ -70,18 +77,18 @@ func _ready() -> void:
 	barra_stamina.visible = false
 	add_child(barra_stamina)
 
-	lbl_pausa = Label.new()
-	lbl_pausa.text = "PAUSADO\nClique para continuar"
-	lbl_pausa.set_anchors_preset(Control.PRESET_FULL_RECT)
-	lbl_pausa.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl_pausa.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl_pausa.add_theme_font_override("font", Flash.fonte_titulo())
-	lbl_pausa.add_theme_font_size_override("font_size", 52)
-	lbl_pausa.add_theme_color_override("font_outline_color", Flash.NAVY)
-	lbl_pausa.add_theme_constant_override("outline_size", 14)
-	lbl_pausa.visible = false
-	add_child(lbl_pausa)
+	Opcoes.carregar()
+	menu_pausa = MenuPausa.new()
+	menu_pausa.name = "MenuPausa"
+	# camada própria, acima das legendas e UIs dos níveis (até 90), mas abaixo da Transição (100)
+	var camada_pausa := CanvasLayer.new()
+	camada_pausa.name = "CamadaPausa"
+	camada_pausa.layer = 96
+	add_child(camada_pausa)
+	camada_pausa.add_child(menu_pausa)
+	lbl_pausa = menu_pausa.lbl_pausa   # (o _ready do menu já rodou ao entrar na árvore)
 
+	_construir_pistas()
 	faixa_discos = FaixaDiscos.new()
 	faixa_discos.name = "FaixaDiscos"
 	add_child(faixa_discos)
@@ -89,6 +96,7 @@ func _ready() -> void:
 	olho.name = "OlhoAtencao"
 	add_child(olho)
 
+	GameState.flag_mudou.connect(_on_flag)
 	GameState.sala_mudou.connect(_on_sala)
 	GameState.visita_mudou.connect(func(_v): _on_sala(GameState.sala_atual))
 	_on_sala(GameState.sala_atual)
@@ -101,6 +109,7 @@ func conectar_player(p: Player) -> void:
 	barra_stamina.value = 1.0
 	barra_stamina.visible = false
 	barra_stamina.modulate = Color.WHITE
+	_sincronizar_pistas()
 	p.alvo_mudou.connect(func(t: String): lbl_aviso.text = ("[E] " + t) if t != "" else "")
 	p.stamina_mudou.connect(func(v: float):
 		barra_stamina.value = v
@@ -127,6 +136,7 @@ func _on_sala(n: int) -> void:
 ## (a interface "mente sobre o progresso", PLANO §7.4).
 func _process(dt: float) -> void:
 	_atualizar_passaporte()
+	_sincronizar_pistas()
 	if GameState.sala_atual <= 0 or not visible:
 		return
 	if _t_glitch > 0.0:
@@ -151,4 +161,85 @@ func _atualizar_passaporte() -> void:
 
 
 func mostrar_pausa(v: bool) -> void:
-	lbl_pausa.visible = v
+	menu_pausa.mostrar(v, GameState.contadores.get("pistas_tito", 0))
+
+
+# ---------------------------------------------------------------- pistas do Tito
+## Um "T" de giz de cabeça para baixo (a assinatura do Tito): barra embaixo, haste para cima.
+class IconeT extends Control:
+	func _init() -> void:
+		custom_minimum_size = Vector2(34, 40)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var giz := Color(0.96, 0.95, 0.88)
+		var sombra := Color(0.08, 0.1, 0.25, 0.8)
+		for passo in [[sombra, Vector2(2, 2), 9.0], [giz, Vector2.ZERO, 5.0]]:
+			var o: Vector2 = passo[1]
+			var w: float = passo[2]
+			draw_line(Vector2(4, 35) + o, Vector2(30, 34) + o, passo[0], w, true)    # barra (embaixo)
+			draw_line(Vector2(17, 34) + o, Vector2(16, 5) + o, passo[0], w, true)    # haste (para cima)
+
+
+func _construir_pistas() -> void:
+	pistas_box = HBoxContainer.new()
+	pistas_box.name = "PistasTito"
+	pistas_box.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	pistas_box.position = Vector2(-190, 16)
+	pistas_box.size = Vector2(170, 50)
+	pistas_box.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	pistas_box.alignment = BoxContainer.ALIGNMENT_END
+	pistas_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pistas_box.visible = false
+	add_child(pistas_box)
+	_lbl_pistas_aviso = Label.new()
+	_lbl_pistas_aviso.text = "pista do Tito"
+	_lbl_pistas_aviso.add_theme_font_override("font", Flash.fonte_texto())
+	_lbl_pistas_aviso.add_theme_font_size_override("font_size", 20)
+	_lbl_pistas_aviso.add_theme_color_override("font_color", Color(0.96, 0.95, 0.88))
+	_lbl_pistas_aviso.add_theme_color_override("font_outline_color", Flash.NAVY)
+	_lbl_pistas_aviso.add_theme_constant_override("outline_size", 6)
+	_lbl_pistas_aviso.modulate.a = 0.0
+	pistas_box.add_child(_lbl_pistas_aviso)
+	pistas_box.add_child(IconeT.new())
+	_lbl_pistas_n = Label.new()
+	_lbl_pistas_n.add_theme_font_override("font", Flash.fonte_titulo())
+	_lbl_pistas_n.add_theme_font_size_override("font_size", 34)
+	_lbl_pistas_n.add_theme_color_override("font_color", Color(0.96, 0.95, 0.88))
+	_lbl_pistas_n.add_theme_color_override("font_outline_color", Flash.NAVY)
+	_lbl_pistas_n.add_theme_constant_override("outline_size", 9)
+	pistas_box.add_child(_lbl_pistas_n)
+	pistas_box.pivot_offset = Vector2(150, 25)
+
+
+## Mostra o número certo sem animar (carregar save, nível novo, jogo novo zerando o contador).
+func _sincronizar_pistas() -> void:
+	var n: int = GameState.contadores.get("pistas_tito", 0)
+	if n == _n_pistas:
+		return
+	_n_pistas = n
+	_lbl_pistas_n.text = str(n)
+	pistas_box.visible = n > 0
+
+
+## `set_flag` avisa ANTES de o contador somar: espera o fim do quadro para ler o número novo.
+func _on_flag(nome: String, valor: Variant) -> void:
+	if nome.begins_with("pista_") and valor == true:
+		_pista_nova.call_deferred()
+
+
+func _pista_nova() -> void:
+	_sincronizar_pistas()
+	if _n_pistas <= 0:
+		return
+	Audio.sfx("blip_misterio", -6.0, 0.8)
+	if _tween_pista:
+		_tween_pista.kill()
+	pistas_box.scale = Vector2.ONE
+	_lbl_pistas_aviso.modulate.a = 1.0
+	_lbl_pistas_n.modulate = Color(1.0, 0.95, 0.5)
+	_tween_pista = create_tween().set_parallel(true)
+	_tween_pista.tween_property(pistas_box, "scale", Vector2.ONE * 1.35, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_tween_pista.chain().tween_property(pistas_box, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_SINE)
+	_tween_pista.tween_property(_lbl_pistas_n, "modulate", Color.WHITE, 1.2).set_delay(0.3)
+	_tween_pista.tween_property(_lbl_pistas_aviso, "modulate:a", 0.0, 0.8).set_delay(2.2)

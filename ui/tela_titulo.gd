@@ -263,6 +263,7 @@ func _ready() -> void:
 	_montar_mascotes()
 	_montar_botoes()
 	_montar_rodape()
+	_montar_lapide()
 
 	Audio.musica("jingle", 0.5)
 
@@ -393,7 +394,7 @@ func _montar_rodape() -> void:
 	aviso.add_theme_constant_override("outline_size", 5)
 	_palco.add_child(aviso)
 	var contador := Label.new()
-	contador.text = "Visitantes: 000027"
+	contador.text = "Visitantes: 000101" if Finais.ultimo() == "sala_101" else "Visitantes: 000027"
 	contador.position = Vector2(20, 692)
 	contador.size = Vector2(280, 26)
 	contador.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -403,6 +404,60 @@ func _montar_rodape() -> void:
 	contador.add_theme_color_override("font_outline_color", Color("14522A"))
 	contador.add_theme_constant_override("outline_size", 5)
 	_palco.add_child(contador)
+
+
+## Depois de qualquer final: uma pequena lápide de areia ao lado do castelo. O primeiro T de "TITO" fica de cabeça
+## para baixo, menos depois de "encontrado". Três marquinhas mostram quantos finais já foram vistos (sem nomear).
+func _montar_lapide() -> void:
+	var ultimo: String = Finais.ultimo()
+	if ultimo == "":
+		return
+	var frase := {"encontrado": "Ele foi para casa.", "visita_concluida": "Ele ainda está esperando.",
+		"sala_101": "Ele tem companhia agora."}.get(ultimo, "") as String
+	var pos := Vector2(1196, 556)     # no gramado à direita do botão, perto das flores do castelo
+	var pedra := Panel.new()
+	pedra.position = pos
+	pedra.size = Vector2(72, 80)
+	pedra.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pedra.add_theme_stylebox_override("panel", Flash.caixa(Color("E8D49A"), Flash.NAVY, 28, 3, false))
+	_palco.add_child(pedra)
+	# "TITO": letras separadas para poder virar só a primeira
+	var letras := "TITO"
+	for i in letras.length():
+		var l := Label.new()
+		l.text = letras[i]
+		l.size = Vector2(15, 22)
+		l.position = pos + Vector2(6 + i * 15, 18)
+		l.pivot_offset = l.size / 2.0
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		l.add_theme_font_override("font", Flash.fonte_titulo())
+		l.add_theme_font_size_override("font_size", 18)
+		l.add_theme_color_override("font_color", Flash.NAVY)
+		if i == 0 and ultimo != "encontrado":
+			l.rotation = PI
+		_palco.add_child(l)
+	var vistos: Array = Finais.vistos()
+	for i in Finais.TODOS.size():
+		var m := Panel.new()
+		m.size = Vector2(14, 14)
+		m.position = pos + Vector2(8 + i * 20, 52)
+		m.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var cor := Flash.AMARELO if i < vistos.size() else Color("E8D49A")
+		m.add_theme_stylebox_override("panel", Flash.caixa(cor, Flash.NAVY, 7, 2, false))
+		_palco.add_child(m)
+	var f := Label.new()
+	f.text = frase
+	f.position = Vector2(1000, 652)
+	f.size = Vector2(272, 26)
+	f.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	f.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	f.add_theme_font_override("font", Flash.fonte_texto())
+	f.add_theme_font_size_override("font_size", 20)
+	f.add_theme_color_override("font_color", Color("FFF6C0"))
+	f.add_theme_color_override("font_outline_color", Color("0F3A1E"))
+	f.add_theme_constant_override("outline_size", 7)
+	_palco.add_child(f)
 
 
 # ================================================================ ação

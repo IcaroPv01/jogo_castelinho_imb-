@@ -255,15 +255,16 @@ func _c_pausa() -> void:
 	p.rotation.y = 0.0
 	await _toque(KEY_ESCAPE)
 	await _frames(4)
-	_checar(Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and paused and main.hud.lbl_pausa.visible, "Esc solta o mouse, pausa e mostra 'PAUSADO'")
+	_checar(Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and paused and main.hud.lbl_pausa.is_visible_in_tree(), "Esc solta o mouse, pausa e mostra 'PAUSADO'")
 	var z0: float = p.global_position.z
 	await _tecla(KEY_W, true)
 	await _segundos(0.6)
 	_checar(absf(p.global_position.z - z0) < 0.05, "pausado: o jogador não anda com W")
 	await _tecla(KEY_W, false)
-	await _clique(Vector2(640, 360))
+	_checar(main.hud.menu_pausa.visible and main.hud.menu_pausa.btn_continuar.is_visible_in_tree(), "o menu de pausa aparece com o botão Continuar")
+	await _clique(_centro_continuar())
 	await _frames(4)
-	_checar(Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not paused and not main.hud.lbl_pausa.visible, "clique retoma o jogo")
+	_checar(Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not paused and not main.hud.lbl_pausa.is_visible_in_tree(), "clique em Continuar retoma o jogo")
 	await _tecla(KEY_W, true)
 	await _segundos(0.6)
 	await _tecla(KEY_W, false)
@@ -282,16 +283,30 @@ func _c_pausa() -> void:
 	main.notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	await _frames(4)
 	_checar(paused and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED, "perder o foco da janela pausa o jogo")
-	await _clique(Vector2(640, 360))
+	await _clique(_centro_continuar())
 	await _frames(4)
 	_checar(not paused and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, "e o clique retoma")
 	# Esc duas vezes seguidas (pausa, e de novo) não deve travar
 	await _toque(KEY_ESCAPE)
 	await _toque(KEY_ESCAPE)
 	await _frames(3)
-	await _clique(Vector2(640, 360))
+	if paused:
+		await _clique(_centro_continuar())
 	await _frames(3)
 	_checar(not paused and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, "Esc, Esc e clique: volta ao jogo")
+	# contador de pistas do Tito: escondido até a primeira; aparece com o número certo
+	_checar(not main.hud.pistas_box.visible, "sem pistas: contador escondido")
+	GS.set_flag("pista_teste", true)
+	GS.somar("pistas_tito")
+	await _frames(4)
+	_checar(main.hud.pistas_box.visible and main.hud._lbl_pistas_n.text == "1", "primeira pista: contador aparece com 1")
+	GS.contadores["pistas_tito"] = 0
+	GS.flags.erase("pista_teste")
+
+
+func _centro_continuar() -> Vector2:
+	var b: Control = main.hud.menu_pausa.btn_continuar
+	return b.get_global_rect().get_center()
 
 
 # ---------------------------------------------------------------- D: Visor dentro das paredes
