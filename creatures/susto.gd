@@ -14,7 +14,10 @@ extends RefCounted
 ##   "silhueta": true = vulto pequeno de criança em vez da Figura; "emergir": true = sobe da água e afunda;
 ##   "cair": true = despenca de cima; "tranco" 1.0 (força do tranco de câmera), "pulso" 0.35 (glitch leve),
 ##   "escala" 1.0 (a Figura é só a cabeça pequena: aumenta para o rosto encher a tela), "flash": true (só um corte preto
-##   no FIM; na revelação nunca há clarão). A Figura é abaixada para o ROSTO ficar na altura dos olhos da câmera.
+##   no FIM; na revelação nunca há clarão). Colada na câmera (< ~1,2 m) a Figura é abaixada para o ROSTO ficar na altura
+##   dos olhos; mais longe (> ~2 m) ela PISA no chão (raycast para baixo) e inclina a cabeça para o rosto "olhar" o
+##   jogador; entre os dois, mistura. Sem "pos", o ponto é ajustado (`_ponto_livre`) para a Figura não nascer dentro de
+##   parede/arco: inteira, com linha de visão livre até a câmera e folga em volta.
 ## Devolve true se o susto foi disparado.
 
 const FLAG := "susto_"
@@ -72,8 +75,10 @@ static func _rodar(nivel: Node, o: Dictionary) -> void:
 	else:
 		var frente := -cam.global_transform.basis.z
 		frente.y = 0.0
-		frente = frente.normalized().rotated(Vector3.UP, deg_to_rad(float(o.get("angulo", 0.0))))
-		pos = jogador.global_position + frente * float(o.get("frente", 1.8))
+		frente = frente.normalized()
+		pos = jogador.global_position + frente.rotated(Vector3.UP, deg_to_rad(float(o.get("angulo", 0.0)))) * float(o.get("frente", 1.8))
+		if not o.get("silhueta", false):
+			pos = _ponto_livre(nivel, cam, jogador, frente, float(o.get("angulo", 0.0)), float(o.get("frente", 1.8)), pos)
 	var no: Node3D
 	var escala: float = o.get("escala", 1.0)
 	if o.get("silhueta", false):
@@ -93,7 +98,14 @@ static func _rodar(nivel: Node, o: Dictionary) -> void:
 		no.olhada = true                          # pose congelada, "estalada"
 		no._mat.set_shader_parameter("brilho", 1.5)       # mais clara só durante o susto
 		no.scale = Vector3.ONE * escala
-		y_final = cam.global_position.y - 2.12 * escala  # o rosto (a ~2,12 m do pé) na altura dos olhos da câmera
+		# o rosto fica a ~2,12 m do pé. Colada na câmera: rosto na altura dos olhos. Longe: pés no piso e cabeça
+		# inclinada para baixo (o rosto continua "olhando" o jogador). Entre 1,2 e 2,0 m: mistura.
+		var dist_h := Vector2(pos.x - jogador.global_position.x, pos.z - jogador.global_position.z).length()
+		var piso := _piso_em(nivel, pos, jogador.global_position.y)
+		var t_piso := smoothstep(1.2, 2.0, dist_h)
+		y_final = lerpf(cam.global_position.y - 2.12 * escala, piso, t_piso)
+		var rosto_y := y_final + 2.12 * escala
+		no.inclinar_cabeca(atan2(rosto_y - cam.global_position.y, maxf(dist_h, 0.3)))
 	var para := jogador.global_position - pos
 	no.rotation.y = atan2(-para.x, -para.z)         # de frente para quem olha
 	var emergir: bool = o.get("emergir", false)
@@ -123,6 +135,56 @@ static func _rodar(nivel: Node, o: Dictionary) -> void:
 		no.queue_free()
 	if o.get("flash", true):
 		Efeitos.flash(0.12, Color(0, 0, 0), 0.6)         # corte seco, preto, só no fim
+
+
+## Altura do piso em `pos` (raycast para baixo no mundo; senão `y_padrao`, o pé do jogador).
+static func _piso_em(nivel: Node, pos: Vector3, y_padrao: float) -> float:
+	var q := PhysicsRayQueryParameters3D.create(Vector3(pos.x, y_padrao + 1.2, pos.z), Vector3(pos.x, y_padrao - 1.5, pos.z), 1)
+	q.collide_with_areas = false
+	var h: Dictionary = nivel.get_world_3d().direct_space_state.intersect_ray(q)
+	return float(h.position.y) if not h.is_empty() else y_padrao
+
+
+static func _linha_livre(nivel: Node, de: Vector3, para: Vector3) -> bool:
+	var q := PhysicsRayQueryParameters3D.create(de, para, 1)
+	q.collide_with_areas = false
+	return nivel.get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+
+
+## A Figura (~0,55 m de folga em volta, 2,4 m de altura) cabe em `p`? Piso por perto, linha de visão livre da câmera até
+## os pés, o peito e a cabeça, e folga horizontal em volta (nada de nascer dentro de parede ou arco).
+static func _cabe(nivel: Node, cam: Camera3D, y_pe: float, p: Vector3) -> bool:
+	var piso := _piso_em(nivel, p, y_pe)
+	if absf(piso - y_pe) > 0.8:
+		return false
+	var base := Vector3(p.x, piso, p.z)
+	for h: float in [0.3, 1.2, 2.2]:
+		if not _linha_livre(nivel, cam.global_position, base + Vector3.UP * h):
+			return false
+	for k in 8:
+		var d := Vector3.FORWARD.rotated(Vector3.UP, TAU * k / 8.0) * 0.55
+		for h: float in [0.5, 1.4, 2.2]:
+			if not _linha_livre(nivel, base + Vector3.UP * h, base + Vector3.UP * h + d):
+				return false
+	return true
+
+
+## Ponto onde a Figura aparece: o pedido (`angulo`, `frente`) se couber; senão o mais próximo que couber (primeiro varia
+## o ângulo, sem sair do campo de visão se o pedido estava nele, depois encurta a distância até ~1 m). Se nada couber, o pedido.
+static func _ponto_livre(nivel: Node, cam: Camera3D, jogador: Node3D, frente: Vector3, angulo: float, dist: float, pedido: Vector3) -> Vector3:
+	var y_pe := jogador.global_position.y
+	for f in [1.0, 0.88, 0.76, 0.64, 0.52, 0.44]:
+		var d: float = dist * f
+		if d < 1.0 and f < 1.0:
+			break
+		for da in [0.0, 12.0, -12.0, 24.0, -24.0, 36.0, -36.0, 50.0, -50.0]:
+			var a: float = angulo + da
+			if absf(angulo) <= 60.0 and absf(a) > maxf(32.0, absf(angulo)):
+				continue                     # pedida na frente/de lado: tem que continuar no campo de visão
+			var p := jogador.global_position + frente.rotated(Vector3.UP, deg_to_rad(a)) * d
+			if _cabe(nivel, cam, y_pe, p):
+				return p
+	return pedido
 
 
 ## Tranco curto de câmera: giro de lado e aperto de FOV que voltam rápido.

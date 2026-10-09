@@ -117,6 +117,20 @@ func conectar_player(p: Player) -> void:
 		barra_stamina.modulate = Color(1, 0.4, 0.4) if p.cansado else Color.WHITE)
 
 
+## Cenas de cinema (final do Braço Morto): esconde faixa de discos, contador de pistas, mira e aviso, para a imagem ficar
+## limpa. `manter_sala` deixa o rótulo da sala (detalhe de terror). `modo_cinema(false)` devolve tudo ao estado normal.
+var _cinema := false
+
+
+func modo_cinema(ligado: bool, manter_sala := false) -> void:
+	_cinema = ligado
+	mira.visible = not ligado
+	lbl_aviso.visible = not ligado
+	lbl_sala.visible = (not ligado) or manter_sala
+	faixa_discos.visible = (not ligado) and faixa_discos.discos_mostrados().size() > 0
+	pistas_box.visible = (not ligado) and _n_pistas > 0
+
+
 ## "VISITA 2 · SALA 27"; no porão (salas 81+) só "SALA 87". `n` pode ser um número errado (glitch da corrupção).
 func texto_sala(n: int) -> String:
 	if n <= 0:
@@ -219,7 +233,7 @@ func _sincronizar_pistas() -> void:
 		return
 	_n_pistas = n
 	_lbl_pistas_n.text = str(n)
-	pistas_box.visible = n > 0
+	pistas_box.visible = n > 0 and not _cinema
 
 
 ## `set_flag` avisa ANTES de o contador somar: espera o fim do quadro para ler o número novo.

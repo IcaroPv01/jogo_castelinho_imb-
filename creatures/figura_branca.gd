@@ -134,10 +134,14 @@ var _mat: ShaderMaterial
 var _nv := 0
 var _snap_t := 0.0
 var _lurch_t := 0.0
-var _arranco := false
+var _arranco := false                     # true = o próximo estalo é a pose forte do arranque
+var _lado := 1.0                          # alterna a cada estalo (ombros/cabeça/braços)
+var _mov_ant := false
+var _prox_arranco := 0.0
 var _olhada_ant := false
 var _dist := 99.0
 var _brilho := 1.0
+var _cabeca_baixa := 0.0                  # rad: cabeça baixa extra na pose "olhada" (usado pelo Susto)
 
 
 ## Tubo ao longo de `pts` com raio `rad` por ponto, elipse `esc` (largura, profundidade), cor por ponto/direção.
@@ -324,22 +328,38 @@ func _pose_base() -> void:
 
 
 ## Nova pose "estalada" (sem interpolação): chamada em intervalos curtos enquanto ela anda.
+## O andar é aos trancos e ALTERNADO: a cada estalo os ombros e a cabeça trocam de lado e os braços (soltos) balançam
+## em sentidos opostos; de vez em quando uma mão sai de trás do vestido. `forte` = o arranque (pose bem mais violenta).
 func _pose_nova(forte: bool) -> void:
-	var f := 1.6 if forte else 1.0
-	_corpo.rotation = Vector3(-0.22 - (0.15 if forte else randf_range(-0.05, 0.08)), randf_range(-0.12, 0.12) * f, randf_range(-0.09, 0.09) * f)
-	_cabeca.rotation = Vector3(-0.1 + randf_range(-0.15, 0.2), randf_range(-0.5, 0.5) * f, 0.16 * signf(_cabeca.rotation.z) + randf_range(-0.15, 0.15))
+	var f := 1.7 if forte else 1.0
+	_lado = -_lado
+	var l := _lado
+	_corpo.rotation = Vector3(-0.22 - (0.2 if forte else randf_range(-0.04, 0.1)), randf_range(0.05, 0.2) * f * l, (0.07 + randf_range(0.0, 0.1)) * f * l)
+	var cz := -0.2 * l + randf_range(-0.12, 0.12)    # a cabeça cai para o lado oposto ao ombro
 	if randf() < 0.18:
-		_cabeca.rotation.z = -_cabeca.rotation.z   # estala para o outro lado
-	_braco_e.rotation = Vector3(randf_range(-0.3, 0.35), 0.0, randf_range(-0.05, 0.14) * f)
-	_braco_d.rotation = Vector3(randf_range(-0.35, 0.3), 0.0, randf_range(-0.14, 0.05) * f)   # fora de sincronia
-	_modelo.position.y = randf_range(0.0, 0.025)
-	_modelo.rotation.y = randf_range(-0.07, 0.07)
+		cz = -cz                                     # estala para o outro lado
+	_cabeca.rotation = Vector3(-0.1 + randf_range(-0.15, 0.25), randf_range(0.15, 0.55) * f * -l, cz * f)
+	# braços soltos: balançam um contra o outro; às vezes a mão abre para fora (z negativo no braço esquerdo, positivo no direito) e aparece ao lado do vestido
+	var solta_e := randf() < 0.35
+	var solta_d := randf() < 0.35
+	_braco_e.rotation = Vector3(0.45 * l * f + randf_range(-0.15, 0.15), 0.0, -(0.22 if solta_e else 0.04) - randf_range(0.0, 0.08) * f)
+	_braco_d.rotation = Vector3(-0.45 * l * f + randf_range(-0.15, 0.15), 0.0, (0.22 if solta_d else 0.04) + randf_range(0.0, 0.08) * f)
+	_modelo.position.y = randf_range(0.0, 0.035) * f
+	_modelo.rotation.y = randf_range(-0.09, 0.09) * f
+
+
+## Inclui `rad` de cabeça baixa na pose "olhada" (o Susto usa: com ela no chão, o rosto segue o jogador).
+## A pose base já olha ~10° para baixo (corcunda); só o que passar disso entra.
+func inclinar_cabeca(rad: float) -> void:
+	_cabeca_baixa = clampf(rad - 0.18, 0.0, 0.6)
+	if _cabeca != null:
+		_pose_olhada()
 
 
 ## Ao ser vista: congela com a cabeça virada de vez para o jogador (um estalo só).
 func _pose_olhada() -> void:
 	_pose_base()
-	_cabeca.rotation = Vector3(0.1, 0.0, 0.5 * (1.0 if randf() < 0.5 else -1.0))
+	_cabeca.rotation = Vector3(0.1 - _cabeca_baixa, 0.0, 0.5 * (1.0 if randf() < 0.5 else -1.0))
 	_corpo.rotation = Vector3(-0.28, 0.0, 0.0)
 	_modelo.rotation.y = 0.0
 
@@ -351,6 +371,15 @@ func _process(dt: float) -> void:
 	_mat.set_shader_parameter("suelo", global_position.y)
 	if _movendo:
 		_snap_t -= dt
+		if not _mov_ant:                       # acabou de arrancar: arranque forte já neste quadro
+			_arranco = true
+			_snap_t = 0.0
+			_prox_arranco = randf_range(1.4, 3.0)
+		_prox_arranco -= dt
+		if _prox_arranco <= 0.0:               # de tempos em tempos, enquanto corre, outro arranque
+			_prox_arranco = randf_range(1.4, 3.0)
+			_arranco = true
+			_snap_t = minf(_snap_t, 0.03)
 		if _snap_t <= 0.0:
 			_snap_t = randf_range(0.07, 0.2)
 			if _arranco:
@@ -361,6 +390,7 @@ func _process(dt: float) -> void:
 	elif olhada and not _olhada_ant:
 		_pose_olhada()
 	_olhada_ant = olhada
+	_mov_ant = _movendo
 	# cintilação só de perto, andando
 	var b := 1.0
 	if _movendo and _dist < 6.0 and randf() < 0.1:

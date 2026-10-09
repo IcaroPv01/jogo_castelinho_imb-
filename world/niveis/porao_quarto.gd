@@ -180,9 +180,10 @@ static func vinheta(c) -> void:
 			_menino(slide, Vector3(-1.2, 0.0, -L + 3.0), 0.0, true, true)
 			_poente(slide, c, -L + 0.08, 3.4, 3.2, 0.0, true)
 		98:
-			# a Figura Branca do outro lado da água, de braços abertos; o menino pequeno, sentado, de costas para nós
-			_menino(slide, Vector3(-1.0, 0.0, -3.6), 0.0, true, true)
-			_figura_aberta(slide, Vector3(0.0, 0.0, -L + 1.2))
+			# a Figura Branca do outro lado, parada, de braços caídos; o menino pequeno, sentado, de costas para nós
+			# (mais adiante no corredor: quem entra na sala não o encontra colado e cortado na tela)
+			_menino(slide, Vector3(-0.9, 0.0, -7.6), 0.0, true, true)
+			_figura_slide(slide, Vector3(0.0, 0.0, -L + 1.2))
 			_poente(slide, c, -L + 0.08, 3.4, 3.2, 0.0, true)
 		99:
 			# a água parada, sem ninguém, e o balde boiando (o nível põe o balde na cota da água)
@@ -321,53 +322,111 @@ static func _menino(pai: Node3D, pos: Vector3, yaw: float, sentado: bool, balde:
 	return n
 
 
-## A Figura Branca de braços abertos (silhueta estática do slide 3): saia, tronco, cabeça sem rosto, véu, braços em T.
-static func _figura_aberta(pai: Node3D, pos: Vector3) -> Node3D:
+## A Figura Branca do slide (silhueta estática, a mesma de creatures/figura_branca.gd, em poucas peças chapadas):
+## alta e magra (~2,4 m), vestido claro rasgado na barra, cabelo preto longo e molhado cobrindo o rosto, braços longos
+## caídos junto ao corpo com dedos longos, levemente curvada para a frente. Frente = +Z (de frente para quem entra).
+static func _figura_slide(pai: Node3D, pos: Vector3) -> Node3D:
 	var n := Node3D.new()
-	n.name = "FiguraAberta"
+	n.name = "FiguraSlide"
 	n.position = pos
 	pai.add_child(n)
-	var branco := _mat_slide(Color(0.95, 0.96, 1.0))
-	var veu_m := StandardMaterial3D.new()
-	veu_m.albedo_color = Color(0.9, 0.93, 1.0, 0.4)
-	veu_m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	veu_m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	veu_m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var vestido := _mat_slide(Color(0.8, 0.86, 0.84))
+	var barra := _mat_slide(Color(0.5, 0.58, 0.58))
+	var pele := _mat_slide(Color(0.56, 0.65, 0.61))   # um pouco mais escura que o vestido: os braços se leem contra ele
+	var cabelo := _mat_slide(Color(0.03, 0.035, 0.045))
+	# vestido: saia fina até o joelho e a barra mais escura, com tiras rasgadas pendendo (sem pés)
 	var saia := CylinderMesh.new()
-	saia.top_radius = 0.16
-	saia.bottom_radius = 0.44
-	saia.height = 1.4
-	saia.radial_segments = 10
+	saia.top_radius = 0.1
+	saia.bottom_radius = 0.28
+	saia.height = 1.04
+	saia.radial_segments = 8
 	saia.rings = 1
-	_peca(n, saia, Vector3(0, 0.78, 0), branco)
+	_peca(n, saia, Vector3(0, 0.62, 0), vestido)
+	var faixa := CylinderMesh.new()
+	faixa.top_radius = 0.22
+	faixa.bottom_radius = 0.29
+	faixa.height = 0.3
+	faixa.radial_segments = 8
+	faixa.rings = 1
+	_peca(n, faixa, Vector3(0, 0.25, 0), barra)
+	var tira := CylinderMesh.new()
+	tira.top_radius = 0.045
+	tira.bottom_radius = 0.0
+	tira.height = 0.32
+	tira.radial_segments = 4
+	tira.rings = 1
+	for k in 9:
+		var ang := TAU * k / 9.0
+		var comp := 0.7 + 0.5 * absf(sin(k * 2.3))
+		var t := _peca(n, tira, Vector3(cos(ang) * 0.27, 0.12, sin(ang) * 0.27), barra)
+		t.scale = Vector3(1, comp, 1)
+	# tronco, pescoço, cabeça e cabelo ficam num pivô no quadril: a curvatura vem daqui
+	var corpo := Node3D.new()
+	corpo.name = "Corpo"
+	corpo.position = Vector3(0, 1.05, 0)
+	corpo.rotation = Vector3(0.2, 0, 0.03)       # +X inclina a cabeça para a frente (+Z)
+	n.add_child(corpo)
 	var tronco := CapsuleMesh.new()
-	tronco.radius = 0.15
-	tronco.height = 0.78
+	tronco.radius = 0.1
+	tronco.height = 0.86
 	tronco.radial_segments = 8
 	tronco.rings = 2
-	_peca(n, tronco, Vector3(0, 1.78, 0), branco)
+	_peca(corpo, tronco, Vector3(0, 0.45, 0), vestido).scale = Vector3(1.2, 1.0, 0.7)
 	var cab := SphereMesh.new()
-	cab.radius = 0.11
-	cab.height = 0.22
+	cab.radius = 0.08
+	cab.height = 0.16
 	cab.radial_segments = 8
 	cab.rings = 4
-	_peca(n, cab, Vector3(0.0, 2.3, 0), branco).scale = Vector3(0.85, 1.25, 0.9)
+	var cabeca := Node3D.new()
+	cabeca.position = Vector3(0, 0.98, 0.03)
+	cabeca.rotation = Vector3(0.12, 0, 0.2)      # cabeça pendida e torta
+	corpo.add_child(cabeca)
+	_peca(cabeca, cab, Vector3(0, 0, 0), pele).scale = Vector3(0.9, 1.3, 0.95)
+	# cabelo: calota sobre a cabeça + cortina que cobre o rosto e desce até o peito + mechas soltas na frente
+	var calota := SphereMesh.new()
+	calota.radius = 0.1
+	calota.height = 0.2
+	calota.radial_segments = 8
+	calota.rings = 4
+	_peca(cabeca, calota, Vector3(0, 0.0, -0.005), cabelo).scale = Vector3(1.0, 1.4, 1.1)
+	var cortina := CapsuleMesh.new()
+	cortina.radius = 0.1
+	cortina.height = 0.95
+	cortina.radial_segments = 8
+	cortina.rings = 2
+	_peca(cabeca, cortina, Vector3(0, -0.34, 0.03), cabelo).scale = Vector3(1.0, 1.0, 0.6)
+	var mecha := CapsuleMesh.new()
+	mecha.radius = 0.014
+	mecha.height = 0.7
+	mecha.radial_segments = 4
+	mecha.rings = 1
+	for k in 5:
+		var xm := (k - 2) * 0.045
+		var m := _peca(cabeca, mecha, Vector3(xm, -0.5 - 0.06 * absf(k - 2), 0.1), cabelo)
+		m.scale = Vector3(1, 1.0 + 0.25 * sin(k * 1.9), 1)
+		m.rotation_degrees = Vector3(0, 0, (k - 2) * 3.0)
+	# braços longos e finos caídos junto ao corpo, levemente para a frente, com 4 dedos longos
 	var braco := CapsuleMesh.new()
-	braco.radius = 0.04
-	braco.height = 1.3
+	braco.radius = 0.026
+	braco.height = 1.12
 	braco.radial_segments = 6
 	braco.rings = 1
-	_peca(n, braco, Vector3(-0.68, 2.05, 0.0), branco, Vector3(0, 0, 82))
-	_peca(n, braco, Vector3(0.68, 2.05, 0.0), branco, Vector3(0, 0, -82))
-	var veu := CylinderMesh.new()
-	veu.top_radius = 0.18
-	veu.bottom_radius = 0.7
-	veu.height = 2.3
-	veu.radial_segments = 12
-	veu.rings = 1
-	veu.cap_top = false
-	veu.cap_bottom = false
-	_peca(n, veu, Vector3(0, 1.2, 0.02), veu_m)
+	var dedo := CapsuleMesh.new()
+	dedo.radius = 0.009
+	dedo.height = 0.3
+	dedo.radial_segments = 4
+	dedo.rings = 1
+	for lado in [-1.0, 1.0]:
+		var ombro := Node3D.new()
+		ombro.position = Vector3(0.16 * lado, 0.8, 0.0)
+		ombro.rotation = Vector3(-0.1, 0, 0.06 * lado)   # pende um pouco para a frente e para fora
+		corpo.add_child(ombro)
+		_peca(ombro, braco, Vector3(0, -0.56, 0), pele)
+		for j in 4:
+			var abre: float = (j - 1.5) * 0.04 * lado
+			var d := _peca(ombro, dedo, Vector3(abre, -1.27, -0.02), pele)
+			d.scale = Vector3(1, 1.0 + 0.2 * (1 - absi(j - 1)), 1)
+			d.rotation_degrees = Vector3(0, 0, -(j - 1.5) * 6.0 * lado)
 	return n
 
 

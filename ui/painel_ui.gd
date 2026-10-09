@@ -330,8 +330,8 @@ func _construir() -> void:
 	dica.size = Vector2(420 if _imagem == null else 200, 40)
 	dica.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	dica.add_theme_font_override("font", Flash.fonte_sistema())
-	dica.add_theme_font_size_override("font_size", 15)
-	dica.add_theme_color_override("font_color", Color("7A8394"))
+	dica.add_theme_font_size_override("font_size", 16)
+	dica.add_theme_color_override("font_color", Flash.NAVY)
 	dica.add_theme_constant_override("outline_size", 0)
 	_janela.add_child(dica)
 

@@ -123,7 +123,7 @@ static func _escada_torre(c: Castelinho) -> void:
 
 # ------------------------------------------------------------------ lustres de ferro (pátina verde) + pontos de luz
 static func lustre(c: Castelinho, ma: Malha, pos: Vector3, teto: float, tam := 1.0) -> void:
-	var ferro: Material = Castelinho.mat_cor(Color(0.18, 0.3, 0.26), 0.6)
+	var ferro: Material = Castelinho.mat_cor(Color(0.10, 0.12, 0.11), 0.9)
 	var luz: Material = c.m.luz
 	var ch := teto - pos.y
 	ma.caixa(ferro, pos + Vector3(-0.012, 0, -0.012), pos + Vector3(0.012, ch, 0.012), Malha.F_TODAS)

@@ -2000,26 +2000,17 @@ func _montar_pegadas_v4() -> void:
 	_pegadas_v4.name = "PegadasMolhadas"
 	_pegadas_v4.visible = false
 	add_child(_pegadas_v4)
-	var mt := StandardMaterial3D.new()
-	mt.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mt.albedo_color = Color(0.1, 0.16, 0.2, 0.7)
-	mt.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	var ini := Vector3(-6.5, 0.025, -16.1)
 	var fim := Vector3(-8.6, 0.025, -14.85)
 	var passos := 7
 	var dirp := (fim - ini).normalized()
 	for i in passos:
 		var f := float(i) / float(passos - 1)
-		var lado := -1.0 if i % 2 == 0 else 1.0
-		var qm := QuadMesh.new()
-		qm.size = Vector2(0.075, 0.17)
-		var mi := MeshInstance3D.new()
-		mi.mesh = qm
-		mi.material_override = mt
-		mi.position = ini.lerp(fim, f) + Vector3(-dirp.z, 0, dirp.x) * 0.06 * lado
-		mi.rotation = Vector3(-PI * 0.5, atan2(-dirp.x, -dirp.z), 0)
+		var esquerdo: bool = i % 2 == 0
+		var lado := -1.0 if esquerdo else 1.0
+		var pos := ini.lerp(fim, f) + Vector3(-dirp.z, 0, dirp.x) * 0.09 * lado
+		var mi := Pegada.criar(pos, dirp, esquerdo, 0.30, 1.35)     # pé de criança (world/pegada.gd), forte para ler de longe
 		mi.layers = 2
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_pegadas_v4.add_child(mi)
 	Epocas.marcar(_pegadas_v4, [E2020])
 	var it := Interagivel.new("Olhar as pegadas", Vector3(2.0, 0.6, 1.4), Callable())
@@ -2278,10 +2269,10 @@ func _evt_sala21() -> void:
 
 
 func _evt_sala22() -> void:
-	# Visita 4, sala 22 (cantinho escuro ao lado do quiz final): as luzes piscam e a Figura está logo ali, de lado.
+	# Visita 4, sala 22 (cantinho escuro ao lado do quiz final): as luzes piscam e a Figura está logo ali, de lado (o Susto afasta o ponto do arco/parede).
 	if visita == 4:
 		_susto_castelo("v4_sala22", GameState.sala_atual, 1.2,
-			{"apagar": 0.8, "sfx_antes": "clique", "angulo": 35.0, "frente": 2.3, "duracao": 0.6})
+			{"apagar": 0.8, "sfx_antes": "clique", "angulo": 20.0, "frente": 2.3, "duracao": 0.6})   # o Susto acha um ponto livre (fora do arco), inteira e na vista
 
 
 ## Visita 3, sala 18 (hall do andar de cima, trecho quieto): a lanterna e as lâmpadas falham e a Figura está no facho.

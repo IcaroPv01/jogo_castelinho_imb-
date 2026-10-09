@@ -620,19 +620,21 @@ def mural_pescador():
     d.line([(134, 112), (172, 100)], fill=(24, 22, 28), width=4)                                            # braço lançando a tarrafa
     d.line([(172, 100), (230, 70)], fill=(60, 60, 70), width=1)
     d.arc((170, 60, 260, 130), 200, 300, fill=(60, 60, 70), width=1)
-    try:
-        fonte = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf", 22)
-        d.text((330, 96), "Castelinho", font=fonte, fill=(20, 20, 24))
-        fonte2 = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf", 15)
-        d.text((350, 122), "Imbé/RS", font=fonte2, fill=(20, 20, 24))
-    except OSError:
-        pass
     # semente 3 (V2_ROTEIRO §3.1): uma criança na margem, pequena, de costas, no canto; ninguém comenta
     d.polygon([(404, 256), (512, 226), (512, 256)], fill=(196, 176, 130))                                   # faixa de areia
     d.ellipse((470, 215, 478, 223), fill=(24, 22, 28))                                                      # cabeça
     d.polygon([(468, 223), (480, 223), (481, 242), (467, 242)], fill=(24, 22, 28))                          # corpo
     d.rectangle((486, 234, 491, 240), fill=(150, 30, 26))                                                   # balde
     im = im.resize((w // 2, h // 2), Image.NEAREST).resize((w, h), Image.NEAREST)   # pixels visíveis
+    # texto DEPOIS da pixelização: letras nítidas (senão a serifa pequena vira "Caslelinho")
+    try:
+        d = ImageDraw.Draw(im)
+        fonte = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf", 22)
+        d.text((330, 96), "Castelinho", font=fonte, fill=(20, 20, 24))
+        fonte2 = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf", 15)
+        d.text((350, 122), "Imbé/RS", font=fonte2, fill=(20, 20, 24))
+    except OSError:
+        pass
     os.makedirs(SAIDA, exist_ok=True)
     im.save(os.path.join(SAIDA, "mural_pescador.png"))
     print("  gerada: mural_pescador.png 512 x 256")

@@ -18,7 +18,7 @@ Decisões do Icaro (07/10/2026):
 | 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | feito (PR #12): sequência fixa, masmorra, Figura nova, sustos (porão e V3/V4), bugs; reabre quando o Icaro jogar |
 | 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | feito (PR #14): três finais (Encontrado ≥8 pistas, Visita concluída, Sala 101), menu do Esc, contador de pistas, título muda após zerar; reabre quando o Icaro jogar |
 | 6 | Áudio | Jingle, ambientes e sustos (ninguém ouviu ainda: precisa do ouvido do Icaro) | `autoload/audio.gd`, `tools/gerar_audio.py`, `assets/audio/` | feito (PR #15): 9 sons novos, mixagem medida, Sala 101 abafada na web, jingle_1 mais estranho; reabre quando o Icaro ouvir (Mesa de som) |
-| 7 | Arte e gráficos | Acabamento visual mantendo o estilo Flash educativo | `shaders/`, `tools/gerar_texturas.py`, `castelinho/` | na fila |
+| 7 | Arte e gráficos | Acabamento visual mantendo o estilo Flash educativo | `shaders/`, `tools/gerar_texturas.py`, `castelinho/` | feito (PR #16): capturas das cenas só testadas, revisão gráfica (Opus), Figura nova no slide 98, mão/dedos de afogada, pegadas com forma de pé, lago e chegada; reabre quando o Icaro jogar |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -44,6 +44,31 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 7: Arte e gráficos (09/10/2026)
+
+- **O Icaro não respondeu às perguntas da abertura:** segui as recomendações (dá para desfazer). Mão e dedos de afogada
+  (pálidos, enrugados, sem garras); começo Flash intocado, acabamento só do porão em diante; slide 98 com a Figura nova;
+  da revisão Opus, aplicados os achados baratos.
+- **Capturas a olho** (scripts novos fora do CI: `tests/captura_visitas.gd` modos folha|tito|pegadas|susto18|susto22,
+  `tests/captura_figura_mov.gd`, `tests/captura_porao_vista.gd`). Ok sem mexer: folha "TITO 6–9" e fala engasgada (V3),
+  Tito de costas (V4 sala 74), giz da cela 90, títulos dos finais.
+- **Corrigido:** pegadas (V4 e lago) viraram pé de criança molhado, helper novo `world/pegada.gd` (`Pegada.criar`);
+  mão no ombro com cotovelo e dedos curvos (`_mao_longa`); dedos na lente afinando, com nós e palma, sem a "unha" preta
+  (`_mao_na_camera`, 7 dedos); lápide com "TITO" inteiro numa placa; lua redonda; fundo da Sala 101 com areia, algas,
+  sapatinhos e balde perto e iluminados; HUD diz "SALA 101" ao afundar (`entrar_sala(101)`; `sala_maxima` vira 101,
+  checkpoint segue 100); slide 98 com `_figura_slide` (nó "FiguraSlide") e menino afastado; Figura com `_arranco` ligado
+  e andar aos trancos alternando lados; sustos com pés no chão a mais de 2 m e `_ponto_livre` (nunca nasce dentro de
+  parede; vale para todo susto sem `pos`); V4 sala 22 sem o arco cortando; correntes da 87 em aço com tocha; cela 90 com
+  fundo aberto, banco e balde.
+- **Revisão Opus aplicada:** HUD some nas cenas de cinema (`hud.modo_cinema`; no Visita concluída fica escondido até o
+  fim); poça do lago sem degraus serrilhados; legenda de chegada mais baixa e com faixa escura; degraus da escada de
+  chegada em lajota com borda clara; marola em volta da Figura no lago; grama mais fina; mural "Castelinho Imbé/RS"
+  legível; lustres sem verde-neon; dicas "Esc: fechar" e "segure Q: ver" maiores.
+- **Não feito (ideias):** a Figura no lago segue "de pé na água" (escolha de roteiro); fundo da Sala 101 ainda simples;
+  dedos da mão do ombro podiam curvar mais; balde do fundo é um bloco vermelho. Áudio: durações das cenas finais não
+  mudaram (só o ângulo da cabeça no afundar).
+- Pendente: o Icaro jogar os finais e o porão e dizer o que ficou feio.
 
 ### Módulo 6: Áudio (09/10/2026)
 
