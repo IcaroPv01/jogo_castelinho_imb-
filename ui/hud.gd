@@ -80,7 +80,12 @@ func _ready() -> void:
 	Opcoes.carregar()
 	menu_pausa = MenuPausa.new()
 	menu_pausa.name = "MenuPausa"
-	add_child(menu_pausa)
+	# camada própria, acima das legendas e UIs dos níveis (até 90), mas abaixo da Transição (100)
+	var camada_pausa := CanvasLayer.new()
+	camada_pausa.name = "CamadaPausa"
+	camada_pausa.layer = 96
+	add_child(camada_pausa)
+	camada_pausa.add_child(menu_pausa)
 	lbl_pausa = menu_pausa.lbl_pausa   # (o _ready do menu já rodou ao entrar na árvore)
 
 	_construir_pistas()

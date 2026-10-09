@@ -394,7 +394,7 @@ func _montar_rodape() -> void:
 	aviso.add_theme_constant_override("outline_size", 5)
 	_palco.add_child(aviso)
 	var contador := Label.new()
-	contador.text = "Visitantes: 000027"
+	contador.text = "Visitantes: 000101" if Finais.ultimo() == "sala_101" else "Visitantes: 000027"
 	contador.position = Vector2(20, 692)
 	contador.size = Vector2(280, 26)
 	contador.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -413,26 +413,26 @@ func _montar_lapide() -> void:
 	if ultimo == "":
 		return
 	var frase := {"encontrado": "Ele foi para casa.", "visita_concluida": "Ele ainda está esperando.",
-		"sala_101": "Visitantes: 101"}.get(ultimo, "") as String
-	var pos := Vector2(560, 470)
+		"sala_101": "Ele tem companhia agora."}.get(ultimo, "") as String
+	var pos := Vector2(1196, 556)     # no gramado à direita do botão, perto das flores do castelo
 	var pedra := Panel.new()
 	pedra.position = pos
-	pedra.size = Vector2(110, 120)
+	pedra.size = Vector2(72, 80)
 	pedra.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pedra.add_theme_stylebox_override("panel", Flash.caixa(Color("E8D49A"), Flash.NAVY, 40, 4, false))
+	pedra.add_theme_stylebox_override("panel", Flash.caixa(Color("E8D49A"), Flash.NAVY, 28, 3, false))
 	_palco.add_child(pedra)
 	# "TITO": letras separadas para poder virar só a primeira
 	var letras := "TITO"
 	for i in letras.length():
 		var l := Label.new()
 		l.text = letras[i]
-		l.size = Vector2(22, 30)
-		l.position = pos + Vector2(11 + i * 23, 34)
+		l.size = Vector2(15, 22)
+		l.position = pos + Vector2(6 + i * 15, 18)
 		l.pivot_offset = l.size / 2.0
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		l.add_theme_font_override("font", Flash.fonte_titulo())
-		l.add_theme_font_size_override("font_size", 22)
+		l.add_theme_font_size_override("font_size", 18)
 		l.add_theme_color_override("font_color", Flash.NAVY)
 		if i == 0 and ultimo != "encontrado":
 			l.rotation = PI
@@ -440,23 +440,23 @@ func _montar_lapide() -> void:
 	var vistos: Array = Finais.vistos()
 	for i in Finais.TODOS.size():
 		var m := Panel.new()
-		m.size = Vector2(12, 12)
-		m.position = pos + Vector2(31 + i * 20, 82)
+		m.size = Vector2(14, 14)
+		m.position = pos + Vector2(8 + i * 20, 52)
 		m.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var cor := Flash.AMARELO if i < vistos.size() else Color("E8D49A")
-		m.add_theme_stylebox_override("panel", Flash.caixa(cor, Flash.NAVY, 6, 2, false))
+		m.add_theme_stylebox_override("panel", Flash.caixa(cor, Flash.NAVY, 7, 2, false))
 		_palco.add_child(m)
 	var f := Label.new()
 	f.text = frase
-	f.position = pos + Vector2(-60, 126)
-	f.size = Vector2(230, 24)
-	f.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	f.position = Vector2(1000, 652)
+	f.size = Vector2(272, 26)
+	f.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	f.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	f.add_theme_font_override("font", Flash.fonte_sistema())
-	f.add_theme_font_size_override("font_size", 16)
-	f.add_theme_color_override("font_color", Color.WHITE)
-	f.add_theme_color_override("font_outline_color", Color("14522A"))
-	f.add_theme_constant_override("outline_size", 5)
+	f.add_theme_font_override("font", Flash.fonte_texto())
+	f.add_theme_font_size_override("font_size", 20)
+	f.add_theme_color_override("font_color", Color("FFF6C0"))
+	f.add_theme_color_override("font_outline_color", Color("0F3A1E"))
+	f.add_theme_constant_override("outline_size", 7)
 	_palco.add_child(f)
 
 

@@ -881,7 +881,7 @@ func _teste_braco_morto(final: String) -> void:
 		_checar(fim_falas and nivel.get_child_count() > 0 and nivel._t_lapide.rotation_degrees.z < 0.5, "Encontrado: o T da lápide ficou certo")
 		var pegadas := 0
 		for c in nivel.get_children():
-			if c is MeshInstance3D and c.mesh is PlaneMesh and (c.mesh as PlaneMesh).size.is_equal_approx(Vector2(0.08, 0.15)):
+			if c is MeshInstance3D and c.mesh is PlaneMesh and (c.mesh as PlaneMesh).size.is_equal_approx(Vector2(0.24, 0.42)):
 				pegadas += 1
 		_checar(pegadas >= 3, "Encontrado: pegadas molhadas deixadas (%d)" % pegadas)
 	else:

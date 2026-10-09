@@ -213,9 +213,9 @@ func _braco(modo: String) -> void:
 		await _esperar(6.0)
 		await _foto("enc_depois_sumiu", 1)
 		# pegadas: olhar para elas
-		player.global_position = Vector3(2.2, 0.8, -1.5)
+		player.global_position = Vector3(1.6, 0.8, -2.0)
 		player.rotation.y = 0.0
-		player.cabeca.rotation.x = -0.5
+		player.cabeca.rotation.x = -0.75
 		await _foto("enc_pegadas", 6)
 		await _esperar(8.0)
 		await _foto("enc_final", 1)

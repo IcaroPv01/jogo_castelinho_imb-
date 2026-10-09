@@ -599,6 +599,15 @@ func _escada_do_porao() -> void:
 	l.omni_range = 7.0
 	l.shadow_enabled = false
 	add_child(l)
+	# luz de preenchimento fria no pé da escada, para os degraus aparecerem
+	var l2 := OmniLight3D.new()
+	l2.name = "LuzDosDegraus"
+	l2.position = Vector3(-14.0, -1.0, 11.2)
+	l2.light_color = Color(0.6, 0.75, 1.0)
+	l2.light_energy = 1.1
+	l2.omni_range = 7.0
+	l2.shadow_enabled = false
+	add_child(l2)
 
 
 # ============================================================================ a lápide de areia (feita por criança)
@@ -626,19 +635,21 @@ func _lapide_de_areia() -> void:
 	# TITO riscado na lápide, com o T de cabeça para baixo (o jeito dele assinar)
 	var letras := ["T", "I", "T", "O"]
 	for i in 4:
-		var l := Construtor.rotulo(self, letras[i], Vector3(p.x - 0.18 + i * 0.12, 0.41, p.z + 0.145), 34, Color(0.3, 0.22, 0.12))
+		var l := Construtor.rotulo(self, letras[i], Vector3(p.x - 0.27 + i * 0.18, 0.4, p.z + 0.2), 64, Color(0.13, 0.08, 0.04))
 		l.pixel_size = 0.0035
 		l.shaded = false
+		l.outline_size = 6
+		l.outline_modulate = Color(0.95, 0.85, 0.6)
 		if i == 0:
 			l.rotation_degrees.z = 180.0
 			_t_lapide = l
 	# uma luz quente baixa para o castelinho de areia ser achado de longe à noite (uma luz só, sem sombra)
 	var luz := OmniLight3D.new()
 	luz.name = "LuzDaLapide"
-	luz.position = Vector3(p.x, 1.6, p.z - 0.6)
-	luz.light_color = Color(1.0, 0.8, 0.5)
-	luz.light_energy = 1.4
-	luz.omni_range = 6.0
+	luz.position = Vector3(p.x, 1.4, p.z + 0.9)
+	luz.light_color = Color(1.0, 0.78, 0.45)
+	luz.light_energy = 2.8
+	luz.omni_range = 7.0
 	luz.shadow_enabled = false
 	add_child(luz)
 	lapide = Interagivel.new("Ver a lápide de areia", Vector3(1.4, 1.0, 0.9), _usar_lapide)
@@ -755,7 +766,8 @@ func _final_encontrado(menino: Node3D) -> void:
 	_mostrar_legenda("Agora alguém sabe.", 3.0, 34)
 	await get_tree().create_timer(3.6, false).timeout
 	# do outro lado do lago, a Figura em pé na água, parada; ele se levanta e anda para a luz do calçadão
-	var fig := _figura_na_agua(Vector3(POS_TITO.x - 4.0, AGUA_Y - 0.55, LAGO_Z0 + 5.0), 0.0)
+	var perto := Vector3(POS_TITO.x - 2.5, AGUA_Y - 0.15, player.global_position.z - 11.0)     # ~13 m do jogador, na água
+	var fig := _figura_na_agua(perto, 0.0)
 	var em_pe := _levantar_tito(menino)
 	var origem := em_pe.position
 	var destino := Vector3(2.2, 0.0, -4.7)
@@ -816,17 +828,40 @@ func _deixar_pegada(pos: Vector3, f: float, dist_total: float) -> void:
 	var dir := Vector3(2.2 - POS_TITO.x, 0.0, -4.7 - POS_TITO.z).normalized()
 	var mi := MeshInstance3D.new()
 	var pl := PlaneMesh.new()
-	pl.size = Vector2(0.08, 0.15)
+	pl.size = Vector2(0.24, 0.42)
 	mi.mesh = pl
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.03, 0.05, 0.09, 0.8)
+	mat.albedo_color = Color(0.02, 0.02, 0.03, 0.95)
+	mat.albedo_texture = _tex_pegada()
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.roughness = 0.1
+	mat.roughness = 0.05
+	mat.metallic_specular = 1.0
+	mat.metallic = 0.35
 	mi.material_override = mat
-	mi.position = Vector3(pos.x + lado * 0.07, 0.035, pos.z)
+	mi.position = Vector3(pos.x + lado * 0.1, 0.04, pos.z)
 	mi.rotation.y = atan2(dir.x, dir.z)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
+
+
+## Mancha oval molhada (alfa radial) para as pegadas do Tito.
+static var _tex_pg: Texture2D
+static func _tex_pegada() -> Texture2D:
+	if _tex_pg == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.set_color(1, Color(1, 1, 1, 0))
+		g.set_offset(0, 0.8)
+		g.set_offset(1, 1.0)
+		var t := GradientTexture2D.new()
+		t.gradient = g
+		t.fill = GradientTexture2D.FILL_RADIAL
+		t.fill_from = Vector2(0.5, 0.5)
+		t.fill_to = Vector2(1.0, 0.5)
+		t.width = 64
+		t.height = 64
+		_tex_pg = t
+	return _tex_pg
 
 
 ## A Figura em pé na água (parada, sem avançar nem matar). `yaw` 0 = de frente para o sul (para o jogador).
@@ -840,6 +875,17 @@ func _figura_na_agua(pos: Vector3, yaw: float) -> FiguraBranca:
 	_figura.visible = true
 	_figura.global_position = pos
 	_figura.rotation.y = yaw
+	_figura.scale = Vector3.ONE * 1.2     # alta, para ler de longe
+	_figura._mat.set_shader_parameter("brilho", 1.9)     # pálida e legível mesmo à noite
+	if _figura.get_node_or_null("LuzFria") == null:
+		var lf := OmniLight3D.new()
+		lf.name = "LuzFria"
+		lf.position = Vector3(0.0, 1.9, 1.6)
+		lf.light_color = Color(0.7, 0.85, 1.0)
+		lf.light_energy = 3.0
+		lf.omni_range = 7.0
+		lf.shadow_enabled = false
+		_figura.add_child(lf)
 	return _figura
 
 
@@ -894,28 +940,33 @@ func _encerrar() -> void:
 
 ## Escurece devagar; a Figura sobe da água atrás do Tito e uma mão longa pousa no ombro dele. Só isso. Corta para o preto.
 func _beat_visita_concluida() -> void:
-	var menino := tito.get_node("Menino") as Node3D
 	var pos_m: Vector3 = tito.global_position + POS_TITO
-	player.olhar_para(pos_m + Vector3(0, 0.6, 0), 1.2)
+	# a câmera se afasta para ~4,5 m de lado, para ver o Tito e quem vem atrás
+	var cam_pos := Vector3(pos_m.x - 2.9, 0.05, pos_m.z + 3.5)
+	var tw0 := create_tween()
+	tw0.tween_property(player, "global_position", cam_pos, 1.4).set_trans(Tween.TRANS_SINE)
+	await tw0.finished
+	player.olhar_para(pos_m + Vector3(0.1, 0.9, -0.9), 0.5)
+	await get_tree().create_timer(0.6, false).timeout
 	var tw := create_tween()
-	tw.tween_property(_cortina, "color:a", 0.72, 5.5).set_trans(Tween.TRANS_SINE)
-	await get_tree().create_timer(1.2, false).timeout
-	var fig := _figura_na_agua(Vector3(pos_m.x, AGUA_Y - 3.0, pos_m.z - 1.9), PI)
+	tw.tween_property(_cortina, "color:a", 0.4, 4.0).set_trans(Tween.TRANS_SINE)
+	await get_tree().create_timer(1.0, false).timeout
+	var fig := _figura_na_agua(Vector3(pos_m.x + 0.15, AGUA_Y - 3.0, pos_m.z - 1.7), PI * 0.06)
 	Audio.sfx("agua_sobe", -8.0)
 	var tw2 := create_tween()
-	tw2.tween_property(fig, "position:y", AGUA_Y - 0.35, 3.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw2.tween_property(fig, "position:y", AGUA_Y - 0.2, 3.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await tw2.finished
 	await get_tree().create_timer(0.5, false).timeout
-	# a mão longa: um braço fino e pálido do peito dela até o ombro dele, com dedos compridos
-	var ombro := pos_m + Vector3(-0.02, 0.62, 0.0)
-	var mao := _mao_longa(fig.global_position + Vector3(0.0, 1.55, 0.15), ombro)
+	# a mão longa pousa no ombro dele
+	var ombro := pos_m + Vector3(0.0, 0.62, -0.05)
+	var mao := _mao_longa(fig.global_position + Vector3(-0.15, 1.75, 0.2), ombro)
 	mao.scale = Vector3(1, 1, 0.01)
 	var tw3 := create_tween()
 	tw3.tween_property(mao, "scale:z", 1.0, 1.8).set_trans(Tween.TRANS_SINE)
 	await tw3.finished
-	await get_tree().create_timer(1.6, false).timeout
+	await get_tree().create_timer(2.8, false).timeout     # fica visível antes de escurecer
 	var tw4 := create_tween()
-	tw4.tween_property(_cortina, "color:a", 1.0, 0.12)     # corta para o preto
+	tw4.tween_property(_cortina, "color:a", 1.0, 1.8).set_trans(Tween.TRANS_SINE)
 	await tw4.finished
 	await get_tree().create_timer(0.6, false).timeout
 
@@ -926,34 +977,69 @@ func _mao_longa(de: Vector3, ate: Vector3) -> Node3D:
 	add_child(raiz)
 	raiz.global_position = de
 	raiz.look_at(ate, Vector3.UP)
-	var cor := FiguraBranca.COR_PELE
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = cor
+	mat.albedo_color = FiguraBranca.COR_PELE * 1.45
+	var mat_unha := StandardMaterial3D.new()
+	mat_unha.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat_unha.albedo_color = Color(0.08, 0.09, 0.1)
 	var comp: float = de.distance_to(ate)
-	var braco := CapsuleMesh.new()
-	braco.radius = 0.035
+	var braco := CylinderMesh.new()
+	braco.top_radius = 0.05
+	braco.bottom_radius = 0.032
 	braco.height = comp
-	braco.radial_segments = 6
-	braco.rings = 1
+	braco.radial_segments = 8
 	var mb := MeshInstance3D.new()
 	mb.mesh = braco
 	mb.material_override = mat
 	mb.rotation.x = PI * 0.5
 	mb.position = Vector3(0, 0, -comp * 0.5)
 	raiz.add_child(mb)
-	var dedo := CapsuleMesh.new()
-	dedo.radius = 0.011
-	dedo.height = 0.26
-	dedo.radial_segments = 5
-	dedo.rings = 1
+	# mão: palma estreita e quatro dedos compridos, de três falanges, que se curvam sobre o ombro
+	var palma := MeshInstance3D.new()
+	var sp := SphereMesh.new()
+	sp.radius = 0.06
+	sp.height = 0.12
+	sp.radial_segments = 8
+	sp.rings = 4
+	palma.mesh = sp
+	palma.material_override = mat
+	palma.scale = Vector3(1.0, 0.5, 1.2)
+	palma.position = Vector3(0, 0, -comp)
+	raiz.add_child(palma)
 	for i in 4:
-		var md := MeshInstance3D.new()
-		md.mesh = dedo
-		md.material_override = mat
-		md.position = Vector3((i - 1.5) * 0.026, -0.05, -comp - 0.02)
-		md.rotation_degrees = Vector3(70.0, 0.0, (i - 1.5) * 7.0)
-		raiz.add_child(md)
+		var pivo := Node3D.new()
+		pivo.position = Vector3((i - 1.5) * 0.034, -0.02, -comp - 0.05)
+		pivo.rotation_degrees = Vector3(-8.0, (i - 1.5) * -6.0, 0.0)
+		raiz.add_child(pivo)
+		var cur := pivo
+		var fal := [0.13, 0.11, 0.09]
+		var rad := 0.014
+		for k in 3:
+			var seg := MeshInstance3D.new()
+			var cm := CylinderMesh.new()
+			cm.top_radius = rad * 0.8
+			cm.bottom_radius = rad
+			cm.height = fal[k]
+			cm.radial_segments = 5
+			seg.mesh = cm
+			seg.material_override = mat
+			seg.rotation.x = PI * 0.5
+			seg.position = Vector3(0, 0, -fal[k] * 0.5)
+			cur.add_child(seg)
+			var junta := Node3D.new()
+			junta.position = Vector3(0, 0, -fal[k])
+			junta.rotation_degrees.x = -28.0     # cada junta dobra um pouco para baixo (para o ombro)
+			cur.add_child(junta)
+			cur = junta
+			rad *= 0.8
+		var unha := MeshInstance3D.new()
+		var bu := BoxMesh.new()
+		bu.size = Vector3(0.014, 0.004, 0.026)
+		unha.mesh = bu
+		unha.material_override = mat_unha
+		unha.position = Vector3(0, 0.008, 0.012)
+		cur.add_child(unha)
 	return raiz
 
 
@@ -965,6 +1051,7 @@ func _titulos_e_dedicatoria() -> void:
 	_titulo_final.text = textos.get(final, "VISITA CONCLUÍDA")
 	var tem_cartao := final == "visita_concluida" or final == "sala_101"
 	if tem_cartao:
+		_titulo_final.offset_bottom = -200.0     # o título sobe para o cartão ficar no centro
 		_montar_cartao("Obrigado pela visita! Volte sempre!" if final == "visita_concluida" else "Sala 101 - Visitante registrado.\nVolte sempre!")
 	var tw2 := create_tween()
 	tw2.tween_property(_titulo_final, "modulate:a", 1.0, 1.2)
@@ -1003,24 +1090,24 @@ func _montar_cartao(linha: String) -> void:
 	_cartao.add_child(caixa)
 	var topo := Label.new()
 	topo.text = "PROGRAMA MUNICIPAL DE MEMÓRIA INTERATIVA"
-	topo.add_theme_font_size_override("font_size", 18)
+	topo.add_theme_font_size_override("font_size", 26)
 	topo.add_theme_color_override("font_color", Color(0.15, 0.45, 0.8))
 	topo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	caixa.add_child(topo)
 	var l := Label.new()
 	l.text = linha
-	l.add_theme_font_size_override("font_size", 34)
+	l.add_theme_font_size_override("font_size", 52)
 	l.add_theme_color_override("font_color", Color(0.1, 0.4, 0.2))
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	caixa.add_child(l)
 	_cartao.modulate.a = 0.0
-	_cartao.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_cartao.set_anchors_preset(Control.PRESET_CENTER)
 	_cartao.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_cartao.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_cartao.offset_top = -150.0
-	_cartao.offset_bottom = -150.0
+	_cartao.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_cartao.offset_top = 90.0
+	_cartao.offset_bottom = 90.0
 	_cartao.rotation_degrees = -3.0
-	_cartao.pivot_offset = Vector2(300, 60)
+	_cartao.resized.connect(func(): _cartao.pivot_offset = _cartao.size * 0.5)
 	_titulo_final.get_parent().add_child(_cartao)
 
 
@@ -1085,13 +1172,10 @@ func _afundar() -> void:
 	tw2.tween_property(player.cabeca, "rotation:x", -0.3, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await tw2.finished
 	await get_tree().create_timer(2.6, false).timeout
-	# os dedos compridos da Figura fecham sobre a lente
+	# os dedos compridos da Figura entram pelas bordas e fecham sobre a lente
 	var mao := _mao_na_camera()
-	var tw3 := create_tween().set_parallel()
-	tw3.tween_property(mao, "position", Vector3(0, -0.02, -0.34), 1.8).set_trans(Tween.TRANS_SINE)
-	for i in 5:
-		var dedo := mao.get_node("Dedo%d" % i) as Node3D
-		tw3.tween_property(dedo, "rotation_degrees:z", (i - 2) * 3.0, 1.8).set_trans(Tween.TRANS_SINE)
+	var tw3 := create_tween()
+	tw3.tween_method(_fechar_mao.bind(mao), 0.0, 1.0, 2.4).set_trans(Tween.TRANS_SINE)
 	await tw3.finished
 	await get_tree().create_timer(0.6, false).timeout
 	var tw4 := create_tween()
@@ -1108,6 +1192,7 @@ func _pecas_do_fundo(fundo: Vector3) -> void:
 	raiz.name = "FundoDoLago"
 	add_child(raiz)
 	raiz.global_position = fundo
+	raiz.scale = Vector3.ONE * 1.5
 	var azul := Construtor.material(Color(0.2, 0.35, 0.8), 0.9)
 	var branco := Construtor.material(Color(0.85, 0.85, 0.8), 0.9)
 	for i in 2:
@@ -1116,7 +1201,7 @@ func _pecas_do_fundo(fundo: Vector3) -> void:
 		bs.size = Vector3(0.09, 0.025, 0.2)
 		sola.mesh = bs
 		sola.material_override = branco
-		sola.position = Vector3(-0.25 + i * 0.16, 0.02, -2.0 - i * 0.08)
+		sola.position = Vector3(-0.25 + i * 0.16, 0.02, -1.4 - i * 0.08)
 		sola.rotation.y = 0.25 - i * 0.7
 		raiz.add_child(sola)
 		var topo := MeshInstance3D.new()
@@ -1134,51 +1219,91 @@ func _pecas_do_fundo(fundo: Vector3) -> void:
 	cil.radial_segments = 10
 	balde.mesh = cil
 	balde.material_override = Construtor.material(Color(0.9, 0.1, 0.07), 0.8)
-	balde.position = Vector3(0.45, 0.1, -2.2)
+	balde.position = Vector3(0.45, 0.1, -1.55)
 	balde.rotation_degrees = Vector3(0, 0, 80)
 	raiz.add_child(balde)
 	var luz := OmniLight3D.new()
-	luz.position = Vector3(0.1, 0.9, -1.6)
-	luz.light_color = Color(0.5, 0.75, 1.0)
-	luz.light_energy = 2.0
-	luz.omni_range = 4.5
+	luz.position = Vector3(0.1, 0.8, -1.0)
+	luz.light_color = Color(0.55, 0.78, 1.0)
+	luz.light_energy = 3.2
+	luz.omni_range = 5.0
 	luz.shadow_enabled = false
 	raiz.add_child(luz)
 
 
-## A mão da Figura diante da câmera: palma e cinco dedos longos abertos (descem de cima e fecham).
+## A mão da Figura diante da câmera: cinco dedos longos, afilados e articulados, que entram pelas bordas da tela
+## (sem palma). `_fechar_mao(t)` os traz para o centro e os dobra (0 = fora da tela, 1 = fechados sobre a lente).
+const DEDOS_BORDA := [Vector2(-0.22, 0.30), Vector2(0.0, 0.32), Vector2(0.24, 0.30), Vector2(-0.52, 0.02), Vector2(0.52, -0.02)]
+
+
 func _mao_na_camera() -> Node3D:
 	var mao := Node3D.new()
 	player.camera.add_child(mao)
-	mao.position = Vector3(0, 0.75, -0.7)
+	mao.position = Vector3(0, 0, -0.34)
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = FiguraBranca.COR_PELE * 0.8
+	mat.albedo_color = FiguraBranca.COR_PELE * 1.25
 	mat.no_depth_test = true
 	mat.render_priority = 10
-	var palma := MeshInstance3D.new()
-	var bp := BoxMesh.new()
-	bp.size = Vector3(0.12, 0.13, 0.02)
-	palma.mesh = bp
-	palma.material_override = mat
-	mao.add_child(palma)
-	var dedo := CapsuleMesh.new()
-	dedo.radius = 0.013
-	dedo.height = 0.5
-	dedo.radial_segments = 5
-	dedo.rings = 1
+	var mat_unha := StandardMaterial3D.new()
+	mat_unha.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat_unha.albedo_color = Color(0.07, 0.08, 0.09)
+	mat_unha.no_depth_test = true
+	mat_unha.render_priority = 11
 	for i in 5:
 		var piv := Node3D.new()
 		piv.name = "Dedo%d" % i
-		piv.position = Vector3((i - 2) * 0.026, -0.06, 0.0)
-		piv.rotation_degrees.z = (i - 2) * 16.0
 		mao.add_child(piv)
-		var md := MeshInstance3D.new()
-		md.mesh = dedo
-		md.material_override = mat
-		md.position = Vector3(0, -0.25, 0)
-		piv.add_child(md)
+		var cur: Node3D = piv
+		var fal := [0.17, 0.14, 0.11]
+		var rad := 0.016
+		for k in 3:
+			var seg := MeshInstance3D.new()
+			var cm := CylinderMesh.new()
+			cm.top_radius = rad * 0.78
+			cm.bottom_radius = rad
+			cm.height = fal[k]
+			cm.radial_segments = 6
+			cm.rings = 1
+			seg.mesh = cm
+			seg.material_override = mat
+			seg.position = Vector3(0, -fal[k] * 0.5, 0)
+			cur.add_child(seg)
+			var junta := Node3D.new()
+			junta.name = "J%d" % k
+			junta.position = Vector3(0, -fal[k], 0)
+			cur.add_child(junta)
+			cur = junta
+			rad *= 0.78
+		var unha := MeshInstance3D.new()
+		var bu := BoxMesh.new()
+		bu.size = Vector3(0.011, 0.02, 0.004)
+		unha.mesh = bu
+		unha.material_override = mat_unha
+		unha.position = Vector3(0, 0.012, 0.01)
+		cur.add_child(unha)
+	_fechar_mao(0.0, mao)
 	return mao
+
+
+func _fechar_mao(t: float, mao: Node3D) -> void:
+	for i in 5:
+		var piv := mao.get_node("Dedo%d" % i) as Node3D
+		var borda: Vector2 = DEDOS_BORDA[i]
+		var fora := borda * 2.1
+		var pos := fora.lerp(borda * 0.85, t)
+		piv.position = Vector3(pos.x, pos.y, 0.0)
+		# o dedo aponta (-y local) para o centro da tela
+		var para := -borda.normalized()
+		var ang := atan2(para.x, -para.y)     # rotação em z que leva -y para `para`
+		piv.rotation = Vector3(0.0, 0.0, ang + (i - 2) * 0.05)
+		var curl := lerpf(6.0, 34.0, t)
+		# articulações: cada junta dobra um pouco para a frente (para a lente)
+		var cur: Node3D = mao.get_node("Dedo%d" % i)
+		for k in 3:
+			var j := cur.get_node("J%d" % k) as Node3D
+			j.rotation_degrees.x = -curl * (1.0 + k * 0.25)
+			cur = j
 
 
 ## Abafa o som (filtro passa-baixa no Master) enquanto o jogador está debaixo d'água; `false` tira o filtro.
