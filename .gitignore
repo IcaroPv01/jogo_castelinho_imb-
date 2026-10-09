@@ -9,3 +9,4 @@ build/
 
 # Referencias de pesquisa (fotos, mosaicos, croquis): privadas, nao versionar
 docs/pesquisa/refs/**
+__pycache__/
