@@ -182,6 +182,11 @@ func _teste_botoes() -> void:
 	_checar(float(lay.interagir.r) * 2.0 >= 90.0 and float(lay.correr.r) * 2.0 >= 90.0, "botões grandes (>= 90 px)")
 	var vp: Vector2 = c.tamanho()
 	_checar(Vector2(lay.interagir.c).x + float(lay.interagir.r) <= vp.x and Vector2(lay.interagir.c).y + float(lay.interagir.r) <= vp.y, "interagir cabe na tela")
+	# cena de cinema: só a pausa continua
+	c.cinema = true
+	var lay_cine: Dictionary = c.layout()
+	_checar(lay_cine.size() == 1 and lay_cine.has("pausa"), "cinema: só o botão de pausa fica")
+	c.cinema = false
 	# Correr: liga/desliga; soltar o analógico desliga
 	c.processar_toque(2, lay.correr.c, true)
 	c.processar_toque(2, lay.correr.c, false)

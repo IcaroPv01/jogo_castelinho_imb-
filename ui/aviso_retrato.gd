@@ -39,7 +39,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	_fundo = ColorRect.new()
-	_fundo.color = Color(Flash.NAVY.r * 0.5, Flash.NAVY.g * 0.5, Flash.NAVY.b * 0.5, 0.98)
+	_fundo.color = Color(Flash.NAVY.r * 0.5, Flash.NAVY.g * 0.5, Flash.NAVY.b * 0.5, 1.0)
 	_fundo.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_fundo.mouse_filter = Control.MOUSE_FILTER_STOP   # não deixa toque passar para o jogo
 	_fundo.visible = false

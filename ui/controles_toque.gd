@@ -25,7 +25,7 @@ const R_GRANDE := Celular.R_GRANDE
 const R_MEDIO := Celular.R_MEDIO
 const ALFA := 0.6
 
-## HUD.modo_cinema: esconde tudo.
+## HUD.modo_cinema: esconde tudo, menos o botão de pausa.
 var cinema := false
 ## Faixa de discos do HUD (para tocar num disco).
 var faixa: FaixaDiscos
@@ -80,7 +80,7 @@ func _exit_tree() -> void:
 # ================================================================ estado
 func _deve_mostrar() -> bool:
 	return Celular.ativo and GameState.jogando and not GameState.flag("ui_aberta") \
-		and not get_tree().paused and not cinema and not Celular.retrato
+		and not get_tree().paused and not Celular.retrato
 
 
 func tamanho() -> Vector2:
@@ -130,6 +130,10 @@ func layout() -> Dictionary:
 	var vp := tamanho()
 	var m := Celular.margens()
 	var d := {}
+	var pausa := Vector2(vp.x - m.z - 34.0, m.y + 34.0)
+	d["pausa"] = {"c": pausa, "r": 30.0}
+	if cinema:   # cena de cinema: só a pausa fica (sempre disponível), sem o resto
+		return d
 	var inter := Vector2(vp.x - m.z - R_GRANDE - 6.0, vp.y - m.w - R_GRANDE - 6.0)
 	d["interagir"] = {"c": inter, "r": R_GRANDE}
 	d["correr"] = {"c": inter + Vector2(-(Celular.BOTOES_ESQ - 4.0), 14.0), "r": R_MEDIO}
@@ -137,8 +141,6 @@ func layout() -> Dictionary:
 		d["lanterna"] = {"c": inter + Vector2(-4.0, -122.0), "r": R_MEDIO}
 	if _tem_visor():
 		d["visor"] = {"c": inter + Vector2(-Celular.BOTOES_ESQ, -98.0), "r": R_MEDIO}
-	var pausa := Vector2(vp.x - m.z - 34.0, m.y + 34.0)
-	d["pausa"] = {"c": pausa, "r": 30.0}
 	d["tela"] = {"c": pausa + Vector2(-76.0, 0.0), "r": 26.0}
 	return d
 
@@ -170,6 +172,8 @@ func processar_toque(idx: int, pos: Vector2, pressed: bool) -> bool:
 				_dedos[idx] = {"t": "botao", "id": id}
 				_acionar(id, idx)
 				return true
+		if cinema:
+			return false
 		if faixa and is_instance_valid(faixa):
 			var slot := faixa.slot_em(pos)
 			if slot >= 0:
@@ -327,7 +331,7 @@ func _desenhar(c: Control) -> void:
 	var vp := tamanho()
 	var m := Celular.margens()
 	# analógico: anel de dica quando parado; base + bolinha quando em uso
-	if _stick_idx < 0:
+	if _stick_idx < 0 and not cinema:
 		var dica := Vector2(m.x + 24.0 + RAIO_STICK, vp.y - m.w - 24.0 - RAIO_STICK)
 		c.draw_arc(dica, RAIO_STICK, 0.0, TAU, 40, Color(Flash.CREME, 0.22), 4.0, true)
 		c.draw_circle(dica, 22.0, Color(Flash.CREME, 0.12))

@@ -61,9 +61,15 @@ static func _detectar_auto() -> bool:
 	if OS.get_cmdline_user_args().has("--celular"):
 		return true
 	if OS.has_feature("web"):
-		var r: Variant = JavaScriptBridge.eval("window.castelinhoToque ? window.castelinhoToque() : false", true)
-		return r == true
+		return _js_bool("window.castelinhoToque && window.castelinhoToque()")
 	return OS.has_feature("mobile")
+
+
+## Avalia uma expressão JS como booleano. O eval do Godot devolve o booleano da página como inteiro/real (e não como
+## bool): `r == true` dava falso na Web e o modo celular nunca ligava. Por isso a página devolve 1/0 e comparamos o número.
+static func _js_bool(expr: String) -> bool:
+	var r: Variant = JavaScriptBridge.eval("(%s) ? 1 : 0" % expr, true)
+	return (r is int or r is float or r is bool) and int(r) == 1
 
 
 static func _ao_mudar(antes: bool) -> void:
@@ -217,8 +223,7 @@ static func eh_ios() -> bool:
 	if _eh_ios < 0:
 		_eh_ios = 0
 		if OS.has_feature("web"):
-			var r: Variant = JavaScriptBridge.eval("window.castelinhoIOS ? window.castelinhoIOS() : false", true)
-			_eh_ios = 1 if r == true else 0
+			_eh_ios = 1 if _js_bool("window.castelinhoIOS && window.castelinhoIOS()") else 0
 	return _eh_ios == 1
 
 
