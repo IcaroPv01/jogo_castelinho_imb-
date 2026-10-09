@@ -34,8 +34,11 @@ const ARC_BAIA := 5.5           # comprimento de cada módulo
 const ARC_N := 8                # módulos repetidos
 const ARC_X_ESQ := -4.0         # eixo dos pilares (lado aberto)
 const ARC_XC := -1.8            # eixo do corredor
-const VEL_FIGURA_CASA := 2.0
-const VEL_FIGURA_ARCADA := 4.0
+## Velocidades da Figura perseguidora (m/s): acima do andar do jogador (3,0), abaixo do correr (5,4). Ela não congela
+## quando é olhada (Granny pura): na arcada, 12 m atrás dele, só andando ele chega à porta antes dela (3,8 contra 3,0).
+const VEL_FIGURA_CASA := 3.3
+const VEL_FIGURA_ARCADA := 3.8
+const ATRASO_FIGURA_CASA := 2.5   # s que a Figura da casa fica parada, de frente, antes de andar
 
 ## Ambientes por área: o céu/névoa/luz mudam de uma sala para outra.
 const AMBIENTES := {
@@ -881,7 +884,7 @@ func _on_sala(n: int) -> void:
 			figura.pontos_caminho = [Vector3(0, 0.05, CASA_Z_FRENTE), Vector3(-3.5, 0.05, -75.0), Vector3(-2.0, 0.05, CASA_Z_FUNDO)]
 			figura.velocidade = VEL_FIGURA_CASA
 			figura.teleportar(Vector3(-6.0, 0.05, -75.0))
-			figura.ativar()
+			figura.ativar(ATRASO_FIGURA_CASA)
 			Efeitos.pulso(0.4, 0.4)
 			Guia.falar("bentinho", ["...", "Fique de olho nos outros visitantes. Sempre."])
 		58:
@@ -898,23 +901,14 @@ func _iniciar_perseguicao() -> void:
 	if _chase_ativo or _fim:
 		return
 	_chase_ativo = true
-	figura.reaparecer_fn = _reaparecer_na_arcada
+	figura.reaparecer_fn = Callable()
 	figura.pontos_reaparecer = []
 	figura.pontos_caminho = []
 	figura.velocidade = VEL_FIGURA_ARCADA
 	figura.teleportar(Vector3(ARC_XC, 0.05, ARC_Z0 + 0.2))
-	figura.ativar()
+	figura.ativar(1.0)
 	Audio.sfx("susto", -8.0)
 	_prox_apagao = 6.0
-
-
-## Quando a figura some (cercada), reaparece mais atrás no corredor.
-func _reaparecer_na_arcada(_f: Node) -> Vector3:
-	var pz := player.global_position.z if player else ARC_Z0 - 10.0
-	var z := minf(pz + 14.0, ARC_Z0 + 0.2)
-	if absf(z - pz) < 8.0:
-		z = pz + 8.0
-	return Vector3(ARC_XC, 0.05, z)
 
 
 # ============================================================================ animações e apagões

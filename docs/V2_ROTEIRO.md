@@ -161,7 +161,7 @@ O roteiro das salas 1–22 do MVP, **mais calmo**:
 - **O medidor:** enquanto o jogador segura Q, enche um medidor de **atenção**. Ele aparece no HUD como um olho que vai se abrindo e não tem número.
 - **O que acontece conforme enche:** a Figura Branca aparece **dentro do slide**, cada vez mais perto da lente.
 - **No máximo:** ela "atravessa" o visor. Vem o pulso forte, o susto e o Visor arranca da mão por 10 s. Na visita 4 e no porão, ela atravessa de verdade e persegue o jogador.
-- **Ritmo:** soltar Q esvazia a atenção devagar. O tempo até encher fica em ~6 s na visita 3, ~4 s na visita 4 e ~3 s no porão.
+- **Ritmo** (revisto no módulo 9): o tempo até encher fica em ~10 s na visita 3, ~7 s na visita 4 e ~5 s no porão; soltar Q esvazia em ~4 s; depois de um estouro há 6 s de folga sem encher. A Figura do slide é um corpo no mundo, atrás do jogador no caminho que ele andou (as paredes a escondem). Na perseguição ela age "tipo a Granny": não atravessa parede, não congela, te perde se você foge e desiste.
 - **O dilema:** as pistas pedem olhar, e olhar chama a Figura.
 
 ## 5. Os desenhos do Tito (texturas geradas por código, estilo giz de cera)

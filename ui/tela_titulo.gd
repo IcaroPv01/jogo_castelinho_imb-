@@ -403,7 +403,20 @@ func _montar_rodape() -> void:
 	contador.add_theme_color_override("font_color", Color("FFF6C0"))
 	contador.add_theme_color_override("font_outline_color", Color("14522A"))
 	contador.add_theme_constant_override("outline_size", 5)
+	# gesto escondido do modo debug: 5 toques rápidos no contador ligam/desligam o debug nesta sessão (celular sem ?debug=1)
+	contador.mouse_filter = Control.MOUSE_FILTER_STOP
+	contador.gui_input.connect(_toque_no_contador)
 	_palco.add_child(contador)
+	if Debug.ligado:
+		var marca := Label.new()
+		marca.text = Celular.dica("modo debug: tecla ' abre o painel", "modo debug: botão DBG abre o painel")
+		marca.position = Vector2(20, 668)
+		marca.add_theme_font_size_override("font_size", 16)
+		marca.add_theme_color_override("font_color", Color("FFB0A0"))
+		marca.add_theme_color_override("font_outline_color", Color("14522A"))
+		marca.add_theme_constant_override("outline_size", 4)
+		marca.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_palco.add_child(marca)
 
 
 ## Depois de qualquer final: uma pequena lápide de areia ao lado do castelo. O primeiro T de "TITO" fica de cabeça
@@ -458,6 +471,33 @@ func _montar_lapide() -> void:
 	f.add_theme_color_override("font_outline_color", Color("0F3A1E"))
 	f.add_theme_constant_override("outline_size", 7)
 	_palco.add_child(f)
+
+
+# ================================================================ modo debug (gesto escondido)
+const TOQUES_DEBUG := 5
+const JANELA_DEBUG_S := 3.0
+var _toques_debug: Array[float] = []
+
+
+func _toque_no_contador(e: InputEvent) -> void:
+	if not (e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT):
+		return
+	var agora := Time.get_ticks_msec() / 1000.0
+	_toques_debug.append(agora)
+	while not _toques_debug.is_empty() and agora - _toques_debug[0] > JANELA_DEBUG_S:
+		_toques_debug.remove_at(0)
+	if _toques_debug.size() >= TOQUES_DEBUG:
+		_toques_debug.clear()
+		alternar_debug()
+
+
+## Liga/desliga o debug (troca o save e recarrega a cena para o título e o main refletirem).
+func alternar_debug() -> void:
+	Debug.definir_ligado(not Debug.ligado)
+	Audio.sfx("selo", -4.0)
+	var arv := get_tree()
+	if arv.current_scene != null:
+		arv.reload_current_scene.call_deferred()
 
 
 # ================================================================ ação

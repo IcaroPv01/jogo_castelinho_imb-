@@ -20,6 +20,7 @@ Decisões do Icaro (07/10/2026):
 | 6 | Áudio | Jingle, ambientes e sustos (ninguém ouviu ainda: precisa do ouvido do Icaro) | `autoload/audio.gd`, `tools/gerar_audio.py`, `assets/audio/` | feito (PR #15): 9 sons novos, mixagem medida, Sala 101 abafada na web, jingle_1 mais estranho; reabre quando o Icaro ouvir (Mesa de som) |
 | 7 | Arte e gráficos | Acabamento visual mantendo o estilo Flash educativo | `shaders/`, `tools/gerar_texturas.py`, `castelinho/` | feito (PR #16): capturas das cenas só testadas, revisão gráfica (Opus), Figura nova no slide 98, mão/dedos de afogada, pegadas com forma de pé, lago e chegada; reabre quando o Icaro jogar |
 | 8 | Celular | Jogar no navegador do celular (Android/iPhone), deitado, pelo mesmo link; computador igual | `ui/celular.gd`, `ui/controles_toque.gd`, `ui/aviso_retrato.gd`, `export_presets.cfg` (head_include) | feito (PR #17): toque, pausa sem pointer lock, retrato, modo leve, som no 1º toque; reabre quando o Icaro testar no celular |
+| 9 | Modo debug e Figura no Q | Q possível e tenso (sem perseguição cedo); painel de debug para testar sem morrer | `world/visor.gd`, `world/rastro.gd`, `creatures/figura_branca.gd`, `ui/debug.gd`, `ui/painel_debug.gd` | feito (PR #19): Figura do slide no mundo, perseguição "tipo Granny", olho mais lento, modo debug `?debug=1`; reabre quando o Icaro testar o Q |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -45,6 +46,36 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 9: Modo debug e Figura no Q (09/10/2026)
+
+- **Problema do Icaro (visita 3):** "toda hora que aperto Q o monstro vem direto em mim". Causa: a Figura do slide era o
+  modelo antigo, presa na frente da câmera (girava junto), desenhada por cima das paredes e aparecia com 0,7 s de Q; e a
+  atenção esvaziava em 9 s, então ela acumulava entre um Q e outro.
+- **Decisões do Icaro:** perseguição de verdade só na V4 e no porão; a Figura **"tipo a Granny pura"**: corpo de verdade,
+  não atravessa parede, não congela quando olhada, nunca reaparece atrás do jogador; atalho do debug = tecla `'`.
+- **Atenção** (`world/visor.gd`): `TEMPO_ENCHER` {3: 10, 4: 7, 5: 5} s, `TEMPO_ESVAZIAR` 4 s, `GRACA_S` 6 s sem encher
+  depois do bloqueio de 10 s, Figura no slide só acima de 0,35. V1 e V2 continuam sem atenção.
+- **Figura do slide:** uma `FiguraBranca` `somente_visual` no mundo (com profundidade), visível só com o Q, parada no
+  **rastro** do jogador (`world/rastro.gd`, `Rastro`: migalhas a cada 0,5 m, últimos 45 m) ~14 m atrás e chegando
+  pelo caminho até 2,5 m (V3) ou 5 m (V4/porão). Sem rastro (jogador parado), não aparece. `pos_figura_slide()`.
+- **Perseguição "Granny"** (`creatures/figura_branca.gd`, `ativa=true`): enxerga até 20 m em qualquer ângulo sem parede
+  no meio; velocidade entre 3,3 e 4,5 (jogador anda 3,0, corre 5,4); perdeu de vista → segue o rastro até onde viu,
+  procura 4 s, sinal `desistiu`, vai embora e some fora da vista. API: `ativar(atraso)`, `desistir()`, `estado`.
+  `ativa=false` (dunas, sala 27) segue como antes (some quando cercada). V4: nasce onde a do slide estava, 3,7 m/s,
+  teto 45 s. Porão: salas 90 (3,4) e 94 (3,8) agora nascem na entrada quando o jogador passa de 35 % da sala.
+  Ato II: casa 3,3, arcada 3,8 saindo da porta dos fundos.
+- **Ficou mais difícil:** quem fica parado na casa da sala 57 ou na cela do giz (90) com ela vindo morre (antes olhar
+  salvava). Sala 58 andando reto dá para chegar à porta. Nada disso foi jogado a pé, só por teste.
+- **Modo debug** (`ui/debug.gd` `Debug`, `ui/painel_debug.gd`): liga com `?debug=1`, `--debug` ou 5 toques em 3 s no
+  contador "Visitantes" do título (celular); tecla `'` ou botão DBG abre o painel (pausa o jogo). Imortal
+  (`GameState.matar_jogador` ignora), Figura desligada (toda `FiguraBranca` some, inclusive nas cenas finais), atenção
+  congelada, ganhar tudo, pular para visita+sala (cai no checkpoint mais perto antes da sala pedida) e para cada final,
+  info (sala, época, visita, qps). Save à parte (`user://save_debug.json`) e finais à parte (`user://finais_debug.cfg`):
+  o jogo normal nunca é tocado. O `?debug=1` real na Web só foi conferido por leitura, não no navegador.
+- **Testes:** `tests/figura_q_test.gd`, `tests/debug_test.gd`; `visor_test`, `ato2_test`, `castelinho_test`,
+  `porao_test` ajustados à regra nova (olhando, ela anda).
+- Pendente: o Icaro testar o Q na V3/V4 e as perseguições (57, 58, 90, 94, V4) e dizer se ficou tenso ou fácil demais.
 
 ### Módulo 8: Celular (09/10/2026)
 

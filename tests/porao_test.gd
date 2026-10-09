@@ -36,6 +36,7 @@ func _rodar() -> void:
 	await _teste_costela()
 	await _teste_voz_e_afogamento()
 	await _teste_figura_pelo_visor()
+	await _teste_figura_das_salas_90_e_94()
 	await _teste_ajustes_revisao()
 	await _teste_masmorra()
 	await _teste_sustos()
@@ -541,6 +542,29 @@ func get_nodes_figura() -> int:
 
 func get_nodes_in_group_count(g: String) -> int:
 	return root.get_tree().get_nodes_in_group(g).size()
+
+
+func _teste_figura_das_salas_90_e_94() -> void:
+	print("-- Figura das salas 90 e 94: surge ATRÁS do jogador (entrada), persegue e a próxima sala a esconde")
+	nivel.ameacas_ligadas = true
+	for idx in [9, 13]:
+		nivel.ir_para_sala(idx)
+		await _frames(5)
+		var fig = nivel.figura
+		var c = nivel.salas[idx]
+		_checar(not fig.visible and not fig.ativa, "sala %d: a Figura ainda não surgiu ao entrar" % (81 + idx))
+		player.global_position = c.raiz.to_global(Vector3(0, c.piso_fn.call(-c.L * 0.5) + 0.05, -c.L * 0.5))   # passou do gatilho
+		var ok: bool = await _ate(func(): return fig.visible and fig.ativa, 120)
+		_checar(ok, "sala %d: passando do gatilho a Figura surge e persegue" % (81 + idx))
+		var lf: Vector3 = c.raiz.to_local(fig.global_position)
+		var lp: Vector3 = c.raiz.to_local(player.global_position)
+		_checar(lf.z > lp.z + 3.0, "sala %d: ela surge atrás do jogador, do lado da entrada (z %.1f contra %.1f)" % [81 + idx, lf.z, lp.z])
+		_checar(fig.velocidade > 3.3 and fig.velocidade < 4.5, "sala %d: velocidade %.1f m/s (acima do andar, abaixo do correr)" % [81 + idx, fig.velocidade])
+		nivel.ir_para_sala(idx + 1)
+		await _frames(5)
+		_checar(not fig.visible and not fig.ativa, "sala %d: a sala seguinte esconde a Figura" % (82 + idx))
+	nivel.ir_para_sala(1)
+	await _frames(5)
 
 
 func _teste_ajustes_revisao() -> void:

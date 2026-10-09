@@ -50,11 +50,11 @@ const PLANO: Array[Dictionary] = [
 	{"tipo": "pedras", "ameaca": "costela"},                                # 87: masmorra, celas e correntes velhas
 	{"tipo": "telefone"},                                                   # 88
 	{"tipo": "bifurcacao", "voz_certa": true, "lado": 1},                   # 89: a voz certa (ensina)
-	{"tipo": "arcos", "ameaca": "figura", "vel_figura": 2.0},               # 90: a 1ª Figura, cela do giz
+	{"tipo": "arcos", "ameaca": "figura", "vel_figura": 3.4},               # 90: a 1ª Figura (vem de trás), cela do giz
 	{"tipo": "escada"},                                                     # 91: checkpoint, água no joelho
 	{"tipo": "poco", "ameaca": "costela"},                                  # 92
 	{"tipo": "bifurcacao", "voz_certa": false, "lado": -1},                 # 93: a isca da água funda
-	{"tipo": "cisterna", "ameaca": "figura", "vel_figura": 2.3},            # 94: a perseguição
+	{"tipo": "cisterna", "ameaca": "figura", "vel_figura": 3.8},            # 94: a perseguição (vem de trás)
 	{"tipo": "quarto_tito"},                                                # 95
 	{"tipo": "abobada"}, {"tipo": "arcos"}, {"tipo": "cisterna"},           # 96-98: o último dia
 	{"tipo": "escada_sobe"},                                                # 99
@@ -73,6 +73,9 @@ const T := 0.6
 
 var player: Player
 var figura: FiguraBranca
+var _figura_pendente := false          # 90/94: a Figura da sala ainda não surgiu (espera o jogador passar do gatilho)
+const GATILHO_FIGURA := 0.35           # fração do comprimento da sala em que a Figura da sala surge atrás do jogador
+const VEL_FIGURA_VISOR := 3.9          # m/s da Figura que atravessa o Visor (acima do andar, abaixo do correr)
 var costela: Node3D
 var plano: Array = []                 # um Dictionary por sala (índice 0 = sala 81)
 var salas := {}                       # idx -> Ctx (só as carregadas)
@@ -145,7 +148,7 @@ func _gerar_plano() -> void:
 		var am: String = e.get("ameaca", "")
 		plano.append({"tipo": e["tipo"], "idx": i, "sala": PRIMEIRA + i, "ultimo": 96 + (i - 15) if i >= 15 and i <= 17 else (99 if i == 18 else 0),
 			"costela": am == "costela", "figura": am == "figura", "voz_ambiente": am == "voz",
-			"voz_certa": e.get("voz_certa", true), "lado": e.get("lado", 1), "vel_figura": e.get("vel_figura", 2.0)})
+			"voz_certa": e.get("voz_certa", true), "lado": e.get("lado", 1), "vel_figura": e.get("vel_figura", 3.5)})
 	# transformações (as salas se encadeiam em linha reta; a escada muda o `y`)
 	var t := Transform3D.IDENTITY
 	var w_prev: float = SalasGd.DIMS["escada"]["w"]
@@ -488,6 +491,7 @@ func _physics_process(dt: float) -> void:
 		_voz_t = randf_range(7.0, 11.0)
 		_chamar_voz()
 	_sustos(dt)
+	_figura_programada()
 	_pistas_t -= dt
 	if _pistas_t <= 0.0:
 		_pistas_t = 0.2
@@ -910,9 +914,8 @@ func _criar_figura() -> void:
 	figura = FiguraBranca.new()
 	figura.name = "FiguraBranca"
 	figura.ativa = false
-	figura.velocidade = 2.1
+	figura.velocidade = 3.5
 	figura.alvo = player
-	figura.reaparecer_fn = _reaparecer_figura
 	add_child(figura)
 	figura.esconder()
 
@@ -925,49 +928,66 @@ func _criar_costela() -> void:
 
 func _preparar_ameacas(i: int) -> void:
 	figura.esconder()
+	_figura_pendente = false
 	if costela:
 		costela.ativa = false
 	if not ameacas_ligadas:
 		return
 	var d: Dictionary = plano[i]
-	var c = salas[i]
 	if d["costela"] and costela:
 		costela.ativa = true
 	if d["figura"]:
-		var p: Vector3 = c.raiz.to_global(c.pontos["figura"])
-		figura.reiniciar(p, true)
-		figura.velocidade = float(d.get("vel_figura", 2.0))
+		# a Figura da sala (90, 94) NÃO espera no fim da sala (a saída fica atrás dela e não dá para driblar uma
+		# perseguidora na frente): ela surge na ENTRADA, atrás do jogador, quando ele passa de GATILHO_FIGURA da sala
+		_figura_pendente = true
+		figura.velocidade = float(d.get("vel_figura", 3.5))
 
 
-## Onde a Figura reaparece depois de cercada: atrás do jogador (do lado da entrada), a ~9 m.
-func _reaparecer_figura(_f: Node) -> Vector3:
-	if idx_atual < 0 or not salas.has(idx_atual):
-		return player.global_position + Vector3(0, 0, 9)
+## 90 e 94: o jogador passou do gatilho da sala, a Figura surge na entrada (a porta já fechou atrás dele) e persegue.
+## Daí em diante vale a regra da Granny: ela enxerga, anda mais rápido que ele andando e mais devagar que correndo,
+## segue o rastro se o perde de vista, procura uns 4 s e desiste. A saída da sala (a próxima sala) a esconde.
+func _figura_programada() -> void:
+	if not _figura_pendente or not ameacas_ligadas or _saindo or morrendo or idx_atual < 0 or not salas.has(idx_atual):
+		return
 	var c = salas[idx_atual]
 	var l: Vector3 = c.raiz.to_local(player.global_position)
-	var z := clampf(l.z + 9.0, -c.L + 1.0, -1.6)
-	if absf(z - l.z) < 5.0:
-		z = clampf(l.z - 9.0, -c.L + 1.0, -1.6)
-	var x := clampf(-l.x * 0.5, -c.w * 0.25, c.w * 0.25)
-	return c.raiz.to_global(Vector3(x, c.piso_fn.call(z) + 0.05, z))
+	if l.z > -c.L * GATILHO_FIGURA:
+		return
+	_figura_pendente = false
+	var z := -1.8
+	figura.reiniciar(c.raiz.to_global(Vector3(0.0, c.piso_fn.call(z) + 0.05, z)), true)
+	figura.velocidade = float(plano[idx_atual].get("vel_figura", 3.5))
+	figura.ativar(1.5)
+	Audio.sfx("susto", -10.0)
 
 
-## O Visor estourou a atenção (visita 5): a Figura atravessa de verdade e persegue.
+## O Visor estourou a atenção (visita 5): a Figura atravessa de verdade, ONDE A DO SLIDE ESTAVA (um ponto do rastro do
+## jogador dentro desta sala), e persegue. Sem rastro (ou rastro de outra sala), um ponto ~7 m atrás dele na sala.
 func _on_figura_atravessou(_visita: int) -> void:
 	if _saindo or idx_atual >= 15:
 		return
 	if idx_atual < 0 or not salas.has(idx_atual) or not is_instance_valid(player):
 		return
 	var c = salas[idx_atual]
-	if c.tipo == "quarto_tito" and false:
-		return
-	var l: Vector3 = c.raiz.to_local(player.global_position)
-	var z := clampf(l.z + 7.0, -c.L + 0.8, -1.4)
-	if absf(z - l.z) < 4.5:
-		z = clampf(l.z - 7.0, -c.L + 0.8, -1.4)
-	var p = c.raiz.to_global(Vector3(clampf(l.x, -c.w * 0.3, c.w * 0.3), c.piso_fn.call(z) + 0.05, z))
+	var p := Vector3.INF
+	if visor != null and is_instance_valid(visor):
+		p = visor.pos_figura_slide()
+	if p.is_finite():
+		var lp: Vector3 = c.raiz.to_local(p)
+		if lp.z > 0.3 or lp.z < -c.L or absf(lp.x) > c.w * 0.5:
+			p = Vector3.INF      # o rastro está na sala de trás: ela já não existe
+		else:
+			p.y += 0.05
+	if not p.is_finite():
+		var l: Vector3 = c.raiz.to_local(player.global_position)
+		var z := clampf(l.z + 7.0, -c.L + 0.8, -1.4)
+		if absf(z - l.z) < 4.5:
+			z = clampf(l.z - 7.0, -c.L + 0.8, -1.4)
+		p = c.raiz.to_global(Vector3(clampf(l.x, -c.w * 0.3, c.w * 0.3), c.piso_fn.call(z) + 0.05, z))
+	_figura_pendente = false
+	figura.velocidade = VEL_FIGURA_VISOR
 	figura.reiniciar(p, true)
-	figura.velocidade = 2.4
+	figura.ativar(1.0)
 	Audio.sfx("susto", -6.0)
 
 
