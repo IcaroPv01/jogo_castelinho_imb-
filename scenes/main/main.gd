@@ -112,6 +112,8 @@ func carregar_mundo(caminho: String, spawn := "Spawn") -> void:
 	var nivel: Node3D = cena.instantiate()
 	mundo.add_child(nivel)
 	nivel_atual = caminho
+	if nivel.has_signal("fim"):   # Braço Morto: guarda o final visto (a tela de título muda)
+		nivel.connect("fim", Finais.registrar)
 	player = Player.new()
 	player.name = "Player"
 	mundo.add_child(player)
