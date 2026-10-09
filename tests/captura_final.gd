@@ -154,7 +154,12 @@ func _braco(modo: String) -> void:
 			await _esperar(0.25)
 			t += 0.25
 		await _esperar(2.5)
+		var fd: Node3D = nivel.get_node("FundoDoLago")
+		print("DBG cam ", player.camera.global_position, " pitch ", player.cabeca.rotation.x, " fundo ", fd.global_position, " shoe ", (fd.get_child(0) as Node3D).global_position, " fogend ", nivel.env.fog_depth_end)
 		await _foto("s101_fundo_pecas", 1)
+		if OS.get_environment("DBG_SEM_TINTA") != "":
+			nivel._tinta.visible = false
+			await _foto("s101_dbg_sem_tinta", 3)
 		await _esperar(2.0)
 		await _foto("s101_fundo_pecas2", 1)
 		# dedos: tira fotos a cada 0.5s até a cortina fechar

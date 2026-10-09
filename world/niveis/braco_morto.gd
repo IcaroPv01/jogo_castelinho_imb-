@@ -1074,15 +1074,15 @@ func _afundar() -> void:
 	tw.tween_property(env, "fog_light_color", Color(0.01, 0.04, 0.08), 3.0)
 	tw.tween_property(env, "fog_depth_begin", 0.5, 3.0)
 	tw.tween_property(env, "fog_depth_end", 12.0, 3.0)
-	tw.tween_property(player, "global_position", Vector3(ini.x, -3.55, ini.z - 1.4), 6.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(player, "global_position", Vector3(ini.x, RAMPA_Y_FIM - 1.4, ini.z - 3.0), 6.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tw.tween_property(player, "rotation:y", 0.0, 2.0)
 	tw.tween_property(player.cabeca, "rotation:x", 0.35, 3.0)     # olha para cima, para a luz que fica para trás
 	await tw.finished
 	# no fundo: sapatinhos e um balde vermelho. Só isso.
-	var fundo: Vector3 = Vector3(ini.x, -2.4, ini.z - 1.4)
+	var fundo: Vector3 = Vector3(ini.x, RAMPA_Y_FIM + 0.02, ini.z - 3.0)
 	_pecas_do_fundo(fundo)
 	var tw2 := create_tween()
-	tw2.tween_property(player.cabeca, "rotation:x", -0.55, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw2.tween_property(player.cabeca, "rotation:x", -0.3, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await tw2.finished
 	await get_tree().create_timer(2.6, false).timeout
 	# os dedos compridos da Figura fecham sobre a lente
