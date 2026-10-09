@@ -815,9 +815,10 @@ MELODIA = [
 RAIZES = [48, 45, 41, 43, 48, 45, 41, 43]
 ACORDES = [(60, 64, 67), (57, 60, 64), (57, 60, 65), (59, 62, 67)] * 2
 
+# Módulo 6: jingle_1 mais estranho (desafina 18 cents, fita mais instável, uma nota some de vez em quando).
 VERSOES_JINGLE = {
     0: dict(bpm=120, trans=0, xilo=True, chocalho=True, stabs=True, baixo=True, cents=0, hiss=0.0, wob=0.0, drop=0.0, lp=9000),
-    1: dict(bpm=104, trans=-1, xilo=False, chocalho=False, stabs=True, baixo=True, cents=9, hiss=0.0, wob=0.006, drop=0.0, lp=5200),
+    1: dict(bpm=104, trans=-1, xilo=False, chocalho=False, stabs=True, baixo=True, cents=18, hiss=0.0, wob=0.012, drop=0.04, lp=4200),
     2: dict(bpm=84, trans=-2, xilo=False, chocalho=False, stabs=False, baixo=True, cents=38, hiss=0.02, wob=0.03, drop=0.14, lp=3000),
 }
 

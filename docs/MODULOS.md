@@ -17,7 +17,7 @@ Decisões do Icaro (07/10/2026):
 | 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | feito (PR #11): ritmo, quiz V2–V4, bugs, fontes; reabre quando o Icaro jogar |
 | 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | feito (PR #12): sequência fixa, masmorra, Figura nova, sustos (porão e V3/V4), bugs; reabre quando o Icaro jogar |
 | 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | feito (PR #14): três finais (Encontrado ≥8 pistas, Visita concluída, Sala 101), menu do Esc, contador de pistas, título muda após zerar; reabre quando o Icaro jogar |
-| 6 | Áudio | Jingle, ambientes e sustos (ninguém ouviu ainda: precisa do ouvido do Icaro) | `autoload/audio.gd`, `tools/gerar_audio.py`, `assets/audio/` | na fila |
+| 6 | Áudio | Jingle, ambientes e sustos (ninguém ouviu ainda: precisa do ouvido do Icaro) | `autoload/audio.gd`, `tools/gerar_audio.py`, `assets/audio/` | feito (PR #15): 9 sons novos, mixagem medida, Sala 101 abafada na web, jingle_1 mais estranho; reabre quando o Icaro ouvir (Mesa de som) |
 | 7 | Arte e gráficos | Acabamento visual mantendo o estilo Flash educativo | `shaders/`, `tools/gerar_texturas.py`, `castelinho/` | na fila |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
@@ -44,6 +44,29 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 6: Áudio (09/10/2026)
+
+- **O Icaro não respondeu no prazo de 2 h:** segui as recomendações (abaixo). Ele ainda **não ouviu** nada; tudo segue
+  conferido só por número. Para ouvir sem jogar: página **Mesa de som** (artifact privado do Icaro,
+  https://claude.ai/artifact/8QEcTF238ZrVzPWyTGaCtJ) com todos os sons no volume do jogo, cenas mixadas e notas por som
+  (ficam no banco do artifact, coleção `notas`; leia com ArtifactData). Seis perguntas lá no topo; pendentes de verdade:
+  "o jingle soa Flash educativo?" e "o volume das Opções funciona no navegador?".
+- **Decidido sem o Icaro (dá para desfazer):** Tito fala com murmúrio abafado (`voz_tito`); um som por tipo de susto;
+  jingle_1 mais estranho (18 cents, fita instável, notas somem, `VERSOES_JINGLE[1]`); Visita 1 segue sem ambiente.
+- **Sons novos** (`tools/gerar_audio.py`, semente própria cada; os antigos não mudam): `susto_agua` (porão 86),
+  `susto_perto` (88), `susto_queda` (99), `voz_tito`, `afundar` + loop `subaquatico` (Sala 101), `figura_sobe`
+  (Visita concluída), `figura_afunda` (Encontrado), `pista` (contador do HUD, antes `blip_misterio`).
+- **Bug:** o abafado da Sala 101 era filtro no bus Master, que **não funciona na web** (modo Sample, sem efeitos de bus).
+  Agora o abafado vem do arquivo `subaquatico`; o filtro ficou para o desktop. Regra: na web, todo efeito de som tem de
+  ser pré-renderizado no arquivo.
+- **Mixagem** (RMS da janela mais forte × dB no jogo): os sustos eram mais baixos que apito e carimbo → `COMPRIMIR` no
+  gerador (saturação suave) e agora estão no topo; J5 de +6 para +2 dB (passava do pico). Goteira, rio, sussurro e
+  blip_sistema subiram; apito, selo e telefone desceram (`VOLUME_PADRAO`).
+- **Para o módulo 7 (Arte):** nada de áudio depende de arte. Se mudar a duração de cenas do final (`braco_morto.gd`), confira
+  que `figura_sobe` (2,5 s), `figura_afunda` (4 s) e `afundar` (5 s) ainda casam com os tweens. Um susto visual novo
+  pode usar `"sfx": "susto_agua" | "susto_perto" | "susto_queda"` no `Susto.disparar`.
+- Pendente: o Icaro ouvir e marcar notas na Mesa de som; ajustar o que ele marcar (próxima sessão de QA ou áudio).
 
 ### Módulo 5: Braço Morto e final (09/10/2026)
 
