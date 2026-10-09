@@ -51,7 +51,7 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
   giz invertido + número, sem total); finais "o mais pesado possível" só por sugestão; 3º final sim; título muda após
   zerar; menu no Esc. O Icaro ainda **não jogou** o final.
 - **Chegada:** legenda "(lá em cima, um lago...)" 1,5 s depois; dica única aos 45 s; luz quente na lápide.
-- **Bugs corrigidos:** lápide durante a cena do Tito; soltar Q no meio da cena (Visor travado); `ao_morrer` durante o fim.
+- **Bugs:** lápide durante a cena do Tito; soltar Q no meio da cena (Visor travado); `ao_morrer` durante o fim.
 - **Finais** (`world/niveis/braco_morto.gd`, `fim(final)` = `encontrado` / `visita_concluida` / `sala_101`):
   - Encontrado: falas "Disseram que eu fugi de casa." / "Ninguém olhou na água." / "Agora alguém sabe."; Tito anda para
     a luz com pegadas, a Figura afunda, o T da lápide se endireita.
