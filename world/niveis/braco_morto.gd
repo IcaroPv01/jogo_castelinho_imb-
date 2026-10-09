@@ -1113,8 +1113,8 @@ static func _dedo(pai: Node3D, base: Vector3, yaw: float, comps: Array, raio: fl
 		else:
 			_bola(fim, Vector3.ZERO, r1 * 1.05, mat)     # ponta redonda
 			if com_unha:
-				var un := _bola(fim, Vector3(0, r1 * 0.55, 0.012), 1.0, _mat_unha())
-				un.scale = Vector3(r1 * 0.75, r1 * 0.3, 0.011)
+				var un := _bola(fim, Vector3(0, r1 * 0.5, 0.007), 1.0, _mat_unha())
+				un.scale = Vector3(r1 * 0.7, r1 * 0.25, 0.008)
 		cur = fim
 		r = r1
 
@@ -1133,7 +1133,7 @@ static func _mat_pele(cor: Color, enrugada: bool) -> StandardMaterial3D:
 static func _mat_unha() -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = Color(0.32, 0.36, 0.37)     # cinza-escuro, não preto
+	m.albedo_color = Color(0.46, 0.5, 0.5)     # cinza-escuro, não preto
 	return m
 
 
@@ -1151,7 +1151,7 @@ static func _tex_enrugada() -> Texture2D:
 				var f := sin(v * TAU * 5.0 + 2.2 * sin(u * TAU * 2.0 + v * 9.0))
 				var d := pow(clampf(f * 0.5 + 0.5, 0.0, 1.0), 3.0)
 				var gr := fposmod(sin(float(x) * 12.9898 + float(y) * 78.233) * 43758.5453, 1.0)
-				var t := 1.0 - 0.3 * d - 0.05 * gr
+				var t := 1.0 - 0.2 * d - 0.04 * gr
 				img.set_pixel(x, y, Color(t, t, t, 1.0))
 		img.generate_mipmaps()
 		_tex_enr = ImageTexture.create_from_image(img)
@@ -1360,10 +1360,10 @@ func _areia_e_algas(raiz: Node3D) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 101
 	for i in 14:
-		var c := Vector3(rng.randf_range(-1.6, 1.6), 0.0, rng.randf_range(-2.4, 0.6))
-		var r := Vector3(rng.randf_range(0.25, 0.55), rng.randf_range(0.025, 0.06), rng.randf_range(0.1, 0.22))
+		var c := Vector3(rng.randf_range(-1.6, 1.6), 0.0, rng.randf_range(-2.6, -0.5))
+		var r := Vector3(rng.randf_range(0.2, 0.4), rng.randf_range(0.02, 0.045), rng.randf_range(0.1, 0.2))
 		var tom := rng.randf_range(0.8, 1.15)
-		m.bolha(mv, c, r, rng, 6, 2, 0.12, Color(0.34, 0.36, 0.3) * tom, Color(0.16, 0.18, 0.15))
+		m.bolha(mv, c, r, rng, 6, 2, 0.12, Color(0.30, 0.34, 0.32) * tom, Color(0.24, 0.28, 0.27))
 	var touceiras := [Vector2(-0.95, -0.45), Vector2(-0.6, -1.35), Vector2(0.95, -1.05), Vector2(1.15, -0.3), Vector2(-0.25, -1.75),
 		Vector2(0.35, -1.9), Vector2(-1.4, -0.95), Vector2(0.7, -0.15)]
 	for t in touceiras:
@@ -1422,8 +1422,8 @@ func _mao_na_camera() -> Node3D:
 			cur = junta
 			rad *= 0.76
 		# unha discreta, cinza-escura, colada na ponta (do lado que olha para a lente)
-		var unha := _bola(cur, Vector3(0, 0.014, 0.0085), 1.0, mat_unha)
-		unha.scale = Vector3(0.0065, 0.011, 0.0022)
+		var unha := _bola(cur, Vector3(0, 0.026, 0.0075), 1.0, mat_unha)
+		unha.scale = Vector3(0.0058, 0.013, 0.0018)
 	# a palma, entrando pela borda de baixo: elipsoide achatado e o início do antebraço descendo para fora da tela
 	var palma := Node3D.new()
 	palma.name = "Palma"
