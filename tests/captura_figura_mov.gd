@@ -68,7 +68,7 @@ func _rodar() -> void:
 	root.add_child(fig)
 	fig.angulo_visao = 0.0   # nunca "olhada": ela anda sempre
 	fig.velocidade = 1.5
-	fig.global_position = Vector3(0, 0, -9)
+	fig.global_position = Vector3(0, 0, -6.5)
 	fig.rotation.y = PI
 	for f in 5:
 		await process_frame

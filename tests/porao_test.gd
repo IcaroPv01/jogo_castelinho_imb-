@@ -676,7 +676,7 @@ func _teste_slides() -> void:
 		if i == 18:
 			_checar(slide.get_node_or_null("BaldeBoiando") != null, "sala 99: a água parada e o balde boiando")
 		if i == 17:
-			_checar(slide.get_node_or_null("FiguraAberta") != null, "sala 98: a Figura Branca de braços abertos")
+			_checar(slide.get_node_or_null("FiguraSlide") != null, "sala 98: a Figura Branca do slide (braços caídos)")
 			var ponte: Node3D = c.raiz.get_node_or_null("PasserelaSemData")
 			_checar(ponte != null and ponte.visible, "sala 98: a passarela sobre o poço só existe no disco sem data")
 			GS.trocar_epoca(GS.Epoca.E2020)

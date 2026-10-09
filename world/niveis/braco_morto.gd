@@ -191,11 +191,36 @@ func _ambiente() -> void:
 		var s := rng.randf_range(0.25, 0.7)
 		var cor := Color(0.8, 0.85, 1.0) * rng.randf_range(0.5, 1.0)
 		m.quad(mat, c + Vector3(-s, -s, 0), c + Vector3(s, -s, 0), c + Vector3(s, s, 0), c + Vector3(-s, s, 0), -dir, Vector2.ZERO, cor)
-	var lua_pos := Vector3(-60, 80, -140)
-	var r := 5.0
-	m.quad(mat, lua_pos + Vector3(-r, -r, 0), lua_pos + Vector3(r, -r, 0), lua_pos + Vector3(r, r, 0), lua_pos + Vector3(-r, r, 0), Vector3(0.3, -0.4, 1).normalized(), Vector2.ZERO, Color(0.95, 0.95, 0.85))
 	var mi := m.construir_instancia(self, "Ceu")
 	mi.extra_cull_margin = 16384.0
+	_lua_disco(Vector3(-60, 80, -140), 5.0)
+
+
+## A lua: um disco de 20 lados (claro, sem neblina) mais um halo fraco, virados para o jogador.
+func _lua_disco(lua_pos: Vector3, r: float) -> void:
+	for par in [[r * 1.9, 0.10, Color(0.75, 0.82, 1.0)], [r, 1.0, Color(0.93, 0.94, 0.88)]]:
+		var disco := CylinderMesh.new()
+		disco.top_radius = par[0]
+		disco.bottom_radius = par[0]
+		disco.height = 0.05
+		disco.radial_segments = 20
+		disco.rings = 1
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.albedo_color = Color(par[2].r, par[2].g, par[2].b, par[1])
+		if par[1] < 1.0:
+			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.disable_fog = true
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		var lm := MeshInstance3D.new()
+		lm.name = "LuaDisco"
+		lm.mesh = disco
+		lm.material_override = mat
+		lm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		lm.extra_cull_margin = 16384.0
+		add_child(lm)
+		lm.look_at_from_position(lua_pos, Vector3.ZERO, Vector3.UP)     # -Z para o jogador
+		lm.rotate_object_local(Vector3.RIGHT, PI * 0.5)                 # o eixo do cilindro (Y) vira o -Z
 
 
 func _mat(tex: String, tam: float, tom: Color, falsa: Callable) -> ShaderMaterial:
@@ -626,7 +651,9 @@ func _lapide_de_areia() -> void:
 		var alt := 0.36 + (i % 2) * 0.1
 		_balde_de_areia(m, mv, Vector3(x, 0.08, p.z - 0.05 + (i % 2) * 0.12), 0.21, 0.15, alt, Color(0.92, 0.8, 0.56), Color(0.7, 0.6, 0.4))
 	# a lápide: laje de areia arredondada em cima, com um monte na frente
-	m.bolha(mv, Vector3(p.x, 0.35, p.z), Vector3(0.38, 0.4, 0.14), rng, 8, 3, 0.08, areia * 1.1, areia * 0.8)
+	m.bolha(mv, Vector3(p.x, 0.35, p.z), Vector3(0.5, 0.42, 0.17), rng, 8, 3, 0.05, areia * 1.1, areia * 0.8)
+	# placa lisa de areia alisada com a mão, encostada na frente do domo: é nela que o nome é riscado
+	m.caixa(mv, Vector3(p.x - 0.36, 0.24, p.z + 0.1), Vector3(p.x + 0.36, 0.56, p.z + 0.215), Malha.F_SEM_BASE, 0.0, areia * 1.08)
 	m.bolha(mv, Vector3(p.x, 0.12, p.z - 0.55), Vector3(0.75, 0.16, 0.5), rng, 8, 2, 0.12, areia * 1.0, areia * 0.8)
 	# um balde vermelho e uma pazinha esquecidos ao lado (só o objeto)
 	m.caixa(mv, Vector3(p.x + 1.1, 0.06, p.z - 0.2), Vector3(p.x + 1.4, 0.34, p.z + 0.1), Malha.F_SEM_BASE, 0.0, Color(0.85, 0.1, 0.08))
@@ -635,8 +662,10 @@ func _lapide_de_areia() -> void:
 	# TITO riscado na lápide, com o T de cabeça para baixo (o jeito dele assinar)
 	var letras := ["T", "I", "T", "O"]
 	for i in 4:
-		var l := Construtor.rotulo(self, letras[i], Vector3(p.x - 0.27 + i * 0.18, 0.4, p.z + 0.2), 64, Color(0.13, 0.08, 0.04))
-		l.pixel_size = 0.0035
+		var l := Construtor.rotulo(self, letras[i], Vector3(p.x - 0.27 + i * 0.18, 0.4, p.z + 0.222), 64, Color(0.13, 0.08, 0.04))
+		l.pixel_size = 0.0033
+		l.no_depth_test = false
+		l.render_priority = 2
 		l.shaded = false
 		l.outline_size = 6
 		l.outline_modulate = Color(0.95, 0.85, 0.6)
@@ -823,50 +852,17 @@ func _levantar_tito(menino: Node3D) -> Node3D:
 	return _tito_em_pe
 
 
-## Pegadinhas molhadas, pequenas, a cada ~0,45 m andados (marcas escuras e achatadas no chão, alternando os pés).
+## Pegadinhas molhadas de pé de criança, a cada ~0,45 m andados, alternando esquerdo/direito (textura em `Pegada`).
 func _deixar_pegada(pos: Vector3, f: float, dist_total: float) -> void:
 	var passo_f: float = 0.45 / maxf(0.01, dist_total)
 	if _ult_pegada >= 0.0 and f - _ult_pegada < passo_f:
 		return
 	_ult_pegada = f
-	var lado := 1.0 if int(f / passo_f) % 2 == 0 else -1.0
+	var esquerdo: bool = int(f / passo_f) % 2 == 0
 	var dir := Vector3(2.2 - POS_TITO.x, 0.0, -4.7 - POS_TITO.z).normalized()
-	var mi := MeshInstance3D.new()
-	var pl := PlaneMesh.new()
-	pl.size = Vector2(0.24, 0.42)
-	mi.mesh = pl
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.02, 0.02, 0.03, 0.95)
-	mat.albedo_texture = _tex_pegada()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.roughness = 0.05
-	mat.metallic_specular = 1.0
-	mat.metallic = 0.35
-	mi.material_override = mat
-	mi.position = Vector3(pos.x + lado * 0.1, 0.04, pos.z)
-	mi.rotation.y = atan2(dir.x, dir.z)
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
-
-
-## Mancha oval molhada (alfa radial) para as pegadas do Tito.
-static var _tex_pg: Texture2D
-static func _tex_pegada() -> Texture2D:
-	if _tex_pg == null:
-		var g := Gradient.new()
-		g.set_color(0, Color(1, 1, 1, 1))
-		g.set_color(1, Color(1, 1, 1, 0))
-		g.set_offset(0, 0.8)
-		g.set_offset(1, 1.0)
-		var t := GradientTexture2D.new()
-		t.gradient = g
-		t.fill = GradientTexture2D.FILL_RADIAL
-		t.fill_from = Vector2(0.5, 0.5)
-		t.fill_to = Vector2(1.0, 0.5)
-		t.width = 64
-		t.height = 64
-		_tex_pg = t
-	return _tex_pg
+	var lado := -1.0 if esquerdo else 1.0
+	var lateral := Vector3(-dir.z, 0.0, dir.x) * 0.07 * lado
+	add_child(Pegada.criar(Vector3(pos.x, 0.035, pos.z) + lateral, dir, esquerdo, 0.26, 1.15))
 
 
 ## A Figura em pé na água (parada, sem avançar nem matar). `yaw` 0 = de frente para o sul (para o jogador).
@@ -1145,6 +1141,7 @@ func _afundar() -> void:
 	encerrando = true
 	final = "sala_101"
 	GameState.set_flag("final_sala_101", true)
+	GameState.entrar_sala(101)     # o HUD (e o glitch do contador) passam a dizer "SALA 101" durante o afundar
 	GameState.set_flag("visor_travado", true)
 	player.pode_mover = false
 	player.velocity = Vector3.ZERO
@@ -1177,7 +1174,7 @@ func _afundar() -> void:
 	var fundo: Vector3 = Vector3(ini.x, RAMPA_Y_FIM + 0.02, ini.z - 3.0)
 	_pecas_do_fundo(fundo)
 	var tw2 := create_tween()
-	tw2.tween_property(player.cabeca, "rotation:x", -0.3, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw2.tween_property(player.cabeca, "rotation:x", -0.42, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await tw2.finished
 	await get_tree().create_timer(2.6, false).timeout
 	# os dedos compridos da Figura entram pelas bordas e fecham sobre a lente
@@ -1194,22 +1191,24 @@ func _afundar() -> void:
 	await _titulos_e_dedicatoria()
 
 
-## Um par de tênis pequenos e um balde vermelho de areia tombado no fundo, à frente da câmera.
+## O fundo do lago, perto de onde o jogador afunda: um par de tênis pequenos e um balde vermelho de areia tombado (a
+## ~1 m, dentro do quadro), uma luz fria fraca em cima deles, areia em ondas e touceiras de alga escura em volta.
 func _pecas_do_fundo(fundo: Vector3) -> void:
 	var raiz := Node3D.new()
 	raiz.name = "FundoDoLago"
 	add_child(raiz)
 	raiz.global_position = fundo
 	raiz.scale = Vector3.ONE * 1.5
-	var azul := Construtor.material(Color(0.2, 0.35, 0.8), 0.9)
-	var branco := Construtor.material(Color(0.85, 0.85, 0.8), 0.9)
+	_areia_e_algas(raiz)
+	var azul := Construtor.material(Color(0.25, 0.42, 0.9), 0.9)
+	var branco := Construtor.material(Color(0.88, 0.88, 0.82), 0.9)
 	for i in 2:
 		var sola := MeshInstance3D.new()
 		var bs := BoxMesh.new()
 		bs.size = Vector3(0.09, 0.025, 0.2)
 		sola.mesh = bs
 		sola.material_override = branco
-		sola.position = Vector3(-0.25 + i * 0.16, 0.02, -1.4 - i * 0.08)
+		sola.position = Vector3(-0.2 + i * 0.17, 0.02, -0.62 - i * 0.08)
 		sola.rotation.y = 0.25 - i * 0.7
 		raiz.add_child(sola)
 		var topo := MeshInstance3D.new()
@@ -1226,17 +1225,51 @@ func _pecas_do_fundo(fundo: Vector3) -> void:
 	cil.height = 0.26
 	cil.radial_segments = 10
 	balde.mesh = cil
-	balde.material_override = Construtor.material(Color(0.9, 0.1, 0.07), 0.8)
-	balde.position = Vector3(0.45, 0.1, -1.55)
-	balde.rotation_degrees = Vector3(0, 0, 80)
+	balde.material_override = Construtor.material(Color(0.95, 0.14, 0.09), 0.8)
+	balde.position = Vector3(0.38, 0.1, -0.78)
+	balde.rotation_degrees = Vector3(0, 25, 80)
 	raiz.add_child(balde)
+	# luz fria e fraca em cima das peças, para lerem no escuro (uma luz só, sem sombra)
 	var luz := OmniLight3D.new()
-	luz.position = Vector3(0.1, 0.8, -1.0)
+	luz.position = Vector3(0.05, 0.75, -0.35)
 	luz.light_color = Color(0.55, 0.78, 1.0)
-	luz.light_energy = 3.2
-	luz.omni_range = 5.0
+	luz.light_energy = 2.6
+	luz.omni_range = 4.5
 	luz.shadow_enabled = false
 	raiz.add_child(luz)
+
+
+## Areia em ondas (montes baixos de dois tons) e touceiras de alga (fitas de duas partes, escuras) no espaço da raiz do fundo.
+func _areia_e_algas(raiz: Node3D) -> void:
+	var m: Malha = MalhaGd.new()
+	var mv := SalasGd.mat_vc()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 101
+	for i in 14:
+		var c := Vector3(rng.randf_range(-1.6, 1.6), 0.0, rng.randf_range(-2.4, 0.6))
+		var r := Vector3(rng.randf_range(0.25, 0.55), rng.randf_range(0.025, 0.06), rng.randf_range(0.1, 0.22))
+		var tom := rng.randf_range(0.8, 1.15)
+		m.bolha(mv, c, r, rng, 6, 2, 0.12, Color(0.34, 0.36, 0.3) * tom, Color(0.16, 0.18, 0.15))
+	var touceiras := [Vector2(-0.95, -0.45), Vector2(-0.6, -1.35), Vector2(0.95, -1.05), Vector2(1.15, -0.3), Vector2(-0.25, -1.75),
+		Vector2(0.35, -1.9), Vector2(-1.4, -0.95), Vector2(0.7, -0.15)]
+	for t in touceiras:
+		for k in rng.randi_range(4, 6):
+			var base := Vector3(t.x + rng.randf_range(-0.12, 0.12), 0.0, t.y + rng.randf_range(-0.12, 0.12))
+			var alt := rng.randf_range(0.35, 0.8)
+			var giro := rng.randf_range(0.0, TAU)
+			var lado := Vector3(cos(giro), 0, sin(giro))
+			var inclina := Vector3(-lado.z, 0, lado.x) * rng.randf_range(-0.12, 0.12)
+			var meio := base + Vector3(0, alt * 0.5, 0) + inclina
+			var ponta := base + Vector3(0, alt, 0) + inclina * 2.6 + lado * 0.03
+			var w := 0.028
+			var c0 := Color(0.04, 0.1, 0.07)
+			var c1 := Color(0.09, 0.2, 0.13)
+			var c2 := Color(0.16, 0.3, 0.18)
+			for dica in [lado.cross(Vector3.UP), -lado.cross(Vector3.UP)]:
+				m.tri_cores(mv, base - lado * w, base + lado * w, meio + lado * w * 0.7, dica, c0, c0, c1)
+				m.tri_cores(mv, base - lado * w, meio + lado * w * 0.7, meio - lado * w * 0.7, dica, c0, c1, c1)
+				m.tri_cores(mv, meio - lado * w * 0.7, meio + lado * w * 0.7, ponta, dica, c1, c1, c2)
+	m.construir_instancia(raiz, "AreiaEAlgas")
 
 
 ## A mão da Figura diante da câmera: cinco dedos longos, afilados e articulados, que entram pelas bordas da tela
