@@ -139,8 +139,10 @@ func _draw() -> void:
 	var dica := Celular.dica("1–5 ou rodinha: trocar · segure Q: ver", "toque no disco: trocar · segure Visor: ver") \
 		if _meus.size() >= 2 else Celular.dica("segure Q: ver", "segure Visor: ver")
 	var fd := Flash.fonte_titulo()
-	draw_string_outline(fd, Vector2(4.0, -6.0), dica, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, 5, Color(0, 0, 0, 0.8))
-	draw_string(fd, Vector2(4.0, -6.0), dica, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, Color(1, 1, 1, 0.9))
+	var tam_dica := 22 if Celular.ativo else 15   # no celular: pelo menos do tamanho do ano dos discos (20)
+	var borda_dica := 7 if Celular.ativo else 5
+	draw_string_outline(fd, Vector2(4.0, -6.0), dica, HORIZONTAL_ALIGNMENT_LEFT, -1.0, tam_dica, borda_dica, Color(0, 0, 0, 0.8))
+	draw_string(fd, Vector2(4.0, -6.0), dica, HORIZONTAL_ALIGNMENT_LEFT, -1.0, tam_dica, Color(1, 1, 1, 0.9))
 	if bloq:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0.05, 0.05, 0.1, 0.35))
 		var frac := clampf(Visor.bloqueio_restante() / Visor.BLOQUEIO_S, 0.0, 1.0)

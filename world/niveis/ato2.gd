@@ -389,6 +389,7 @@ func _criar_vento() -> void:
 	_vento = CPUParticles3D.new()
 	_vento.name = "VentoAreia"
 	_vento.amount = 110
+	Celular.reduzir_particulas(_vento)
 	_vento.lifetime = 2.2
 	_vento.local_coords = false
 	_vento.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX

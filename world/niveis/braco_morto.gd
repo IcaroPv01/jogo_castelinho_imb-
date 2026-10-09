@@ -629,7 +629,9 @@ func _escada_do_porao() -> void:
 	l.omni_range = 7.0
 	l.shadow_enabled = false
 	add_child(l)
-	# luz de preenchimento fria no pé da escada, para os degraus aparecerem
+	# luz de preenchimento fria no pé da escada, para os degraus aparecerem (no celular fica só a de cima: orçamento de luzes)
+	if Celular.ativo:
+		return
 	var l2 := OmniLight3D.new()
 	l2.name = "LuzDosDegraus"
 	l2.position = Vector3(-14.0, -1.0, 11.2)

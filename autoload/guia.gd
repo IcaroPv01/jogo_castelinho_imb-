@@ -65,6 +65,8 @@ var _retrato_corrompido := false
 var _t_glitch := 0.0         # tempo restante do retrato forçado como corrompido
 var _prox_glitch := 1.5
 var _tween_caixa: Tween
+var _largura := LARGURA      # largura da caixa; no celular encolhe para terminar antes dos botões de toque
+var _layout_celular := false
 
 var _raiz: Control
 var _caixa: Control
@@ -193,6 +195,7 @@ func _mostrar_linha(f: Fala, cfg: Dictionary, linha: String) -> void:
 	_personagem = f.personagem
 	var corr := GameState.corruption
 	var info := _preparar_texto(f, linha, corr)
+	_ajustar_largura()
 	_estilizar(cfg, corr, str(info.texto).length())   # antes do texto: com autowrap, o tamanho do Label precisa estar certo primeiro
 	_texto.text = info.texto
 	_texto.visible_characters = 0
@@ -361,6 +364,28 @@ func _construir() -> void:
 	_caixa.add_child(_seta)
 
 
+## No celular a caixa de fala vai da margem esquerda até antes do aglomerado de botões (Visor/Correr/...), encolhendo
+## e quebrando o texto em mais linhas. No desktop não mexe em nada.
+func _ajustar_largura() -> void:
+	if Celular.ativo:
+		var vp := get_viewport().get_visible_rect().size
+		var x0 := Celular.margens().x + 12.0
+		_largura = clampf(Celular.borda_botoes(vp.x) - 8.0 - x0, 560.0, LARGURA)
+		_caixa.anchor_left = 0.0
+		_caixa.anchor_right = 0.0
+		_caixa.offset_left = x0
+		_caixa.offset_right = x0 + _largura
+		_layout_celular = true
+	elif _layout_celular:
+		_largura = LARGURA
+		_caixa.anchor_left = 0.5
+		_caixa.anchor_right = 0.5
+		_caixa.offset_left = -LARGURA / 2.0
+		_caixa.offset_right = LARGURA / 2.0
+		_layout_celular = false
+	_seta.position.x = _largura - 56.0
+
+
 func _estilizar(cfg: Dictionary, corr: float, n_letras := 0) -> void:
 	var t := Flash.fator_dessat(corr)
 	var tem_retrato: bool = cfg.retrato != ""
@@ -378,7 +403,7 @@ func _estilizar(cfg: Dictionary, corr: float, n_letras := 0) -> void:
 		sb_balao = Flash.caixa(cor_balao, Flash.NAVY, 24, 5)
 	_balao.add_theme_stylebox_override("panel", sb_balao)
 	_balao.position.x = 150.0 if tem_retrato else 0.0
-	_balao.size.x = LARGURA - _balao.position.x
+	_balao.size.x = _largura - _balao.position.x
 	var margem := 28.0
 	_texto.position = Vector2(_balao.position.x + margem, 12)
 	_texto.size = Vector2(_balao.size.x - margem * 2.0 - 30.0, ALTURA - 24)
@@ -446,7 +471,7 @@ func _mostrar() -> void:
 	# Se uma fala acabou de terminar, a caixa pode estar no meio do fade-out: traz de volta.
 	var ja_visivel := _raiz.visible and _caixa.modulate.a > 0.5
 	_raiz.visible = true
-	_caixa.pivot_offset = Vector2(LARGURA / 2.0, ALTURA)
+	_caixa.pivot_offset = Vector2(_largura / 2.0, ALTURA)
 	if ja_visivel:
 		_caixa.modulate.a = 1.0
 		_caixa.scale = Vector2.ONE

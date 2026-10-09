@@ -49,6 +49,7 @@ func _rodar() -> void:
 
 	Cel.modo = "auto"
 	Cel.ativo = false
+	Cel.aplicar_ambiente()
 	Cel.pausa_toque = false
 	Cel.retrato = false
 	_gravar_modo_auto()
@@ -112,6 +113,14 @@ func _teste_pausa_sem_ponteiro() -> void:
 			tem_clique = true
 	_checar(not tem_clique, "celular: clique emulado não é mais 'interagir'")
 	_checar(Cel.dica("teclado", "toque") == "toque", "dica de toque no celular")
+	Cel.aplicar_ambiente()
+	_checar(is_equal_approx(root.scaling_3d_scale, 0.7) and Engine.max_fps == 30, "perfil leve: 3D a 70% e 30 fps")
+	_checar(Cel.limite_luzes(5) == 3 and Cel.limite_luzes(2) == 2, "no máximo 3 OmniLight no celular")
+	var part := CPUParticles3D.new()
+	part.amount = 100
+	Cel.reduzir_particulas(part)
+	_checar(part.amount == 50, "partículas pela metade")
+	part.free()
 	var m: Vector4 = Cel.margens()
 	_checar(m.x >= Cel.MARGEM_MIN and m.w >= Cel.MARGEM_MIN, "margens com mínimo")
 
@@ -245,6 +254,8 @@ func _teste_toque_avanca_fala() -> void:
 		if guia.bloqueando():
 			break
 	_checar(guia.bloqueando(), "fala bloqueante na tela")
+	var borda: float = Cel.borda_botoes(c.tamanho().x)
+	_checar(guia._caixa.offset_right < borda and guia._caixa.offset_left >= 0.0, "balão termina antes dos botões (%.0f < %.0f)" % [guia._caixa.offset_right, borda])
 	await create_timer(0.6).timeout
 	var tempo := 0
 	c.processar_toque(7, Vector2(700, 300), true)   # com balão bloqueante, qualquer toque avança
@@ -364,6 +375,7 @@ func _teste_opcao() -> void:
 	await process_frame
 	await process_frame
 	_checar(not Cel.ativo and hud.controles == null and hud.aviso_retrato == null, "'Nunca' remove os controles na hora")
+	_checar(is_equal_approx(root.scaling_3d_scale, 1.0) and Engine.max_fps == 0, "'Nunca' desfaz o perfil leve")
 	Op.definir_controles("sempre")
 	await process_frame
 	await process_frame

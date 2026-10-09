@@ -21,8 +21,8 @@ const ZONA_MORTA := 0.16
 const TOQUE_S := 0.3
 const TOQUE_PX := 24.0
 const FOLGA := 10.0              # tolerância extra ao acertar um botão com o dedo
-const R_GRANDE := 56.0
-const R_MEDIO := 47.0
+const R_GRANDE := Celular.R_GRANDE
+const R_MEDIO := Celular.R_MEDIO
 const ALFA := 0.6
 
 ## HUD.modo_cinema: esconde tudo.
@@ -132,11 +132,11 @@ func layout() -> Dictionary:
 	var d := {}
 	var inter := Vector2(vp.x - m.z - R_GRANDE - 6.0, vp.y - m.w - R_GRANDE - 6.0)
 	d["interagir"] = {"c": inter, "r": R_GRANDE}
-	d["correr"] = {"c": inter + Vector2(-128.0, 14.0), "r": R_MEDIO}
+	d["correr"] = {"c": inter + Vector2(-(Celular.BOTOES_ESQ - 4.0), 14.0), "r": R_MEDIO}
 	if _tem_lanterna():
 		d["lanterna"] = {"c": inter + Vector2(-4.0, -122.0), "r": R_MEDIO}
 	if _tem_visor():
-		d["visor"] = {"c": inter + Vector2(-132.0, -98.0), "r": R_MEDIO}
+		d["visor"] = {"c": inter + Vector2(-Celular.BOTOES_ESQ, -98.0), "r": R_MEDIO}
 	var pausa := Vector2(vp.x - m.z - 34.0, m.y + 34.0)
 	d["pausa"] = {"c": pausa, "r": 30.0}
 	d["tela"] = {"c": pausa + Vector2(-76.0, 0.0), "r": 26.0}

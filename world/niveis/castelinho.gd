@@ -312,6 +312,7 @@ func _montar_vento() -> void:
 	vento = CPUParticles3D.new()
 	vento.name = "VentoDeAreia"
 	vento.amount = 140
+	Celular.reduzir_particulas(vento)
 	vento.lifetime = 2.2
 	vento.local_coords = false
 	vento.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
@@ -336,6 +337,7 @@ func _montar_chuva() -> void:
 	chuva = CPUParticles3D.new()
 	chuva.name = "Chuva"
 	chuva.amount = 360
+	Celular.reduzir_particulas(chuva)
 	chuva.lifetime = 0.75
 	chuva.local_coords = false
 	chuva.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
@@ -717,7 +719,7 @@ func _atualizar_luzes() -> void:
 		var cam := get_viewport().get_camera_3d()
 		if cam:
 			ref = cam.global_position
-	var maximo: int = LAMPADAS[visita][1]
+	var maximo: int = Celular.limite_luzes(LAMPADAS[visita][1])
 	var cand: Array = []
 	for l in _luzes:
 		var no: OmniLight3D = l["no"]
