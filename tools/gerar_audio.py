@@ -959,6 +959,10 @@ CATALOGO = {
 }
 
 
+# Módulo 6: os sustos eram transientes curtos e soavam mais baixos que o apito e o carimbo; comprimidos, ficam no topo da mistura.
+COMPRIMIR = {"susto", "susto_agua", "susto_perto", "susto_queda"}
+
+
 def converter_ogg(wav, ogg):
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", wav, "-c:a", "libvorbis", "-q:a", "3", "-ar", str(SR), ogg], check=True)
 
@@ -975,6 +979,8 @@ def main():
             if nome.startswith("jingle") or nome in ("vento", "mar", "rio", "chuva", "goteira", "subaquatico"):
                 x = normalizar(x, 0.8)  # loops: sem fade nas pontas (emenda sem corte)
             else:
+                if nome in COMPRIMIR:  # sustos: saturação suave sobe o volume percebido sem passar do pico
+                    x = np.tanh(3.0 * x / (np.max(np.abs(x)) + 1e-9))
                 x = fade(normalizar(x, 0.85))
             for ext in ("wav", "ogg"):  # remove versão antiga em outro formato
                 antigo = os.path.join(SAIDA, f"{nome}.{ext}")

@@ -33,12 +33,12 @@ const SILENCIO_DB := -60.0
 
 ## Ajuste de volume por som (os arquivos são normalizados no mesmo pico).
 const VOLUME_PADRAO := {
-	"erro": -7.0, "glitch": -8.0, "telefone": -3.0, "susto": -1.0, "fanfarra": -5.0,
-	"blip_bentinho": -8.0, "blip_taina": -8.0, "blip_quico": -9.0, "blip_sistema": -9.0,
+	"erro": -7.0, "glitch": -8.0, "telefone": -6.0, "susto": -1.0, "fanfarra": -5.0,
+	"blip_bentinho": -8.0, "blip_taina": -8.0, "blip_quico": -9.0, "blip_sistema": -5.0,
 	"blip_misterio": -6.0, "clique": -5.0, "boing": -4.0, "passo_1": -5.0, "passo_2": -5.0, "passo_3": -5.0,
-	"vento": -4.0, "mar": -4.0, "rio": -4.0, "ofego": -3.0, "confete": -3.0, "sussurro": -2.0, "slide": -4.0,
-	"chuva": -6.0, "goteira": -5.0, "agua_sobe": -3.0, "crianca_ei": -3.0, "telefone_voz": -3.0, "atencao": -2.0,
-	"trovao": -3.0,
+	"vento": -4.0, "mar": -4.0, "rio": 0.0, "ofego": -3.0, "confete": -3.0, "sussurro": 2.0, "slide": -4.0,
+	"chuva": -6.0, "goteira": 0.0, "agua_sobe": -3.0, "crianca_ei": -3.0, "telefone_voz": -3.0, "atencao": -2.0,
+	"trovao": -3.0, "apito": -4.0, "selo": -3.0,
 	"susto_agua": -2.0, "susto_perto": -2.0, "susto_queda": -2.0, "voz_tito": -2.0, "afundar": -3.0,
 	"subaquatico": -6.0, "figura_sobe": -2.0, "figura_afunda": -2.0, "pista": -3.0,
 }

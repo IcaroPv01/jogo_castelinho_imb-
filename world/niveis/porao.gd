@@ -550,7 +550,7 @@ func _susto_telefone(c, dt: float) -> void:
 
 ## J5 (99): perto do topo da escada a Figura despenca do escuro, colada na câmera; depois o silêncio, a fala F e o ar fresco.
 func _final_99() -> void:
-	Susto.disparar(self, "porao_j5", {"frente": 0.85, "cair": true, "duracao": 0.7, "volume_db": 6.0, "pulso": 0.6, "tranco": 1.6, "escala": 1.3, "sfx": "susto_queda"})
+	Susto.disparar(self, "porao_j5", {"frente": 0.85, "cair": true, "duracao": 0.7, "volume_db": 2.0, "pulso": 0.6, "tranco": 1.6, "escala": 1.3, "sfx": "susto_queda"})
 	await get_tree().create_timer(2.6, false).timeout
 	if not _saindo and not morrendo:
 		Guia.falar("sistema", ["Fim da área de visitação."])
