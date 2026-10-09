@@ -141,6 +141,7 @@ var _prox_arranco := 0.0
 var _olhada_ant := false
 var _dist := 99.0
 var _brilho := 1.0
+var _cabeca_baixa := 0.0                  # rad: cabeça baixa extra na pose "olhada" (usado pelo Susto)
 
 
 ## Tubo ao longo de `pts` com raio `rad` por ponto, elipse `esc` (largura, profundidade), cor por ponto/direção.
@@ -347,10 +348,18 @@ func _pose_nova(forte: bool) -> void:
 	_modelo.rotation.y = randf_range(-0.09, 0.09) * f
 
 
+## Inclui `rad` de cabeça baixa na pose "olhada" (o Susto usa: com ela no chão, o rosto segue o jogador).
+## A pose base já olha ~10° para baixo (corcunda); só o que passar disso entra.
+func inclinar_cabeca(rad: float) -> void:
+	_cabeca_baixa = clampf(rad - 0.18, 0.0, 0.6)
+	if _cabeca != null:
+		_pose_olhada()
+
+
 ## Ao ser vista: congela com a cabeça virada de vez para o jogador (um estalo só).
 func _pose_olhada() -> void:
 	_pose_base()
-	_cabeca.rotation = Vector3(0.1, 0.0, 0.5 * (1.0 if randf() < 0.5 else -1.0))
+	_cabeca.rotation = Vector3(0.1 - _cabeca_baixa, 0.0, 0.5 * (1.0 if randf() < 0.5 else -1.0))
 	_corpo.rotation = Vector3(-0.28, 0.0, 0.0)
 	_modelo.rotation.y = 0.0
 

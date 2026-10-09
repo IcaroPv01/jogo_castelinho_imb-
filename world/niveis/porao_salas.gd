@@ -328,6 +328,7 @@ static func _masmorra(c: Ctx) -> void:
 			_cela(c, 1, -10.5)
 			_correntes(c, -1, -10.6)
 			_correntes(c, -1, -11.5)
+			tocha(c, Vector3(-c.w * 0.5 + 0.12, 2.0, -9.3), -1, 1.3, 6.5)       # uma tocha perto: as correntes precisam aparecer
 		9: _cela_giz(c)
 
 
@@ -340,7 +341,8 @@ static func _grade(c: Ctx, x_face: float, lado: float, zc: float, larg: float, a
 	var ferro := Color(0.36, 0.19, 0.1)
 	var meia := larg * 0.5
 	# fundo escuro do nicho e moldura de pedra (viga em cima, soleira embaixo)
-	c.vc.caixa(mv, Vector3(x_face, 0.0, zc - meia), Vector3(x_face + d * 0.02, alt, zc + meia), Malha.F_TODAS, 0.0, Color(0.012, 0.012, 0.016))
+	if not aberta:   # (a cela aberta da sala 90 mostra o nicho de verdade, com fundo e objetos: um plano liso parecia porta pintada)
+		c.vc.caixa(mv, Vector3(x_face, 0.0, zc - meia), Vector3(x_face + d * 0.02, alt, zc + meia), Malha.F_TODAS, 0.0, Color(0.012, 0.012, 0.016))
 	c.vc.caixa(mv, Vector3(x_face, alt, zc - meia - 0.1), Vector3(x_face + d * 0.22, alt + 0.2, zc + meia + 0.1), Malha.F_TODAS, 0.0, Color(0.32, 0.3, 0.3))
 	c.vc.caixa(mv, Vector3(x_face, 0.0, zc - meia - 0.1), Vector3(x_face + d * 0.22, 0.12, zc + meia + 0.1), Malha.F_TODAS, 0.0, Color(0.32, 0.3, 0.3))
 	for lat in [-1.0, 1.0]:
@@ -376,22 +378,49 @@ static func _correntes(c: Ctx, lado: float, zc: float) -> void:
 	var mv := mat_vc()
 	var d := -lado
 	var x := lado * c.w * 0.5 + d * 0.06
-	var ferro := Color(0.2, 0.15, 0.12)
+	var ferro := Color(0.5, 0.52, 0.56)      # aço velho claro: sobre o tijolo escuro precisa de contraste
 	c.vc.caixa(mv, Vector3(x - 0.05, 2.62, zc - 0.12), Vector3(x + d * 0.1, 2.74, zc + 0.12), Malha.F_TODAS, 0.0, ferro)      # suporte
 	var y := 2.62
 	for k in 6:
 		var alt := 0.18
 		for lat in [-1.0, 1.0]:
 			if k % 2 == 0:       # elo de frente: dois lados ao longo de z
-				c.vc.caixa(mv, Vector3(x - 0.012, y - alt, zc + lat * 0.045 - 0.012), Vector3(x + 0.012, y, zc + lat * 0.045 + 0.012), Malha.F_TODAS, 0.0, ferro)
+				c.vc.caixa(mv, Vector3(x - 0.019, y - alt, zc + lat * 0.045 - 0.019), Vector3(x + 0.019, y, zc + lat * 0.045 + 0.019), Malha.F_TODAS, 0.0, ferro)
 			else:                # elo de lado: dois lados ao longo de x
-				c.vc.caixa(mv, Vector3(x + lat * 0.045 - 0.012, y - alt, zc - 0.012), Vector3(x + lat * 0.045 + 0.012, y, zc + 0.012), Malha.F_TODAS, 0.0, ferro)
+				c.vc.caixa(mv, Vector3(x + lat * 0.045 - 0.019, y - alt, zc - 0.019), Vector3(x + lat * 0.045 + 0.019, y, zc + 0.019), Malha.F_TODAS, 0.0, ferro)
 		y -= alt * 0.85
 	# algema grande (aro de ~30 cm) na ponta
 	var r := 0.15
 	for lado_z in [-1.0, 1.0]:
-		c.vc.caixa(mv, Vector3(x - 0.02, y - 0.3, zc + lado_z * r - 0.02), Vector3(x + 0.02 + d * 0.0, y, zc + lado_z * r + 0.02), Malha.F_TODAS, 0.0, ferro)
-	c.vc.caixa(mv, Vector3(x - 0.02, y - 0.32, zc - r), Vector3(x + 0.02, y - 0.28, zc + r), Malha.F_TODAS, 0.0, ferro)
+		c.vc.caixa(mv, Vector3(x - 0.03, y - 0.3, zc + lado_z * r - 0.02), Vector3(x + 0.03 + d * 0.0, y, zc + lado_z * r + 0.02), Malha.F_TODAS, 0.0, ferro)
+	c.vc.caixa(mv, Vector3(x - 0.03, y - 0.32, zc - r), Vector3(x + 0.03, y - 0.28, zc + r), Malha.F_TODAS, 0.0, ferro)
+
+
+## Um banco de madeira encostado na lateral e um balde de lata virado no chão da cela da sala 90: dão profundidade ao nicho
+## visto de fora, pela grade (sem tocar nos desenhos de giz do fundo).
+static func _mobilia_cela(c: Ctx, x0: float, zc: float) -> void:
+	var mv := mat_vc()
+	var madeira := Color(0.34, 0.24, 0.17)
+	var zb := zc + 0.55
+	caixa(c.vc, mv, x0 + 0.3, 0.4, zb - 0.55, x0 + 0.75, 0.46, zb + 0.55, madeira)                           # assento
+	for lz in [-0.5, 0.5]:
+		for lx in [0.34, 0.71]:
+			caixa(c.vc, mv, x0 + lx - 0.03, 0.0, zb + lz - 0.03, x0 + lx + 0.03, 0.4, zb + lz + 0.03, madeira)
+	var cil := CylinderMesh.new()
+	cil.top_radius = 0.17
+	cil.bottom_radius = 0.13
+	cil.height = 0.28
+	cil.radial_segments = 8
+	cil.rings = 1
+	var mb := StandardMaterial3D.new()
+	mb.albedo_color = Color(0.5, 0.52, 0.55)
+	mb.roughness = 0.5
+	var balde := MeshInstance3D.new()
+	balde.name = "BaldeCela"
+	balde.mesh = cil
+	balde.material_override = mb
+	balde.position = Vector3(x0 + 1.15, 0.14, zc - 0.7)
+	c.raiz.add_child(balde)
 
 
 ## Sala 90: o nicho k = 1 de `_arcos` vira uma cela com a grade aberta. Na parede de dentro, 4 desenhos de giz, da esquerda
@@ -403,6 +432,7 @@ static func _cela_giz(c: Ctx) -> void:
 	var x0 := c.w * 0.5 + T
 	var x1 := x0 + 2.2
 	_grade(c, c.w * 0.5, 1.0, zc, 2.4, 2.4, true)
+	_mobilia_cela(c, x0, zc)
 	var todas := [GameState.Epoca.E1950, GameState.Epoca.E1975, GameState.Epoca.E2019, GameState.Epoca.E2020, GameState.Epoca.E1967, GameState.Epoca.ESEMDATA]
 	for n in 4:
 		var zq := zc - 1.2 + n * 0.8                # +z é a direita de quem olha para a parede do fundo (+x)

@@ -332,7 +332,7 @@ static func _figura_slide(pai: Node3D, pos: Vector3) -> Node3D:
 	pai.add_child(n)
 	var vestido := _mat_slide(Color(0.8, 0.86, 0.84))
 	var barra := _mat_slide(Color(0.5, 0.58, 0.58))
-	var pele := _mat_slide(Color(0.66, 0.74, 0.69))
+	var pele := _mat_slide(Color(0.56, 0.65, 0.61))   # um pouco mais escura que o vestido: os braços se leem contra ele
 	var cabelo := _mat_slide(Color(0.03, 0.035, 0.045))
 	# vestido: saia fina até o joelho e a barra mais escura, com tiras rasgadas pendendo (sem pés)
 	var saia := CylinderMesh.new()

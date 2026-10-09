@@ -2269,10 +2269,10 @@ func _evt_sala21() -> void:
 
 
 func _evt_sala22() -> void:
-	# Visita 4, sala 22 (cantinho escuro ao lado do quiz final): as luzes piscam e a Figura está logo ali, de lado.
+	# Visita 4, sala 22 (cantinho escuro ao lado do quiz final): as luzes piscam e a Figura está logo ali, de lado (o Susto afasta o ponto do arco/parede).
 	if visita == 4:
 		_susto_castelo("v4_sala22", GameState.sala_atual, 1.2,
-			{"apagar": 0.8, "sfx_antes": "clique", "angulo": 35.0, "frente": 2.3, "duracao": 0.6})
+			{"apagar": 0.8, "sfx_antes": "clique", "angulo": 20.0, "frente": 2.3, "duracao": 0.6})   # o Susto acha um ponto livre (fora do arco), inteira e na vista
 
 
 ## Visita 3, sala 18 (hall do andar de cima, trecho quieto): a lanterna e as lâmpadas falham e a Figura está no facho.

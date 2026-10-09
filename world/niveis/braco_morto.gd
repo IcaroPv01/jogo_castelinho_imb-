@@ -81,6 +81,7 @@ var _convite_dado := false
 var _entrou_na_agua := false
 var _entrada_pos := Vector3.ZERO
 var _filtro: AudioEffectLowPassFilter
+var _marola: MeshInstance3D       # anel de marola em volta da Figura na água
 var _ult_pegada := -1.0           # fração do caminho da última pegada deixada
 
 
@@ -231,7 +232,7 @@ func _mat(tex: String, tam: float, tom: Color, falsa: Callable) -> ShaderMateria
 # ============================================================================ terreno: grama, calçadão, quadra do lago
 func _terreno() -> void:
 	var m: Malha = MalhaGd.new()
-	var grama := _mat("grama", 4.0, Color(0.30, 0.42, 0.30), Ato2Pecas.tex_areia)
+	var grama := _mat("grama", 1.5, Color(0.30, 0.42, 0.30), Ato2Pecas.tex_areia)     # (4.0 dava blocos de Minecraft de perto)
 	var concreto := _mat("calcada_lajotas", 1.5, Color(0.66, 0.66, 0.70), Ato2Pecas.tex_piso_pedra)
 	var asfalto := _mat("asfalto", 2.5, Color(0.5, 0.5, 0.55), Ato2Pecas.tex_piso_pedra)
 	# a grama é cortada em 4 pedaços por causa do poço da escada (x -15.6..-12.4, z 7..14.4)
@@ -487,7 +488,7 @@ func _margem_de_la() -> void:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	x = -90.0
 	while x <= 90.0:
-		_quad_uv(st, Vector3(x, 0.05, -3.8), 4.6, 4.6, Rect2(0, 0, 0.5, 1))            # poça deste lado (metade esq. da textura)
+		_quad_uv(st, Vector3(x, 0.05, -5.5), 4.6, 2.4, Rect2(0, 0, 0.5, 1))            # poça deste lado (metade esq. da textura), toda dentro do calçadão (z -8 a -3)
 		x += 18.0
 	for xl in xs:
 		_quad_uv(st, Vector3(xl, 0.08, LAGO_Z0 - 2.4), 4.0, 3.2, Rect2(0, 0, 0.5, 1))  # poça do lado de lá
@@ -496,7 +497,7 @@ func _margem_de_la() -> void:
 	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_texture = _tex_luzes()
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR     # NEAREST dava degraus serrilhados na poça
 	mat.albedo_color = Color(1.0, 0.72, 0.36, 0.9)
 	mat.render_priority = 2          # depois da água (também transparente), senão o lago cobre os reflexos
 	var mi := MeshInstance3D.new()
@@ -550,7 +551,7 @@ static func _tex_luzes() -> ImageTexture:
 	for y in 64:
 		for x in 32:
 			var d := Vector2(x + 0.5 - 16.0, (y + 0.5) * 0.5 - 16.0).length() / 16.0
-			var a := floorf(pow(clampf(1.0 - d, 0.0, 1.0), 1.5) * 5.0) / 5.0
+			var a := floorf(pow(clampf(1.0 - d, 0.0, 1.0), 1.5) * 8.0) / 8.0
 			img.set_pixel(x, y, Color(1, 1, 1, a))
 		var v := float(y) / 63.0
 		var onda := 0.6 + 0.4 * sin(y * 1.7 + rng.randf() * 2.0)
@@ -586,13 +587,17 @@ func _obra() -> void:
 func _escada_do_porao() -> void:
 	var m: Malha = MalhaGd.new()
 	var pedra := SalasGd._mat_pedra(SalasGd._textura("parede_castelinho", Ato2Pecas.tex_pedra), 1.48, Color(0.62, 0.52, 0.5), 0.5, 0.2)
+	var piso := _mat("calcada_lajotas", 1.0, Color(0.66, 0.66, 0.70), Ato2Pecas.tex_piso_pedra)
 	var n := 8
 	var z0 := 13.4
 	var tread := (z0 - 7.2) / n
 	for i in n:
 		var za := z0 - i * tread
 		var y := -2.4 + (i + 1) * 0.3
-		m.caixa(pedra, Vector3(-15.6, y - 0.3, za - tread), Vector3(-12.4, y, za), Malha.F_PY | Malha.F_PZ, 0.0, Color.WHITE)
+		# piso de lajota, espelho (a parte que se sobe) de tijolo e uma borda um pouco mais clara: lê como degrau, não rampa
+		m.caixa(piso, Vector3(-15.6, y - 0.3, za - tread), Vector3(-12.4, y, za), Malha.F_PY, 0.0, Color.WHITE)
+		m.caixa(pedra, Vector3(-15.6, y - 0.3, za - tread), Vector3(-12.4, y, za), Malha.F_PZ, 0.0, Color(0.85, 0.85, 0.85))
+		m.caixa(piso, Vector3(-15.6, y, za - 0.14), Vector3(-12.4, y + 0.008, za), Malha.F_PY, 0.0, Color(1.45, 1.45, 1.4))
 	m.rampa(PackedVector3Array([Vector3(-15.6, -2.4, z0), Vector3(-12.4, -2.4, z0), Vector3(-15.6, 0.0, 7.2), Vector3(-12.4, 0.0, 7.2),
 		Vector3(-15.6, -2.9, z0), Vector3(-12.4, -2.9, z0), Vector3(-15.6, -2.9, 7.2), Vector3(-12.4, -2.9, 7.2)]))
 	m.caixa(pedra, Vector3(-15.6, -2.4, z0), Vector3(-12.4, -2.0, z0 + 0.6), Malha.F_TODAS, 0.0, Color.WHITE)
@@ -763,6 +768,7 @@ func _cena_tito() -> void:
 	if cena_feita:
 		return
 	cena_feita = true
+	_hud_cinema(true)
 	player.pode_mover = false
 	# soltar o Q no meio da cena devolveria 2020 e o Tito sumiria falando: segura a época até o fim
 	GameState.set_flag("visor_travado", true)
@@ -821,6 +827,8 @@ func _final_encontrado(menino: Node3D) -> void:
 	tw3.tween_property(fig, "position:y", AGUA_Y - 3.4, 4.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	await tw3.finished
 	fig.visible = false
+	if _marola:
+		_marola.visible = false
 	var tw4 := create_tween().set_parallel()
 	tw4.tween_property(mat_agua, "shader_parameter/ondas", 0.0, 3.0)
 	tw4.tween_property(mat_agua, "shader_parameter/velocidade", 0.04, 3.0)
@@ -874,6 +882,7 @@ func _figura_na_agua(pos: Vector3, yaw: float) -> FiguraBranca:
 		add_child(_figura)
 		_figura.set_physics_process(false)     # sem gravidade nem toque: é só uma presença
 	_figura.visible = true
+	_marola_da_figura(pos)
 	_figura.global_position = pos
 	_figura.rotation.y = yaw
 	_figura.scale = Vector3.ONE * 1.2     # alta, para ler de longe
@@ -888,6 +897,41 @@ func _figura_na_agua(pos: Vector3, yaw: float) -> FiguraBranca:
 		lf.shadow_enabled = false
 		_figura.add_child(lf)
 	return _figura
+
+
+## Um anel fraco de marola (quad aditivo, 1 draw) na água em volta da Figura, crescendo e voltando devagar.
+func _marola_da_figura(pos: Vector3) -> void:
+	if _marola == null:
+		var g := Gradient.new()
+		g.offsets = PackedFloat32Array([0.0, 0.55, 0.78, 1.0])
+		g.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 0.85), Color(1, 1, 1, 0)])
+		var t := GradientTexture2D.new()
+		t.gradient = g
+		t.fill = GradientTexture2D.FILL_RADIAL
+		t.fill_from = Vector2(0.5, 0.5)
+		t.fill_to = Vector2(1.0, 0.5)
+		t.width = 128
+		t.height = 128
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.albedo_texture = t
+		mat.albedo_color = Color(0.5, 0.66, 0.9, 0.55)
+		mat.render_priority = 2          # depois da água (também transparente)
+		var pl := PlaneMesh.new()
+		pl.size = Vector2(3.4, 3.4)
+		_marola = MeshInstance3D.new()
+		_marola.name = "MarolaDaFigura"
+		_marola.mesh = pl
+		_marola.material_override = mat
+		_marola.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(_marola)
+		var tw := _marola.create_tween().set_loops()
+		tw.tween_property(_marola, "scale", Vector3(1.3, 1.0, 1.3), 2.6).from(Vector3(0.8, 1.0, 0.8)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_property(_marola, "scale", Vector3(0.8, 1.0, 0.8), 2.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_marola.visible = true
+	_marola.global_position = Vector3(pos.x, AGUA_Y + 0.02, pos.z)
 
 
 # ---------------------------------------------------------------- final "Visita concluída"
@@ -911,6 +955,7 @@ func _fechar_cena_tito(devolver_controle: bool) -> void:
 	GameState.set_flag("viu_tito_final", true)
 	_tito_concluido = true
 	if devolver_controle:
+		_hud_cinema(false)     # no "Visita concluída" o HUD segue escondido até o fim
 		GameState.set_flag("visor_travado", false)
 		if not (_visor and _visor.ativo) and GameState.epoca in EPOCAS_TITO:
 			GameState.trocar_epoca(GameState.Epoca.E2020)     # o Visor foi solto durante a cena: volta ao hoje
@@ -973,76 +1018,144 @@ func _beat_visita_concluida() -> void:
 	await get_tree().create_timer(0.6, false).timeout
 
 
-## Braço fino de `de` até `ate` (mundo) com quatro dedos longos dobrados sobre o fim dele. Devolve o nó (escala em Z = alcance).
+## Braço de afogada de `de` (ombro da Figura) até `ate` (mundo): braço e antebraço com o cotovelo dobrado para fora, e uma
+## mão de dedos longos e finos com a palma achatada pousada em `ate` e os dedos curvados por cima do ombro, mais o polegar.
+## Devolve o nó (escala em Z = alcance).
 func _mao_longa(de: Vector3, ate: Vector3) -> Node3D:
 	var raiz := Node3D.new()
 	add_child(raiz)
 	raiz.global_position = de
 	raiz.look_at(ate, Vector3.UP)
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = FiguraBranca.COR_PELE * 1.45
-	var mat_unha := StandardMaterial3D.new()
-	mat_unha.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat_unha.albedo_color = Color(0.08, 0.09, 0.1)
+	var cor := FiguraBranca.COR_PELE * 1.4
+	var mat := _mat_pele(cor, false)
+	var mat_mao := _mat_pele(cor, true)
 	var comp: float = de.distance_to(ate)
-	var braco := CylinderMesh.new()
-	braco.top_radius = 0.05
-	braco.bottom_radius = 0.032
-	braco.height = comp
-	braco.radial_segments = 8
-	var mb := MeshInstance3D.new()
-	mb.mesh = braco
-	mb.material_override = mat
-	mb.rotation.x = PI * 0.5
-	mb.position = Vector3(0, 0, -comp * 0.5)
-	raiz.add_child(mb)
-	# mão: palma estreita e quatro dedos compridos, de três falanges, que se curvam sobre o ombro
-	var palma := MeshInstance3D.new()
-	var sp := SphereMesh.new()
-	sp.radius = 0.06
-	sp.height = 0.12
-	sp.radial_segments = 8
-	sp.rings = 4
-	palma.mesh = sp
-	palma.material_override = mat
-	palma.scale = Vector3(1.0, 0.5, 1.2)
-	palma.position = Vector3(0, 0, -comp)
-	raiz.add_child(palma)
+	var queda: float = clampf((de.y - ate.y) / maxf(comp, 0.01), -1.0, 1.0)
+	# braço: ombro -> cotovelo (para fora e um pouco para cima) -> pulso, afinando
+	var cotovelo := Vector3(0.28, 0.46, -comp * 0.44)
+	var pulso := Vector3(0.03, 0.05, -(comp - 0.14))
+	_cone(raiz, Vector3.ZERO, cotovelo, 0.052, 0.04, mat, 8)
+	_bola(raiz, cotovelo, 0.047, mat)
+	_cone(raiz, cotovelo, pulso, 0.04, 0.022, mat, 8)
+	_bola(raiz, pulso, 0.024, mat)
+	# a mão fica num nó de eixo horizontal (a rampa do braço é desfeita), com a palma para baixo
+	var mao := Node3D.new()
+	mao.position = pulso
+	mao.rotation.x = asin(queda)
+	mao.scale = Vector3.ONE * 1.5     # mãos grandes, para lerem a 4-5 m
+	raiz.add_child(mao)
+	var palma := _bola(mao, Vector3(0, 0, -0.085), 1.0, mat_mao)
+	(palma.mesh as SphereMesh).radial_segments = 10
+	palma.scale = Vector3(0.088, 0.026, 0.1)
+	# 4 dedos longos, de três falanges, abertos em leque e curvados sobre o ombro; o do meio é o maior
+	var comps := [[0.17, 0.14, 0.11], [0.2, 0.16, 0.12], [0.19, 0.15, 0.11], [0.15, 0.12, 0.09]]
 	for i in 4:
-		var pivo := Node3D.new()
-		pivo.position = Vector3((i - 1.5) * 0.034, -0.02, -comp - 0.05)
-		pivo.rotation_degrees = Vector3(-8.0, (i - 1.5) * -6.0, 0.0)
-		raiz.add_child(pivo)
-		var cur := pivo
-		var fal := [0.13, 0.11, 0.09]
-		var rad := 0.014
-		for k in 3:
-			var seg := MeshInstance3D.new()
-			var cm := CylinderMesh.new()
-			cm.top_radius = rad * 0.8
-			cm.bottom_radius = rad
-			cm.height = fal[k]
-			cm.radial_segments = 5
-			seg.mesh = cm
-			seg.material_override = mat
-			seg.rotation.x = PI * 0.5
-			seg.position = Vector3(0, 0, -fal[k] * 0.5)
-			cur.add_child(seg)
-			var junta := Node3D.new()
-			junta.position = Vector3(0, 0, -fal[k])
-			junta.rotation_degrees.x = -28.0     # cada junta dobra um pouco para baixo (para o ombro)
-			cur.add_child(junta)
-			cur = junta
-			rad *= 0.8
-		var unha := MeshInstance3D.new()
-		var bu := BoxMesh.new()
-		bu.size = Vector3(0.014, 0.004, 0.026)
-		unha.mesh = bu
-		unha.material_override = mat_unha
-		unha.position = Vector3(0, 0.008, 0.012)
-		cur.add_child(unha)
+		var x := (float(i) - 1.5) * 0.04
+		_dedo(mao, Vector3(x, 0.0, -0.17), (float(i) - 1.5) * -0.09, comps[i], 0.0145, [-6.0, -34.0, -36.0, -30.0], mat_mao, true)
+	# polegar: duas falanges, para fora e para baixo
+	_dedo(mao, Vector3(0.075, -0.004, -0.1), -0.7, [0.1, 0.085], 0.017, [-4.0, -26.0, -28.0], mat_mao, true)
 	return raiz
+
+
+## Cone de `a` (raio r0) até `b` (raio r1), no espaço do pai.
+static func _cone(pai: Node3D, a: Vector3, b: Vector3, r0: float, r1: float, mat: Material, lados := 7) -> MeshInstance3D:
+	var d := b - a
+	var cm := CylinderMesh.new()
+	cm.bottom_radius = r0
+	cm.top_radius = r1
+	cm.height = d.length()
+	cm.radial_segments = lados
+	cm.rings = 1
+	var mi := MeshInstance3D.new()
+	mi.mesh = cm
+	mi.material_override = mat
+	mi.position = (a + b) * 0.5
+	mi.basis = Basis(Quaternion(Vector3.UP, d.normalized()))
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pai.add_child(mi)
+	return mi
+
+
+static func _bola(pai: Node3D, pos: Vector3, r: float, mat: Material) -> MeshInstance3D:
+	var sm := SphereMesh.new()
+	sm.radius = r
+	sm.height = r * 2.0
+	sm.radial_segments = 8
+	sm.rings = 4
+	var mi := MeshInstance3D.new()
+	mi.mesh = sm
+	mi.material_override = mat
+	mi.position = pos
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pai.add_child(mi)
+	return mi
+
+
+## Dedo articulado que aponta para -Z a partir de `base` (giro `yaw` em Y): uma falange por item de `comps`, cada uma mais
+## fina que a anterior, com um nó (junta mais grossa) entre elas e a ponta redonda com uma unha pequena e cinza.
+## `curvas` = dobra de cada junta em graus (rotação em X; negativo = para baixo), uma por falange mais a do pivô.
+static func _dedo(pai: Node3D, base: Vector3, yaw: float, comps: Array, raio: float, curvas: Array, mat: Material, com_unha: bool) -> void:
+	var cur := Node3D.new()
+	cur.position = base
+	cur.rotation = Vector3(deg_to_rad(curvas[0]), yaw, 0.0)
+	pai.add_child(cur)
+	var r := raio
+	for k in comps.size():
+		var c: float = comps[k]
+		var r1 := r * 0.8
+		_cone(cur, Vector3.ZERO, Vector3(0, 0, -c), r, r1, mat, 6)
+		var fim := Node3D.new()
+		fim.position = Vector3(0, 0, -c)
+		cur.add_child(fim)
+		if k < comps.size() - 1:
+			_bola(fim, Vector3.ZERO, r1 * 1.3, mat)     # o nó da junta
+			fim.rotation.x = deg_to_rad(curvas[mini(k + 1, curvas.size() - 1)])
+		else:
+			_bola(fim, Vector3.ZERO, r1 * 1.05, mat)     # ponta redonda
+			if com_unha:
+				var un := _bola(fim, Vector3(0, r1 * 0.55, 0.012), 1.0, _mat_unha())
+				un.scale = Vector3(r1 * 0.75, r1 * 0.3, 0.011)
+		cur = fim
+		r = r1
+
+
+## Pele pálida e acinzentada (sem luz, como a Figura). `enrugada`: dobrinhas de quem ficou muito tempo n'água.
+static func _mat_pele(cor: Color, enrugada: bool) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = cor
+	if enrugada:
+		m.albedo_texture = _tex_enrugada()
+		m.texture_repeat = true
+	return m
+
+
+static func _mat_unha() -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = Color(0.32, 0.36, 0.37)     # cinza-escuro, não preto
+	return m
+
+
+static var _tex_enr: Texture2D
+## Branco com dobrinhas escuras atravessadas (v = ao longo do dedo), para a pele de quem ficou muito tempo na água.
+static func _tex_enrugada() -> Texture2D:
+	if _tex_enr == null:
+		var w := 32
+		var h := 64
+		var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+		for y in h:
+			for x in w:
+				var u := float(x) / w
+				var v := float(y) / h
+				var f := sin(v * TAU * 5.0 + 2.2 * sin(u * TAU * 2.0 + v * 9.0))
+				var d := pow(clampf(f * 0.5 + 0.5, 0.0, 1.0), 3.0)
+				var gr := fposmod(sin(float(x) * 12.9898 + float(y) * 78.233) * 43758.5453, 1.0)
+				var t := 1.0 - 0.3 * d - 0.05 * gr
+				img.set_pixel(x, y, Color(t, t, t, 1.0))
+		img.generate_mipmaps()
+		_tex_enr = ImageTexture.create_from_image(img)
+	return _tex_enr
 
 
 ## Título do final (+ cartão alegre da prefeitura quando é o caso), sinal `fim`, dedicatória e volta ao título.
@@ -1145,6 +1258,7 @@ func _afundar() -> void:
 	GameState.set_flag("visor_travado", true)
 	player.pode_mover = false
 	player.velocity = Vector3.ZERO
+	_hud_cinema(true, true)     # só o "SALA 101" fica na tela
 	player.set_physics_process(false)     # sem colisão: o corpo desce pelo "chão" da rampa
 	var ini := player.global_position
 	Audio.sfx("agua_puxa", -4.0)
@@ -1272,63 +1386,58 @@ func _areia_e_algas(raiz: Node3D) -> void:
 	m.construir_instancia(raiz, "AreiaEAlgas")
 
 
-## A mão da Figura diante da câmera: cinco dedos longos, afilados e articulados, que entram pelas bordas da tela
-## (sem palma). `_fechar_mao(t)` os traz para o centro e os dobra (0 = fora da tela, 1 = fechados sobre a lente).
-const DEDOS_BORDA := [Vector2(-0.22, 0.30), Vector2(0.0, 0.32), Vector2(0.24, 0.30), Vector2(-0.52, 0.02), Vector2(0.52, -0.02)]
+## A mão da Figura diante da câmera: dedos longos, afilados, com dois nós e pele pálida enrugada, que entram pelas bordas
+## da tela; a palma sobe pela borda de baixo (com mais dois dedos). `_fechar_mao(t)` os traz para o centro e os dobra
+## (0 = fora da tela, 1 = fechados sobre a lente).
+const DEDOS_BORDA := [Vector2(-0.22, 0.30), Vector2(0.0, 0.32), Vector2(0.24, 0.30), Vector2(-0.52, 0.02), Vector2(0.52, -0.02),
+	Vector2(-0.14, -0.30), Vector2(0.17, -0.30)]
 
 
 func _mao_na_camera() -> Node3D:
 	var mao := Node3D.new()
 	player.camera.add_child(mao)
 	mao.position = Vector3(0, 0, -0.34)
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = FiguraBranca.COR_PELE * 1.25
+	var mat := _mat_pele(FiguraBranca.COR_PELE * 1.22, true)
 	mat.no_depth_test = true
 	mat.render_priority = 10
-	var mat_unha := StandardMaterial3D.new()
-	mat_unha.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat_unha.albedo_color = Color(0.07, 0.08, 0.09)
+	var mat_unha := _mat_unha()
 	mat_unha.no_depth_test = true
 	mat_unha.render_priority = 11
-	for i in 5:
+	for i in DEDOS_BORDA.size():
 		var piv := Node3D.new()
 		piv.name = "Dedo%d" % i
 		mao.add_child(piv)
 		var cur: Node3D = piv
 		var fal := [0.17, 0.14, 0.11]
-		var rad := 0.016
+		var rad := 0.02
 		for k in 3:
-			var seg := MeshInstance3D.new()
-			var cm := CylinderMesh.new()
-			cm.top_radius = rad * 0.78
-			cm.bottom_radius = rad
-			cm.height = fal[k]
-			cm.radial_segments = 6
-			cm.rings = 1
-			seg.mesh = cm
-			seg.material_override = mat
-			seg.position = Vector3(0, -fal[k] * 0.5, 0)
-			cur.add_child(seg)
+			var seg := _cone(cur, Vector3.ZERO, Vector3(0, -fal[k], 0), rad, rad * 0.76, mat, 7)
+			seg.name = "S%d" % k
 			var junta := Node3D.new()
 			junta.name = "J%d" % k
 			junta.position = Vector3(0, -fal[k], 0)
 			cur.add_child(junta)
+			var no := _bola(junta, Vector3.ZERO, rad * 0.76 * (1.28 if k < 2 else 1.0), mat)     # o nó (junta) mais grosso
+			no.scale = Vector3(1.0, 0.8, 1.0)
 			cur = junta
-			rad *= 0.78
-		var unha := MeshInstance3D.new()
-		var bu := BoxMesh.new()
-		bu.size = Vector3(0.011, 0.02, 0.004)
-		unha.mesh = bu
-		unha.material_override = mat_unha
-		unha.position = Vector3(0, 0.012, 0.01)
-		cur.add_child(unha)
+			rad *= 0.76
+		# unha discreta, cinza-escura, colada na ponta (do lado que olha para a lente)
+		var unha := _bola(cur, Vector3(0, 0.014, 0.0085), 1.0, mat_unha)
+		unha.scale = Vector3(0.0065, 0.011, 0.0022)
+	# a palma, entrando pela borda de baixo: elipsoide achatado e o início do antebraço descendo para fora da tela
+	var palma := Node3D.new()
+	palma.name = "Palma"
+	mao.add_child(palma)
+	var pm := _bola(palma, Vector3.ZERO, 1.0, mat)
+	pm.scale = Vector3(0.2, 0.17, 0.05)
+	var braco := _cone(palma, Vector3(0, -0.1, 0.0), Vector3(0, -0.7, 0.02), 0.085, 0.07, mat, 8)
+	braco.name = "Antebraco"
 	_fechar_mao(0.0, mao)
 	return mao
 
 
 func _fechar_mao(t: float, mao: Node3D) -> void:
-	for i in 5:
+	for i in DEDOS_BORDA.size():
 		var piv := mao.get_node("Dedo%d" % i) as Node3D
 		var borda: Vector2 = DEDOS_BORDA[i]
 		var fora := borda * 2.1
@@ -1345,6 +1454,8 @@ func _fechar_mao(t: float, mao: Node3D) -> void:
 			var j := cur.get_node("J%d" % k) as Node3D
 			j.rotation_degrees.x = -curl * (1.0 + k * 0.25)
 			cur = j
+	# a palma sobe devagar da borda de baixo
+	(mao.get_node("Palma") as Node3D).position = Vector3(0.0, lerpf(-0.62, -0.31, t), 0.0)
 
 
 ## Abafa o som (filtro passa-baixa no Master) enquanto o jogador está debaixo d'água; `false` tira o filtro.
@@ -1426,9 +1537,20 @@ func _hud_proprio() -> void:
 	_legenda.anchor_right = 1.0
 	_legenda.anchor_top = 1.0
 	_legenda.anchor_bottom = 1.0
-	_legenda.offset_top = -190.0
-	_legenda.offset_bottom = -110.0
+	_legenda.offset_left = 140.0
+	_legenda.offset_right = -140.0
+	_legenda.offset_top = -110.0
+	_legenda.offset_bottom = -40.0
 	_legenda.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_legenda.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# faixa preta translúcida atrás do texto: a legenda lê sobre a lápide clara
+	var faixa_leg := StyleBoxFlat.new()
+	faixa_leg.bg_color = Color(0, 0, 0, 0.45)
+	faixa_leg.content_margin_left = 16
+	faixa_leg.content_margin_right = 16
+	faixa_leg.content_margin_top = 4
+	faixa_leg.content_margin_bottom = 4
+	_legenda.add_theme_stylebox_override("normal", faixa_leg)
 	_legenda.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_legenda.modulate.a = 0.0
 	cam.add_child(_legenda)
@@ -1440,6 +1562,13 @@ func _hud_proprio() -> void:
 	_titulo_final.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_titulo_final.modulate.a = 0.0
 	cam.add_child(_titulo_final)
+
+
+## HUD limpo nas cenas de cinema (faixa de discos, ⊥N, mira); `manter_sala` deixa o rótulo "SALA N".
+func _hud_cinema(ligado: bool, manter_sala := false) -> void:
+	var main := get_tree().get_first_node_in_group("main") if is_inside_tree() else null
+	if main and main.get("hud") and main.hud.has_method("modo_cinema"):
+		main.hud.modo_cinema(ligado, manter_sala)
 
 
 func _mostrar_legenda(texto: String, dur := 3.0, tam := 26) -> void:
