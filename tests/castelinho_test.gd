@@ -508,9 +508,16 @@ func _visitas() -> void:
 		await _frames_f(3)
 		var fg: Node = nivel.get_node_or_null("FiguraPerseguidora")
 		_checar(fg != null and fg.visible and fg.ativa, "V4: figura_atravessou cria a perseguidora ativa")
-		_checar(fg != null and fg.global_position.distance_to(p.global_position) > 4.0, "V4: ela nasce longe (dá para fugir)")
+		# sem rastro (o teste não anda) ela nasce no ponto mais livre em volta; aqui o jogador está num canto apertado (3,6 m livres)
+		_checar(fg != null and fg.global_position.distance_to(p.global_position) > 3.0, "V4: ela nasce longe (dá para fugir): %.1f m" % fg.global_position.distance_to(p.global_position))
+		# passado `persegue_s` ela é mandada desistir: dá as costas e se afasta; some só fora da vista do jogador
 		await create_timer(1.0).timeout
-		_checar(fg != null and not fg.visible and not fg.ativa, "V4: a perseguidora some depois do tempo")
+		_checar(fg != null and (fg.estado == fg.Est.EMBORA or not fg.visible), "V4: passado o tempo a perseguidora desiste (estado %d)" % (fg.estado if fg else -1))
+		for i in 40:
+			if not fg.visible:
+				break
+			await create_timer(0.5).timeout
+		_checar(fg != null and not fg.visible and not fg.ativa, "V4: a perseguidora que desistiu se afasta e some")
 	# a escada de 2019 é a única descida
 	nivel._usar_escada_2019(p)
 	await _frames_f(3)

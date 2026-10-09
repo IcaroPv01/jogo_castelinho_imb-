@@ -290,6 +290,7 @@ func _teste_fim_demo() -> void:
 # ============================================================================ regra da figura
 func _teste_regra_figura() -> void:
 	print("-- regra da Figura Branca (arena plana)")
+	Engine.time_scale = 1.0   # as distâncias do teste contam com 1 quadro = 1/60 s (a perseguidora anda ~3,3 m/s)
 	GS.jogador_morreu.disconnect(main._on_morte)
 	await main.carregar_mundo("res://world/niveis/teste.tscn", "Spawn")
 	nivel = main.mundo.get_child(0)
@@ -304,13 +305,16 @@ func _teste_regra_figura() -> void:
 	await _frames(20)
 	var p0: Vector3 = f.global_position
 
-	# olhando: não se move
+	# olhando: ela NÃO congela (Granny pura, módulo 9): perseguidora ativa anda mesmo sendo olhada
 	await _frames(90)
 	_checar(f.olhada, "figura está sendo olhada")
-	_checar(f.global_position.distance_to(p0) < 0.05, "OLHANDO: a figura não se move (%.3f m)" % f.global_position.distance_to(p0))
+	_checar(f.global_position.distance_to(p0) > 3.0, "OLHANDO: a figura NÃO congela, continua andando (%.2f m)" % f.global_position.distance_to(p0))
 
-	# de costas: se aproxima
+	# de costas: também se aproxima
 	player.rotation.y = PI
+	f.global_position = Vector3(0, 0.1, -14.0)
+	f.velocity = Vector3.ZERO
+	await _frames(5)
 	var d0: float = f.global_position.distance_to(player.global_position)
 	await _frames(60)
 	var d1: float = f.global_position.distance_to(player.global_position)
@@ -337,7 +341,8 @@ func _teste_regra_figura() -> void:
 	f.escuro = false
 	await _frames(5)
 
-	# cercar: o jogador se aproxima olhando -> ela some e reaparece no ponto configurado
+	# cercar (só figura PARADA, ativa=false, como as das dunas): o jogador se aproxima olhando -> ela some e reaparece
+	f.ativa = false
 	f.global_position = Vector3(0, 0.1, -9.0)
 	f.velocity = Vector3.ZERO
 	f.tempo_reaparecer = 0.4

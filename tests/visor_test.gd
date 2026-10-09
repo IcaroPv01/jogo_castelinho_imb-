@@ -65,6 +65,15 @@ func _passo(segundos: float, dt := 0.1) -> void:
 		v._process(dt)
 
 
+## Simula que o jogador andou `metros` em linha reta (o rastro de migalhas que a Figura do slide usa).
+func _dar_rastro(metros: float) -> void:
+	v._rastro.limpar()
+	var x := -metros
+	while x <= 0.0:
+		v._rastro.seguir(Vector3(x, 0.0, 0.0))
+		x += 0.5
+
+
 ## Muda o estado do Q e deixa passar tempo real suficiente para o INTERVALO_MIN do Visor.
 func _q(apertado: bool) -> void:
 	if apertado:
@@ -250,27 +259,28 @@ func _teste_atencao() -> void:
 	_zerar(3)
 	GS.ganhar_disco(GS.Epoca.E1950)
 	await _q(true)
-	_passo(3.0)
-	_checar(absf(GS.atencao - 0.5) < 0.06, "visita 3: meio medidor em ~3 s (%.2f)" % GS.atencao)
-	_checar(v.figura_visivel, "a Figura aparece no slide com o Q apertado e atenção > 12%")
+	_dar_rastro(20.0)   # o jogador andou 20 m (a Figura do slide fica sobre o rastro dele)
+	_passo(5.0)
+	_checar(absf(GS.atencao - 0.5) < 0.06, "visita 3: meio medidor em ~5 s (%.2f; mudou de 3 s para 5 s com TEMPO_ENCHER 10 s)" % GS.atencao)
+	_checar(v.figura_visivel, "a Figura aparece no slide com o Q apertado, atenção > 35% e rastro andado")
 	var sinais := []
 	GS.atencao_mudou.connect(func(a): sinais.append(a))
 	_passo(0.5)
 	_checar(not sinais.is_empty(), "GameState.atencao_mudou é emitido")
 	var antes: float = GS.atencao
 	await _q(false)
-	_passo(2.0)
-	_checar(GS.atencao < antes and GS.atencao > 0.0, "soltar o Q faz a atenção cair devagar (%.2f -> %.2f)" % [antes, GS.atencao])
+	_passo(1.0)
+	_checar(GS.atencao < antes and GS.atencao > 0.0, "soltar o Q faz a atenção cair (%.2f -> %.2f; 4 s do máximo a zero)" % [antes, GS.atencao])
 	_checar(not v.figura_visivel, "sem Q a Figura some do slide")
-	_passo(12.0)
+	_passo(6.0)
 	_checar(GS.atencao == 0.0, "e esvazia por completo")
-	# tempo até encher: visita 3 ~6 s, visita 4 ~4 s, porão ~3 s
-	for par in [[3, 6.0], [4, 4.0], [5, 3.0]]:
+	# tempo até encher: visita 3 ~10 s, visita 4 ~7 s, porão ~5 s
+	for par in [[3, 10.0], [4, 7.0], [5, 5.0]]:
 		_zerar(par[0])
 		GS.ganhar_disco(GS.Epoca.E1950)
 		await _q(true)
 		var t := 0.0
-		while not VisorCls.bloqueado() and t < 12.0:
+		while not VisorCls.bloqueado() and t < 14.0:
 			_passo(0.1)
 			t += 0.1
 		_checar(absf(t - par[1]) < 0.35, "visita %d: enche em ~%.0f s (levou %.1f s)" % [par[0], par[1], t])
@@ -294,7 +304,7 @@ func _teste_susto_e_bloqueio() -> void:
 	var sustos0: int = GS.contadores.get("sustos", 0)
 	await _q(true)
 	_checar(v.ativo and GS.epoca == GS.Epoca.E1967, "visor ligado em 1967")
-	_passo(6.3)
+	_passo(10.3)
 	_checar(cheios == [3], "atenção cheia emitida na visita 3 (%s)" % str(cheios))
 	_checar(not v.ativo and GS.epoca == GS.Epoca.E2020, "o Visor foi arrancado da mão (desligou, época de hoje)")
 	_checar(VisorCls.bloqueado() and absf(VisorCls.bloqueio_restante() - 10.0) < 0.5, "bloqueado por 10 s (%.1f)" % VisorCls.bloqueio_restante())
@@ -315,6 +325,10 @@ func _teste_susto_e_bloqueio() -> void:
 	await create_timer(0.2).timeout
 	_passo(0.2)
 	_checar(v.ativo, "e o Q (ainda apertado) volta a funcionar")
+	_passo(5.0)
+	_checar(GS.atencao == 0.0, "graça de 6 s depois do bloqueio: a atenção não sobe (%.2f)" % GS.atencao)
+	_passo(2.0)
+	_checar(GS.atencao > 0.0, "passada a graça, a atenção volta a subir (%.2f)" % GS.atencao)
 	await _q(false)
 	v.atencao_cheia.disconnect(c1)
 	v.bloqueio_mudou.disconnect(c2)
@@ -331,7 +345,7 @@ func _teste_figura_atravessou() -> void:
 		var f = func(x): atrav.append(x)
 		v.figura_atravessou.connect(f)
 		await _q(true)
-		_passo(5.0)
+		_passo(7.3 if vis == 4 else 5.3)   # visita 4 enche em 7 s, porão em 5 s
 		_checar(atrav == [vis], "visita %d: Visor.figura_atravessou(%d) emitido (%s)" % [vis, vis, str(atrav)])
 		v.figura_atravessou.disconnect(f)
 		await _q(false)

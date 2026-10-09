@@ -168,8 +168,9 @@ var _porta_falando := false
 var _figura_v4: FiguraBranca          # perseguidora criada sob demanda quando o Visor estoura (visita 4)
 var _visor_v4: Visor
 var _visor: Visor
+const VEL_FIGURA_V4 := 3.7           # m/s: acima do andar (3,0), abaixo do correr (5,4)
 var _persegue_id := 0                 # invalida o temporizador de uma perseguição anterior
-var persegue_s := 12.0           # s que a Figura persegue na visita 4 (o Visor fica bloqueado por 10 s)
+var persegue_s := 45.0           # teto de segurança (s) da perseguição na visita 4; ela costuma desistir antes, ao perder o jogador
 var _painel_solto: Node3D
 var _lampada_fase := 0.0
 var _t_relampago := 6.0               # visita 4: segundos até o próximo relâmpago
@@ -1786,8 +1787,12 @@ func _usar_escada_2019(_p: Node) -> void:
 	_descer_porao()
 
 
-## O Visor estourou a atenção (visita 4): a Figura Branca (a mesma do porão) aparece e persegue por persegue_s.
-## Se pegar, a Figura mata o jogador e o main volta ao checkpoint (recarrega o nível, que some com ela).
+## O Visor estourou a atenção (visita 4): a Figura Branca (a mesma do porão) atravessa de verdade EXATAMENTE onde a
+## do slide estava (um ponto do rastro do jogador, nunca atrás de parede) e o persegue "como a vovó do Granny": enxerga,
+## anda mais rápido que o jogador andando e mais devagar que correndo, segue o rastro se perde de vista, procura uns
+## 4 s e desiste (se afasta sozinha e se esconde fora da vista). Não congela, não some e reaparece atrás de ninguém.
+## Se pegar, ela mata o jogador e o main volta ao checkpoint (recarrega o nível, que some com ela).
+## `persegue_s` é só o teto de segurança: passado esse tempo ela é mandada desistir.
 func _on_figura_atravessou(_v: int) -> void:
 	if visita != 4 or player == null or not is_instance_valid(player) or _saindo_porao:
 		return
@@ -1795,26 +1800,43 @@ func _on_figura_atravessou(_v: int) -> void:
 		_figura_v4 = FiguraBranca.new()
 		_figura_v4.name = "FiguraPerseguidora"
 		_figura_v4.alvo = player
-		_figura_v4.reaparecer_fn = _reaparecer_figura_v4
 		add_child(_figura_v4)
-	var dir := -player.global_transform.basis.z
-	dir.y = 0.0
-	dir = dir.normalized() if dir.length() > 0.1 else Vector3.FORWARD
-	var p := player.global_position - dir * 7.0           # atrás do jogador
-	_figura_v4.reiniciar(Vector3(p.x, player.global_position.y + 0.05, p.z), true)
-	_figura_v4.velocidade = 2.2
+	var onde := Vector3.INF
+	if _visor_v4 != null and is_instance_valid(_visor_v4):
+		onde = _visor_v4.pos_figura_slide()
+	if not onde.is_finite():
+		onde = _ponto_livre_atras(7.0)
+	_figura_v4.velocidade = VEL_FIGURA_V4
+	_figura_v4.reiniciar(Vector3(onde.x, onde.y + 0.05, onde.z), true)
+	_figura_v4.ativar(1.0)   # 1 s parada, de frente para o jogador, antes de andar
 	_persegue_id += 1
 	var id := _persegue_id
 	await get_tree().create_timer(persegue_s, false).timeout
 	if id == _persegue_id and _figura_v4 and is_instance_valid(_figura_v4) and not _figura_v4.matou:
-		_figura_v4.esconder()
+		_figura_v4.desistir()
 
 
-func _reaparecer_figura_v4(_f: Node) -> Vector3:
-	var dir := player.global_transform.basis.z
+## Ponto no chão a até `dist` m do jogador, sem parede no meio (só se o Visor não tem rastro para dar): tenta atrás dele
+## e, se a parede estiver perto, os outros lados; fica com o mais livre (mínimo 4 m, se der).
+func _ponto_livre_atras(dist: float) -> Vector3:
+	var dir := -player.global_transform.basis.z
 	dir.y = 0.0
-	var p := player.global_position + dir.normalized() * 8.0
-	return Vector3(p.x, player.global_position.y + 0.05, p.z)
+	dir = dir.normalized() if dir.length() > 0.1 else Vector3.FORWARD
+	var de := player.global_position + Vector3.UP * 0.8
+	var espaco := get_world_3d().direct_space_state
+	var melhor := player.global_position
+	var melhor_d := -1.0
+	for ang in [180.0, 135.0, -135.0, 90.0, -90.0, 45.0, -45.0, 0.0]:
+		var d2 := dir.rotated(Vector3.UP, deg_to_rad(ang))
+		var q := PhysicsRayQueryParameters3D.create(de, de + d2 * dist, 1)
+		var h := espaco.intersect_ray(q)
+		var livre := dist if h.is_empty() else maxf(de.distance_to(h.position) - 0.8, 0.0)
+		if livre > melhor_d + 0.01:
+			melhor_d = livre
+			melhor = player.global_position + d2 * livre
+		if livre >= dist:
+			break
+	return Vector3(melhor.x, player.global_position.y, melhor.z)
 
 
 func _exit_tree() -> void:

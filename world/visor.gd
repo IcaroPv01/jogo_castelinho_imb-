@@ -14,17 +14,26 @@ extends Node
 ## Trocar de disco com o Q apertado troca a época na hora (clarão e "slide").
 ##
 ## ATENÇÃO (V2 §4.3), da visita 3 em diante (`GameState.visita >= 3`, 5 = porão): "do outro lado, algo percebe você".
-##   - Enquanto o Q está apertado, `GameState.atencao` sobe (cheio em ~6 s na visita 3, ~4 s na 4 e ~3 s no porão
-##     = `TEMPO_ENCHER`); ao soltar, cai devagar (`TEMPO_ESVAZIAR`). Quem escreve é só este script.
+##   - Visitas 1 e 2: o Visor é um brinquedo, sem risco nenhum (a atenção fica em zero, nenhuma Figura).
+##   - Enquanto o Q está apertado, `GameState.atencao` sobe (cheio em 10 s na visita 3, 7 s na 4 e 5 s no porão
+##     = `TEMPO_ENCHER`); ao soltar, cai rápido (`TEMPO_ESVAZIAR` = 4 s do máximo a zero). Quem escreve é só este script
+##     (e nada escreve com `Debug.atencao_congelada`).
+##   - Depois de um estouro e do fim do bloqueio, `GRACA_S` = 6 s de graça: a atenção não sobe.
 ##   - O HUD mostra um olho (ui/olho_atencao.gd) e o batimento "atencao" acelera (um som por batida).
-##   - A Figura Branca aparece DENTRO do slide (só com Q apertado), cada vez mais perto da lente
-##     (`FiguraSlide`, um visual próprio, sem IA: não entra no grupo "figura_branca" e não mata ninguém).
+##   - A Figura Branca aparece DENTRO do slide (só com Q apertado e atenção > `ATENCAO_MIN_FIGURA` = 0,35) como um
+##     corpo no MUNDO, não uma imagem colada na câmera: é uma FiguraBranca `somente_visual` (sem IA, sem colisão, sem
+##     matar) com teste de profundidade normal, então as paredes a escondem. Ela fica sobre o RASTRO do jogador
+##     (world/rastro.gd), ~14 m atrás ao longo do caminho que ele andou, e anda por esse caminho em direção a ele
+##     conforme a atenção sobe (para a 2,5 m na visita 3 e a 5 m nas 4 e 5, onde ela vai atravessar), recua quando cai.
+##     Como o rastro é por onde o jogador andou, ela nunca é posta atrás de uma parede; sem ~5 m de rastro, não aparece.
 ##   - No máximo: susto (Efeitos.pulso forte + som "susto"), o Visor é arrancado da mão e fica BLOQUEADO por
 ##     `BLOQUEIO_S` = 10 s (`Visor.bloqueado()`, `Visor.bloqueio_restante()`); a atenção volta a zero.
 ##   - SINAL DE INSTÂNCIA `figura_atravessou(visita)`: emitido no susto, nas visitas 4 e 5 (porão), para o nível
-##     soltar a Figura Branca "de verdade". Uso no nível do porão:
+##     soltar a Figura Branca "de verdade" EXATAMENTE onde a do slide estava (`pos_figura_slide()`: um ponto do rastro,
+##     nunca atrás do jogador por mágica). Uso no nível:
 ##         Visor.instalar(self).figura_atravessou.connect(func(_v): _soltar_figura())
-##     (na visita 3 o susto não solta nada: só pulso, som e bloqueio). `atencao_cheia(visita)` sai em todas.
+##     (na visita 3 o susto não solta nada: só pulso, som e bloqueio; é só susto). `atencao_cheia(visita)` sai em todas.
+##   - Debug (ui/debug.gd): `figura_off` = a Figura do slide nunca aparece; `atencao_congelada` = o Visor não mexe na atenção.
 ##
 ## Como usar (cada nível que quiser o Visor), em `_ready()` ou `iniciar(player)`:
 ##     Visor.instalar(self)
@@ -46,12 +55,19 @@ const INTERVALO_MIN := 0.12   # s entre trocas (evita metralhar o clique)
 ## (inteiros do enum GameState.Epoca: E1950 = 0, E1975 = 1, E2019 = 2, E2020 = 3, E1967 = 4, ESEMDATA = 5)
 const ORDEM_DISCOS: Array[int] = [0, 4, 1, 2, 5]
 ## Segundos com o Q apertado até a atenção encher, por visita (5 = porão).
-const TEMPO_ENCHER := {3: 6.0, 4: 4.0, 5: 3.0}
-const TEMPO_ESVAZIAR := 9.0   # s para esvaziar do máximo a zero depois de soltar o Q
+const TEMPO_ENCHER := {3: 10.0, 4: 7.0, 5: 5.0}
+const TEMPO_ESVAZIAR := 4.0   # s para esvaziar do máximo a zero depois de soltar o Q
 const BLOQUEIO_S := 10.0
-const ATENCAO_MIN_FIGURA := 0.12   # abaixo disso a Figura ainda não aparece no slide
+const GRACA_S := 6.0          # s depois do bloqueio em que a atenção não sobe
+const ATENCAO_MIN_FIGURA := 0.35   # abaixo disso a Figura ainda não aparece no slide
+const DIST_FIGURA_LONGE := 14.0    # m de rastro atrás do jogador quando ela surge
+const DIST_FIGURA_PERTO_V3 := 2.5  # m onde ela para na visita 3 (só susto)
+const DIST_FIGURA_PERTO := 5.0     # m onde ela para nas visitas 4 e 5 (vai atravessar e perseguir: dá folga para fugir)
+const RASTRO_MIN := 5.0            # m de rastro mínimos para a Figura aparecer
+const VEL_FIGURA_SLIDE := 2.5      # m/s: o quanto ela anda pelo rastro no slide
 
 static var _bloqueio := 0.0   # s restantes (estático: atravessa a troca de nível)
+static var _graca := 0.0      # s de graça que restam (a atenção não sobe)
 
 var ativo := false
 var figura_visivel := false   # a Figura está sendo mostrada no slide agora (para testes)
@@ -59,8 +75,12 @@ var _ultima_troca := -10.0
 var _epoca_mostrada := -1
 var _epoca_antes := 0   # época de antes de ligar (com `visor_travado`, soltar o Q volta para ela)
 var _aviso_disco_t := 0.0   # s até poder avisar de novo "sem esse disco"
-var _figura: Node3D
-var _lado := 1.0
+var _figura: FiguraBranca     # a Figura do slide (somente visual, no mundo)
+var _rastro: Rastro
+var _s_fig := 0.0             # onde ela está no rastro (coordenada de arco)
+var _fig_no_mundo := false
+var _pos_fig := Vector3.ZERO
+var _tem_pos_fig := false
 var _bat_t := 0.0
 var _aviso_t := 0.0
 
@@ -107,6 +127,7 @@ static func bloqueio_restante() -> float:
 ## Zera o bloqueio (nova partida, testes).
 static func resetar_estado() -> void:
 	_bloqueio = 0.0
+	_graca = 0.0
 
 
 static func atencao_ligada() -> bool:
@@ -120,6 +141,8 @@ func _ready() -> void:
 	GameState.flag_mudou.connect(_on_flag)
 	if GameState.sala_atual <= 0:   # nova partida (ainda sem sala): nada de bloqueio herdado
 		_bloqueio = 0.0
+		_graca = 0.0
+	_rastro = Rastro.garantir(self)
 
 
 func _input(e: InputEvent) -> void:
@@ -154,7 +177,10 @@ func _process(dt: float) -> void:
 		_bloqueio = maxf(0.0, _bloqueio - dt)
 		if antes > 0.0 and _bloqueio <= 0.0:
 			Audio.sfx("clique", -4.0, 1.4)   # o Visor "volta para a mão"
+			_graca = GRACA_S
 			bloqueio_mudou.emit(false)
+	elif _graca > 0.0:
+		_graca = maxf(0.0, _graca - dt)
 	_atualizar_atencao(dt)
 	_atualizar_batimento(dt)
 	_atualizar_figura(dt)
@@ -169,7 +195,7 @@ func _exit_tree() -> void:
 			Efeitos.visor(false)
 		if is_instance_valid(GameState):
 			GameState.trocar_epoca(_epoca_antes if GameState.flag("visor_travado") else GameState.Epoca.E2020)
-	if is_instance_valid(GameState):
+	if is_instance_valid(GameState) and not Debug.atencao_congelada:
 		GameState.definir_atencao(0.0)
 	if is_instance_valid(_figura):
 		_figura.queue_free()
@@ -265,7 +291,6 @@ func _quer_ligar() -> bool:
 
 func _ligar() -> void:
 	ativo = true
-	_lado = -1.0 if randf() < 0.5 else 1.0
 	var alvo := epoca_alvo()
 	_epoca_mostrada = alvo
 	_epoca_antes = int(GameState.epoca)
@@ -285,13 +310,15 @@ func _desligar() -> void:
 
 # ---------------------------------------------------------------- atenção
 func _atualizar_atencao(dt: float) -> void:
+	if Debug.atencao_congelada:   # debug: o Visor não mexe na atenção
+		return
 	var enche: float = TEMPO_ENCHER.get(GameState.visita, 0.0)
 	if enche <= 0.0:   # visitas 1 e 2: o Visor é só um brinquedo
 		if GameState.atencao > 0.0:
 			GameState.definir_atencao(0.0)
 		return
 	var a := GameState.atencao
-	if ativo:
+	if ativo and _graca <= 0.0:
 		a += dt / enche
 	else:
 		a -= dt / TEMPO_ESVAZIAR
@@ -329,122 +356,57 @@ func _atualizar_batimento(dt: float) -> void:
 
 
 # ---------------------------------------------------------------- a Figura dentro do slide
+## Onde a Figura do slide está agora (mundo), ou, se ela não estava aparecendo, um ponto do rastro a ~7 m atrás do
+## jogador. `Vector3.INF` = não há onde pôr (rastro curto demais): o nível usa o próprio critério.
+func pos_figura_slide() -> Vector3:
+	if _tem_pos_fig:
+		return _pos_fig
+	if _rastro != null and is_instance_valid(_rastro) and _rastro.comprimento() >= RASTRO_MIN:
+		return _rastro.ponto_atras(minf(7.0, _rastro.comprimento()))
+	return Vector3.INF
+
+
+func _dist_perto() -> float:
+	return DIST_FIGURA_PERTO_V3 if GameState.visita == 3 else DIST_FIGURA_PERTO
+
+
 func _atualizar_figura(dt: float) -> void:
 	var a := GameState.atencao
-	var cam := get_viewport().get_camera_3d() if is_inside_tree() else null
-	var mostrar := ativo and a > ATENCAO_MIN_FIGURA and cam != null
+	if _rastro == null or not is_instance_valid(_rastro):
+		_rastro = Rastro.garantir(self)
+	var mostrar := ativo and a > ATENCAO_MIN_FIGURA and atencao_ligada() and not Debug.figura_off \
+		and _rastro.comprimento() >= RASTRO_MIN
 	figura_visivel = mostrar
 	if not mostrar:
+		_fig_no_mundo = false
 		if is_instance_valid(_figura) and _figura.visible:
 			_figura.visible = false
+			_figura.animar = false
+		_tem_pos_fig = false   # (o estouro lê a posição antes deste ponto: ela vale só no quadro do susto)
 		return
 	if not is_instance_valid(_figura):
-		_figura = FiguraSlide.new()
+		_figura = FiguraBranca.new()
+		_figura.name = "FiguraSlide"
+		_figura.somente_visual = true
+		_figura.ativa = false
+		_figura.som_ativo = false
 		add_child(_figura)
 	var t := inverse_lerp(ATENCAO_MIN_FIGURA, 1.0, a)
-	var frente := Vector3(-cam.global_basis.z.x, 0.0, -cam.global_basis.z.z)
-	frente = frente.normalized() if frente.length() > 0.001 else Vector3.FORWARD
-	# revisão V2: ela para a ~2,6 m e se DEBRUÇA sobre a lente (antes chegava a 1,15 m em pé e a cabeça saía do quadro:
-	# no pico do susto o slide mostrava só duas colunas rosadas)
-	var dist := lerpf(15.0, 2.6, pow(t, 1.4))
-	var dir := frente.rotated(Vector3.UP, deg_to_rad(lerpf(32.0, 0.0, t) * _lado))
-	var pos := cam.global_position + dir * dist
-	pos.y = cam.global_position.y - 1.55   # os pés no chão (altura dos olhos do jogador)
-	if t > 0.7:   # tremida de quem está quase em cima da lente
-		pos += Vector3(randf_range(-1, 1), 0.0, randf_range(-1, 1)) * (t - 0.7) * 0.2
+	var disp := _rastro.comprimento()
+	var gap := minf(lerpf(DIST_FIGURA_LONGE, _dist_perto(), t), disp)
+	var s_alvo := _rastro.s_atual() - gap
+	if not _fig_no_mundo:
+		_fig_no_mundo = true
+		_s_fig = s_alvo
+	var antes := _s_fig
+	_s_fig = move_toward(_s_fig, s_alvo, VEL_FIGURA_SLIDE * dt)
+	_s_fig = maxf(_s_fig, _rastro.s_inicio())
+	var pos := _rastro.ponto_em(_s_fig)
+	_pos_fig = pos
+	_tem_pos_fig = true
 	_figura.global_position = pos
-	_figura.look_at(Vector3(cam.global_position.x, pos.y, cam.global_position.z), Vector3.UP)
-	_figura.rotate_object_local(Vector3.RIGHT, -deg_to_rad(48.0) * smoothstep(0.5, 1.0, t))
-	_figura.scale = Vector3(1.0, lerpf(1.0, 1.18, t), 1.0)
-	_figura.visible = not (t > 0.5 and randf() < t * 0.12)   # pisca (glitch) quando está perto
-	(_figura as FiguraSlide).intensidade = t
-
-
-## Visual da Figura Branca só para o slide: silhueta alta, branca, sem rosto, com véu. Sem física, sem IA, sem grupo.
-## Desenhada por cima de tudo (sem teste de profundidade): é uma imagem no slide, não um corpo no mundo.
-class FiguraSlide extends Node3D:
-	var intensidade := 0.0
-	var _t := randf() * 6.0
-	var _veu: Node3D
-	var _braco_e: Node3D
-	var _braco_d: Node3D
-
-	func _ready() -> void:
-		var corpo := _material(0.93)
-		var tecido := _material(0.5)
-		var m := Node3D.new()
-		m.scale = Vector3(1.0, 1.12, 1.0)
-		add_child(m)
-		var saia := CylinderMesh.new()
-		saia.top_radius = 0.16
-		saia.bottom_radius = 0.44
-		saia.height = 1.4
-		saia.radial_segments = 12
-		saia.rings = 1
-		_peca(m, saia, Vector3(0, 0.7, 0), corpo)
-		var tronco := CapsuleMesh.new()
-		tronco.radius = 0.15
-		tronco.height = 0.78
-		tronco.radial_segments = 10
-		tronco.rings = 3
-		_peca(m, tronco, Vector3(0, 1.68, 0), corpo)
-		var cab := SphereMesh.new()
-		cab.radius = 0.11
-		cab.height = 0.22
-		cab.radial_segments = 10
-		cab.rings = 6
-		_peca(m, cab, Vector3(0.03, 2.16, 0), corpo, Vector3(0, 0, deg_to_rad(-12)), Vector3(0.85, 1.25, 0.9))
-		var braco := CapsuleMesh.new()
-		braco.radius = 0.04
-		braco.height = 1.25
-		braco.radial_segments = 6
-		braco.rings = 2
-		_braco_e = Node3D.new()
-		_braco_e.position = Vector3(-0.2, 1.9, 0)
-		m.add_child(_braco_e)
-		_peca(_braco_e, braco, Vector3(-0.06, -0.55, 0), corpo, Vector3(0, 0, deg_to_rad(6)))
-		_braco_d = Node3D.new()
-		_braco_d.position = Vector3(0.2, 1.9, 0)
-		m.add_child(_braco_d)
-		_peca(_braco_d, braco, Vector3(0.06, -0.55, 0), corpo, Vector3(0, 0, deg_to_rad(-6)))
-		_veu = Node3D.new()
-		m.add_child(_veu)
-		var veu := CylinderMesh.new()
-		veu.top_radius = 0.18
-		veu.bottom_radius = 0.66
-		veu.height = 2.3
-		veu.radial_segments = 14
-		veu.rings = 1
-		veu.cap_top = false
-		veu.cap_bottom = false
-		_peca(_veu, veu, Vector3(0, 1.15, 0.02), tecido)
-
-	func _process(dt: float) -> void:
-		_t += dt
-		if _veu:
-			_veu.rotation.z = sin(_t * 1.3) * 0.05
-			_veu.scale = Vector3(1.0 + 0.05 * sin(_t * 2.1), 1.0, 1.0 + 0.05 * cos(_t * 1.7))
-		if _braco_e:
-			# os braços sobem devagar conforme ela chega perto (abre os braços para o visor)
-			_braco_e.rotation.z = lerpf(0.0, -1.2, intensidade) + sin(_t * 1.1) * 0.05
-			_braco_d.rotation.z = lerpf(0.0, 1.2, intensidade) + sin(_t * 1.1 + 1.7) * 0.05
-
-	static func _material(alfa: float) -> StandardMaterial3D:
-		var mat := StandardMaterial3D.new()
-		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.albedo_color = Color(0.96, 0.97, 1.0, alfa)
-		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		mat.no_depth_test = true
-		mat.render_priority = 20
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		return mat
-
-	func _peca(pai: Node3D, malha: Mesh, pos: Vector3, mat: Material, rot := Vector3.ZERO, escala := Vector3.ONE) -> void:
-		var mi := MeshInstance3D.new()
-		mi.mesh = malha
-		mi.material_override = mat
-		mi.position = pos
-		mi.rotation = rot
-		mi.scale = escala
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		pai.add_child(mi)
+	var para := _rastro.pos_atual - pos
+	if Vector2(para.x, para.z).length() > 0.05:
+		_figura.rotation.y = atan2(-para.x, -para.z)
+	_figura.animar = absf(_s_fig - antes) > 0.0001
+	_figura.visible = not (t > 0.5 and randf() < t * 0.1)   # pisca (glitch) quando está perto

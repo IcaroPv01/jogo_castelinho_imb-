@@ -3,29 +3,53 @@ extends CharacterBody3D
 ## A Figura Branca (PLANO §6): inspirada na lenda "A Aparição" do Passo da Mãe Rosa.
 ## Silhueta feminina alta, branca, sem rosto, com véu. Feita só de malhas simples.
 ##
-## REGRA (uma só, legível):
-##   - Avança em direção ao jogador SÓ quando NÃO está sendo olhada.
-##     "Olhada" = dentro do cone de visão do jogador (< `angulo_visao`) com linha de visão livre.
-##   - Se o jogador se aproxima olhando (distância < `distancia_cercar` enquanto olha), ela SOME
-##     e reaparece mais longe (num de `pontos_reaparecer`, ou em `reaparecer_fn`, ou mais longe
-##     na mesma direção).
-##   - Encostou (distância < `distancia_toque`) sem ser olhada: GameState.matar_jogador("figura_branca").
+## REGRAS (módulo 9, "Granny pura": ela é um CORPO de verdade, como a vovó do Granny):
+##   - Nunca atravessa parede (CharacterBody, `move_and_slide`), nunca some e reaparece atrás do jogador, NÃO congela
+##     quando é olhada e sempre anda. Mais rápida que o jogador andando (3,0 m/s), mais lenta que correndo (5,4 m/s):
+##     `velocidade` é presa entre `VEL_CACA_MIN` e `VEL_CACA_MAX`.
+##   - `ativa = true` (perseguição): ela ENXERGA o jogador (linha de visão livre de parede, de qualquer ângulo, até
+##     `alcance_visao` = 20 m) e vai para cima dele. Perdeu de vista: segue o RASTRO de migalhas dele (world/rastro.gd,
+##     contorna quinas) até o último ponto onde o viu, procura `tempo_busca` s (~4) parada, e desiste: emite
+##     `desistiu`, vira as costas e se afasta andando até sair da vista (nunca some na frente do jogador) e se esconde.
+##     Fugir e quebrar a linha de visão é a saída. Encostou (`distancia_toque`) = GameState.matar_jogador (menos com
+##     `Debug.imortal`).
+##   - `ativa = false` (figura PARADA, ex.: sala 27 e dunas do Ato II): fica onde está; se o jogador a cerca olhando
+##     (< `distancia_cercar`), ela SOME e reaparece mais longe (`pontos_reaparecer` / `reaparecer_fn` / mesma direção).
+##   - `somente_visual = true`: só o corpo (sem IA, sem colisão, sem grupo, sem matar). É o que o Visor usa no slide.
+##   - `Debug.figura_off`: toda FiguraBranca (menos as somente visuais) fica escondida e parada.
 ##
 ## Uso:
 ##     var f := FiguraBranca.new()
-##     f.velocidade = 2.4
-##     f.pontos_reaparecer = [Vector3(30, 5, -60)]
+##     f.velocidade = 3.6
 ##     nivel.add_child(f); f.global_position = ponto
-##     f.ativa = false         # parada: só some quando cercada (sala 27)
-##     f.ativar()              # passa a avançar
+##     f.ativa = false         # parada: só some quando cercada (dunas do Ato II)
+##     f.ativar(1.0)           # passa a perseguir (1 s parada antes de andar)
+##     f.desistir()            # manda desistir (o nível, quando acabou a perseguição)
 ## Camada de colisão 4 (valor 8); colide só com o mundo (o jogador a atravessa: o toque é por distância).
 
 signal sumiu(onde: Vector3)
 signal reapareceu(onde: Vector3)
 signal matou_jogador
+signal desistiu                              # perdeu o jogador e deu a busca por encerrada (vai se afastar e se esconder)
 
-@export var velocidade := 2.2
-@export var ativa := true                    # false = parada (só some quando cercada)
+## Estados da perseguição (só com `ativa = true`).
+enum Est { PARADA, CACANDO, PROCURANDO, BUSCANDO, EMBORA }
+## Limites da velocidade de perseguição: acima do andar do jogador (3,0), abaixo do correr (5,4).
+const VEL_CACA_MIN := 3.3
+const VEL_CACA_MAX := 4.5
+
+@export var velocidade := 3.6                # m/s na perseguição (presa entre VEL_CACA_MIN e VEL_CACA_MAX)
+@export var ativa := true:                   # false = parada (só some quando cercada); true = persegue
+	set(v):
+		var antes := ativa
+		ativa = v
+		if v and not antes:
+			_iniciar_pendente = true
+		elif not v:
+			estado = Est.PARADA
+@export var somente_visual := false          # só o corpo: sem IA, colisão, grupo nem morte (slide do Visor)
+@export var alcance_visao := 20.0            # m: até onde ela enxerga o jogador (qualquer ângulo, sem parede no meio)
+@export var tempo_busca := 4.0               # s procurando no último ponto onde viu o jogador, antes de desistir
 @export var angulo_visao := 35.0             # graus: meio-cone de visão do jogador
 @export var distancia_cercar := 2.5          # m: olhando e mais perto que isso -> ela some
 @export var distancia_toque := 0.9           # m: sem ser olhada e mais perto -> mata
@@ -46,6 +70,8 @@ var escuro := false:                         # apagão: o jogador não a vê (co
 var olhada := false                          # resultado da última checagem (para testes e debug)
 var sumida := false
 var matou := false
+var estado: Est = Est.PARADA                 # fase da perseguição (para testes e debug)
+var animar := false                          # somente_visual: anda "aos trancos" no lugar (o Visor liga)
 
 var _modelo: Node3D
 var _braco_e: Node3D
@@ -57,20 +83,43 @@ var _movendo := false
 var _prox_som := 0.0
 var _pos_antes := Vector3.ZERO
 var _idx_ponto := -1
+var _iniciar_pendente := true                # a perseguição ainda não "soube" onde o jogador está
+var _atraso := 0.0                           # s parada antes de começar a andar
+var _ult_visto := Vector3.ZERO               # onde viu o jogador pela última vez
+var _ult_s := 0.0                            # coordenada de arco dele no rastro nesse instante
+var _sem_visao_t := 0.0
+var _busca_t := 0.0
+var _embora_t := 0.0
+var _trava_t := 0.0                          # s tentando andar sem sair do lugar
+var _pos_trava := Vector3.ZERO
+var _tentava := false
+var _prog_melhor := INF                      # menor distância já alcançada do alvo atual (PROCURANDO)
+var _prog_alvo := Vector3.INF
+var _prog_t := 0.0                           # s sem chegar mais perto do alvo
+var _rastro: Rastro
+var _alvo_rastro_t := 0.0
+var _alvo_rastro := Vector3.ZERO
+var _debug_oculta := false
 
 
 func _ready() -> void:
-	collision_layer = 8
-	collision_mask = 1
 	floor_snap_length = 0.4
-	add_to_group("figura_branca")
-	_colisao = CollisionShape3D.new()
-	var cap := CapsuleShape3D.new()
-	cap.radius = 0.35
-	cap.height = 2.0
-	_colisao.shape = cap
-	_colisao.position.y = 1.0
-	add_child(_colisao)
+	if somente_visual:
+		ativa = false
+		collision_layer = 0
+		collision_mask = 0
+		set_physics_process(false)
+	else:
+		collision_layer = 8
+		collision_mask = 1
+		add_to_group("figura_branca")
+		_colisao = CollisionShape3D.new()
+		var cap := CapsuleShape3D.new()
+		cap.radius = 0.35
+		cap.height = 2.0
+		_colisao.shape = cap
+		_colisao.position.y = 1.0
+		add_child(_colisao)
 	_construir_visual()
 	if usar_navegacao:
 		_agente = NavigationAgent3D.new()
@@ -85,7 +134,7 @@ func _ready() -> void:
 ## cabeça pequena e torta, rosto = vazio escuro com mechas de cabelo molhado, vestido rasgado sem pés.
 ## 4 malhas (corpo+vestido, cabeça+cabelo, 2 braços), 1 material (shader sem luz, cor por vértice): 4 draw calls.
 ## Movimento: poses "estaladas" (sem interpolação), quadros pulados, só mexe quando está andando;
-## olhada = congelada. Corre em arrancos (média = `velocidade`).
+## parada e olhada (susto, figura parada) = pose congelada. Anda em arrancos (média = `velocidade`).
 const SHADER := """shader_type spatial;
 render_mode unshaded, cull_disabled;
 uniform float brilho = 1.0;
@@ -367,6 +416,9 @@ func _pose_olhada() -> void:
 func _process(dt: float) -> void:
 	if _modelo == null:
 		return
+	_atualizar_debug()
+	if somente_visual:
+		_movendo = animar
 	_t += dt
 	_mat.set_shader_parameter("suelo", global_position.y)
 	if _movendo:
@@ -401,7 +453,10 @@ func _process(dt: float) -> void:
 
 
 # ---------------------------------------------------------------- API
-func ativar() -> void:
+## Passa a perseguir. `atraso` = segundos parada (olhando) antes de começar a andar.
+func ativar(atraso := 0.0) -> void:
+	_atraso = atraso
+	_iniciar_pendente = true
 	ativa = true
 
 
@@ -415,6 +470,8 @@ func teleportar(pos: Vector3) -> void:
 	velocity = Vector3.ZERO
 	sumida = false
 	visible = true
+	_iniciar_pendente = true
+	_trava_t = 0.0
 	if _colisao:
 		_colisao.set_deferred("disabled", false)
 
@@ -423,8 +480,11 @@ func teleportar(pos: Vector3) -> void:
 func reiniciar(pos: Vector3, nova_ativa := false) -> void:
 	matou = false
 	escuro = false
+	_atraso = 0.0
 	ativa = nova_ativa
 	teleportar(pos)
+	if nova_ativa:
+		estado = Est.PROCURANDO
 
 
 ## Some de vez (fim da sala 30, por exemplo).
@@ -434,6 +494,12 @@ func esconder() -> void:
 	visible = false
 	if _colisao:
 		_colisao.set_deferred("disabled", true)
+
+
+## Manda desistir agora (o nível decidiu que a perseguição acabou): ela dá as costas e se afasta até sair da vista.
+func desistir() -> void:
+	if ativa and estado != Est.EMBORA and not sumida:
+		_desistir()
 
 
 ## O jogador está vendo a figura agora? (cone de visão + linha de visão livre)
@@ -458,15 +524,18 @@ func esta_sendo_olhada() -> bool:
 
 # ---------------------------------------------------------------- física
 func _physics_process(dt: float) -> void:
+	if Debug.figura_off:
+		velocity = Vector3.ZERO
+		return
 	if not is_on_floor():
 		velocity.y -= 18.0 * dt
 	if alvo == null or not is_instance_valid(alvo):
 		alvo = get_tree().get_first_node_in_group("player") as Node3D
 	_movendo = false
 	if sumida or matou or alvo == null:
-		velocity.x = 0.0
-		velocity.z = 0.0
-		move_and_slide()
+		velocity = Vector3.ZERO
+		if not sumida:   # escondida: não cai pelo chão sem colisão
+			move_and_slide()
 		return
 
 	var pa := alvo.global_position
@@ -474,30 +543,191 @@ func _physics_process(dt: float) -> void:
 	para.y = 0.0
 	var dist := para.length()
 	_dist = dist
-	if dist > 0.01:
-		_virar(para, dt)
-
 	olhada = esta_sendo_olhada()
 	velocity.x = 0.0
 	velocity.z = 0.0
-	if olhada:
-		if dist < distancia_cercar:
+	if ativa:
+		_ia(dt, pa, dist)
+		if sumida or matou:
+			return
+	else:
+		# parada (dunas, sala 27): só vira para o jogador; cercada olhando, some
+		if dist > 0.01:
+			_virar(para, dt)
+		if olhada and dist < distancia_cercar:
 			_sumir()
 			return
-	elif ativa:
-		if dist < distancia_toque and absf(pa.y - global_position.y) < 1.8:
+	move_and_slide()
+
+
+## A perseguição "Granny": enxerga, vai, perde, segue o rastro, procura e desiste.
+func _ia(dt: float, pa: Vector3, dist: float) -> void:
+	if _iniciar_pendente:
+		_iniciar_pendente = false
+		_ult_visto = pa
+		_sem_visao_t = 0.0
+		_trava_t = 0.0
+		_prog_alvo = Vector3.INF
+		_prog_t = 0.0
+		_rastro = _achar_rastro()
+		_ult_s = _rastro.s_atual() if _rastro != null else 0.0
+		if estado != Est.EMBORA:
+			estado = Est.PROCURANDO
+	# encostou: mata (a não ser no modo imortal do debug)
+	if estado != Est.EMBORA and dist < distancia_toque and absf(pa.y - global_position.y) < 1.8:
+		if not Debug.imortal:
 			_matar()
 			return
-		var dir := _direcao_para(pa)
-		velocity.x = dir.x * velocidade
-		velocity.z = dir.z * velocidade
-		_movendo = true
-		_prox_som -= dt
-		if _prox_som <= 0.0:
-			_prox_som = 1.6
-			if som_ativo:
-				Audio.sfx_3d("sussurro", global_position)
-	move_and_slide()
+	if _atraso > 0.0:
+		_atraso -= dt
+		if dist > 0.01:
+			_virar(pa - global_position, dt)
+		return
+	var vel := clampf(velocidade, VEL_CACA_MIN, VEL_CACA_MAX)
+	var ve := estado != Est.EMBORA and _enxerga(pa, dist)
+	if ve:
+		_ult_visto = pa
+		_rastro = _rastro if (_rastro != null and is_instance_valid(_rastro)) else _achar_rastro()
+		_ult_s = _rastro.s_atual() if _rastro != null else 0.0
+		_sem_visao_t = 0.0
+		if estado != Est.CACANDO:
+			estado = Est.CACANDO
+			_trava_t = 0.0
+	else:
+		_sem_visao_t += dt
+		if estado == Est.CACANDO and _sem_visao_t > 0.3:
+			estado = Est.PROCURANDO
+			_alvo_rastro_t = 0.0
+	match estado:
+		Est.CACANDO:
+			_andar_para(pa, vel, dt)
+		Est.PROCURANDO:
+			var d_ult := Vector2(_ult_visto.x - global_position.x, _ult_visto.z - global_position.z).length()
+			if d_ult < 1.2:
+				estado = Est.BUSCANDO
+				_busca_t = tempo_busca
+			else:
+				_alvo_rastro_t -= dt
+				if _alvo_rastro_t <= 0.0:
+					_alvo_rastro_t = 0.2
+					_alvo_rastro = _alvo_no_rastro()
+				_andar_para(_alvo_rastro, vel, dt)
+				# andando de lado numa parede, sem chegar mais perto do alvo: dá a busca por encerrada
+				var d_alvo := Vector2(_alvo_rastro.x - global_position.x, _alvo_rastro.z - global_position.z).length()
+				if _alvo_rastro.distance_to(_prog_alvo) > 1.5:
+					_prog_alvo = _alvo_rastro
+					_prog_melhor = d_alvo
+					_prog_t = 0.0
+				elif d_alvo < _prog_melhor - 0.3:
+					_prog_melhor = d_alvo
+					_prog_t = 0.0
+				else:
+					_prog_t += dt
+					if _prog_t > 3.0:
+						_prog_t = 0.0
+						estado = Est.BUSCANDO
+						_busca_t = tempo_busca
+		Est.BUSCANDO:
+			# parada no último ponto onde viu o jogador, olhando em volta
+			_busca_t -= dt
+			rotation.y += sin(_t * 1.6) * dt * 1.4
+			if _busca_t <= 0.0:
+				_desistir()
+		Est.EMBORA:
+			_embora_t += dt
+			var longe := global_position - pa
+			longe.y = 0.0
+			longe = longe.normalized() if longe.length() > 0.1 else -global_transform.basis.z
+			var dir := _desviar(longe)
+			velocity.x = dir.x * vel * 0.6
+			velocity.z = dir.z * vel * 0.6
+			_movendo = true
+			_virar(dir, dt)
+			# some só FORA da vista do jogador (nunca na frente dele); os outros dois são rede de segurança
+			if (not olhada and dist > 6.0) or dist > 50.0 or _embora_t > 25.0:
+				esconder()
+	# presa: tentou andar e não saiu do lugar (parede, vão estreito) -> dá a busca por encerrada
+	var mov := Vector2(global_position.x - _pos_trava.x, global_position.z - _pos_trava.z).length()
+	_pos_trava = global_position
+	if _tentava and mov < maxf(vel * dt * 0.2, 0.002):
+		_trava_t += dt
+	else:
+		_trava_t = maxf(0.0, _trava_t - dt)
+	_tentava = _movendo and estado != Est.EMBORA
+	if _trava_t > 2.2 and (estado == Est.CACANDO or estado == Est.PROCURANDO):
+		_trava_t = 0.0
+		estado = Est.BUSCANDO
+		_busca_t = tempo_busca
+
+
+func _desistir() -> void:
+	estado = Est.EMBORA
+	_embora_t = 0.0
+	desistiu.emit()
+
+
+## Anda até `destino` na velocidade `vel`, virada para onde vai.
+func _andar_para(destino: Vector3, vel: float, dt: float) -> void:
+	var dir := _direcao_para(destino)
+	if dir.length() < 0.01:
+		return
+	velocity.x = dir.x * vel
+	velocity.z = dir.z * vel
+	_movendo = true
+	_virar(dir, dt)
+	_prox_som -= dt
+	if _prox_som <= 0.0:
+		_prox_som = 1.6
+		if som_ativo:
+			Audio.sfx_3d("sussurro", global_position)
+
+
+func _achar_rastro() -> Rastro:
+	if not is_inside_tree():
+		return null
+	return Rastro.garantir(self)
+
+
+## Ela enxerga o jogador? Distância até `alcance_visao`, de QUALQUER ângulo, sem parede no caminho
+## (da cabeça dela à câmera dele, ou do peito ao peito).
+func _enxerga(pa: Vector3, dist: float) -> bool:
+	if dist > alcance_visao or absf(pa.y - global_position.y) > 7.0:
+		return false
+	var cam := _camera()
+	var olho_dele := cam.global_position if cam != null else pa + Vector3.UP * 1.55
+	if _linha_livre(global_position + Vector3.UP * 1.9, olho_dele):
+		return true
+	return _linha_livre(global_position + Vector3.UP * 1.0, pa + Vector3.UP * 1.0)
+
+
+## Para onde andar para chegar ao último ponto visto sem passar por parede: o ponto do rastro do jogador mais perto
+## do "último visto" que ela enxerga daqui (varre de trás para a frente); sem rastro, o próprio último ponto visto.
+func _alvo_no_rastro() -> Vector3:
+	var r := _rastro
+	if r == null or not is_instance_valid(r) or r.pontos.is_empty():
+		return _ult_visto
+	var peito := global_position + Vector3.UP * 1.0
+	var s := minf(_ult_s, r.s_atual())
+	var s_min := maxf(r.s_inicio(), s - 40.0)
+	while s >= s_min:
+		var p := r.ponto_em(s)
+		if _linha_livre(peito, p + Vector3.UP * 1.0):
+			return p
+		s -= 1.0
+	return _ult_visto
+
+
+func _atualizar_debug() -> void:
+	if somente_visual:
+		return
+	if Debug.figura_off:
+		if visible:
+			visible = false
+			_debug_oculta = true
+	elif _debug_oculta:
+		_debug_oculta = false
+		if not sumida:
+			visible = true
 
 
 func _virar(para: Vector3, dt: float) -> void:
