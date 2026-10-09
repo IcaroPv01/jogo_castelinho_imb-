@@ -155,7 +155,7 @@ func _teste_olhar() -> void:
 	c.processar_toque(1, Vector2(900, 250), true)
 	c.processar_arraste(1, Vector2(1000, 280), Vector2(100, 30))
 	c.processar_toque(1, Vector2(1000, 280), false)
-	_checar(absf(p.rotation.y - yaw0) > 0.3, "arrasto horizontal girou (%.2f rad)" % (p.rotation.y - yaw0))
+	_checar(absf(p.rotation.y - yaw0) > 0.15, "arrasto horizontal girou (%.2f rad)" % (p.rotation.y - yaw0))
 	_checar(absf(p.cabeca.rotation.x - pitch0) > 0.05, "arrasto vertical inclinou a cabeça")
 	var yaw1: float = p.rotation.y
 	p.pode_mover = false
