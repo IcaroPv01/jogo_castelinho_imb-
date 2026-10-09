@@ -744,6 +744,7 @@ func _cena_tito() -> void:
 	tw.tween_property(menino, "rotation:y", PI, 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await tw.finished
 	Audio.sfx("crianca_ei", 2.0)
+	Audio.sfx("voz_tito", -4.0, randf_range(0.95, 1.05))
 	_mostrar_legenda("Você veio me procurar.", 4.2, 40)
 	await get_tree().create_timer(3.2, false).timeout
 	if GameState.contadores.get("pistas_tito", 0) >= PISTAS_ENCONTRADO:
@@ -759,10 +760,13 @@ func _final_encontrado(menino: Node3D) -> void:
 	boca.text = ")"
 	boca.rotation_degrees.z = -90.0
 	await get_tree().create_timer(1.0, false).timeout
+	Audio.sfx("voz_tito", -4.0, randf_range(0.95, 1.05))
 	_mostrar_legenda("Disseram que eu fugi de casa.", 3.0, 34)
 	await get_tree().create_timer(4.0, false).timeout
+	Audio.sfx("voz_tito", -4.0, randf_range(0.95, 1.05))
 	_mostrar_legenda("Ninguém olhou na água.", 3.0, 34)
 	await get_tree().create_timer(4.0, false).timeout
+	Audio.sfx("voz_tito", -4.0, randf_range(0.95, 1.05))
 	_mostrar_legenda("Agora alguém sabe.", 3.0, 34)
 	await get_tree().create_timer(3.6, false).timeout
 	# do outro lado do lago, a Figura em pé na água, parada; ele se levanta e anda para a luz do calçadão
@@ -783,6 +787,7 @@ func _final_encontrado(menino: Node3D) -> void:
 	menino.scale = Vector3(0.001, 0.001, 0.001)
 	# a Figura afunda devagar e o lago fica parado
 	await get_tree().create_timer(0.8, false).timeout
+	Audio.sfx("figura_afunda", -6.0)
 	var tw3 := create_tween()
 	tw3.tween_property(fig, "position:y", AGUA_Y - 3.4, 4.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	await tw3.finished
@@ -892,6 +897,7 @@ func _figura_na_agua(pos: Vector3, yaw: float) -> FiguraBranca:
 # ---------------------------------------------------------------- final "Visita concluída"
 func _final_visita_concluida(menino: Node3D) -> void:
 	final = "visita_concluida"
+	Audio.sfx("voz_tito", -4.0, randf_range(0.95, 1.05))
 	_mostrar_legenda("Você também vai embora.", 3.0, 34)
 	await get_tree().create_timer(2.6, false).timeout
 	# ele se vira de volta para a água (o rosto sai de cena)
@@ -952,7 +958,7 @@ func _beat_visita_concluida() -> void:
 	tw.tween_property(_cortina, "color:a", 0.4, 4.0).set_trans(Tween.TRANS_SINE)
 	await get_tree().create_timer(1.0, false).timeout
 	var fig := _figura_na_agua(Vector3(pos_m.x + 0.15, AGUA_Y - 3.0, pos_m.z - 1.7), PI * 0.06)
-	Audio.sfx("agua_sobe", -8.0)
+	Audio.sfx("figura_sobe", -6.0)
 	var tw2 := create_tween()
 	tw2.tween_property(fig, "position:y", AGUA_Y - 0.2, 3.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await tw2.finished
@@ -1145,8 +1151,10 @@ func _afundar() -> void:
 	player.set_physics_process(false)     # sem colisão: o corpo desce pelo "chão" da rampa
 	var ini := player.global_position
 	Audio.sfx("agua_puxa", -4.0)
+	Audio.sfx("afundar")
 	_abafar(true)
-	Audio.ambiente("rio", -26.0, 2.0)
+	# o abafado vem do próprio arquivo: na web (modo Sample) o filtro de bus do _abafar() não funciona
+	Audio.ambiente("subaquatico", -10.0, 2.0)
 	# tinta azul-escura sobe; a névoa fecha
 	var camada := _cortina.get_parent()
 	_tinta = ColorRect.new()
