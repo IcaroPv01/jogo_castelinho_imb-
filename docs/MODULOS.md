@@ -61,7 +61,7 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
   (botão, foco perdido, Esc de teclado) ou `Celular.retrato`. Dica de tecla mostrada ao jogador passa por
   `Celular.adaptar(texto)` ou `Celular.dica(teclado, toque)`.
 - **Controles** (`ui/controles_toque.gd`, camada 15, abaixo do balão da Guia): analógico flutuante à esquerda
-  (`Input.action_press` com força), olhar arrastando à direita (`Player.girar_olhar`, `SENS_TOQUE` 0,003), Interagir
+  (`Input.action_press` com força), analógico da câmera à direita (velocidade de giro, `VEL_YAW`/`VEL_PITCH` em `ui/controles_toque.gd`; o Icaro achou o arrasto direto brusco: um toque virava a câmera), Interagir
   (amarelo com alvo), Correr, Lanterna, Visor (segurar), Pausa (sempre visível jogando, inclusive em cinema), Tela cheia.
   Toque na faixa de discos (`FaixaDiscos.slot_em`). Toque rápido avança a Guia; a Guia ignora o clique emulado do toque e,
   no celular, o clique sai da ação "interagir". Balão da Guia encolhe até `Celular.borda_botoes()`.

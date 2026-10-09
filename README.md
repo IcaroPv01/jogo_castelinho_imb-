@@ -29,7 +29,7 @@ aparecem sozinhos; dá para forçar em Pausa → Opções → Controles de toque
 | Toque | Ação |
 |---|---|
 | Arrastar no lado esquerdo | Andar (analógico) |
-| Arrastar no lado direito | Olhar |
+| Arrastar no lado direito (analógico com o olho) | Girar a câmera: quanto mais longe do centro, mais rápido |
 | **Interagir** (fica amarelo perto de algo) | Ler painel / usar |
 | **Correr** | Liga a corrida; para sozinha ao soltar o analógico |
 | **Visor** (segurar) | Mostrar época do disco |
