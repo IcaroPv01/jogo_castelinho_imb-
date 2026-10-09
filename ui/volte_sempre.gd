@@ -142,7 +142,7 @@ func _construir() -> void:
 		_pos_base[_mascote] = _mascote.position
 
 	_dica = Label.new()
-	_dica.text = "Clique ou aperte Enter para continuar"
+	_dica.text = Celular.dica("Clique ou aperte Enter para continuar", "Toque para continuar")
 	_dica.anchor_left = 0.5
 	_dica.anchor_right = 0.5
 	_dica.anchor_top = 1.0

@@ -50,7 +50,7 @@ func _titulo_simples() -> Control:
 	c.set_anchors_preset(Control.PRESET_FULL_RECT)
 	c.add_user_signal("comecar", [{"name": "continuar", "type": TYPE_BOOL}])
 	var b := Button.new()
-	b.text = "CLIQUE PARA COMEÇAR"
+	b.text = Celular.dica("CLIQUE PARA COMEÇAR", "TOQUE PARA COMEÇAR")
 	b.set_anchors_preset(Control.PRESET_CENTER)
 	b.position = Vector2(-180, -30)
 	b.size = Vector2(360, 60)
@@ -64,7 +64,8 @@ func _comecar(continuar := false) -> void:
 	# Precisa ser chamado dentro do evento de clique (regra do navegador para mouse e áudio).
 	if _carregando:
 		return
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Celular.pausa_toque = false
+	Celular.capturar_mouse()
 	var nivel := PRIMEIRO_NIVEL if ResourceLoader.exists(PRIMEIRO_NIVEL) else NIVEL_TESTE
 	var spawn := "Spawn"
 	if continuar:
@@ -188,6 +189,11 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	if GameState.flag("ui_aberta"):
 		return
+	if Celular.ativo:
+		# celular: não há captura de mouse; Esc/P (teclado externo) pausam, e o toque é dos controles
+		if e.is_action_pressed("pausa"):
+			Celular.pausa_toque = true
+		return
 	if e is InputEventMouseButton and e.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		get_viewport().set_input_as_handled()
@@ -197,9 +203,14 @@ func _unhandled_input(e: InputEvent) -> void:
 
 ## Alt-Tab no desktop: o mouse continua "capturado" e o jogo seguia rodando (a Figura Branca matava o jogador com a
 ## janela em segundo plano). Perder o foco solta o mouse, e o `_process` abaixo trata como pausa.
+## No celular (sem captura de mouse) perder o foco liga a pausa por botão.
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
-		if GameState.jogando and not GameState.flag("ui_aberta") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		if not GameState.jogando or GameState.flag("ui_aberta"):
+			return
+		if Celular.ativo:
+			Celular.pausa_toque = true
+		elif Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
@@ -207,8 +218,21 @@ func _process(_dt: float) -> void:
 	# Esc/Alt-Tab soltam o mouse no navegador: tratamos como pausa.
 	if not GameState.jogando or DisplayServer.get_name() == "headless":
 		return
-	# Telas de leitura/quiz soltam o mouse de propósito: não contam como pausa.
-	var pausado: bool = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not GameState.flag("ui_aberta")
+	_atualizar_pausa()
+
+
+## O jogo deve estar pausado agora? Desktop: mouse solto (menos nas telas de leitura/quiz, que soltam de propósito).
+## Celular: só o botão de pausa (ou o aviso "vire o celular"), nunca o estado do ponteiro.
+func deve_pausar() -> bool:
+	if GameState.flag("ui_aberta"):
+		return false
+	if Celular.ativo:
+		return Celular.pausa_toque or Celular.retrato
+	return Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
+
+
+func _atualizar_pausa() -> void:
+	var pausado: bool = deve_pausar()
 	if get_tree().paused != pausado:
 		get_tree().paused = pausado
 		hud.mostrar_pausa(pausado)

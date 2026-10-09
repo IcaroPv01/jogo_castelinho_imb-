@@ -629,7 +629,9 @@ func _escada_do_porao() -> void:
 	l.omni_range = 7.0
 	l.shadow_enabled = false
 	add_child(l)
-	# luz de preenchimento fria no pé da escada, para os degraus aparecerem
+	# luz de preenchimento fria no pé da escada, para os degraus aparecerem (no celular fica só a de cima: orçamento de luzes)
+	if Celular.ativo:
+		return
 	var l2 := OmniLight3D.new()
 	l2.name = "LuzDosDegraus"
 	l2.position = Vector3(-14.0, -1.0, 11.2)
@@ -1503,7 +1505,7 @@ func _mostrar_dedicatoria() -> void:
 func _voltar_ao_titulo() -> void:
 	Flash.resetar_ui()
 	GameState.jogando = false
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Celular.soltar_mouse()
 	get_tree().paused = false
 	Transicao.fade_in(0.05)
 	var arvore := get_tree()
@@ -1572,7 +1574,7 @@ func _hud_cinema(ligado: bool, manter_sala := false) -> void:
 
 
 func _mostrar_legenda(texto: String, dur := 3.0, tam := 26) -> void:
-	_legenda.text = texto
+	_legenda.text = Celular.adaptar(texto)
 	_legenda.add_theme_font_size_override("font_size", tam)
 	if _tween_legenda and _tween_legenda.is_valid():
 		_tween_legenda.kill()

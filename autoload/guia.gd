@@ -65,6 +65,8 @@ var _retrato_corrompido := false
 var _t_glitch := 0.0         # tempo restante do retrato forçado como corrompido
 var _prox_glitch := 1.5
 var _tween_caixa: Tween
+var _largura := LARGURA      # largura da caixa; no celular encolhe para terminar antes dos botões de toque
+var _layout_celular := false
 
 var _raiz: Control
 var _caixa: Control
@@ -126,6 +128,15 @@ func ocupado() -> bool:
 	return _pendentes > 0
 
 
+## Há um balão na tela? / ele trava o jogador? (o celular usa para decidir o que um toque faz)
+func visivel() -> bool:
+	return _ativo
+
+
+func bloqueando() -> bool:
+	return _ativo and _bloqueante
+
+
 func avancar() -> void:
 	if not _ativo or _t_linha < CARENCIA:
 		return
@@ -184,6 +195,7 @@ func _mostrar_linha(f: Fala, cfg: Dictionary, linha: String) -> void:
 	_personagem = f.personagem
 	var corr := GameState.corruption
 	var info := _preparar_texto(f, linha, corr)
+	_ajustar_largura()
 	_estilizar(cfg, corr, str(info.texto).length())   # antes do texto: com autowrap, o tamanho do Label precisa estar certo primeiro
 	_texto.text = info.texto
 	_texto.visible_characters = 0
@@ -206,7 +218,7 @@ func _mostrar_linha(f: Fala, cfg: Dictionary, linha: String) -> void:
 
 
 func _preparar_texto(f: Fala, linha: String, corr: float) -> Dictionary:
-	var texto := Flash.corromper(linha, corr)
+	var texto := Flash.corromper(Celular.adaptar(linha), corr)
 	var info := {"texto": texto, "ini": -1, "fim": -1}
 	var engasga := f.engasgar or (corr > 0.45 and randf() < (corr - 0.3) * 0.5)
 	if engasga and f.personagem not in ["sistema", "???"]:
@@ -352,6 +364,28 @@ func _construir() -> void:
 	_caixa.add_child(_seta)
 
 
+## No celular a caixa de fala vai da margem esquerda até antes do aglomerado de botões (Visor/Correr/...), encolhendo
+## e quebrando o texto em mais linhas. No desktop não mexe em nada.
+func _ajustar_largura() -> void:
+	if Celular.ativo:
+		var vp := get_viewport().get_visible_rect().size
+		var x0 := Celular.margens().x + 12.0
+		_largura = clampf(Celular.borda_botoes(vp.x) - 8.0 - x0, 560.0, LARGURA)
+		_caixa.anchor_left = 0.0
+		_caixa.anchor_right = 0.0
+		_caixa.offset_left = x0
+		_caixa.offset_right = x0 + _largura
+		_layout_celular = true
+	elif _layout_celular:
+		_largura = LARGURA
+		_caixa.anchor_left = 0.5
+		_caixa.anchor_right = 0.5
+		_caixa.offset_left = -LARGURA / 2.0
+		_caixa.offset_right = LARGURA / 2.0
+		_layout_celular = false
+	_seta.position.x = _largura - 56.0
+
+
 func _estilizar(cfg: Dictionary, corr: float, n_letras := 0) -> void:
 	var t := Flash.fator_dessat(corr)
 	var tem_retrato: bool = cfg.retrato != ""
@@ -369,7 +403,7 @@ func _estilizar(cfg: Dictionary, corr: float, n_letras := 0) -> void:
 		sb_balao = Flash.caixa(cor_balao, Flash.NAVY, 24, 5)
 	_balao.add_theme_stylebox_override("panel", sb_balao)
 	_balao.position.x = 150.0 if tem_retrato else 0.0
-	_balao.size.x = LARGURA - _balao.position.x
+	_balao.size.x = _largura - _balao.position.x
 	var margem := 28.0
 	_texto.position = Vector2(_balao.position.x + margem, 12)
 	_texto.size = Vector2(_balao.size.x - margem * 2.0 - 30.0, ALTURA - 24)
@@ -437,7 +471,7 @@ func _mostrar() -> void:
 	# Se uma fala acabou de terminar, a caixa pode estar no meio do fade-out: traz de volta.
 	var ja_visivel := _raiz.visible and _caixa.modulate.a > 0.5
 	_raiz.visible = true
-	_caixa.pivot_offset = Vector2(LARGURA / 2.0, ALTURA)
+	_caixa.pivot_offset = Vector2(_largura / 2.0, ALTURA)
 	if ja_visivel:
 		_caixa.modulate.a = 1.0
 		_caixa.scale = Vector2.ONE
@@ -517,7 +551,8 @@ func _input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo:
 		pedido = e.is_action_pressed("avancar_dialogo")
 	elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
-		pedido = true
+		# celular: o toque vira clique emulado em qualquer lugar (até no analógico); quem avança é o ControlesToque
+		pedido = not (Celular.ativo and e.device == InputEvent.DEVICE_ID_EMULATION)
 	if pedido:
 		avancar()
 		# Num balão que não trava o jogador, o clique também segue para o jogo (ex.: interagir com um painel).

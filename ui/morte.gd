@@ -132,7 +132,7 @@ func _construir() -> void:
 	btn.pressed.connect(continuar)
 	_cartao.add_child(btn)
 	var dica := Label.new()
-	dica.text = "Espaço, Enter ou clique para continuar"
+	dica.text = Celular.dica("Espaço, Enter ou clique para continuar", "Toque para continuar")
 	dica.position = Vector2(390, 458)
 	dica.size = Vector2(470, 40)
 	dica.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

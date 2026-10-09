@@ -20,6 +20,9 @@ var _tween_pista: Tween
 var lbl_passaporte: Label
 var faixa_discos: FaixaDiscos
 var olho: OlhoAtencao
+## Só existem no celular (Celular.ativo): controles de toque e aviso "vire o celular". O HUD cria e libera.
+var controles: ControlesToque
+var aviso_retrato: AvisoRetrato
 var _t_glitch := 0.0
 
 
@@ -100,6 +103,54 @@ func _ready() -> void:
 	GameState.sala_mudou.connect(_on_sala)
 	GameState.visita_mudou.connect(func(_v): _on_sala(GameState.sala_atual))
 	_on_sala(GameState.sala_atual)
+	get_viewport().size_changed.connect(func():
+		Celular.recalcular_margens()
+		_reposicionar())
+	_sincronizar_toque.call_deferred()
+
+
+## Cria/libera os controles de toque conforme `Celular.ativo` (a opção "Controles de toque" vale na hora).
+func _sincronizar_toque() -> void:
+	if not is_inside_tree():
+		return
+	if Celular.ativo:
+		if controles == null:
+			controles = ControlesToque.new()
+			controles.faixa = faixa_discos
+			controles.cinema = _cinema
+			add_child(controles)
+		if aviso_retrato == null and get_parent():
+			aviso_retrato = AvisoRetrato.new()
+			get_parent().add_child(aviso_retrato)
+	else:
+		if controles:
+			controles.queue_free()
+			controles = null
+		if aviso_retrato:
+			aviso_retrato.queue_free()
+			aviso_retrato = null
+	var ligado: bool = controles != null
+	if ligado != _toque_aplicado:
+		_toque_aplicado = ligado
+		Celular.aplicar_ambiente()
+		_reposicionar()
+
+
+var _toque_aplicado := false
+
+
+## No celular o contador de salas e as pistas respeitam a área segura (entalhe) e deixam o canto de cima à direita
+## para os botões de pausa e tela cheia. Desktop: posições originais.
+func _reposicionar() -> void:
+	if Celular.ativo:
+		var m := Celular.margens()
+		lbl_sala.position = Vector2(m.x + 12.0, m.y)
+		lbl_passaporte.position = Vector2(m.x + 14.0, m.y + 50.0)
+		pistas_box.position = Vector2(-170.0 - m.z, m.y + 78.0)
+	else:
+		lbl_sala.position = Vector2(24, 18)
+		lbl_passaporte.position = Vector2(26, 66)
+		pistas_box.position = Vector2(-190, 16)
 
 
 func conectar_player(p: Player) -> void:
@@ -110,7 +161,7 @@ func conectar_player(p: Player) -> void:
 	barra_stamina.visible = false
 	barra_stamina.modulate = Color.WHITE
 	_sincronizar_pistas()
-	p.alvo_mudou.connect(func(t: String): lbl_aviso.text = ("[E] " + t) if t != "" else "")
+	p.alvo_mudou.connect(func(t: String): lbl_aviso.text = (Celular.dica("[E] ", "") + t) if t != "" else "")
 	p.stamina_mudou.connect(func(v: float):
 		barra_stamina.value = v
 		barra_stamina.visible = v < 0.999
@@ -124,6 +175,8 @@ var _cinema := false
 
 func modo_cinema(ligado: bool, manter_sala := false) -> void:
 	_cinema = ligado
+	if controles:
+		controles.cinema = ligado
 	mira.visible = not ligado
 	lbl_aviso.visible = not ligado
 	lbl_sala.visible = (not ligado) or manter_sala
@@ -149,6 +202,8 @@ func _on_sala(n: int) -> void:
 ## Corrupção alta: de vez em quando o contador de salas mostra um número errado por um instante
 ## (a interface "mente sobre o progresso", PLANO §7.4).
 func _process(dt: float) -> void:
+	if Celular.ativo != (controles != null):
+		_sincronizar_toque()
 	_atualizar_passaporte()
 	_sincronizar_pistas()
 	if GameState.sala_atual <= 0 or not visible:

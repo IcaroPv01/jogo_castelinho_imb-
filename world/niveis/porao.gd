@@ -808,7 +808,7 @@ func _mostrar_legenda(texto: String, dur := 2.4, prio := 1) -> void:
 		return
 	_prio_legenda = prio
 	_legenda_fim = agora + dur + 1.0
-	_legenda.text = texto
+	_legenda.text = Celular.adaptar(texto)
 	if _tween_legenda and _tween_legenda.is_valid():
 		_tween_legenda.kill()
 	_tween_legenda = create_tween()

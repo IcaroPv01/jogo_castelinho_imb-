@@ -1,6 +1,6 @@
 # Castelinho: Visita Guiada
 
-**▶ Jogar no navegador (computador):** https://icaropv01.github.io/jogo_castelinho_imb-/
+**▶ Jogar no navegador (computador ou celular):** https://icaropv01.github.io/jogo_castelinho_imb-/
 **Versão para Windows (offline):** gerada só sob pedido. Fica em https://icaropv01.github.io/jogo_castelinho_imb-/Castelinho_Windows.zip até a próxima atualização do site.
 
 Jogo 3D de terror em Godot 4 sobre o Castelinho de Imbé (RS). Começa como um "jogo educativo da prefeitura" sobre a história de Imbé e vai ficando cada vez mais estranho até descer a uma masmorra. Inspiração: *Spooky's Jump Scare Mansion*.
@@ -20,6 +20,26 @@ Jogo 3D de terror em Godot 4 sobre o Castelinho de Imbé (RS). Começa como um "
 | **F** | Lanterna (a partir da visita 3) |
 | Espaço / Enter | Avançar diálogo |
 | Esc ou P | Pausar (clique para voltar) |
+
+### No celular (Chrome no Android, Safari no iPhone)
+
+Abra o mesmo link e jogue **com o celular deitado** (em pé, o jogo pede para virar e pausa). Os controles de toque
+aparecem sozinhos; dá para forçar em Pausa → Opções → Controles de toque (Automático / Sempre / Nunca).
+
+| Toque | Ação |
+|---|---|
+| Arrastar no lado esquerdo | Andar (analógico) |
+| Arrastar no lado direito | Olhar |
+| **Interagir** (fica amarelo perto de algo) | Ler painel / usar |
+| **Correr** | Liga a corrida; para sozinha ao soltar o analógico |
+| **Visor** (segurar) | Mostrar época do disco |
+| Tocar num disco da faixa | Selecionar disco |
+| **Lanterna** | Lanterna (a partir da visita 3) |
+| Tocar na tela | Avançar diálogo |
+| ⏸ (canto de cima) | Pausar |
+| ⛶ (canto de cima) | Tela cheia (no iPhone: Compartilhar → Adicionar à Tela de Início) |
+
+No celular o jogo usa um modo leve (imagem 3D um pouco mais baixa, 30 quadros por segundo, menos luzes).
 
 **Versão 2:** Quatro visitas ao Castelinho (salas 1–80), um porão com salas 81–99, e o Braço Morto (sala 100). O jogo salva sozinho no navegador. A história se desdobra em cada visita, com ritmo lento na visita 1 e complexidade crescente.
 

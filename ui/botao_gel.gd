@@ -11,6 +11,7 @@ extends Button
 var cor := Flash.AZUL
 var tamanho_fonte := 28
 var som_hover := true
+var margem_h := 28           # margem interna esquerda/direita (botões lado a lado usam menos)
 var _brilho: Panel
 var _tween: Tween
 
@@ -63,8 +64,8 @@ func _aplicar_estilos() -> void:
 	pressionado.shadow_offset = Vector2(0, 1)
 	var desativado := Flash.caixa(Flash.dessaturar(cor, 0.85).lightened(0.2), Color("6B7280"), raio, 5, false)
 	for s: StyleBoxFlat in [normal, hover, pressionado, desativado]:
-		s.content_margin_left = 28
-		s.content_margin_right = 28
+		s.content_margin_left = margem_h
+		s.content_margin_right = margem_h
 		s.content_margin_top = 10
 		s.content_margin_bottom = 14
 	add_theme_stylebox_override("normal", normal)

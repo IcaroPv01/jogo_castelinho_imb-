@@ -57,9 +57,28 @@ func _atualizar() -> void:
 
 
 ## Canto de baixo à esquerda (calculado do tamanho da janela: sem anchors, que dependem do pai).
+## No celular vai para o alto à esquerda, abaixo do contador de salas: o canto de baixo é do analógico.
 func _posicionar() -> void:
 	var vp := get_viewport_rect().size if is_inside_tree() else Vector2(1280, 720)
+	if Celular.ativo:
+		var m := Celular.margens()
+		position = Vector2(m.x + 12.0, m.y + 118.0)
+		return
 	position = Vector2(MARGEM, vp.y - MARGEM - size.y)
+
+
+## Qual slot do Visor (0..4, a ordem das teclas 1..5) está sob o ponto `pos` (coordenadas do canvas)? -1 = nenhum.
+## Usado pelos controles de toque: tocar num disco seleciona.
+func slot_em(pos: Vector2) -> int:
+	if not visible or _meus.is_empty():
+		return -1
+	var local := pos - global_position
+	if local.y < -4.0 or local.y > size.y + 4.0 or local.x < 0.0 or local.x > size.x:
+		return -1
+	var i := int(floor((local.x - 10.0) / LARG_SLOT))
+	if i < 0 or i >= _meus.size():
+		return -1
+	return ORDEM.find(_meus[i])
 
 
 func _alvo_x() -> float:
@@ -105,21 +124,25 @@ func _draw() -> void:
 		var cy := base_y + 40.0 - (6.0 if sel else 0.0) - (0.0 if pop >= 1.0 else 30.0 * (1.0 - pop))
 		cy += sin(_t * 3.0 + i) * (1.2 if sel else 0.0)
 		_disco(Vector2(cx, cy), raio, COR_DISCO.get(ep, Color.GRAY), sel, bloq)
-		# número da tecla (bolinha no canto de cima à esquerda do slot)
-		var tag := Vector2(cx - 24.0, base_y + 6.0)
-		draw_circle(tag, 11.0, Flash.NAVY)
-		draw_circle(tag, 9.0, Color.WHITE)
-		draw_string(fonte_n, tag + Vector2(-5.0, 6.0), str(ORDEM.find(ep) + 1), HORIZONTAL_ALIGNMENT_CENTER, 10.0, 16, Flash.NAVY)
+		# número da tecla (bolinha no canto de cima à esquerda do slot); no celular não há teclas
+		if not Celular.ativo:
+			var tag := Vector2(cx - 24.0, base_y + 6.0)
+			draw_circle(tag, 11.0, Flash.NAVY)
+			draw_circle(tag, 9.0, Color.WHITE)
+			draw_string(fonte_n, tag + Vector2(-5.0, 6.0), str(ORDEM.find(ep) + 1), HORIZONTAL_ALIGNMENT_CENTER, 10.0, 16, Flash.NAVY)
 		# ano embaixo
 		var txt: String = ROTULO.get(ep, "")
 		var ponta := Vector2(cx - 34.0, base_y + 86.0)
 		draw_string_outline(fonte_n, ponta, txt, HORIZONTAL_ALIGNMENT_CENTER, 68.0, 20, 6, Flash.NAVY)
 		draw_string(fonte_n, ponta, txt, HORIZONTAL_ALIGNMENT_CENTER, 68.0, 20, Color.WHITE if not bloq else Color("C8CCD4"))
 	# dica discreta de teclas, logo acima da plaquinha (não ocupa espaço de outra UI)
-	var dica := "1–5 ou rodinha: trocar · segure Q: ver" if _meus.size() >= 2 else "segure Q: ver"
+	var dica := Celular.dica("1–5 ou rodinha: trocar · segure Q: ver", "toque no disco: trocar · segure Visor: ver") \
+		if _meus.size() >= 2 else Celular.dica("segure Q: ver", "segure Visor: ver")
 	var fd := Flash.fonte_titulo()
-	draw_string_outline(fd, Vector2(4.0, -6.0), dica, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, 5, Color(0, 0, 0, 0.8))
-	draw_string(fd, Vector2(4.0, -6.0), dica, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, Color(1, 1, 1, 0.9))
+	var tam_dica := 22 if Celular.ativo else 15   # no celular: pelo menos do tamanho do ano dos discos (20)
+	var borda_dica := 7 if Celular.ativo else 5
+	draw_string_outline(fd, Vector2(4.0, -6.0), dica, HORIZONTAL_ALIGNMENT_LEFT, -1.0, tam_dica, borda_dica, Color(0, 0, 0, 0.8))
+	draw_string(fd, Vector2(4.0, -6.0), dica, HORIZONTAL_ALIGNMENT_LEFT, -1.0, tam_dica, Color(1, 1, 1, 0.9))
 	if bloq:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0.05, 0.05, 0.1, 0.35))
 		var frac := clampf(Visor.bloqueio_restante() / Visor.BLOQUEIO_S, 0.0, 1.0)

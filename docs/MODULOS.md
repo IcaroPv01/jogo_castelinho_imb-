@@ -19,6 +19,7 @@ Decisões do Icaro (07/10/2026):
 | 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | feito (PR #14): três finais (Encontrado ≥8 pistas, Visita concluída, Sala 101), menu do Esc, contador de pistas, título muda após zerar; reabre quando o Icaro jogar |
 | 6 | Áudio | Jingle, ambientes e sustos (ninguém ouviu ainda: precisa do ouvido do Icaro) | `autoload/audio.gd`, `tools/gerar_audio.py`, `assets/audio/` | feito (PR #15): 9 sons novos, mixagem medida, Sala 101 abafada na web, jingle_1 mais estranho; reabre quando o Icaro ouvir (Mesa de som) |
 | 7 | Arte e gráficos | Acabamento visual mantendo o estilo Flash educativo | `shaders/`, `tools/gerar_texturas.py`, `castelinho/` | feito (PR #16): capturas das cenas só testadas, revisão gráfica (Opus), Figura nova no slide 98, mão/dedos de afogada, pegadas com forma de pé, lago e chegada; reabre quando o Icaro jogar |
+| 8 | Celular | Jogar no navegador do celular (Android/iPhone), deitado, pelo mesmo link; computador igual | `ui/celular.gd`, `ui/controles_toque.gd`, `ui/aviso_retrato.gd`, `export_presets.cfg` (head_include) | feito (PR #17): toque, pausa sem pointer lock, retrato, modo leve, som no 1º toque; reabre quando o Icaro testar no celular |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -44,6 +45,37 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 8: Celular (09/10/2026)
+
+- **O Icaro não respondeu às perguntas da abertura:** segui as recomendações (dá para desfazer). Opção "Controles de
+  toque: Automático / Sempre / Nunca" (Pausa → Opções, `user://opcoes.cfg` chave `controles_toque`); Correr liga com um
+  toque e para ao soltar o analógico; modo leve automático; sensibilidade do olhar usa o mesmo slider. Celular dele:
+  ainda não sabemos.
+- **Detecção** (`ui/celular.gd`, `Celular`, estático): página Web define `castelinhoToque()` (ponteiro grosso + toque),
+  `castelinhoIOS()`, `castelinhoSeguro()` (entalhe) no head_include do `export_presets.cfg`. URL `?celular=1`/`0` força;
+  `--celular` na linha de comando também. **Armadilha:** `JavaScriptBridge.eval` devolve booleano JS como número na Web
+  real (no headless não se vê): use `Celular._js_bool()`.
+- **Regra nova para todos:** nunca `Input.mouse_mode = ...` direto: `Celular.capturar_mouse()` / `soltar_mouse()` (no
+  iPhone não há pointer lock). Pausa: `main.gd` `deve_pausar()` — desktop = mouse solto; celular = `Celular.pausa_toque`
+  (botão, foco perdido, Esc de teclado) ou `Celular.retrato`. Dica de tecla mostrada ao jogador passa por
+  `Celular.adaptar(texto)` ou `Celular.dica(teclado, toque)`.
+- **Controles** (`ui/controles_toque.gd`, camada 15, abaixo do balão da Guia): analógico flutuante à esquerda
+  (`Input.action_press` com força), olhar arrastando à direita (`Player.girar_olhar`, `SENS_TOQUE` 0,003), Interagir
+  (amarelo com alvo), Correr, Lanterna, Visor (segurar), Pausa (sempre visível jogando, inclusive em cinema), Tela cheia.
+  Toque na faixa de discos (`FaixaDiscos.slot_em`). Toque rápido avança a Guia; a Guia ignora o clique emulado do toque e,
+  no celular, o clique sai da ação "interagir". Balão da Guia encolhe até `Celular.borda_botoes()`.
+- **Telas:** interface 1,35× só durante o jogo (título, painéis, menus e finais ficam em 1,0: foram desenhados para
+  1280x720); aviso "vire o celular" opaco (`ui/aviso_retrato.gd`); área segura do entalhe em `Celular.margens()`.
+- **Modo leve** (`Celular.aplicar_qualidade()`, desfeito no desktop): 3D a 70 %, 30 qps, até 3 luzes no Castelinho
+  (`Celular.limite_luzes()`), metade das partículas, sem a LuzDosDegraus no Braço Morto. Pós-processamento mantido.
+- **Som:** head_include destrava o AudioContext no 1º toque e põe `navigator.audioSession` em "playback" (iPhone no
+  silencioso). Nunca ouvido de verdade.
+- **Testes:** `tests/celular_test.gd` (CI). `tools/testar_web_celular.sh` (fora do CI, ~5 min): build Web real no
+  Chromium 844x390 com toque; capturas da fala, painel, pausa, Opções e retrato. Captura xvfb: `tests/captura_celular.gd`.
+- **Não medido:** desempenho real (a nuvem roda a 2–3 qps por software). O corte de luzes só foi visto na visita 1, não
+  nas noturnas. Telas cheias (painel, quiz, diploma) ficam com texto ~14 px no celular: legível, mas pequeno.
+- Pendente: o Icaro testar no celular (lista no PR #17) e dizer o que travou, ficou pequeno ou difícil de tocar.
 
 ### Módulo 7: Arte e gráficos (09/10/2026)
 
@@ -197,7 +229,7 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
 - **Para o módulo 3 (Visitas 1 a 4):** `castelinho.gd` ganhou o bloco "Passaporte do Museu", `_on_figura_atravessou`
   (perseguição V4) e `_exit_tree`; a porta zebrada do hall não desce mais; as falas das salas 21 e 80 da V4 mudaram.
   Mudar a posição dos discos/objetos mexe com as caças: combine com o módulo 2.
-- Pendente: controles de celular (o Visor só funciona com teclado e mouse); esvaziamento da atenção (9 s) permite
+- Pendente: ~~controles de celular~~ (feito no módulo 8); esvaziamento da atenção (9 s) permite
   "espiar em rajadas" na V4/porão, o Icaro decide ao jogar.
 
 ### Módulo 1: QA e bugs, varredura automática (08/10/2026)
