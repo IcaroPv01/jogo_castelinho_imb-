@@ -126,6 +126,15 @@ func ocupado() -> bool:
 	return _pendentes > 0
 
 
+## Há um balão na tela? / ele trava o jogador? (o celular usa para decidir o que um toque faz)
+func visivel() -> bool:
+	return _ativo
+
+
+func bloqueando() -> bool:
+	return _ativo and _bloqueante
+
+
 func avancar() -> void:
 	if not _ativo or _t_linha < CARENCIA:
 		return
@@ -206,7 +215,7 @@ func _mostrar_linha(f: Fala, cfg: Dictionary, linha: String) -> void:
 
 
 func _preparar_texto(f: Fala, linha: String, corr: float) -> Dictionary:
-	var texto := Flash.corromper(linha, corr)
+	var texto := Flash.corromper(Celular.adaptar(linha), corr)
 	var info := {"texto": texto, "ini": -1, "fim": -1}
 	var engasga := f.engasgar or (corr > 0.45 and randf() < (corr - 0.3) * 0.5)
 	if engasga and f.personagem not in ["sistema", "???"]:
@@ -517,7 +526,8 @@ func _input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo:
 		pedido = e.is_action_pressed("avancar_dialogo")
 	elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
-		pedido = true
+		# celular: o toque vira clique emulado em qualquer lugar (até no analógico); quem avança é o ControlesToque
+		pedido = not (Celular.ativo and e.device == InputEvent.DEVICE_ID_EMULATION)
 	if pedido:
 		avancar()
 		# Num balão que não trava o jogador, o clique também segue para o jogo (ex.: interagir com um painel).

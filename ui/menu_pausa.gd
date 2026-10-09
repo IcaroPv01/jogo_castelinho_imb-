@@ -11,6 +11,8 @@ var _lbl_pistas: Label
 var _pag_principal: VBoxContainer
 var _pag_opcoes: VBoxContainer
 var _pag_confirma: VBoxContainer
+var _rot_sens: Label
+var _botoes_toque := {}         # modo ("auto"/"sempre"/"nunca") -> BotaoGel
 
 
 func _ready() -> void:
@@ -60,9 +62,11 @@ func _ready() -> void:
 	_pag_opcoes.add_child(_rotulo("Volume geral", 24))
 	_pag_opcoes.add_child(_slider(0.0, 1.0, Opcoes.volume, func(v: float):
 		Opcoes.definir_volume(v)))
-	_pag_opcoes.add_child(_rotulo("Sensibilidade do mouse", 24))
+	_rot_sens = _rotulo(Celular.dica("Sensibilidade do mouse", "Sensibilidade do olhar"), 24)
+	_pag_opcoes.add_child(_rot_sens)
 	_pag_opcoes.add_child(_slider(Opcoes.SENS_MIN, Opcoes.SENS_MAX, GameState.sensibilidade, func(v: float):
 		GameState.sensibilidade = v))
+	_construir_controles_toque(_pag_opcoes)
 	_botao(_pag_opcoes, "Voltar", Flash.AZUL, func():
 		Opcoes.salvar()
 		_ir("principal"))
@@ -140,6 +144,34 @@ func _textura_bola(cor: Color) -> ImageTexture:
 	return ImageTexture.create_from_image(img)
 
 
+## "Controles de toque: Automático / Sempre / Nunca": vale na hora (Celular.detectar + o HUD refaz os controles).
+func _construir_controles_toque(pagina: VBoxContainer) -> void:
+	pagina.add_child(_rotulo("Controles de toque", 24))
+	var linha := HBoxContainer.new()
+	linha.add_theme_constant_override("separation", 8)
+	pagina.add_child(linha)
+	var nomes := {"auto": "Automático", "sempre": "Sempre", "nunca": "Nunca"}
+	for modo: String in Celular.MODOS:
+		var b := BotaoGel.new(nomes[modo], Flash.AZUL, 22)
+		b.custom_minimum_size = Vector2(0, 54)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.som_hover = false
+		b.margem_h = 8
+		b.pressed.connect(func():
+			Opcoes.definir_controles(modo)
+			_marcar_controles_toque())
+		linha.add_child(b)
+		_botoes_toque[modo] = b
+	_marcar_controles_toque()
+
+
+func _marcar_controles_toque() -> void:
+	for modo: String in _botoes_toque:
+		(_botoes_toque[modo] as BotaoGel).definir_cor(Flash.VERDE if modo == Celular.modo else Flash.AZUL)
+	if _rot_sens:
+		_rot_sens.text = Celular.dica("Sensibilidade do mouse", "Sensibilidade do olhar")
+
+
 func _ir(pagina: String) -> void:
 	_pag_principal.visible = pagina == "principal"
 	_pag_opcoes.visible = pagina == "opcoes"
@@ -151,6 +183,7 @@ func mostrar(v: bool, pistas: int = 0) -> void:
 	visible = v
 	if v:
 		_ir("principal")
+		_marcar_controles_toque()
 		_lbl_pistas.text = "Pistas do Tito: %d" % pistas
 		_lbl_pistas.visible = pistas > 0
 
@@ -158,7 +191,8 @@ func mostrar(v: bool, pistas: int = 0) -> void:
 ## Recaptura o mouse dentro do clique (exigência do navegador); o main.gd despausa no quadro seguinte.
 func _continuar() -> void:
 	Opcoes.salvar()
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Celular.pausa_toque = false
+	Celular.capturar_mouse()
 
 
 ## Mesmo caminho de volta ao título do Braço Morto: zera a UI, desliga o jogo e recarrega a cena principal.
@@ -166,7 +200,8 @@ func voltar_ao_titulo() -> void:
 	Opcoes.salvar()
 	Flash.resetar_ui()
 	GameState.jogando = false
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Celular.pausa_toque = false
+	Celular.soltar_mouse()
 	get_tree().paused = false
 	Transicao.fade_in(0.05)   # o nível pode ter deixado a Transicao escura
 	var arvore := get_tree()

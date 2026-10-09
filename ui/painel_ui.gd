@@ -263,7 +263,7 @@ func _construir() -> void:
 	_texto.size = Vector2(_area_texto.size.x - 48, 304)
 	_texto.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_texto.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-	var bruto := str(dados_painel.get("texto", ""))
+	var bruto := Celular.adaptar(str(dados_painel.get("texto", "")))
 	_texto.text = bruto if _seco else Flash.corromper(bruto, _corr)
 	var fonte_corpo: Font = Flash.fonte_sistema() if _seco else (Flash.fonte_erro() if _corr >= 0.6 else Flash.fonte_texto())
 	_texto.add_theme_font_override("font", fonte_corpo)
@@ -325,7 +325,8 @@ func _construir() -> void:
 
 	# ---- rodapé
 	var dica := Label.new()
-	dica.text = "Espaço ou Enter: continuar     Esc: fechar" if _imagem == null else "Esc: fechar"
+	dica.text = Celular.dica("Espaço ou Enter: continuar     Esc: fechar", "Toque no botão para continuar     X: fechar") if _imagem == null \
+		else Celular.dica("Esc: fechar", "Toque em X para fechar")
 	dica.position = Vector2(x_texto, 528)
 	dica.size = Vector2(420 if _imagem == null else 200, 40)
 	dica.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

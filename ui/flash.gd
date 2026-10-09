@@ -198,7 +198,7 @@ static func abrir_ui() -> void:
 	_modais += 1
 	if _modais == 1:
 		GameState.set_flag("ui_aberta", true)
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		Celular.soltar_mouse()
 	travar_jogador(true)
 
 
@@ -208,7 +208,7 @@ static func fechar_ui() -> void:
 	travar_jogador(false)
 	if _modais == 0:
 		if GameState.jogando:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			Celular.capturar_mouse()
 		GameState.set_flag("ui_aberta", false)
 
 

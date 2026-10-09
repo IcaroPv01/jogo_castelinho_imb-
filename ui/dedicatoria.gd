@@ -104,7 +104,7 @@ func _construir() -> void:
 	_rt1.modulate.a = 0.0
 	_rt2.modulate.a = 0.0
 	_dica = Label.new()
-	_dica.text = "Clique ou aperte Enter para continuar"
+	_dica.text = Celular.dica("Clique ou aperte Enter para continuar", "Toque para continuar")
 	_dica.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_dica.anchor_left = 0.5
 	_dica.anchor_right = 0.5
@@ -195,7 +195,7 @@ func _terminar() -> void:
 	fase = "fim"
 	Audio.silenciar(0.2)
 	Flash.resetar_ui()          # a cena final acabou: o jogo volta ao título; o mouse fica solto
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Celular.soltar_mouse()
 	terminou.emit()
 	if voltar_ao_titulo:
 		GameState.jogando = false

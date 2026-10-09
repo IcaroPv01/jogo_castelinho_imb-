@@ -128,7 +128,7 @@ func voltar_ao_inicio() -> void:
 	Audio.silenciar(0.3)
 	Flash.resetar_ui()
 	GameState.jogando = false
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Celular.soltar_mouse()
 	get_tree().paused = false
 	Transicao.fade_in(0.05)   # o nível costuma deixar a Transicao toda preta: limpa antes de recarregar
 	var arvore := get_tree()

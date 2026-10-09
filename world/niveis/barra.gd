@@ -414,7 +414,7 @@ func _criar_hud() -> void:
 	_lbl_placar.add_theme_constant_override("outline_size", 8)
 	camada.add_child(_lbl_placar)
 	_lbl_dica = Label.new()
-	_lbl_dica.text = "Clique ou [E] para lançar a tarrafa"
+	_lbl_dica.text = Celular.dica("Clique ou [E] para lançar a tarrafa", "Toque em Interagir para lançar a tarrafa")
 	_lbl_dica.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_lbl_dica.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_lbl_dica.offset_top = -150.0

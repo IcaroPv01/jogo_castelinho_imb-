@@ -13,6 +13,7 @@ const VEL_CORRER := 5.4
 const GRAVIDADE := 18.0
 const ALTURA_OLHOS := 1.55
 const SENS_MOUSE := 0.0022
+const SENS_TOQUE := 0.005    # rad por pixel do canvas arrastado no celular (multiplicada por GameState.sensibilidade)
 const ALCANCE := 2.4
 const DRENO := 0.28      # stamina por segundo correndo
 const RECARGA := 0.22    # stamina por segundo parado/andando
@@ -83,13 +84,12 @@ func _ready() -> void:
 
 
 func _unhandled_input(e: InputEvent) -> void:
-	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+	if not Celular.olhar_liberado():
 		return
-	if e is InputEventMouseMotion and pode_mover:
-		var s := SENS_MOUSE * GameState.sensibilidade
-		rotate_y(-e.relative.x * s)
-		cabeca.rotate_x(-e.relative.y * s)
-		cabeca.rotation.x = clampf(cabeca.rotation.x, deg_to_rad(-85), deg_to_rad(85))
+	if e is InputEventMouseMotion:
+		# celular: o olhar vem do arrasto de dedo (ControlesToque -> girar_olhar), não do mouse emulado
+		if not Celular.ativo:
+			girar_olhar(e.relative, SENS_MOUSE * GameState.sensibilidade)
 	elif e.is_action_pressed("interagir") and pode_mover and _alvo and is_instance_valid(_alvo):
 		_alvo.interagir(self)
 		get_viewport().set_input_as_handled()
@@ -97,6 +97,16 @@ func _unhandled_input(e: InputEvent) -> void:
 		lanterna.visible = not lanterna.visible
 		GameState.set_flag("lanterna_desligada", not lanterna.visible)
 		Audio.sfx("clique")
+
+
+## Gira a câmera: `rel` = deslocamento (pixels do mouse ou do dedo), `s` = radianos por pixel.
+## Usado pelo mouse (desktop) e pelo arrasto de dedo (celular).
+func girar_olhar(rel: Vector2, s: float) -> void:
+	if not pode_mover:
+		return
+	rotate_y(-rel.x * s)
+	cabeca.rotate_x(-rel.y * s)
+	cabeca.rotation.x = clampf(cabeca.rotation.x, deg_to_rad(-85), deg_to_rad(85))
 
 
 func _physics_process(dt: float) -> void:

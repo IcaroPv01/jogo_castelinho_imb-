@@ -170,7 +170,7 @@ func _construir() -> void:
 	_palco.add_child(_passo)
 
 	_dica = Label.new()
-	_dica.text = "Dica do Bentinho: " + String(DICAS[randi() % DICAS.size()])
+	_dica.text = "Dica do Bentinho: " + Celular.adaptar(String(DICAS[randi() % DICAS.size()]))
 	_dica.position = Vector2(0, 640)
 	_dica.size = Vector2(LARGURA, 36)
 	_dica.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
