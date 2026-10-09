@@ -580,6 +580,226 @@ def s_atencao():
     return buf
 
 
+# ------------------------------------------------------------------ módulo 6: porão e Braço Morto
+# Todos usam um gerador próprio (como o trovão) para não deslocar a sequência aleatória dos outros sons.
+def _bolha(rng, f0, d=None, sobe=2.0, tau=0.03):
+    d = d or rng.uniform(0.05, 0.12)
+    tb = tt(d)
+    return np.sin(fase(f0 * (1 + sobe * tb / d))) * np.exp(-tb / tau)
+
+
+def s_susto_agua():
+    """Susto de emergir (1,2 s): água estoura, impacto grave e cordas raspadas dissonantes que somem."""
+    rng = np.random.default_rng(60001)
+    dur = 1.2
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    r = rng.uniform(-1, 1, n)
+    estouro = filtro(r, "banda", 400, 5500) * np.exp(-t / 0.16)
+    estouro *= np.minimum(1, t / 0.004)
+    espuma = filtro(rng.uniform(-1, 1, n), "alta", 2500) * np.exp(-t / 0.35) * 0.35
+    impacto = np.sin(fase(70 * np.exp(-t * 7) + 38)) * np.exp(-t / 0.22) * 1.3
+    # cordas raspadas: duas notas quase em semitom + harmônicos agudos, com ruído de arco
+    cordas = np.zeros(n)
+    for f in (1180, 1250, 1769):
+        vib = 1 + 0.012 * np.sin(2 * np.pi * 6.5 * t + rng.uniform(0, 6))
+        cordas += serra(f * vib * (1 - 0.04 * t), t, 6) * 0.5
+    arco = filtro(rng.uniform(-1, 1, n), "banda", 1800, 4800) * 0.6
+    cordas = (cordas + arco * (0.6 + 0.4 * np.sin(2 * np.pi * 23 * t))) * np.exp(-t / 0.42) * np.minimum(1, t / 0.03)
+    return estouro * 1.0 + espuma + impacto + cordas * 0.45
+
+
+def s_susto_perto():
+    """Susto bem perto (1,0 s): inspiração molhada e rouca, depois um estalo agudo (stinger)."""
+    rng = np.random.default_rng(60002)
+    dur = 1.0
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    # inspiração rouca (0,05 .. 0,52 s): ruído em formante de garganta, subindo
+    di = 0.47
+    ti = tt(di)
+    env = np.sin(np.pi * np.clip(ti / di, 0, 1)) ** 1.3 * (0.4 + 0.6 * ti / di)
+    rouco = (filtro(rng.uniform(-1, 1, len(ti)), "banda", 350, 1100) + 0.8 * filtro(rng.uniform(-1, 1, len(ti)), "banda", 1800, 3800)) * env
+    rouco *= 0.7 + 0.3 * np.sign(np.sin(2 * np.pi * 70 * ti)) * np.abs(np.sin(2 * np.pi * 9 * ti))  # raspado
+    y = np.zeros(n)
+    colocar(y, rouco, 0.04, 1.0)
+    # molhado: bolhinhas na inspiração
+    for pos in (0.12, 0.2, 0.33, 0.41):
+        colocar(y, _bolha(rng, rng.uniform(500, 900), 0.06), pos, 0.35)
+    # stinger: estalo + nota aguda dissonante
+    ts = tt(0.5)
+    estalo = filtro(rng.uniform(-1, 1, len(ts)), "alta", 2500) * np.exp(-ts / 0.012)
+    ping = (np.sin(2 * np.pi * 2637 * ts) + 0.8 * np.sin(2 * np.pi * 2794 * ts) + 0.5 * np.sin(2 * np.pi * 3951 * ts)) * np.exp(-ts / 0.16)
+    colocar(y, (estalo * 1.2 + ping * 0.5), 0.52, 1.0)
+    colocar(y, np.sin(fase(60 * np.exp(-ts * 10) + 40)) * np.exp(-ts / 0.1), 0.52, 0.8)
+    return y
+
+
+def s_susto_queda():
+    """Queda (1,2 s): baque surdo e um guincho metálico agudo descendo."""
+    rng = np.random.default_rng(60003)
+    dur = 1.2
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    baque = np.sin(fase(85 * np.exp(-t * 9) + 40)) * np.exp(-t / 0.18) * 1.3
+    baque += filtro(rng.uniform(-1, 1, n), "baixa", 400) * np.exp(-t / 0.05) * 0.9
+    ts = t - 0.06
+    ativo = (ts > 0).astype(float)
+    f = 4200 * np.exp(-np.clip(ts, 0, None) * 1.6) + 600
+    guincho = (np.sin(fase(f)) + 0.6 * np.sin(fase(f * 2.31)) + 0.35 * np.sin(fase(f * 3.77)))
+    guincho *= np.exp(-np.clip(ts, 0, None) / 0.55) * ativo * np.minimum(1, np.clip(ts, 0, None) / 0.01)
+    guincho *= 0.8 + 0.2 * np.sin(2 * np.pi * 31 * t)
+    atrito = filtro(rng.uniform(-1, 1, n), "alta", 3500) * np.exp(-np.clip(ts, 0, None) / 0.25) * ativo * 0.25
+    return baque + guincho * 0.55 + atrito
+
+
+def s_voz_tito():
+    """Murmúrio de criança sem palavras (1,3 s), abafado como debaixo d'água, com 3 bolhinhas.
+    Só a silhueta das sílabas (formantes agudos, como crianca_ei), nada inteligível."""
+    rng = np.random.default_rng(60004)
+    dur = 1.3
+    n = int(dur * SR)
+
+    def silaba(ini, d, f0a, f0b, formantes, ganho):
+        m = int(d * SR)
+        tb = np.arange(m) / SR
+        f0 = np.linspace(f0a, f0b, m)
+        fonte = np.zeros(m)
+        ph = fase(f0)
+        for k in range(1, 22):
+            fonte += np.sin(k * ph) / k
+        s = np.zeros(m)
+        for fc, largura, g in formantes:
+            s += g * filtro(fonte, "banda", max(fc - largura, 100), fc + largura)
+        s += 0.15 * filtro(rng.uniform(-1, 1, m), "banda", 1500, 4000)
+        env = np.sin(np.pi * np.clip(tb / d, 0, 1)) ** 1.4
+        return ini, s * env * ganho
+
+    buf = np.zeros(n)
+    for ini, x in [silaba(0.08, 0.26, 330, 300, [(700, 180, 1.0), (1500, 300, 0.7), (3200, 500, 0.4)], 0.9),
+                   silaba(0.38, 0.22, 360, 410, [(420, 120, 1.0), (2400, 500, 0.8), (3500, 500, 0.4)], 0.8),
+                   silaba(0.66, 0.30, 400, 310, [(550, 150, 1.0), (1900, 400, 0.8), (3300, 500, 0.4)], 0.85),
+                   silaba(1.0, 0.2, 320, 280, [(380, 100, 1.0), (2200, 400, 0.6)], 0.55)]:
+        colocar(buf, x, ini)
+    buf = filtro(buf, "baixa", 1500, ordem=3)
+    buf = normalizar(buf, 0.7)
+    bol = np.zeros(n)
+    for pos in (0.25, 0.58, 0.93):
+        colocar(bol, _bolha(rng, rng.uniform(350, 600), 0.07, 2.0, 0.025), pos, 0.5)
+    buf += filtro(bol, "baixa", 1500)
+    return buf
+
+
+def s_afundar():
+    """Afundar no Braço Morto (5 s): bolhas subindo, ronco abafado de pressão. Tudo passa-baixa."""
+    rng = np.random.default_rng(60005)
+    dur = 5.0
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    ronco = filtro(rng.uniform(-1, 1, n), "baixa", 180, ordem=3) * (0.4 + 0.6 * np.clip(t / 2.5, 0, 1)) * 1.6
+    ronco += 0.4 * np.sin(2 * np.pi * 42 * t + 0.6 * np.sin(2 * np.pi * 0.5 * t))
+    bolhas = np.zeros(n)
+    for _ in range(85):
+        pos = rng.uniform(0.05, dur - 0.2)
+        f0 = rng.uniform(220, 900)
+        colocar(bolhas, _bolha(rng, f0, rng.uniform(0.05, 0.16), 2.4, 0.035), pos, rng.uniform(0.15, 0.7))
+    bolhas = filtro(bolhas, "baixa", 1400)
+    y = ronco + bolhas * 0.9
+    y = filtro(y, "baixa", 1800)
+    return y * np.minimum(1, t / 0.25) * np.minimum(1, (dur - t) / 0.9)
+
+
+def s_subaquatico():
+    """Loop de 8 s debaixo d'água: drone grave abafado e uma bolha rara. Já sai abafado do arquivo
+    (na web o filtro de bus não funciona). Ciclos inteiros em 8 s => emenda sem corte."""
+    rng = np.random.default_rng(60006)
+    dur = 8.0
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    y = 0.8 * np.sin(2 * np.pi * 44 * t + 0.8 * np.sin(2 * np.pi * (2 / dur) * t))
+    y += 0.5 * np.sin(2 * np.pi * 66.25 * t + 1.1)            # 530 ciclos em 8 s
+    y += 0.25 * np.sin(2 * np.pi * 88.5 * t) * (0.5 + 0.5 * np.sin(2 * np.pi * (3 / dur) * t))
+    y += filtro(rng.uniform(-1, 1, n), "baixa", 220, ordem=3) * (0.9 + 0.5 * np.sin(2 * np.pi * (4 / dur) * t + 1.0))
+    bol = np.zeros(n)
+    for pos, f0, g in ((2.1, 380, 0.5), (5.6, 300, 0.4), (6.5, 460, 0.25)):
+        colocar(bol, _bolha(rng, f0, 0.12, 2.2, 0.04), pos, g)
+    y += filtro(bol, "baixa", 1000) * 0.6
+    return filtro(y, "baixa", 900, ordem=3)
+
+
+def s_figura_sobe():
+    """Água escorrendo de um corpo que sai da lagoa (2,5 s): gotejar denso, filete e gorgolejo."""
+    rng = np.random.default_rng(60007)
+    dur = 2.5
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    y = np.zeros(n)
+    # gotejar denso que rareia
+    pos = 0.0
+    while pos < dur - 0.1:
+        d = 0.05
+        td = tt(d)
+        f0 = rng.uniform(900, 2200)
+        gota = np.sin(fase(f0 * (1 + 1.2 * np.exp(-td / 0.015)))) * np.exp(-td / 0.018) * rng.uniform(0.2, 0.9)
+        colocar(y, gota, pos)
+        pos += rng.uniform(0.012, 0.04) * (1 + 3.5 * (pos / dur) ** 2)
+    # filete contínuo
+    filete = filtro(rng.uniform(-1, 1, n), "banda", 1200, 4500) * (0.5 + 0.5 * np.sin(2 * np.pi * 7 * t + 1)) ** 0.5
+    y += filete * 0.28 * np.exp(-t / 1.4) * np.minimum(1, t / 0.15)
+    # gorgolejo grave que sobe
+    gor = filtro(rng.uniform(-1, 1, n), "banda", 150, 700) * (0.6 + 0.4 * np.sin(2 * np.pi * 11 * t)) * np.exp(-t / 1.0)
+    y += gor * 0.7
+    for _ in range(14):
+        colocar(y, _bolha(rng, rng.uniform(300, 700), rng.uniform(0.05, 0.1), 2.0, 0.03), rng.uniform(0.0, 1.8), rng.uniform(0.25, 0.6))
+    return y * np.minimum(1, (dur - t) / 0.5)
+
+
+def s_figura_afunda():
+    """A Figura afunda (4 s): gorgolejo lento, bolhas grandes que rareiam."""
+    rng = np.random.default_rng(60008)
+    dur = 4.0
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    gor = filtro(rng.uniform(-1, 1, n), "banda", 90, 500, 3)
+    gor *= (0.55 + 0.45 * np.sin(2 * np.pi * (5.5 - 3.0 * t / dur) * t)) * np.exp(-t / 1.8)
+    y = gor * 1.4
+    pos = 0.05
+    k = 0
+    while pos < dur - 0.4:
+        d = rng.uniform(0.12, 0.28)
+        colocar(y, _bolha(rng, rng.uniform(140, 380), d, 1.8, 0.07), pos, rng.uniform(0.5, 1.0) * (1 - 0.6 * pos / dur))
+        pos += 0.12 + 0.1 * k ** 1.25 * rng.uniform(0.7, 1.3)
+        k += 1
+    y = filtro(y, "baixa", 1300, ordem=2)
+    return y * np.minimum(1, t / 0.08) * np.minimum(1, (dur - t) / 0.7)
+
+
+def s_pista():
+    """Pista nova (0,9 s): risco de giz (dois traços) e uma nota grave de caixinha de música, em tom menor, que ecoa."""
+    rng = np.random.default_rng(60009)
+    dur = 0.9
+    n = int(dur * SR)
+    y = np.zeros(n)
+    for ini, d, g in ((0.0, 0.11, 1.0), (0.13, 0.09, 0.8)):
+        td = tt(d)
+        traco = filtro(rng.uniform(-1, 1, len(td)), "banda", 3500, 8500) * np.sin(np.pi * td / d) ** 0.7
+        traco *= 0.6 + 0.4 * np.sin(2 * np.pi * 90 * td)
+        colocar(y, traco, ini, g)
+    # caixinha: Ré menor (D4 e F4 dissonando de leve com A4 ao fundo), dedilhado grave que ecoa
+    for ini, nota, g in ((0.2, 62, 1.0),):
+        f = float(midi(nota))
+        tn = tt(0.7)
+        nt = (np.sin(2 * np.pi * f * tn) * np.exp(-tn / 0.28)
+              + 0.45 * np.sin(2 * np.pi * f * 2.0 * tn) * np.exp(-tn / 0.12)
+              + 0.25 * np.sin(2 * np.pi * f * 5.04 * tn) * np.exp(-tn / 0.04)
+              + 0.3 * np.sin(2 * np.pi * float(midi(65)) * tn) * np.exp(-tn / 0.18))  # terça menor
+        nt = fade(nt, 0.001, 0.02)
+        colocar(y, nt, ini, g)
+        colocar(y, nt, ini + 0.17, g * 0.3)   # eco
+    return y
+
+
+
 # ------------------------------------------------------------------ jingle (3 versões)
 # Melodia (beat, nota MIDI, duração em beats): 8 compassos em Dó maior (C - Am - F - G - C - Am - F - G).
 MELODIA = [
@@ -726,6 +946,16 @@ CATALOGO = {
     "jingle_1": (lambda: s_jingle(1), "ogg"),
     "jingle_2": (lambda: s_jingle(2), "ogg"),
     "trovao": (s_trovao, "ogg"),
+    # módulo 6
+    "susto_agua": (s_susto_agua, "wav"),
+    "susto_perto": (s_susto_perto, "wav"),
+    "susto_queda": (s_susto_queda, "wav"),
+    "voz_tito": (s_voz_tito, "wav"),
+    "afundar": (s_afundar, "wav"),
+    "subaquatico": (s_subaquatico, "ogg"),
+    "figura_sobe": (s_figura_sobe, "wav"),
+    "figura_afunda": (s_figura_afunda, "wav"),
+    "pista": (s_pista, "wav"),
 }
 
 
@@ -742,7 +972,7 @@ def main():
         for nome in nomes:
             fn, fmt = CATALOGO[nome]
             x = fn()
-            if nome.startswith("jingle") or nome in ("vento", "mar", "rio", "chuva", "goteira"):
+            if nome.startswith("jingle") or nome in ("vento", "mar", "rio", "chuva", "goteira", "subaquatico"):
                 x = normalizar(x, 0.8)  # loops: sem fade nas pontas (emenda sem corte)
             else:
                 x = fade(normalizar(x, 0.85))

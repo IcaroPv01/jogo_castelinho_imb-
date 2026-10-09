@@ -14,6 +14,9 @@ extends Node
 ## V2: loops de ambiente "chuva" e "goteira" (Audio.ambiente); efeitos "agua_sobe", "crianca_ei" (sussurro "ei... aqui..."
 ## de ruído filtrado, o texto vai na tela), "telefone_voz" (a mãe do Tito, chiada) e "atencao" (UM batimento de 0,6 s:
 ## o Visor o repete mais depressa e mais alto conforme a atenção sobe). Revisão V2: "trovao" (trovão distante, visita 4).
+## Módulo 6 (porão e Braço Morto): "susto_agua", "susto_perto", "susto_queda" (opção "sfx" do Susto), "voz_tito" (murmúrio
+## abafado sem palavras), "afundar", "figura_sobe", "figura_afunda", "pista" (nova pista no HUD) e o loop "subaquatico"
+## (já sai abafado do arquivo, porque o filtro de bus não funciona na web).
 ##
 ## Música "jingle": a versão tocada acompanha GameState.corruption (o modo Sample da web não aceita
 ## efeitos de bus, então as três versões foram pré-renderizadas):
@@ -36,6 +39,8 @@ const VOLUME_PADRAO := {
 	"vento": -4.0, "mar": -4.0, "rio": -4.0, "ofego": -3.0, "confete": -3.0, "sussurro": -2.0, "slide": -4.0,
 	"chuva": -6.0, "goteira": -5.0, "agua_sobe": -3.0, "crianca_ei": -3.0, "telefone_voz": -3.0, "atencao": -2.0,
 	"trovao": -3.0,
+	"susto_agua": -2.0, "susto_perto": -2.0, "susto_queda": -2.0, "voz_tito": -2.0, "afundar": -3.0,
+	"subaquatico": -6.0, "figura_sobe": -2.0, "figura_afunda": -2.0, "pista": -3.0,
 }
 
 var volume_musica_db := -9.0

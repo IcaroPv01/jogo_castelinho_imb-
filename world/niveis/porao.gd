@@ -513,7 +513,7 @@ func _sustos(dt: float) -> void:
 				fr.y = 0.0
 				var p := player.global_position + fr.normalized() * 1.5
 				p.y = c.raiz.global_position.y + _agua_y_local(c)
-				Susto.disparar(self, "porao_j2", {"pos": p, "emergir": true, "escala": 1.5, "duracao": 0.9})
+				Susto.disparar(self, "porao_j2", {"pos": p, "emergir": true, "escala": 1.5, "duracao": 0.9, "sfx": "susto_agua"})
 		7:
 			_susto_telefone(c, dt)
 		10:     # 91: no meio da descida as tochas apagam 1,5 s e voltam com a Figura a 2 m, nos degraus
@@ -542,15 +542,15 @@ func _susto_telefone(c, dt: float) -> void:
 	var olhar := -player.camera.global_transform.basis.z
 	if olhar.dot(para_entrada) > 0.5:
 		_j3_estado = 0
-		Susto.disparar(self, "porao_j3", {"angulo": 0.0, "frente": 1.2, "duracao": 0.7, "volume_db": 3.0, "escala": 1.3})
+		Susto.disparar(self, "porao_j3", {"angulo": 0.0, "frente": 1.2, "duracao": 0.7, "volume_db": 3.0, "escala": 1.3, "sfx": "susto_perto"})
 	elif _j3_t >= 8.0:
 		_j3_estado = 0
-		Susto.disparar(self, "porao_j3", {"angulo": 75.0, "frente": 1.6, "duracao": 0.7, "volume_db": 3.0, "escala": 1.4})
+		Susto.disparar(self, "porao_j3", {"angulo": 75.0, "frente": 1.6, "duracao": 0.7, "volume_db": 3.0, "escala": 1.4, "sfx": "susto_perto"})
 
 
 ## J5 (99): perto do topo da escada a Figura despenca do escuro, colada na câmera; depois o silêncio, a fala F e o ar fresco.
 func _final_99() -> void:
-	Susto.disparar(self, "porao_j5", {"frente": 0.85, "cair": true, "duracao": 0.7, "volume_db": 6.0, "pulso": 0.6, "tranco": 1.6, "escala": 1.3})
+	Susto.disparar(self, "porao_j5", {"frente": 0.85, "cair": true, "duracao": 0.7, "volume_db": 6.0, "pulso": 0.6, "tranco": 1.6, "escala": 1.3, "sfx": "susto_queda"})
 	await get_tree().create_timer(2.6, false).timeout
 	if not _saindo and not morrendo:
 		Guia.falar("sistema", ["Fim da área de visitação."])

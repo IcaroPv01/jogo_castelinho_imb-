@@ -232,7 +232,7 @@ func _pista_nova() -> void:
 	_sincronizar_pistas()
 	if _n_pistas <= 0:
 		return
-	Audio.sfx("blip_misterio", -6.0, 0.8)
+	Audio.sfx("pista", -4.0)
 	if _tween_pista:
 		_tween_pista.kill()
 	pistas_box.scale = Vector2.ONE
