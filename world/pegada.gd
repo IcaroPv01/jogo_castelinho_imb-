@@ -7,7 +7,7 @@ extends RefCounted
 const W := 64
 const H := 128
 const TAM_BASE := Vector2(0.24, 0.42)     # plano base (largura x comprimento)
-const COR_AGUA := Color(0.05, 0.085, 0.12)
+const COR_AGUA := Color(0.07, 0.115, 0.17)
 
 static var _tex := {}     # esquerdo(bool) -> ImageTexture
 static var _mats := {}    # chave -> StandardMaterial3D
@@ -60,7 +60,7 @@ static func material(esquerdo: bool, forca := 1.0) -> StandardMaterial3D:
 		return _mats[chave]
 	var m := StandardMaterial3D.new()
 	m.albedo_texture = textura(esquerdo)
-	m.albedo_color = Color(COR_AGUA.r, COR_AGUA.g, COR_AGUA.b, clampf(0.78 * forca, 0.0, 1.0))
+	m.albedo_color = Color(COR_AGUA.r, COR_AGUA.g, COR_AGUA.b, clampf(0.7 * forca, 0.0, 1.0))
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.roughness = 0.08          # molhado: liso, pega o brilho das luzes
 	m.metallic = 0.0

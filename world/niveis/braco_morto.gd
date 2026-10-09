@@ -1363,9 +1363,9 @@ func _areia_e_algas(raiz: Node3D) -> void:
 		var c := Vector3(rng.randf_range(-1.6, 1.6), 0.0, rng.randf_range(-2.6, -0.5))
 		var r := Vector3(rng.randf_range(0.2, 0.4), rng.randf_range(0.02, 0.045), rng.randf_range(0.1, 0.2))
 		var tom := rng.randf_range(0.8, 1.15)
-		m.bolha(mv, c, r, rng, 6, 2, 0.12, Color(0.30, 0.34, 0.32) * tom, Color(0.24, 0.28, 0.27))
-	var touceiras := [Vector2(-0.95, -0.45), Vector2(-0.6, -1.35), Vector2(0.95, -1.05), Vector2(1.15, -0.3), Vector2(-0.25, -1.75),
-		Vector2(0.35, -1.9), Vector2(-1.4, -0.95), Vector2(0.7, -0.15)]
+		m.bolha(mv, c, r, rng, 6, 2, 0.12, Color(0.40, 0.44, 0.40) * tom, Color(0.2, 0.24, 0.23))
+	var touceiras := [Vector2(-0.95, -0.7), Vector2(-0.6, -1.1), Vector2(0.95, -1.05), Vector2(1.15, -0.6), Vector2(-0.25, -1.5),
+		Vector2(0.35, -1.6), Vector2(-1.3, -0.95), Vector2(0.75, -0.45)]
 	for t in touceiras:
 		for k in rng.randi_range(4, 6):
 			var base := Vector3(t.x + rng.randf_range(-0.12, 0.12), 0.0, t.y + rng.randf_range(-0.12, 0.12))
@@ -1377,8 +1377,8 @@ func _areia_e_algas(raiz: Node3D) -> void:
 			var ponta := base + Vector3(0, alt, 0) + inclina * 2.6 + lado * 0.03
 			var w := 0.028
 			var c0 := Color(0.04, 0.1, 0.07)
-			var c1 := Color(0.09, 0.2, 0.13)
-			var c2 := Color(0.16, 0.3, 0.18)
+			var c1 := Color(0.13, 0.28, 0.18)
+			var c2 := Color(0.24, 0.44, 0.27)
 			for dica in [lado.cross(Vector3.UP), -lado.cross(Vector3.UP)]:
 				m.tri_cores(mv, base - lado * w, base + lado * w, meio + lado * w * 0.7, dica, c0, c0, c1)
 				m.tri_cores(mv, base - lado * w, meio + lado * w * 0.7, meio - lado * w * 0.7, dica, c0, c1, c1)
