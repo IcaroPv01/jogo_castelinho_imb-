@@ -102,7 +102,9 @@ static func aplicar_escala(jogo: bool) -> void:
 	if raiz == null:
 		return
 	var f := 1.0
-	if ativo and jogo:
+	if ativo and retrato:
+		f = 1280.0 / 560.0   # em pé o canvas teria 1280 de largura: o aviso "vire o celular" precisa ficar legível
+	elif ativo and jogo:
 		var tam := Vector2(DisplayServer.window_get_size())
 		var a: float = tam.x / tam.y if tam.y > 0.0 else 16.0 / 9.0
 		f = clampf(0.69 * a, 1.0, ESCALA_UI)

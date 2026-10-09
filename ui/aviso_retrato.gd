@@ -82,6 +82,7 @@ func _process(dt: float) -> void:
 	var pe := Celular.ativo and em_pe()
 	if pe != Celular.retrato:
 		Celular.retrato = pe
+		Celular.aplicar_escala(false)   # em pé o canvas fica mais estreito (texto legível); deitado, os controles reajustam
 	if _fundo.visible != pe:
 		_fundo.visible = pe
 	if pe:

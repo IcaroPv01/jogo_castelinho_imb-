@@ -98,7 +98,7 @@ func _teste_pausa_sem_ponteiro() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_checar(hud.controles != null and hud.controles.is_inside_tree(), "controles de toque criados")
 	_checar(hud.aviso_retrato != null, "aviso de retrato criado")
-	_checar(hud.controles.layer == 90 and hud.controles.layer < 96, "camada 90, abaixo do menu de pausa")
+	_checar(hud.controles.layer > hud.layer and hud.controles.layer < 20, "camada acima do HUD e abaixo do balão da Guia")
 	_checar(hud.controles.ligado, "controles ligados com o jogo rodando")
 	_checar(Cel.olhar_liberado(), "olhar liberado sem mouse capturado")
 	_checar(not main.deve_pausar(), "mouse solto NÃO pausa no celular")

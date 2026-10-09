@@ -50,7 +50,7 @@ func _titulo_simples() -> Control:
 	c.set_anchors_preset(Control.PRESET_FULL_RECT)
 	c.add_user_signal("comecar", [{"name": "continuar", "type": TYPE_BOOL}])
 	var b := Button.new()
-	b.text = "CLIQUE PARA COMEÇAR"
+	b.text = Celular.dica("CLIQUE PARA COMEÇAR", "TOQUE PARA COMEÇAR")
 	b.set_anchors_preset(Control.PRESET_CENTER)
 	b.position = Vector2(-180, -30)
 	b.size = Vector2(360, 60)

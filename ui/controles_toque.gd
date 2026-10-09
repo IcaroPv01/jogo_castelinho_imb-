@@ -23,7 +23,7 @@ const TOQUE_PX := 24.0
 const FOLGA := 10.0              # tolerância extra ao acertar um botão com o dedo
 const R_GRANDE := 56.0
 const R_MEDIO := 47.0
-const ALFA := 0.5
+const ALFA := 0.6
 
 ## HUD.modo_cinema: esconde tudo.
 var cinema := false
@@ -56,7 +56,9 @@ class Tela extends Control:
 
 
 func _init() -> void:
-	layer = 90   # acima das legendas/UIs dos níveis (até 90 no máximo) e abaixo do menu de pausa (96)
+	# Acima do HUD (10) e ABAIXO da caixa da Guia (20): o balão de fala cobre os botões em vez de ser coberto por eles.
+	# A pausa (96), a Transição (100) e o aviso de retrato (128) ficam por cima de tudo.
+	layer = 15
 	name = "ControlesToque"
 
 
