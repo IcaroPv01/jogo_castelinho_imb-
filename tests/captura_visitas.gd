@@ -170,11 +170,12 @@ func _susto(nome: String, base: int, pos: Vector3, alvo: Vector3) -> void:
 	_olhar(pos, alvo)
 	var antes := nivel.get_children()
 	nivel._entrou(base)
+	var t0 := Time.get_ticks_msec()
 	var t := 0.0
 	var achou := false
 	while t < 8.0:
 		await process_frame
-		t += get_process_delta_time()
+		t = (Time.get_ticks_msec() - t0) / 1000.0
 		for c in nivel.get_children():
 			if not antes.has(c) and c is Node3D and c.get_script() != null \
 					and str(c.get_script().resource_path).ends_with("figura_branca.gd"):
