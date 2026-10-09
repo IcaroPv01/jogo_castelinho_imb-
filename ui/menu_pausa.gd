@@ -14,16 +14,16 @@ var _pag_confirma: VBoxContainer
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP   # clique no fundo não vaza para o jogo
 	var fundo := ColorRect.new()
 	fundo.color = Color(0.06, 0.08, 0.22, 0.6)
-	fundo.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fundo.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fundo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(fundo)
 	var centro := CenterContainer.new()
-	centro.set_anchors_preset(Control.PRESET_FULL_RECT)
+	centro.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	centro.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(centro)
 	var painel := PanelContainer.new()
