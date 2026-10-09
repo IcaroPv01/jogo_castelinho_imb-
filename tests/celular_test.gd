@@ -152,15 +152,25 @@ func _teste_olhar() -> void:
 	var p = main.player
 	var yaw0: float = p.rotation.y
 	var pitch0: float = p.cabeca.rotation.x
+	# só tocar (sem arrastar) não gira, nem com um `relative` absurdo vindo do navegador
+	c.processar_toque(1, Vector2(900, 250), true)
+	c.processar_arraste(1, Vector2(901, 250), Vector2(-600, 0))
+	c.girar_camera(0.5)
+	c.processar_toque(1, Vector2(901, 250), false)
+	_checar(is_equal_approx(p.rotation.y, yaw0), "tocar sem arrastar não gira a câmera")
 	c.processar_toque(1, Vector2(900, 250), true)
 	c.processar_arraste(1, Vector2(1000, 280), Vector2(100, 30))
+	c.girar_camera(0.5)
 	c.processar_toque(1, Vector2(1000, 280), false)
-	_checar(absf(p.rotation.y - yaw0) > 0.15, "arrasto horizontal girou (%.2f rad)" % (p.rotation.y - yaw0))
-	_checar(absf(p.cabeca.rotation.x - pitch0) > 0.05, "arrasto vertical inclinou a cabeça")
+	_checar(absf(p.rotation.y - yaw0) > 0.15, "analógico da câmera girou (%.2f rad)" % (p.rotation.y - yaw0))
+	_checar(absf(p.cabeca.rotation.x - pitch0) > 0.05, "analógico da câmera inclinou a cabeça")
 	var yaw1: float = p.rotation.y
+	c.girar_camera(0.5)
+	_checar(is_equal_approx(p.rotation.y, yaw1), "soltar o dedo para de girar")
 	p.pode_mover = false
 	c.processar_toque(1, Vector2(900, 250), true)
 	c.processar_arraste(1, Vector2(1000, 250), Vector2(100, 0))
+	c.girar_camera(0.5)
 	c.processar_toque(1, Vector2(1000, 250), false)
 	p.pode_mover = true
 	_checar(is_equal_approx(p.rotation.y, yaw1), "jogador travado não gira")

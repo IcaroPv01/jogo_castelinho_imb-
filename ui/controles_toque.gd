@@ -4,7 +4,9 @@ extends CanvasLayer
 ##
 ##   - Analógico flutuante nos 40% da esquerda: a base nasce onde o dedo pousa. Anda por Input.action_press de
 ##     "frente/tras/esquerda/direita" com força analógica (o Input.get_vector do Player e da costela continua valendo).
-##   - Arrastar no resto da tela olha (Player.girar_olhar).
+##   - Analógico da câmera no resto da tela (direita): a base nasce onde o dedo pousa e a inclinação dá a VELOCIDADE de
+##     giro (Player.girar_olhar a cada quadro). Tocar sem arrastar não gira nada (antes, arrastar direto na tela dava
+##     trancos: um toque novo virava a câmera de uma vez).
 ##   - Botões grandes embaixo à direita: Interagir, Correr (liga/desliga), Lanterna, Visor (segurar).
 ##     Pausa e Tela cheia no canto de cima à direita.
 ##   - Tocar num disco da faixa seleciona o disco (Visor.selecionar_slot).
@@ -18,6 +20,10 @@ extends CanvasLayer
 const RAIO_STICK := 74.0
 const ZONA_STICK := 0.4          # fração da largura (a partir da esquerda) onde o analógico nasce
 const ZONA_MORTA := 0.16
+const RAIO_CAM := 64.0
+const ZONA_MORTA_CAM := 0.14
+const VEL_YAW := 2.6             # rad/s com o analógico da câmera no máximo (× GameState.sensibilidade)
+const VEL_PITCH := 1.6
 const TOQUE_S := 0.3
 const TOQUE_PX := 24.0
 const FOLGA := 10.0              # tolerância extra ao acertar um botão com o dedo
@@ -40,6 +46,9 @@ var _stick_idx := -1
 var _stick_base := Vector2.ZERO
 var _stick_pos := Vector2.ZERO
 var _vec := Vector2.ZERO         # -1..1 (x direita, y para baixo)
+var _cam_idx := -1               # dedo do analógico da câmera
+var _cam_base := Vector2.ZERO
+var _cam_vec := Vector2.ZERO     # -1..1
 var _correr := false
 var _visor_idx := -1
 var _tem_alvo := false
@@ -104,6 +113,7 @@ func _process(dt: float) -> void:
 		_achar_player()
 	if _stick_idx >= 0:
 		_aplicar_acoes()   # reafirma (outro código pode ter soltado a ação)
+	girar_camera(dt)
 	_tela.queue_redraw()
 
 
@@ -186,13 +196,19 @@ func processar_toque(idx: int, pos: Vector2, pressed: bool) -> bool:
 			Guia.avancar()
 			_dedos[idx] = {"t": "ignorar"}
 			return true
-		var d := {"t": "olhar", "t0": Time.get_ticks_msec(), "p0": pos, "mov": 0.0}
-		if pos.x < tamanho().x * ZONA_STICK and _stick_idx < 0:
-			d["t"] = "stick"
-			_stick_idx = idx
-			_stick_base = pos
-			_stick_pos = pos
-			_vec = Vector2.ZERO
+		var d := {"t": "ignorar", "t0": Time.get_ticks_msec(), "p0": pos, "mov": 0.0}
+		if pos.x < tamanho().x * ZONA_STICK:
+			if _stick_idx < 0:
+				d["t"] = "stick"
+				_stick_idx = idx
+				_stick_base = pos
+				_stick_pos = pos
+				_vec = Vector2.ZERO
+		elif _cam_idx < 0:
+			d["t"] = "olhar"
+			_cam_idx = idx
+			_cam_base = pos
+			_cam_vec = Vector2.ZERO
 		_dedos[idx] = d
 		return true
 	# soltou
@@ -205,6 +221,7 @@ func processar_toque(idx: int, pos: Vector2, pressed: bool) -> bool:
 			_soltar_stick()
 			_se_toque_rapido(dedo)
 		"olhar":
+			_soltar_cam()
 			_se_toque_rapido(dedo)
 		"botao":
 			if dedo.id == "visor":
@@ -223,10 +240,33 @@ func processar_arraste(idx: int, pos: Vector2, rel: Vector2) -> bool:
 			d["mov"] = float(d.mov) + rel.length()
 			_mover_stick(pos)
 		"olhar":
-			d["mov"] = float(d.mov) + rel.length()
-			if _player and is_instance_valid(_player):
-				_player.girar_olhar(rel, Player.SENS_TOQUE * GameState.sensibilidade)
+			# distância até onde o dedo pousou (não `rel`: no navegador o 1º arraste de um dedo novo pode vir com um
+			# `relative` enorme, medido a partir do dedo anterior)
+			d["mov"] = maxf(float(d.mov), pos.distance_to(d.p0))
+			var v := pos - _cam_base
+			if v.length() > RAIO_CAM:   # base puxada pelo dedo, como no analógico de andar
+				_cam_base += v.normalized() * (v.length() - RAIO_CAM)
+				v = pos - _cam_base
+			_cam_vec = (v / RAIO_CAM).limit_length(1.0)
 	return true
+
+
+## Gira a câmera conforme o analógico da direita (chamado a cada quadro; público para os testes).
+func girar_camera(dt: float) -> void:
+	if _cam_idx < 0 or _player == null or not is_instance_valid(_player):
+		return
+	var forca := _cam_vec.length()
+	if forca < ZONA_MORTA_CAM:
+		return
+	# curva suave: perto do centro gira devagar (mirar), na borda gira rápido (virar)
+	var f := pow(remap(forca, ZONA_MORTA_CAM, 1.0, 0.0, 1.0), 1.6)
+	var dir := _cam_vec / forca * f
+	_player.girar_olhar(Vector2(dir.x * VEL_YAW, dir.y * VEL_PITCH) * dt, GameState.sensibilidade)
+
+
+func _soltar_cam() -> void:
+	_cam_idx = -1
+	_cam_vec = Vector2.ZERO
 
 
 func _se_toque_rapido(dedo: Dictionary) -> void:
@@ -278,6 +318,7 @@ func _soltar_stick() -> void:
 func _soltar_tudo() -> void:
 	_dedos.clear()
 	_soltar_stick()
+	_soltar_cam()
 	_visor_idx = -1
 	Input.action_release("visor")
 
@@ -342,6 +383,20 @@ func _desenhar(c: Control) -> void:
 		var knob := _stick_base + _vec * RAIO_STICK
 		c.draw_circle(knob, 34.0, Color(Flash.NAVY, 0.7))
 		c.draw_circle(knob, 30.0, Color(Flash.CREME, 0.7))
+	# analógico da câmera: anel de dica à esquerda dos botões quando parado; base + bolinha quando em uso
+	if not cinema:
+		if _cam_idx < 0:
+			var dica_cam := Vector2(Celular.borda_botoes(vp.x) - 30.0 - RAIO_CAM, vp.y - m.w - 24.0 - RAIO_CAM)
+			c.draw_arc(dica_cam, RAIO_CAM, 0.0, TAU, 40, Color(Flash.CREME, 0.22), 4.0, true)
+			_icone_olho(c, dica_cam, Color(Flash.CREME, 0.35))
+		else:
+			c.draw_circle(_cam_base, RAIO_CAM, Color(Flash.CREME, 0.16))
+			c.draw_arc(_cam_base, RAIO_CAM, 0.0, TAU, 40, Color(Flash.NAVY, 0.6), 6.0, true)
+			c.draw_arc(_cam_base, RAIO_CAM, 0.0, TAU, 40, Color(Flash.CREME, 0.55), 3.0, true)
+			var bola := _cam_base + _cam_vec * RAIO_CAM
+			c.draw_circle(bola, 30.0, Color(Flash.NAVY, 0.7))
+			c.draw_circle(bola, 26.0, Color(Flash.CREME, 0.7))
+			_icone_olho(c, bola, Color(Flash.NAVY, 0.8))
 	# botões
 	for id: String in lay:
 		var b: Dictionary = lay[id]
@@ -405,3 +460,17 @@ func _icone_tela_cheia(c: Control, centro: Vector2) -> void:
 			var canto := centro + Vector2(sx * s, sy * s)
 			c.draw_line(canto, canto - Vector2(sx * l, 0), Flash.NAVY, 4.0)
 			c.draw_line(canto, canto - Vector2(0, sy * l), Flash.NAVY, 4.0)
+
+
+## Olhinho (amêndoa + pupila) que marca o analógico da câmera.
+func _icone_olho(c: Control, centro: Vector2, cor: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in 17:
+		var a := PI * i / 16.0
+		pts.append(centro + Vector2(cos(a) * 16.0, -sin(a) * 9.0))
+	for i in range(1, 16):
+		var a := PI * i / 16.0
+		pts.append(centro + Vector2(-cos(a) * 16.0, sin(a) * 9.0))
+	pts.append(pts[0])
+	c.draw_polyline(pts, cor, 3.0, true)
+	c.draw_circle(centro, 4.5, cor)
