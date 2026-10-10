@@ -153,8 +153,12 @@ static func _lustres(c: Castelinho) -> void:
 		[Vector3(-19.4, 5.85, -12.9), 6.5, "torre2"],
 		[Vector3(-6.6, 4.9, -24.9), 5.9, "torreb"],
 	]
+	var li := 0
 	for l in lista:
+		li += 1
+		var _et := Malha.abrir("lustre_%s_%d" % [l[2], li])
 		lustre(c, g.inte, l[0], l[1], 1.0)
+		Malha.fechar(_et)
 		c.luzes.append({"pos": l[0] - Vector3(0, 0.3, 0), "sala": l[2]})
 
 
@@ -163,11 +167,16 @@ static func _bancos_de_pedra(c: Castelinho) -> void:
 	var g := c.g_base
 	var pe: Material = c.m.parede
 	# mesa de pedra com bancos (jardim, lado oeste, foto frontal 2026)
+	var _et := Malha.abrir("mesa_pedra_jardim")
 	g.ext.caixa(pe, Vector3(-24.6, 0, -7.4), Vector3(-23.2, 0.75, -6.6), Malha.F_TODAS)
 	g.ext.col(Vector3(-24.6, 0, -7.4), Vector3(-23.2, 0.75, -6.6))
+	Malha.abrir("banco_pedra_jardim_norte")
 	g.ext.caixa(pe, Vector3(-25.0, 0.0, -8.1), Vector3(-22.8, 0.42, -7.5), Malha.F_TODAS)
+	Malha.abrir("banco_pedra_jardim_sul")
 	g.ext.caixa(pe, Vector3(-25.0, 0.0, -6.5), Vector3(-22.8, 0.42, -5.9), Malha.F_TODAS)
 	g.ext.col(Vector3(-25.0, 0.0, -8.1), Vector3(-22.8, 0.42, -5.9))
 	# churrasqueira de pedra
+	Malha.abrir("churrasqueira_pedra")
 	g.ext.caixa(pe, Vector3(-27.0, 0, -6.9), Vector3(-25.6, 0.9, -5.7), Malha.F_TODAS)
 	g.ext.col(Vector3(-27.0, 0, -6.9), Vector3(-25.6, 0.9, -5.7))
+	Malha.fechar(_et)

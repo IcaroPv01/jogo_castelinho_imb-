@@ -271,7 +271,7 @@ func tri(mat: Material, a: Vector3, b: Vector3, c: Vector3, n: Vector3, uva := V
 		s["uv"].append(p[1])
 		s["c"].append(cor)
 	if registrar:
-		(s["et"] as PackedStringArray).append(etiqueta)
+		s["et"].append(etiqueta)
 	triangulos += 1
 
 
@@ -302,7 +302,7 @@ func tri_cores(mat: Material, a: Vector3, b: Vector3, c: Vector3, dica: Vector3,
 		s["uv"].append(Vector2.ZERO)
 		s["c"].append((p[1] as Color) * tom)
 	if registrar:
-		(s["et"] as PackedStringArray).append(etiqueta)
+		s["et"].append(etiqueta)
 	triangulos += 1
 
 
@@ -595,6 +595,8 @@ func construir_colisao(pai: Node, nome: String) -> StaticBody3D:
 		cs.shape = bs
 		cs.position = bx.get_center()
 		sb.add_child(cs)
+	if registrar:
+		sb.set_meta("malha_col", true)           # a varredura da árvore ignora: as caixas já estão no registro
 	for pts in convexas:
 		var cs := CollisionShape3D.new()
 		var cp := ConvexPolygonShape3D.new()

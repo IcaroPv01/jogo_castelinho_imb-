@@ -22,6 +22,8 @@ const FOV_ESTUDIO := 35.0
 const ELEV_NORMAL := [14.0, 10.0, 32.0]
 const ELEV_CHAO := [55.0, 40.0, 75.0]
 const AZIM := [35.0, 90.0, 215.0]
+const ELEV_FINO := [8.0, 14.0, 24.0]          # folhas verticais finas (mural, painel, banner): só se vê a frente
+const AZIM_FINO := [24.0, -34.0, 58.0]
 
 var Cat
 var gs: Node
@@ -291,8 +293,9 @@ func _carregar_cenario(chave: String) -> bool:
 	await _quadros(20)
 	await physics_frame
 	await physics_frame
-	if c.has("preparar"):
-		await (c["preparar"] as Callable).call(nivel, self)
+	match str(c.get("preparar", "")):
+		"porao":
+			nivel.ameacas_ligadas = false
 	_esconder_ui()
 	return true
 
@@ -330,12 +333,15 @@ func _processar(o: Dictionary) -> void:
 		obj.process_mode = Node.PROCESS_MODE_DISABLED
 	# 2. três ângulos
 	var plano := bb.size.y < 0.12 * maxf(bb.size.x, bb.size.z) and bb.size.y < 0.6
-	var elev: Array = ELEV_CHAO if plano else ELEV_NORMAL
+	var fino_v := not plano and (bb.size.z < 0.12 * maxf(bb.size.x, bb.size.y) or bb.size.x < 0.12 * maxf(bb.size.z, bb.size.y)) \
+		and minf(bb.size.x, bb.size.z) < 0.6
+	var elev: Array = ELEV_CHAO if plano else (ELEV_FINO if fino_v else ELEV_NORMAL)
+	var azs: Array = AZIM_FINO if fino_v else AZIM
 	var frente: float = float(o.get("frente", 0.0))
 	var fotos: Array = []
 	for k in 3:
 		var rel := "fotos/%s_%d.jpg" % [id, k + 1]
-		var ok := await _foto_estudio(obj, frente + AZIM[k], elev[k], saida.path_join(rel))
+		var ok := await _foto_estudio(obj, frente + azs[k], elev[k], saida.path_join(rel))
 		if ok:
 			fotos.append(rel)
 	# 3. glb
@@ -344,7 +350,7 @@ func _processar(o: Dictionary) -> void:
 		glb = _exportar(obj, id)
 	# 4. onde fica (foto no nível)
 	var local := ""
-	if not sem_local:
+	if not sem_local and not bool(o.get("sem_local", false)):
 		local = await _foto_local(o, info, bb)
 	obj.queue_free()
 	await _quadros(1)
@@ -354,7 +360,7 @@ func _processar(o: Dictionary) -> void:
 	var notas: Array = (o.get("notas", []) as Array).duplicate()
 	if info.get("aviso", "") != "":
 		notas.append(info["aviso"])
-	if local == "" and not sem_local:
+	if local == "" and not sem_local and not bool(o.get("sem_local", false)):
 		notas.append("sem foto de local (nenhum ponto de vista livre achado)")
 	var d := {
 		"id": id, "nome": o["nome"], "grupo": o["grupo"], "onde": o["onde"],
@@ -431,12 +437,18 @@ func _recortar_de_sala(o: Dictionary, f: Dictionary) -> Node3D:
 		return null
 	var caixa: AABB = (f["caixa"] as Callable).call(c)
 	var frame: Transform3D = c.raiz.global_transform
-	return _recortar(c.raiz, caixa, frame, f)
+	var f2 := f.duplicate()
+	var ok_mats: Array = []
+	for nome in f.get("shader_mats", []):
+		if c.mats.has(nome):
+			ok_mats.append(c.mats[nome])
+	f2["shader_ok"] = ok_mats
+	return _recortar(c.raiz, caixa, frame, f2)
 
 
 func _recortar(raiz_busca: Node, caixa: AABB, frame: Transform3D, f: Dictionary) -> Node3D:
 	var inv := frame.affine_inverse()
-	var com_shader: bool = bool(f.get("shader", false))
+	var opc := {"shader": bool(f.get("shader", false)), "ok": f.get("shader_ok", []), "excl": f.get("excluir_cores", []), "aresta2": pow(float(f.get("aresta_max", 8.0)), 2.0)}
 	var com_rotulos: bool = bool(f.get("rotulos", true))
 	var bks := {}
 	var ordem: Array = []
@@ -450,9 +462,9 @@ func _recortar(raiz_busca: Node, caixa: AABB, frame: Transform3D, f: Dictionary)
 			pilha.append(c)
 		if n is MeshInstance3D:
 			var nome := String(n.name)
-			if nome.begins_with("Agua") or nome.begins_with("Ceu"):
+			if nome.begins_with("Agua") or nome.begins_with("Ceu") or nome == "Lago":
 				continue
-			_recortar_mi(n as MeshInstance3D, caixa, inv, com_shader, bks, ordem)
+			_recortar_mi(n as MeshInstance3D, caixa, inv, opc, bks, ordem)
 		elif com_rotulos and (n is Label3D or n is Sprite3D):
 			var pos: Vector3 = inv * (n as Node3D).global_position
 			if caixa.has_point(pos):
@@ -481,7 +493,6 @@ func _recortar(raiz_busca: Node, caixa: AABB, frame: Transform3D, f: Dictionary)
 		var cp := (r as Node3D).duplicate() as Node3D
 		raiz.add_child(cp)
 		cp.transform = inv * (r as Node3D).global_transform
-	var centro := frame * caixa.get_center()
 	raiz.set_meta("_frame", {"centro": frame * _centro_real(raiz), "raio": _raio_real(raiz), "base": (frame * Vector3(0, _base_real(raiz), 0)).y})
 	return raiz
 
@@ -507,7 +518,13 @@ func _base_real(raiz: Node3D) -> float:
 	return 0.0
 
 
-func _recortar_mi(mi: MeshInstance3D, caixa: AABB, inv: Transform3D, com_shader: bool, bks: Dictionary, ordem: Array) -> void:
+func _prim(mesh: Mesh, s: int) -> int:
+	if mesh is ArrayMesh:
+		return (mesh as ArrayMesh).surface_get_primitive_type(s)
+	return Mesh.PRIMITIVE_TRIANGLES
+
+
+func _recortar_mi(mi: MeshInstance3D, caixa: AABB, inv: Transform3D, opc: Dictionary, bks: Dictionary, ordem: Array) -> void:
 	var mesh: Mesh = mi.mesh
 	if mesh == null:
 		return
@@ -517,14 +534,14 @@ func _recortar_mi(mi: MeshInstance3D, caixa: AABB, inv: Transform3D, com_shader:
 		return
 	var nb := xf.basis.inverse().transposed()
 	for s in mesh.get_surface_count():
-		if mesh.surface_get_primitive_type(s) != Mesh.PRIMITIVE_TRIANGLES:
+		if _prim(mesh, s) != Mesh.PRIMITIVE_TRIANGLES:
 			continue
 		var mat: Material = mi.get_surface_override_material(s)
 		if mat == null:
 			mat = mi.material_override
 		if mat == null:
 			mat = mesh.surface_get_material(s)
-		if mat is ShaderMaterial and not com_shader:
+		if mat is ShaderMaterial and not opc["shader"] and not (mat in opc["ok"]):
 			continue
 		var arr := mesh.surface_get_arrays(s)
 		var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
@@ -555,6 +572,17 @@ func _recortar_mi(mi: MeshInstance3D, caixa: AABB, inv: Transform3D, com_shader:
 			var ct := (a + bb + cc) / 3.0
 			if not caixa.has_point(ct):
 				continue
+			if (a - bb).length_squared() > opc["aresta2"] or (bb - cc).length_squared() > opc["aresta2"] or (cc - a).length_squared() > opc["aresta2"]:
+				continue
+			if tem_c and not (opc["excl"] as Array).is_empty():
+				var cor_t: Color = cs[i0]
+				var fora_ := false
+				for ec in opc["excl"]:
+					if absf(cor_t.r - ec.r) < 0.03 and absf(cor_t.g - ec.g) < 0.03 and absf(cor_t.b - ec.b) < 0.03:
+						fora_ = true
+						break
+				if fora_:
+					continue
 			if b.is_empty():
 				if not bks.has(mat):
 					bks[mat] = {"v": PackedVector3Array(), "n": PackedVector3Array(), "uv": PackedVector2Array(), "c": PackedColorArray()}
@@ -583,14 +611,19 @@ func _foto_local(o: Dictionary, info: Dictionary, bb_estudio: AABB) -> String:
 	var colocado: Node3D = null
 	if o.has("ref"):
 		ref_no = (o["ref"] as Callable).call(nivel)
-	if ref_no == null and o.has("colocar") and o["fonte"]["t"] == "no":
-		colocado = (o["fonte"]["f"] as Callable).call()
+	if ref_no == null and o.has("colocar") and (o["fonte"]["t"] == "no" or o["fonte"]["t"] == "nivel_fn"):
 		var cl: Dictionary = o["colocar"]
 		var pai: Node = nivel
 		if cl.has("sala"):
-			var cc = nivel.salas.get(int(cl["sala"]))
+			var idx_sala := int(cl["sala"])
+			if not nivel.salas.has(idx_sala):
+				nivel.ir_para_sala(idx_sala)
+			var cc = nivel.salas.get(idx_sala)
 			if cc:
 				pai = cc.raiz
+		colocado = await _montar_objeto(o, o["fonte"])
+		if colocado.is_inside_tree():
+			colocado.get_parent().remove_child(colocado)
 		pai.add_child(colocado)
 		if cl.has("transform"):
 			colocado.transform = cl["transform"]
@@ -618,6 +651,7 @@ func _foto_local(o: Dictionary, info: Dictionary, bb_estudio: AABB) -> String:
 		if colocado:
 			colocado.queue_free()
 		return ""
+	print("      local: pés ", pt[0], " alvo ", centro, " raio ", snappedf(raio, 0.01))
 	_olhar(pt[0], centro)
 	_esconder_ui()
 	await _quadros(14)
@@ -647,6 +681,7 @@ func _olhar(pos: Vector3, alvo: Vector3) -> void:
 func _raio(de: Vector3, para: Vector3) -> Dictionary:
 	var q := PhysicsRayQueryParameters3D.create(de, para, 1)
 	q.collide_with_areas = false
+	q.hit_from_inside = true
 	return nivel.get_world_3d().direct_space_state.intersect_ray(q)
 
 
@@ -742,7 +777,7 @@ func _mesh_export(mi: MeshInstance3D) -> ArrayMesh:
 	var am := ArrayMesh.new()
 	var mesh := mi.mesh
 	for s in mesh.get_surface_count():
-		if mesh.surface_get_primitive_type(s) != Mesh.PRIMITIVE_TRIANGLES:
+		if _prim(mesh, s) != Mesh.PRIMITIVE_TRIANGLES:
 			continue
 		var arr := mesh.surface_get_arrays(s)
 		if arr[Mesh.ARRAY_VERTEX] == null or (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() < 3:
@@ -855,12 +890,18 @@ func _achar_linha(arquivo: String, padrao: String) -> int:
 
 func _escrever_manifesto() -> void:
 	var parcial := so_ids.size() > 0 or so_cen != ""
-	var d := {"gerado": Time.get_date_string_from_system(), "canva": "", "objetos": manifesto}
+	var canva := ""
+	var antigo := FileAccess.open(saida.path_join("manifesto.json"), FileAccess.READ)
+	if antigo:
+		var j = JSON.parse_string(antigo.get_as_text())
+		if typeof(j) == TYPE_DICTIONARY:
+			canva = str((j as Dictionary).get("canva", ""))
+	var d := {"gerado": Time.get_date_string_from_system(), "canva": canva, "objetos": manifesto}
 	var nome := "manifesto_parcial.json" if parcial else "manifesto.json"
 	var f := FileAccess.open(saida.path_join(nome), FileAccess.WRITE)
 	if f == null:
 		push_error("não consegui escrever " + nome)
 		return
-	f.store_string(JSON.stringify(d, "  "))
+	f.store_string(JSON.stringify(d, "  ", false))
 	f.close()
 	print("galeria: escrito ", saida.path_join(nome))

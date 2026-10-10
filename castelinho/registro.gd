@@ -55,10 +55,21 @@ static func _eh_conteiner(p: Node, cache: Dictionary) -> bool:
 	return r
 
 
+static func _slug(t: String) -> String:
+	var r := t.to_lower().strip_edges()
+	for ch in [" ", "-", ".", ",", "/", "\\", "(", ")", "[", "]", "'", "\""]:
+		r = r.replace(ch, "_")
+	while r.contains("__"):
+		r = r.replace("__", "_")
+	return r.trim_prefix("_").trim_suffix("_")
+
+
 static func _objeto(no: Node, raiz: Node, cache: Dictionary) -> Node:
 	var n := no
 	while n != null and n != raiz:
 		if n.has_meta("etiqueta"):
+			return n
+		if n.has_method("interagir"):        # Interagivel / Painel3D: um objeto só, com as peças dentro
 			return n
 		n = n.get_parent()
 	# sem nome explícito: sobe enquanto o pai for um agrupador pequeno (lustre, vitrine...) e não o nível
@@ -68,6 +79,17 @@ static func _objeto(no: Node, raiz: Node, cache: Dictionary) -> Node:
 		alvo = p
 		p = p.get_parent()
 	return alvo
+
+
+static func _nome_obj(no: Node, raiz: Node) -> String:
+	if no.has_method("interagir"):
+		var pid = no.get("id")
+		if pid != null and String(pid) != "":
+			return "painel_" + String(pid)
+		var tx = no.get("texto_interacao")
+		if tx != null:
+			return "interagivel_" + _slug(String(tx)) + "#" + str(no.get_index())
+	return _nome_estavel(no, raiz)
 
 
 static func _nome_estavel(no: Node, raiz: Node) -> String:
@@ -139,7 +161,7 @@ static func _geometria(g: GeometryInstance3D, raiz: Node, nv: String, cache: Dic
 		return
 	var obj := _objeto(g, raiz, cache)
 	var auto := not obj.has_meta("etiqueta")
-	var et: String = obj.get_meta("etiqueta") if not auto else _nome_estavel(obj, raiz)
+	var et: String = obj.get_meta("etiqueta") if not auto else _nome_obj(obj, raiz)
 	var tipo := "no"
 	var normal := Vector3.ZERO
 	var rot := not _alinhado(g.global_transform.basis)
@@ -177,6 +199,7 @@ static func _geometria(g: GeometryInstance3D, raiz: Node, nv: String, cache: Dic
 		bb = AABB(pos, sz)
 	var d := _novo(et, tipo, bb, normal, g, mat, nv, auto)
 	d["no"] = str(raiz.get_path_to(g))
+	d["objeto_no"] = str(raiz.get_path_to(obj)) if (obj != g or obj.has_meta("etiqueta")) else ""
 	d["malha_no"] = classe
 	d["rot"] = rot
 	d["visivel"] = g.visible
@@ -200,6 +223,8 @@ static func _colisao(cs: CollisionShape3D, raiz: Node, nv: String) -> void:
 	var corpo := cs.get_parent()
 	if not (corpo is StaticBody3D or corpo is AnimatableBody3D):
 		return
+	if corpo.has_meta("malha_col"):
+		return          # colisão criada por Malha.construir_colisao: já registrada (com etiqueta) por Malha.col
 	if ((corpo as CollisionObject3D).collision_layer & 1) == 0:
 		return
 	var sh := cs.shape
@@ -225,6 +250,7 @@ static func _colisao(cs: CollisionShape3D, raiz: Node, nv: String) -> void:
 	d["no"] = str(raiz.get_path_to(cs))
 	d["malha_no"] = sh.get_class()
 	d["terreno"] = terreno
+	d["invisivel"] = not (corpo.get_parent() is GeometryInstance3D)      # colisor sem malha (paredes de contenção)
 	d["onde"] = _onde_de(cs, raiz)
 	Malha.registro.append(d)
 

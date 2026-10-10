@@ -162,7 +162,6 @@ func _analisar(nivel: String, visita: int, sala_fn: Callable) -> void:
 	var t0 := Time.get_ticks_msec()
 	var lib = lib_gd.new()
 	lib.preparar(Malha.registro, Malha.materiais, {"nivel": nivel, "visita": visita, "sala_fn": sala_fn})
-	lib.agrupar_objetos()
 	var t1 := Time.get_ticks_msec()
 	lib.checar_flutuando()
 	var t2 := Time.get_ticks_msec()
@@ -177,6 +176,9 @@ func _analisar(nivel: String, visita: int, sala_fn: Callable) -> void:
 	print("[%s v%d] entradas %d, objetos(clusters) %d | prep %d ms, flut %d, enf %d, zf %d, fresta %d, degrau %d | achados %d" % [nivel, visita,
 		Malha.registro.size(), lib._clusters.size(), t1 - t0, t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5, lib.achados.size()])
 	todos.append_array(lib.achados)
+	var dbg := OS.get_environment("COLOC_DEBUG")
+	if dbg != "" and visita == int(OS.get_environment("COLOC_DEBUG_V") if OS.get_environment("COLOC_DEBUG_V") != "" else visita):
+		lib.depurar(dbg.split(","))
 	# inventário e snapshot para a continuidade
 	var inv: Dictionary = Malha.info_por_etiqueta()
 	var snap := {}

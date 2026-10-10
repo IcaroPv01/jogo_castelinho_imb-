@@ -83,7 +83,7 @@ class Grade:
 				for z in range(a.z, b.z + 1):
 					var k := Vector3i(x, y, z)
 					if d.has(k):
-						(d[k] as PackedInt32Array).append(idx)
+						d[k].append(idx)
 					else:
 						d[k] = PackedInt32Array([idx])
 
@@ -177,15 +177,47 @@ func preparar(registro: Array, mats: Dictionary, ctx: Dictionary) -> void:
 		if ee.col:
 			continue
 		grade.inserir(ee.i, ee.mn, ee.mx, 0.0)
-	# sólidos: colisões sem etiqueta + caixas estruturais grossas
+	agrupar_objetos()
+	_atribuir_colisoes_aos_donos()
+	_montar_solidos()
+
+
+## Colisões sem etiqueta que cabem (>= 70 % do volume) dentro de um objeto são o colisor DESSE objeto (cx(..., col=true)).
+func _atribuir_colisoes_aos_donos() -> void:
+	var bbs: Array = []
+	for c in _clusters:
+		bbs.append(_bb_cluster(c))
+	var gc := Grade.new(_clusters.size() + 1, 2.0)
+	for i in bbs.size():
+		gc.inserir(i, (bbs[i] as AABB).position, (bbs[i] as AABB).end, 0.05)
+	for e in es:
+		var ee: E = e
+		if not ee.col or ee.et != "":
+			continue
+		var vol := ee.tam().x * ee.tam().y * ee.tam().z
+		if vol <= 0.0:
+			continue
+		for ci in gc.consultar(ee.mn - Vector3.ONE * 0.05, ee.mx + Vector3.ONE * 0.05):
+			var bb: AABB = (bbs[ci] as AABB).grow(0.03)
+			if (bb.size.x > 20.0 or bb.size.z > 20.0) or (_epm_cluster(_clusters[ci]) & ee.epm) == 0:
+				continue
+			var inter := bb.intersection(AABB(ee.mn, ee.tam()))
+			if inter.size.x * inter.size.y * inter.size.z >= 0.7 * vol:
+				ee.et = (_clusters[ci][0] as E).et
+				ee.d["dono"] = ee.et
+				break
+
+
+func _montar_solidos() -> void:
+	_sol = []
 	_grade_sol = Grade.new(es.size())
 	for e in es:
 		var ee: E = e
 		var t := ee.tam()
 		var s := false
-		if ee.col and ee.et == "":
+		if ee.col and ee.et == "" and not ee.d.get("invisivel", false):
 			s = true
-		elif (ee.tipo == "caixa") and not ee.obj and minf(t.x, minf(t.y, t.z)) >= 0.05:
+		elif (ee.tipo == "caixa") and not ee.obj and ee.et == "" and minf(t.x, minf(t.y, t.z)) >= 0.05:
 			s = true
 		if s:
 			_sol.append(ee)
@@ -247,12 +279,25 @@ var _clusters: Array = []     # Array of Array[E]
 func agrupar_objetos() -> void:
 	_clusters = []
 	var por_et := {}
+	var fixos := {}          # entradas de nós: um cluster por objeto-raiz (sem depender de contato)
 	for e in es:
 		var ee: E = e
 		if ee.obj and ee.visivel:
+			var on: String = ee.d.get("objeto_no", "")
+			if on != "":
+				var kk := "no:" + on
+				if not fixos.has(kk):
+					fixos[kk] = []
+				fixos[kk].append(ee)
+				continue
 			if not por_et.has(ee.et):
 				por_et[ee.et] = []
 			por_et[ee.et].append(ee)
+	for kk in fixos:
+		var cl: Array = fixos[kk]
+		for e in cl:
+			(e as E).cl = _clusters.size()
+		_clusters.append(cl)
 	for et in por_et:
 		var lst: Array = por_et[et]
 		var pai := PackedInt32Array()
@@ -516,7 +561,7 @@ func checar_zfight() -> void:
 		f_sg.append(sg)
 		if not baldes.has(k):
 			baldes[k] = PackedInt32Array()
-		(baldes[k] as PackedInt32Array).append(idx)
+		baldes[k].append(idx)
 	for e in es:
 		var ee: E = e
 		if ee.col or not ee.visivel or ee.tipo == "no" or ee.tipo == "bolha" or ee.tipo == "rampa" or ee.tipo == "telhado" or ee.tipo == "piramide":
@@ -559,6 +604,8 @@ func checar_zfight() -> void:
 		if area < 0.004:
 			return
 		var ax: int = f_ax[a]
+		if OS.get_environment("COLOC_ZF") != "" and (ea.et == OS.get_environment("COLOC_ZF") or String(eb.d.get("onde", "")).contains(OS.get_environment("COLOC_ZF"))):
+			print("ZF ", ea.tipo, ea.mn, ea.mx, " f=", ea.faces, " n=", ea.n, " sg=", f_sg[a], " x ", eb.tipo, eb.mn, eb.mx, " f=", eb.faces, " n=", eb.n, " sg=", f_sg[b], " ", ea.mat, " ", eb.mat, " coord ", f_c[a], f_c[b], " ", ea.d.get("onde", "").get_slice(" < ", 0), " ", eb.d.get("onde", "").get_slice(" < ", 0))
 		var chave := "%s|%s|%d|%s|%s" % [ea.et if ea.et != "" else _nome_estrutura(ea), eb.et if eb.et != "" else _nome_estrutura(eb), ax, String(ea.d.get("onde", "")).get_slice(" < ", 0), String(eb.d.get("onde", "")).get_slice(" < ", 0)]
 		var u := (ax + 1) % 3
 		var v := (ax + 2) % 3
@@ -811,3 +858,29 @@ func checar_degraus() -> void:
 		_acha("degrau_de_piso", grav, ea, ((r["bmn"] as Vector3) + (r["bmx"] as Vector3)) * 0.5, dy * 100.0,
 			"pisos vizinhos '%s' e '%s' com %.1f cm de diferença de altura (%d células de %.1f m)" % [_nome_estrutura(ea), _nome_estrutura(eb), dy * 100.0, int(r["n"]), passo],
 			false, "", {"outro_arquivo": _arquivo(eb), "celulas": int(r["n"])})
+
+
+# ============================================================================ depuração
+## COLOC_DEBUG=etiqueta1,etiqueta2 : imprime as entradas do objeto e as vizinhas (até 0,5 m).
+func depurar(nomes: PackedStringArray) -> void:
+	for nm in nomes:
+		for c in _clusters:
+			if (c[0] as E).et != nm:
+				continue
+			var bb := _bb_cluster(c)
+			print("== DEBUG ", nm, " bb ", bb, " épocas ", nomes_epocas(_epm_cluster(c)))
+			var n_ep := 0
+			for o in es:
+				if (o as E).epm == (_epm_cluster(c)) and dist_caixas(bb.position, bb.end, (o as E).mn, (o as E).mx) < 0.5:
+					n_ep += 1
+			print("   entradas da mesma época perto (varredura linear): ", n_ep)
+			for e in c:
+				var ee: E = e
+				print("   [obj] ", ee.tipo, " ", ee.mn, " ", ee.mx, " ", ee.d.get("onde", ""))
+			for i in grade.consultar(bb.position - Vector3.ONE * 0.5, bb.end + Vector3.ONE * 0.5):
+				var o: E = es[i]
+				if o.cl == (c[0] as E).cl:
+					continue
+				if dist_caixas(bb.position, bb.end, o.mn, o.mx) < 0.5:
+					print("   [viz] ", o.tipo, " et='", o.et, "' ", o.mn, " ", o.mx, " n=", o.n, " ep=", nomes_epocas(o.epm), " ", String(o.d.get("onde", "")).get_slice(" < ", 0))
+			break
