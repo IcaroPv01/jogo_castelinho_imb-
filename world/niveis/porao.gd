@@ -251,7 +251,9 @@ func _carregar_sala(i: int) -> void:
 	raiz.transform = d["t"]
 	add_child(raiz)
 	c.raiz = raiz
+	Malha.origem = (d["t"] as Transform3D).origin        # registro de objetos (verificador): sala no lugar dela no mundo
 	SalasGd.construir(c)
+	Malha.origem = Vector3.ZERO
 	salas[i] = c
 	if c.voz.is_empty() and d["voz_ambiente"]:
 		c.voz = {"pos": c.pontos["voz"], "certa": true}

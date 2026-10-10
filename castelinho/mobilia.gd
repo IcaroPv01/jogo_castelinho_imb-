@@ -39,6 +39,7 @@ static func construir(c: Castelinho) -> void:
 
 ## Escudo redondo de madeira com aro e umbo de ferro (parede da Sala Medieval).
 static func _escudo_redondo(g: Castelinho.Grupo, c: Vector3, n: Vector3, r: float) -> void:
+	var _et := Malha.abrir("escudo_redondo_%d_%d" % [roundi(c.x * 10.0), roundi(c.y * 10.0)])
 	disco(g.inte, Castelinho.mat_cor(Color(0.26, 0.27, 0.3), 0.5), c, n, r * 1.12, 12)
 	disco(g.inte, Castelinho.mat_cor(Color(0.46, 0.3, 0.18), 0.9), c + n * 0.01, n, r, 12)
 	disco(g.inte, Castelinho.mat_cor(Color(0.6, 0.6, 0.62), 0.4), c + n * 0.02, n, r * 0.28, 8)
@@ -49,6 +50,7 @@ static func _escudo_redondo(g: Castelinho.Grupo, c: Vector3, n: Vector3, r: floa
 		var b: Vector3 = c + n * 0.015 + u * (k * r + 0.008)
 		var hh := sqrt(maxf(r * r - k * r * k * r, 0.0)) * 0.95
 		g.inte.quad(Castelinho.mat_cor(Color(0.3, 0.19, 0.12), 0.9), a - Vector3(0, hh, 0), b - Vector3(0, hh, 0), b + Vector3(0, hh, 0), a + Vector3(0, hh, 0), n)
+	Malha.fechar(_et)
 
 
 ## Haste fina no plano da parede, de `a` a `b` (cabos, lâminas).
@@ -60,6 +62,7 @@ static func _haste(ma: Malha, mat: Material, a: Vector3, b: Vector3, n: Vector3,
 
 ## Dois machados cruzados atrás de um escudo.
 static func _machados(g: Castelinho.Grupo, c: Vector3, n: Vector3, L: float) -> void:
+	var _et := Malha.abrir("machados_cruzados_%d" % roundi(c.x * 10.0))
 	var u := Vector3.UP.cross(n).normalized()
 	var cabo := Castelinho.mat_cor(Color(0.32, 0.2, 0.12), 0.9)
 	var ferro := Castelinho.mat_cor(Color(0.55, 0.56, 0.6), 0.4)
@@ -71,10 +74,12 @@ static func _machados(g: Castelinho.Grupo, c: Vector3, n: Vector3, L: float) -> 
 		var lado: Vector3 = u * sx
 		g.inte.tri(ferro, b - Vector3(0, 0.12, 0) + n * 0.005, b + lado * 0.22 + Vector3(0, 0.12, 0) + n * 0.005,
 			b + lado * 0.22 - Vector3(0, 0.22, 0) + n * 0.005, n)
+	Malha.fechar(_et)
 
 
 ## Duas espadas cruzadas (lâminas claras, guardas escuras).
 static func _espadas(g: Castelinho.Grupo, c: Vector3, n: Vector3, L: float) -> void:
+	var _et := Malha.abrir("espadas_cruzadas_%d" % roundi(c.x * 10.0))
 	var u := Vector3.UP.cross(n).normalized()
 	var lamina := Castelinho.mat_cor(Color(0.75, 0.76, 0.8), 0.3)
 	var guarda := Castelinho.mat_cor(Color(0.35, 0.25, 0.12), 0.6)
@@ -85,10 +90,12 @@ static func _espadas(g: Castelinho.Grupo, c: Vector3, n: Vector3, L: float) -> v
 		_haste(g.inte, lamina, a, b, n, 0.045)
 		var gc: Vector3 = a + dirv * 0.16
 		_haste(g.inte, guarda, gc - dirv.cross(n) * 0.12, gc + dirv.cross(n) * 0.12, n, 0.04)
+	Malha.fechar(_et)
 
 
 ## Brasão (escudo heráldico de ponta) verde-petróleo com borda dourada e uma águia escura estilizada.
 static func _brasao(g: Castelinho.Grupo, c: Vector3, n: Vector3, w: float, h: float) -> void:
+	var _et := Malha.abrir("brasao_aguia")
 	var u := Vector3.UP.cross(n).normalized()
 	var p := func(x: float, y: float, z := 0.0) -> Vector3:
 		return c + u * x + Vector3(0, y, 0) + n * z
@@ -110,6 +117,7 @@ static func _brasao(g: Castelinho.Grupo, c: Vector3, n: Vector3, w: float, h: fl
 		g.inte.tri(aguia, p.call(0.04 * sx, 0.1, 0.02), p.call(0.24 * sx, 0.24, 0.02), p.call(0.2 * sx, -0.06, 0.02), n)
 		g.inte.tri(aguia, p.call(0.02 * sx, -0.18, 0.02), p.call(0.12 * sx, -0.3, 0.02), p.call(0.0, -0.24, 0.02), n)
 	g.inte.tri(aguia, p.call(-0.05, 0.18, 0.02), p.call(0.05, 0.18, 0.02), p.call(0.0, 0.27, 0.02), n)
+	Malha.fechar(_et)
 
 
 # ------------------------------------------------------------------ E2020
@@ -118,6 +126,7 @@ static func _museu(c: Castelinho) -> void:
 	var madeira: Material = c.m.madeira
 	var tela_cores := [Color(0.85, 0.3, 0.45), Color(0.2, 0.7, 0.7), Color(0.95, 0.65, 0.2), Color(0.4, 0.3, 0.8), Color(0.9, 0.85, 0.3)]
 	var claro: Material = Castelinho.mat_cor(Color(0.82, 0.62, 0.38), 0.9)
+	var _et := Malha.abrir("")
 	# --- hall (galeria): cavaletes com telas encostados na parede norte
 	for i in 3:
 		# (revisão V2: 0,5 m para o leste; o terceiro cobria metade da porta zebrada do porão, em x = -14, na visita 4)
@@ -126,17 +135,24 @@ static func _museu(c: Castelinho) -> void:
 	for i in 3:
 		_cavalete(c, g, Vector3(-11.3 + i * 1.6, 0, -17.7), N_N, tela_cores, 3 + i)
 	# --- Acervo (metade leste): mesa escura com telefone, máquina de escrever e livros + baú
+	Malha.abrir("mesa_acervo")
 	cx(g, madeira, Vector3(-6.3, 0.4, -19.0), Vector3(1.2, 0.8, 0.6), true, 1.0)
+	Malha.abrir("maquina_escrever_acervo")
 	cx(g, Castelinho.mat_cor(Color(0.85, 0.3, 0.12), 0.5), Vector3(-6.0, 0.9, -19.0), Vector3(0.34, 0.18, 0.3))          # máquina de escrever laranja
+	Malha.abrir("livros_acervo")
 	cx(g, Castelinho.mat_cor(Color(0.6, 0.1, 0.1), 0.7), Vector3(-6.95, 0.93, -19.1), Vector3(0.18, 0.26, 0.14))        # livros
 		# vitrine de discos no canto
+	Malha.abrir("vitrine_discos_acervo")
 	cx(g, madeira, Vector3(-5.9, 0.5, -19.8), Vector3(0.6, 1.0, 0.4), true, 1.0)
 	# --- Sala do Pescador: mural (parede sul, voltada ao norte), faixa de areia, corda amarela, conchas
 	var zm := -14.24
+	Malha.abrir("mural_pescador")
 	g.inte.quad_uv(c.m.mural, Vector3(-10.5, 0.55, zm), Vector3(-6.9, 0.55, zm), Vector3(-6.9, 2.45, zm), Vector3(-10.5, 2.45, zm), N_N,
 		Vector2(1, 1), Vector2(0, 1), Vector2(0, 0), Vector2(1, 0))
 	var areia: Material = Castelinho.mat_tri("areia", Vector3(2, 2, 2))
+	Malha.abrir("faixa_areia_pescador")
 	g.inte.quad(areia, Vector3(-10.7, 0.03, -14.25), Vector3(-6.7, 0.03, -14.25), Vector3(-6.7, 0.03, -15.0), Vector3(-10.7, 0.03, -15.0), Vector3.UP)
+	Malha.abrir("corda_amarela_pescador")
 	cx(g, c.m.corda, Vector3(-8.7, 0.06, -15.02), Vector3(4.0, 0.06, 0.08))
 	# conchas, tartaruga e boto de pano (artesanato da foto da sala): formas arredondadas, não caixas
 	var rnd := RandomNumberGenerator.new()
@@ -144,23 +160,32 @@ static func _museu(c: Castelinho) -> void:
 	var branco_osso := Castelinho.mat_cor(Color.WHITE, 0.9)
 	var cores_concha := [Color(0.92, 0.86, 0.76), Color(0.95, 0.78, 0.66), Color(0.86, 0.82, 0.8), Color(0.9, 0.7, 0.55)]
 	for i in 7:
+		Malha.abrir("concha_pescador_%d" % (i + 1))
 		var x := -10.3 + i * 0.6 + 0.1 * float(i % 2)
 		var cc: Color = cores_concha[i % cores_concha.size()]
 		g.inte.bolha(branco_osso, Vector3(x, 0.08, -14.55 - 0.1 * float(i % 3)), Vector3(0.13, 0.07, 0.11), rnd, 6, 2, 0.15, cc, cc * Color(0.7, 0.68, 0.66))
 	var casco := Castelinho.mat_cor(Color.WHITE, 0.9)
+	Malha.abrir("tartaruga_pescador")
 	g.inte.bolha(casco, Vector3(-7.4, 0.11, -14.95), Vector3(0.3, 0.1, 0.22), rnd, 7, 2, 0.1, Color(0.5, 0.4, 0.26), Color(0.26, 0.2, 0.14))
 	g.inte.bolha(casco, Vector3(-7.05, 0.09, -14.95), Vector3(0.09, 0.06, 0.07), rnd, 5, 2, 0.1, Color(0.55, 0.5, 0.36), Color(0.3, 0.26, 0.18))
+	Malha.abrir("boto_de_pano_pescador")
 	g.inte.bolha(casco, Vector3(-9.6, 0.16, -14.75), Vector3(0.32, 0.11, 0.1), rnd, 7, 2, 0.08, Color(0.72, 0.74, 0.78), Color(0.45, 0.47, 0.52))
 	g.inte.tri(casco, Vector3(-9.62, 0.24, -14.75), Vector3(-9.5, 0.24, -14.75), Vector3(-9.6, 0.36, -14.75), N_S, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Color(0.6, 0.62, 0.66))
 	# bancos baixos de madeira
+	Malha.abrir("banco_baixo_pescador")
 	cx(g, madeira, Vector3(-7.9, 0.25, -16.3), Vector3(1.4, 0.5, 0.4), true, 1.0)
 	# --- Povos Originários (anexo): vitrine longa de conchas/sambaqui
+	Malha.abrir("vitrine_povos_base")
 	cx(g, madeira, Vector3(-24.1, 0.45, -13.4), Vector3(2.0, 0.9, 0.7), true, 1.0)
+	Malha.abrir("vitrine_povos_vidro")
 	cx(g, c.m.vidro, Vector3(-24.1, 1.0, -13.4), Vector3(1.9, 0.2, 0.62))
 	for i in 9:
+		Malha.abrir("sambaqui_concha_%d" % (i + 1))
 		cx(g, Castelinho.mat_cor(Color(0.9, 0.86, 0.78), 0.9), Vector3(-24.9 + i * 0.2, 0.96, -13.4 + 0.12 * float((i % 3) - 1)), Vector3(0.12, 0.08, 0.12))
+	Malha.abrir("banco_povos")
 	cx(g, madeira, Vector3(-23.4, 0.3, -14.3), Vector3(1.2, 0.6, 0.4), true, 1.0)
 	# --- Meio Ambiente (bloco do pátio): areia, osso de baleia, cartaz
+	Malha.abrir("faixa_areia_meio_ambiente")
 	g.inte.quad(areia, Vector3(-24.0, 0.03, -16.8), Vector3(-21.4, 0.03, -16.8), Vector3(-21.4, 0.03, -15.1), Vector3(-24.0, 0.03, -15.1), Vector3.UP)
 	# vértebra de baleia (foto do Meio Ambiente): corpo, apófises laterais e espinho dorsal, cor de osso
 	var osso_c := Color(0.9, 0.86, 0.78)
@@ -169,6 +194,7 @@ static func _museu(c: Castelinho) -> void:
 	rv.seed = 9
 	var osso := Castelinho.mat_cor(Color.WHITE, 0.9)
 	# centro em forma de tambor deitado (disco), asas laterais compridas e achatadas, espinho baixo e largo
+	Malha.abrir("vertebra_baleia")
 	g.inte.bolha(osso, Vector3(-21.8, 0.2, -17.6), Vector3(0.24, 0.2, 0.16), rv, 8, 3, 0.08, osso_c, osso_s)
 	for sx in [-1.0, 1.0]:
 		g.inte.bolha(osso, Vector3(-21.8 + 0.4 * sx, 0.24, -17.6), Vector3(0.24, 0.045, 0.1), rv, 6, 2, 0.1, osso_c, osso_s)
@@ -177,6 +203,7 @@ static func _museu(c: Castelinho) -> void:
 	var banner := Castelinho.mat_uv("banner_ambiental", Color.WHITE, 0.8)
 	var bz0 := -19.6
 	var bz1 := -18.8
+	Malha.abrir("banner_ambiental")
 	g.inte.quad_uv(banner, Vector3(-24.56, 0.75, bz1), Vector3(-24.56, 0.75, bz0), Vector3(-24.56, 2.4, bz0), Vector3(-24.56, 2.4, bz1), N_L,
 		Vector2(0, 1), Vector2(1, 1), Vector2(1, 0), Vector2(0, 0))
 	cx(g, c.m.ferro, Vector3(-24.53, 0.72, (bz0 + bz1) * 0.5), Vector3(0.08, 0.06, 0.86))
@@ -186,11 +213,15 @@ static func _museu(c: Castelinho) -> void:
 		var x := -22.0 + i * 2.6
 		if absf(x + 22.8) < 1.0 or absf(x + 8.5) < 1.2:
 			continue
+		Malha.abrir("porta_secretaria_%d" % (i + 1))
 		g.inte.quad(c.m.porta, Vector3(x - 0.45, 0.0, -20.89), Vector3(x + 0.45, 0.0, -20.89), Vector3(x + 0.45, 2.05, -20.89), Vector3(x - 0.45, 2.05, -20.89), N_N, Vector2(1, 1))
 		cx(g, c.m.branco, Vector3(x, 1.7, -20.9), Vector3(0.3, 0.1, 0.02))
+	Malha.abrir("mesa_corredor")
 	cx(g, madeira, Vector3(-6.2, 0.4, -22.5), Vector3(1.2, 0.8, 0.6), true, 1.0)
 	# planta no vaso (corredor)
+	Malha.abrir("vaso_planta_corredor")
 	cx(g, Castelinho.mat_cor(Color(0.6, 0.32, 0.22), 0.9), Vector3(-5.8, 0.2, -21.3), Vector3(0.36, 0.4, 0.36))
+	Malha.abrir("folhagem_planta_corredor")
 	var rp := RandomNumberGenerator.new()
 	rp.seed = 21
 	var folha_vaso := Castelinho.mat_tri("folhagem", Vector3(0.8, 0.8, 0.8), Color(0.8, 1.0, 0.72))
@@ -198,10 +229,12 @@ static func _museu(c: Castelinho) -> void:
 		g.inte.bolha(folha_vaso, Vector3(-5.8 + rp.randf_range(-0.15, 0.15), 0.62 + k * 0.2, -21.3 + rp.randf_range(-0.15, 0.15)),
 			Vector3(0.3, 0.2, 0.3) * (1.0 - k * 0.15), rp, 6, 2, 0.2, Color(1, 1, 1), Color(0.45, 0.5, 0.45))
 	# --- Sala Medieval (ala dos fundos)
+	Malha.fechar(_et)
 	_sala_medieval(c, g)
 
 
 static func _cavalete(c: Castelinho, g: Castelinho.Grupo, p: Vector3, frente: Vector3, cores: Array, i: int) -> void:
+	var _et := Malha.abrir("cavalete_%d" % (i + 1))
 	var madeira: Material = Castelinho.mat_cor(Color(0.78, 0.6, 0.38), 0.9)
 	var s := frente
 	var lado := Vector3(-s.z, 0, s.x)
@@ -216,6 +249,7 @@ static func _cavalete(c: Castelinho, g: Castelinho.Grupo, p: Vector3, frente: Ve
 		var off := lado * (0.3 * float((k * 3) % 5 - 2) / 2.0) + Vector3(0, 0.25 * float((k * 2) % 5 - 2) / 2.0, 0)
 		var t2 := Vector3(0.3, 0.3, 0.02) if absf(s.z) > 0.5 else Vector3(0.02, 0.3, 0.3)
 		cx(g, Castelinho.mat_cor(cor, 0.8), tela + s * 0.03 + off, t2)
+	Malha.fechar(_et)
 
 
 static func _sala_medieval(c: Castelinho, g: Castelinho.Grupo) -> void:
@@ -226,6 +260,7 @@ static func _sala_medieval(c: Castelinho, g: Castelinho.Grupo) -> void:
 	# capelo trapezoidal CLARO subindo até o forro (o tom diferente da parede é o que faz a peça "ler")
 	var zf := -29.1
 	var capelo: Material = Castelinho.mat_tri("reboco", Vector3(1.2, 1.2, 1.2), Color(0.93, 0.86, 0.78))
+	var _et := Malha.abrir("lareira_medieval")
 	cx(g, pe, Vector3(-14.2, 0.25, zf + 0.35), Vector3(2.4, 0.5, 0.7), true)
 	cx(g, pe, Vector3(-15.2, 1.0, zf + 0.35), Vector3(0.4, 1.0, 0.7))
 	cx(g, pe, Vector3(-13.2, 1.0, zf + 0.35), Vector3(0.4, 1.0, 0.7))
@@ -245,6 +280,7 @@ static func _sala_medieval(c: Castelinho, g: Castelinho.Grupo) -> void:
 	g.inte.quad_auto(capelo, b1, t1, Vector3(t1.x, yt, zf), Vector3(b1.x, yb, zf), N_L)
 	g.inte.quad_auto(capelo, b0, b1, Vector3(b1.x, yb, zf), Vector3(b0.x, yb, zf), Vector3.DOWN)
 	# escudo redondo com machados cruzados no capelo; brasão (águia) e outro escudo na parede norte
+	Malha.abrir("")
 	_machados(g, Vector3(-14.2, 2.45, fz - 0.06), N_S, 0.75)
 	_escudo_redondo(g, Vector3(-14.2, 2.45, fz - 0.05), N_S, 0.36)
 	_brasao(g, Vector3(-11.9, 2.05, zf + 0.04), N_S, 0.62, 0.78)
@@ -252,14 +288,17 @@ static func _sala_medieval(c: Castelinho, g: Castelinho.Grupo) -> void:
 	_escudo_redondo(g, Vector3(-9.0, 2.05, zf + 0.06), N_S, 0.3)
 	# lanças e estandartes na parede oeste/leste
 	for x in [-10.5, -10.0, -9.5]:
+		Malha.abrir("lanca_medieval_%d" % roundi((x + 10.5) * 2.0 + 1.0))
 		cx(g, madeira, Vector3(x, 1.4, -23.65), Vector3(0.05, 2.5, 0.05))
 		cx(g, c.m.ferro, Vector3(x, 2.75, -23.65), Vector3(0.07, 0.3, 0.07))
 	# tronos (dois), encosto alto de madeira escura
 	for z in [-27.0, -28.2]:
+		Malha.abrir("trono_medieval_%d" % (1 if z > -27.5 else 2))
 		cx(g, madeira, Vector3(-9.2, 0.35, z), Vector3(0.7, 0.7, 0.7), true, 1.0)
 		cx(g, madeira, Vector3(-8.9, 1.2, z), Vector3(0.12, 1.4, 0.7), false, 1.0)
 		cx(g, c.m.bordo, Vector3(-9.2, 0.75, z), Vector3(0.6, 0.1, 0.6))
 	# mesa grande com cadeiras
+	Malha.abrir("mesa_grande_medieval")
 	cx(g, madeira, Vector3(-13.2, 0.78, -26.0), Vector3(3.0, 0.1, 1.0), false, 1.0)
 	g.inte.col(Vector3(-14.7, 0, -26.5), Vector3(-11.7, 0.9, -25.5))
 	for dx in [-1.3, 1.3]:
@@ -268,15 +307,19 @@ static func _sala_medieval(c: Castelinho, g: Castelinho.Grupo) -> void:
 	for i in 3:
 		var x := -14.2 + i * 1.0
 		for dz in [-0.95, 0.95]:
+			Malha.abrir("cadeira_medieval_%d_%s" % [i + 1, "n" if dz < 0 else "s"])
 			cx(g, madeira, Vector3(x, 0.25, -26.0 + dz), Vector3(0.45, 0.5, 0.45), true, 1.0)
 			cx(g, madeira, Vector3(x, 0.7, -26.0 + dz * 1.1), Vector3(0.45, 0.5, 0.06), false, 1.0)
 	# tochas (arandelas) ao lado da porta de saída e da lareira
 	for p in [Vector3(-11.4, 1.9, -29.05), Vector3(-9.0, 1.9, -29.05), Vector3(-16.4, 1.9, -24.5)]:
+		Malha.abrir("tocha_medieval_%d" % roundi(absf(p.x)))
 		cx(g, ferro, p, Vector3(0.1, 0.5, 0.1))
 		cx(g, Castelinho.mat_luz(Color(1.0, 0.55, 0.15), 1.6), p + Vector3(0, 0.4, 0), Vector3(0.14, 0.24, 0.14))
 		c.luzes.append({"pos": p + Vector3(0, 0.6, 0.3), "sala": "medieval_tocha"})
 	# baú de ferro
+	Malha.abrir("bau_medieval")
 	cx(g, madeira, Vector3(-9.7, 0.25, -24.3), Vector3(0.5, 0.5, 0.8), true, 1.0)
+	Malha.fechar(_et)
 
 
 # ------------------------------------------------------------------ E1975: casa de veraneio
@@ -291,9 +334,12 @@ static func _veraneio_1975(c: Castelinho) -> void:
 	# almofadas, poltronas, mesa de centro de pés palito, estante com livros, abajur de pé, TV de madeira e quadro
 	var mostarda := Castelinho.mat_cor(Color(0.86, 0.62, 0.2), 0.95)
 	var marrom := Castelinho.mat_cor(Color(0.4, 0.24, 0.14), 0.9)
+	var _et := Malha.abrir("tapete_barra_1975")
 	g.inte.quad(Castelinho.mat_cor(Color(0.45, 0.14, 0.1), 1.0), Vector3(-14.6, 0.015, -27.6), Vector3(-10.2, 0.015, -27.6), Vector3(-10.2, 0.015, -24.6), Vector3(-14.6, 0.015, -24.6), Vector3.UP)
+	Malha.abrir("tapete_1975")
 	g.inte.quad(tapete, Vector3(-14.4, 0.02, -27.4), Vector3(-10.4, 0.02, -27.4), Vector3(-10.4, 0.02, -24.8), Vector3(-14.4, 0.02, -24.8), Vector3.UP)
 	# sofá (encosto na parede norte): base, encosto, braços, 3 almofadas, pés
+	Malha.abrir("sofa_1975")
 	cx(g, tecido, Vector3(-12.4, 0.3, -28.55), Vector3(2.2, 0.36, 0.9), true)
 	cx(g, tecido, Vector3(-12.4, 0.72, -28.9), Vector3(2.2, 0.5, 0.2))
 	for sx in [-1.0, 1.0]:
@@ -304,19 +350,24 @@ static func _veraneio_1975(c: Castelinho) -> void:
 		cx(g, madeira, p, Vector3(0.06, 0.12, 0.06))
 	# poltronas
 	for px in [-15.5, -9.7]:
+		Malha.abrir("poltrona_1975_%s" % ("oeste" if px < -12.0 else "leste"))
 		cx(g, tecido2, Vector3(px, 0.28, -26.3), Vector3(0.8, 0.34, 0.8), true)
 		var fora := 1.0 if px > -12.0 else -1.0
 		cx(g, tecido2, Vector3(px + 0.32 * fora, 0.65, -26.3), Vector3(0.16, 0.5, 0.8))
 		for sz in [-1.0, 1.0]:
 			cx(g, tecido2, Vector3(px, 0.48, -26.3 + 0.34 * sz), Vector3(0.8, 0.24, 0.12))
 	# mesa de centro de pés palito com cinzeiro e vaso
+	Malha.abrir("mesa_centro_1975")
 	cx(g, madeira, Vector3(-12.4, 0.4, -26.1), Vector3(1.1, 0.05, 0.6), true, 1.0)
 	for sx in [-1.0, 1.0]:
 		for sz in [-1.0, 1.0]:
 			cx(g, madeira, Vector3(-12.4 + 0.45 * sx, 0.19, -26.1 + 0.22 * sz), Vector3(0.04, 0.38, 0.04))
+	Malha.abrir("vaso_mesa_centro_1975")
 	cx(g, Castelinho.mat_cor(Color(0.3, 0.55, 0.5), 0.4), Vector3(-12.6, 0.52, -26.1), Vector3(0.12, 0.2, 0.12))
+	Malha.abrir("cinzeiro_mesa_centro_1975")
 	cx(g, Castelinho.mat_cor(Color(0.8, 0.8, 0.78), 0.4), Vector3(-12.1, 0.44, -26.0), Vector3(0.14, 0.03, 0.14))
 	# estante na parede oeste: caixa de madeira com prateleiras e lombadas coloridas
+	Malha.abrir("estante_1975")
 	cx(g, madeira, Vector3(-16.2, 1.0, -24.5), Vector3(0.45, 2.0, 1.2), true, 1.0)
 	var lombadas := [Color(0.7, 0.2, 0.15), Color(0.2, 0.35, 0.6), Color(0.85, 0.7, 0.25), Color(0.25, 0.45, 0.3), Color(0.9, 0.88, 0.8)]
 	for f in 3:
@@ -328,31 +379,43 @@ static func _veraneio_1975(c: Castelinho) -> void:
 			cx(g, Castelinho.mat_cor(lombadas[(k + f * 2) % lombadas.size()], 0.8), Vector3(-15.96, yy + 0.14, zz + lw * 0.5), Vector3(0.02, 0.28 - 0.04 * float(k % 2), lw * 0.9))
 			zz += lw
 			k += 1
+	Malha.abrir("radio_estante_1975")
 	cx(g, Castelinho.mat_cor(Color(0.55, 0.35, 0.2), 0.7), Vector3(-15.96, 1.92, -24.5), Vector3(0.02, 0.18, 0.5))   # rádio
 	# abajur de pé (cúpula laranja acesa) ao lado do sofá
+	Malha.abrir("abajur_1975")
 	cx(g, Castelinho.mat_cor(Color(0.15, 0.13, 0.12), 0.5), Vector3(-14.0, 0.75, -28.7), Vector3(0.04, 1.5, 0.04))
 	cx(g, Castelinho.mat_cor(Color(0.15, 0.13, 0.12), 0.5), Vector3(-14.0, 0.02, -28.7), Vector3(0.3, 0.04, 0.3))
 	cx(g, Castelinho.mat_luz(Color(1.0, 0.62, 0.25), 1.2), Vector3(-14.0, 1.55, -28.7), Vector3(0.36, 0.28, 0.36))
 	# TV de madeira com tela esverdeada, no canto leste
+	Malha.abrir("tv_1975")
 	cx(g, marrom, Vector3(-9.0, 0.3, -24.4), Vector3(0.6, 0.6, 0.5), true, 1.0)
 	cx(g, marrom, Vector3(-9.0, 0.85, -24.4), Vector3(0.62, 0.5, 0.5))
 	g.inte.quad(Castelinho.mat_luz(Color(0.36, 0.45, 0.42), 0.6), Vector3(-9.22, 0.68, -24.12), Vector3(-8.84, 0.68, -24.12), Vector3(-8.84, 1.0, -24.12), Vector3(-9.22, 1.0, -24.12), N_S)
 	# quadro de pôr do sol na parede norte, acima do sofá
+	Malha.abrir("quadro_por_do_sol_1975")
 	cx(g, madeira, Vector3(-12.4, 1.7, -29.08), Vector3(1.0, 0.62, 0.02))
 	var por := [Color(0.95, 0.55, 0.25), Color(0.98, 0.78, 0.4), Color(0.3, 0.45, 0.6)]
 	for k in 3:
 		g.inte.quad(Castelinho.mat_cor(por[k], 0.9), Vector3(-12.85, 1.46 + k * 0.17, -29.035), Vector3(-11.95, 1.46 + k * 0.17, -29.035),
 			Vector3(-11.95, 1.63 + k * 0.17, -29.035), Vector3(-12.85, 1.63 + k * 0.17, -29.035), N_S)
+	Malha.abrir("cadeira_palha_1975")
 	cx(g, palha, Vector3(-10.0, 0.5, -24.2), Vector3(0.5, 1.0, 0.5))         # cadeira de palha
 	# bilhete de praia: guarda-sol dobrado, boia, prancha encostada
+	Malha.abrir("guarda_sol_dobrado_1975")
 	cx(g, Castelinho.mat_cor(Color(0.9, 0.3, 0.3), 0.9), Vector3(-9.0, 0.5, -28.7), Vector3(0.5, 1.0, 0.1))
+	Malha.abrir("prancha_praia_1975")
 	cx(g, Castelinho.mat_cor(Color(0.95, 0.85, 0.3), 0.9), Vector3(-9.4, 0.35, -28.7), Vector3(0.5, 0.7, 0.1))
 	# corredor/hall: banco e cabideiro
+	Malha.abrir("banco_hall_1975")
 	cx(g, madeira, Vector3(-9.0, 0.25, -13.4), Vector3(1.4, 0.5, 0.4), true, 1.0)
+	Malha.abrir("cabideiro_hall_1975")
 	cx(g, madeira, Vector3(-14.8, 0.9, -13.4), Vector3(0.4, 1.8, 0.1))
 	# Sala do Pescador em 1975: redes de pesca e caixas
+	Malha.abrir("caixa_rede_pesca_1975")
 	cx(g, palha, Vector3(-8.7, 0.3, -15.9), Vector3(1.2, 0.6, 0.8), true)
+	Malha.abrir("caixa_verde_pescador_1975")
 	cx(g, Castelinho.mat_cor(Color(0.45, 0.55, 0.4), 0.9), Vector3(-10.0, 0.25, -16.6), Vector3(0.9, 0.5, 0.6), true)
+	Malha.fechar(_et)
 
 
 # ------------------------------------------------------------------ nós avulsos
