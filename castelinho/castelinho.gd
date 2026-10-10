@@ -45,6 +45,9 @@ class Grupo:
 	func _init(n: String, e: Array) -> void:
 		nome = n
 		epocas = e
+		for par in [[ext, "/ext"], [inte, "/int"], [col_sempre, "/col_sempre"]]:   # rótulos do registro (ver malha.gd)
+			(par[0] as Malha).rotulo = n + par[1]
+			(par[0] as Malha).epocas = e
 
 	func finalizar(pai: Node3D) -> void:
 		no = Node3D.new()

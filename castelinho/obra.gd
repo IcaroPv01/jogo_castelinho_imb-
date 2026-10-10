@@ -87,7 +87,9 @@ static func _torre_a(c: Castelinho, g: Castelinho.Grupo, info: Dictionary) -> vo
 	c.parede_z(g, -15.8, -15.0, -11.0, 1, 0.0, 4.2, [Muros.ab(-12.6, 1.3, 0.0, 1.9, 2.3, "arco")], "ext", "ext", {"tampa": true})
 	# blocos soltos no alto da parede mais baixa
 	for k in 3:
+		var _et := Malha.abrir("bloco_solto_torre_a_%d" % (k + 1))
 		g.ext.caixa(c.m.parede_clara, Vector3(-22.4 + k * 0.5, 2.6, -14.8), Vector3(-22.0 + k * 0.5, 2.95, -14.5), Malha.F_SEM_BASE)
+	Malha.abrir("")
 	info["volumes"].append([-22.6, -15.8, -15.0, -11.0, 4.2])
 
 
@@ -103,8 +105,10 @@ static func _torre_b(c: Castelinho, g: Castelinho.Grupo, info: Dictionary) -> vo
 	for x in [-7.9, -7.0, -6.1, -5.3]:
 		for z in [-26.4, -23.8]:
 			var alt := 1.7 + 0.18 * float((i * 3) % 4)
+			Malha.abrir("ferro_armacao_%d" % (i + 1))
 			g.ext.caixa(c.m.ferro, Vector3(x - 0.012, h, z - 0.012), Vector3(x + 0.012, alt, z + 0.012), Malha.F_TODAS)
 			i += 1
+	Malha.abrir("")
 	# baldrame baixo da ala dos fundos (só o traçado, sem colisão)
 	g.ext.caixa(c.m.parede_clara, Vector3(-17.0, 0, -29.5), Vector3(-8.2, 0.18, -29.1), Malha.F_SEM_BASE)
 	g.ext.caixa(c.m.parede_clara, Vector3(-17.0, 0, -29.5), Vector3(-16.6, 0.18, -23.5), Malha.F_SEM_BASE)
@@ -121,6 +125,7 @@ static func _andaime(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var z := -10.35
 	var xs := [-23.3, -21.0, -18.7, -16.4]
 	var ys := [1.7, 3.3, 4.9]
+	var _et := Malha.abrir("andaime_torre_a")
 	for x in xs:
 		e.caixa(madeira, Vector3(x - 0.07, 0.0, z - 0.07), Vector3(x + 0.07, 5.5, z + 0.07), Malha.F_SEM_BASE, 1.0)
 	for zz in [-12.2, -14.4]:
@@ -146,10 +151,12 @@ static func _andaime(c: Castelinho, g: Castelinho.Grupo) -> void:
 		for n in [N_S, N_N]:
 			e.quad_auto(madeira, a2, b2, b2 + d, a2 + d, n)
 	# escada de mão encostada no andaime
+	Malha.abrir("escada_de_mao_andaime")
 	for lado in [-0.2, 0.2]:
 		e.caixa(madeira, Vector3(-19.6 + lado - 0.025, 0.0, -10.2), Vector3(-19.6 + lado + 0.025, 3.3, -10.15), Malha.F_TODAS, 1.0)
 	for k in 9:
 		e.caixa(madeira, Vector3(-19.8, 0.3 + k * 0.33, -10.21), Vector3(-19.4, 0.33 + k * 0.33, -10.14), Malha.F_TODAS, 1.0)
+	Malha.fechar(_et)
 
 
 # ------------------------------------------------------------------ pilhas de blocos
@@ -159,14 +166,18 @@ static func _pilhas(c: Castelinho, g: Castelinho.Grupo, info: Dictionary) -> voi
 		[-20.4, -8.3, 0.0], [-18.2, -8.9, 15.0], [-24.8, -7.6, -10.0], [-3.1, -15.5, 0.0], [-3.7, -27.0, 8.0],
 		[-14.2, -6.4, 0.0], [-26.5, -16.0, 20.0], [-4.0, -19.0, -6.0],
 	]
+	var ip := 0
 	for p in pilhas:
 		var x: float = p[0]
 		var z: float = p[1]
+		ip += 1
+		var _et := Malha.abrir("pilha_blocos_%d" % ip)
 		for k in 3:
 			var w := 1.5 - 0.35 * k
 			var d := 0.9 - 0.15 * k
 			g.ext.caixa(mat, Vector3(x - w * 0.5, k * 0.3, z - d * 0.5), Vector3(x + w * 0.5, (k + 1) * 0.3, z + d * 0.5), Malha.F_SEM_BASE)
 		g.ext.col(Vector3(x - 0.75, 0, z - 0.45), Vector3(x + 0.75, 0.9, z + 0.45))
+		Malha.fechar(_et)
 		info["volumes"].append([x - 0.8, x + 0.8, z - 0.5, z + 0.5, 0.9])
 
 
@@ -198,6 +209,7 @@ static func _barco(c: Castelinho, g: Castelinho.Grupo) -> void:
 		])
 	var e := g.ext
 	var cima := Vector3.UP
+	var _et := Malha.abrir("barco_encalhado")
 	for i in n:
 		var a: Array = est[i]
 		var d: Array = est[i + 1]
@@ -222,8 +234,10 @@ static func _barco(c: Castelinho, g: Castelinho.Grupo) -> void:
 		var x: float = t * L
 		var lar := 0.55
 		_caixa_rot(e, madeira, o, b, Vector3(x - 0.14, 0.5, -lar), Vector3(x + 0.14, 0.56, lar))
+	Malha.abrir("remo_barco")
 	_caixa_rot(e, madeira, Vector3(-14.9, 0.05, -3.1), Basis.from_euler(Vector3(0, deg_to_rad(-20.0), 0)), Vector3(-1.1, 0.0, -0.03), Vector3(1.1, 0.06, 0.03))
 	g.ext.col(Vector3(-18.2, 0, -5.2), Vector3(-15.0, 0.8, -3.2))
+	Malha.fechar(_et)
 
 
 ## Caixa "girada": 8 cantos transformados por `b` ao redor de `o`, só as 4 faces de cima/laterais (peça pequena).
@@ -245,16 +259,20 @@ static func _muro_com_buraco(c: Castelinho, g: Castelinho.Grupo) -> void:
 	c.parede_x(g, -1.0, -29.8, -3.6, 1, 0.0, 1.1, [Muros.ab(xb, 0.75, 0.0, 0.85, 0.85, "ret")], "ext", "ext", {"tampa": true}, 0.25)
 	# revisão V2: o vão retangular parecia uma porta. Blocos meio quebrados avançam para dentro do vão (bordas
 	# serrilhadas) e o alto cede: lê como um buraco aberto a chute, do tamanho de uma criança.
+	var _et := Malha.abrir("buraco_muro_dentes")
 	var dentes := [[-0.38, 0.62, -0.2, 0.85], [-0.16, 0.74, 0.1, 0.85], [0.22, 0.58, 0.38, 0.85], [-0.38, 0.0, -0.26, 0.22],
 		[-0.38, 0.34, -0.3, 0.5], [0.28, 0.12, 0.38, 0.3], [0.3, 0.4, 0.38, 0.52]]
 	for dd in dentes:
 		g.ext.caixa(c.m.parede, Vector3(xb + dd[0], dd[1], -1.28), Vector3(xb + dd[2], dd[3], -0.97), Malha.F_SEM_BASE)
 	# blocos quebrados jogados em volta do buraco
 	for k in 5:
+		Malha.abrir("bloco_quebrado_buraco_%d" % (k + 1))
 		var dx := -0.55 + 0.28 * k
 		g.ext.caixa(c.m.parede_clara, Vector3(xb + dx - 0.1, 0.0, -0.45 + 0.1 * float(k % 2)), Vector3(xb + dx + 0.1, 0.16, -0.25 + 0.1 * float(k % 2)), Malha.F_SEM_BASE)
 	# o muro termina em pilaretes: dois pilaretes na ponta do portão
+	Malha.abrir("pilarete_portao_obra")
 	g.ext.caixa(c.m.parede, Vector3(-3.8, 0, -1.25), Vector3(-3.3, 1.4, -0.75), Malha.F_SEM_BASE)
+	Malha.fechar(_et)
 
 
 # ------------------------------------------------------------------ castelinho de areia (Tito brinca ao lado)
@@ -262,6 +280,7 @@ static func _castelo_de_areia(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var areia := Castelinho.mat_cor(Color(0.86, 0.74, 0.5), 1.0)
 	var areia2 := Castelinho.mat_cor(Color(0.78, 0.66, 0.43), 1.0)
 	var o := TITO_POS + Vector3(0.62, 0, 0.1)
+	var _et := Malha.abrir("castelinho_de_areia")
 	g.ext.caixa(areia, o + Vector3(-0.32, 0, -0.22), o + Vector3(0.32, 0.18, 0.22), Malha.F_SEM_BASE)
 	for sx in [-1.0, 1.0]:
 		for sz in [-1.0, 1.0]:
@@ -269,7 +288,9 @@ static func _castelo_de_areia(c: Castelinho, g: Castelinho.Grupo) -> void:
 			g.ext.caixa(areia, o + Vector3(0.3 * sx - 0.045, 0.3, 0.2 * sz - 0.045), o + Vector3(0.3 * sx + 0.045, 0.36, 0.2 * sz + 0.045), Malha.F_SEM_BASE)
 	g.ext.caixa(areia2, o + Vector3(-0.1, 0.18, -0.08), o + Vector3(0.1, 0.34, 0.08), Malha.F_SEM_BASE)
 	# poça de areia revirada e a pazinha
+	Malha.abrir("poca_de_areia_tito")
 	g.ext.caixa(areia2, TITO_POS + Vector3(-0.5, 0, -0.35), TITO_POS + Vector3(-0.2, 0.05, -0.05), Malha.F_SEM_BASE)
+	Malha.fechar(_et)
 
 
 # ------------------------------------------------------------------ canteiro de obra (revisão V2)
@@ -283,6 +304,7 @@ static func _canteiro(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var areia := Castelinho.mat_cor(Color(0.72, 0.6, 0.42), 1.0)
 	# carrinho de mão (caçamba de chapa, roda e dois braços) ao pé do andaime
 	var o := Vector3(-17.6, 0.0, -8.6)
+	var _et := Malha.abrir("carrinho_de_mao")
 	e.caixa(ferro, o + Vector3(-0.35, 0.3, -0.3), o + Vector3(0.35, 0.62, 0.3), Malha.F_TODAS)
 	e.caixa(massa, o + Vector3(-0.3, 0.62, -0.25), o + Vector3(0.3, 0.64, 0.25), Malha.F_PY)
 	e.caixa(ferro, o + Vector3(0.45, 0.05, -0.05), o + Vector3(0.65, 0.3, 0.05), Malha.F_TODAS)
@@ -291,21 +313,27 @@ static func _canteiro(c: Castelinho, g: Castelinho.Grupo) -> void:
 		e.caixa(ferro, o + Vector3(-0.3, 0.0, lado - 0.02), o + Vector3(-0.26, 0.3, lado + 0.02), Malha.F_TODAS)
 	# caixa de massa (tábuas baixas com argamassa cinza) e a enxada encostada
 	var m0 := Vector3(-13.2, 0.0, -8.4)
+	Malha.abrir("caixa_de_massa")
 	e.caixa(pinho, m0 + Vector3(-0.7, 0.0, -0.45), m0 + Vector3(0.7, 0.25, 0.45), Malha.F_SEM_BASE, 1.0)
 	e.caixa(massa, m0 + Vector3(-0.64, 0.2, -0.39), m0 + Vector3(0.64, 0.21, 0.39), Malha.F_PY)
 	e.caixa(pinho, m0 + Vector3(0.5, 0.2, -0.03), m0 + Vector3(1.6, 0.24, 0.03), Malha.F_TODAS, 1.0)
 	# monte de areia grossa (pirâmide baixa) e sacos de cimento empilhados
+	Malha.abrir("monte_de_areia_grossa")
 	e.piramide(areia, Vector3(-11.5, 0.0, -7.2), 2.2, 1.8, 0.9, 1.0)
 	for k in 5:
+		Malha.abrir("saco_de_cimento_%d" % (k + 1))
 		var px := -9.9 + (k % 3) * 0.48
 		var py := 0.0 if k < 3 else 0.18
 		var pz := -7.6 + (0.24 if k >= 3 else 0.0)
 		e.caixa(saco, Vector3(px - 0.22, py, pz - 0.32), Vector3(px + 0.22, py + 0.18, pz + 0.32), Malha.F_SEM_BASE)
 	# tábuas soltas no chão
 	for k in 4:
+		Malha.abrir("tabua_solta_%d" % (k + 1))
 		e.caixa(pinho, Vector3(-21.0 + k * 0.05, 0.02 + k * 0.035, -6.4 - k * 0.32), Vector3(-18.0 + k * 0.05, 0.05 + k * 0.035, -6.15 - k * 0.32), Malha.F_TODAS, 1.0)
+	Malha.abrir("")
 	g.ext.col(Vector3(-13.9, 0, -8.9), Vector3(-12.5, 0.3, -7.9))
 	g.ext.col(Vector3(-12.6, 0, -8.1), Vector3(-10.4, 0.7, -6.3))
+	Malha.fechar(_et)
 
 
 # ------------------------------------------------------------------ casas de madeira em volta (quase ninguém em 1967)
@@ -322,6 +350,7 @@ static func _casas(c: Castelinho, g: Castelinho.Grupo) -> void:
 		var w: float = h[2]
 		var d: float = h[3]
 		var alt: float = h[4]
+		var _et := Malha.abrir("casa_madeira_1967_%d" % (casas.find(h) + 1))
 		g.ext.caixa(tabuas, Vector3(cx_ - w * 0.5, 0.35, cz - d * 0.5), Vector3(cx_ + w * 0.5, alt, cz + d * 0.5), Malha.F_SEM_BASE - Malha.F_PY, 1.5)
 		# palafita baixa (pilotis) para a areia
 		for sx in [-1.0, 1.0]:
@@ -332,3 +361,4 @@ static func _casas(c: Castelinho, g: Castelinho.Grupo) -> void:
 		# porta e janela na face sul
 		g.ext.caixa(porta, Vector3(cx_ - 0.45, 0.35, cz + d * 0.5), Vector3(cx_ + 0.45, 2.1, cz + d * 0.5 + 0.04), Malha.F_TODAS)
 		g.ext.caixa(janela, Vector3(cx_ + w * 0.28 - 0.4, 1.1, cz + d * 0.5), Vector3(cx_ + w * 0.28 + 0.4, 1.9, cz + d * 0.5 + 0.04), Malha.F_TODAS)
+		Malha.fechar(_et)

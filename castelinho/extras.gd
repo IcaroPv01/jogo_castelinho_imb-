@@ -29,7 +29,9 @@ static func _museu(c: Castelinho) -> void:
 	# vidros nos arcos 2..5 (esquadria preta); o arco 1 é a porta de entrada (nó separado)
 	for i in range(1, arcos.size()):
 		var a: Dictionary = arcos[i]
+		var _et := Malha.abrir("vidro_arco_%d" % (i + 1))
 		_vidro_arco(c, g.ext, a["x"], a["w"], a["imposta"], a["coroa"])
+		Malha.fechar(_et)
 		g.ext.col(Vector3(a["x"] - a["w"] * 0.5, 0, -11.3), Vector3(a["x"] + a["w"] * 0.5, a["coroa"], -11.1))
 	_porta_entrada(c, arcos[0])
 	# porta de saída da Sala Medieval (norte): fechada em 2020 (em 1975 o vão está aberto e leva ao corredor)
@@ -72,6 +74,7 @@ static func _porta_entrada(c: Castelinho, a: Dictionary) -> void:
 	var coroa: float = a["coroa"]
 	var raiz := Node3D.new()
 	raiz.name = "PortaEntrada"
+	Malha.nomear(raiz, "porta_entrada_vidro")
 	c.add_child(raiz)
 	c.porta_entrada = raiz
 	# bandeira fixa em arco acima das folhas (no mesmo plano z = -11,2)
@@ -130,13 +133,18 @@ static func _deck(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var z0 := -9.2
 	var z1 := -4.2
 	var e := g.ext
+	var _et := Malha.abrir("deck_madeira")
 	e.caixa(c.m.deck, Vector3(x0, 0.0, z0), Vector3(x1, 0.07, z1), Malha.F_SEM_BASE, 1.5)
 	e.col(Vector3(x0, 0.0, z0), Vector3(x1, 0.07, z1))
 	var h := 2.5
+	var ip := 0
 	for px in [x0 + 0.15, (x0 + x1) * 0.5, x1 - 0.15]:
 		for pz in [z0 + 0.15, z1 - 0.15]:
+			ip += 1
+			Malha.abrir("pergola_poste_%d" % ip)
 			e.caixa(c.m.madeira, Vector3(px - 0.07, 0.07, pz - 0.07), Vector3(px + 0.07, h, pz + 0.07), Malha.F_TODAS, 1.0)
 	# vigas longas (ao longo de x) e caibros (ao longo de z)
+	Malha.abrir("pergola_vigas")
 	for pz in [z0 + 0.15, z1 - 0.15]:
 		e.caixa(c.m.madeira, Vector3(x0, h, pz - 0.06), Vector3(x1, h + 0.16, pz + 0.06), Malha.F_TODAS, 1.0)
 	var n := 8
@@ -145,17 +153,22 @@ static func _deck(c: Castelinho, g: Castelinho.Grupo) -> void:
 		e.caixa(c.m.madeira, Vector3(x - 0.04, h + 0.16, z0 - 0.15), Vector3(x + 0.04, h + 0.24, z1 + 0.15), Malha.F_TODAS, 1.0)
 	# guarda-sóis pretos
 	for p in [Vector3(-12.2, 0, -5.8), Vector3(-9.0, 0, -7.6)]:
+		Malha.abrir("guarda_sol_deck_%d" % (1 if p.x < -10.0 else 2))
 		e.caixa(c.m.ferro, Vector3(p.x - 0.02, 0, p.z - 0.02), Vector3(p.x + 0.02, 2.0, p.z + 0.02), Malha.F_TODAS)
 		e.piramide(c.m.escuro, Vector3(p.x, 1.85, p.z), 2.0, 2.0, 0.55, 1.0)
+	Malha.fechar(_et)
 
 
 ## Cerca de corda trançada em postes baixos, em arco suave (foto frontal 2026). Sem colisão.
 static func _corda(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var z := -2.6
 	var xs := [-27.0, -24.6, -22.2, -19.8, -17.4, -15.0, -12.6, -10.2, -7.8]   # abre um vão no caminho de lajotas (x -7,8..-3)
+	var _et := Malha.abrir("")
 	for i in xs.size():
+		Malha.abrir("cerca_corda_poste_%d" % (i + 1))
 		g.ext.caixa(c.m.madeira, Vector3(xs[i] - 0.05, 0, z - 0.05), Vector3(xs[i] + 0.05, 0.5, z + 0.05), Malha.F_TODAS, 1.0)
 	for i in xs.size() - 1:
+		Malha.abrir("cerca_corda_%d" % (i + 1))
 		var a: float = xs[i]
 		var b: float = xs[i + 1]
 		var pts: Array = []
@@ -167,6 +180,7 @@ static func _corda(c: Castelinho, g: Castelinho.Grupo) -> void:
 			var p1: Vector3 = pts[k + 1]
 			var d := Vector3(0, 0.05, 0)
 			g.ext.quad_auto(c.m.corda, p0, p1, p1 + d, p0 + d, N_S)
+	Malha.fechar(_et)
 
 
 static func _hortensias(c: Castelinho, g: Castelinho.Grupo) -> void:
@@ -186,9 +200,11 @@ static func _hortensias(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var folha: Material = Castelinho.mat_tri("folhagem", Vector3(0.8, 0.8, 0.8), Color(0.82, 1.0, 0.72))
 	var rnd := RandomNumberGenerator.new()
 	rnd.seed = 1975
+	var _et := Malha.abrir("")
 	for i in pos.size():
 		var p: Vector3 = pos[i]
 		var s := 0.95 + 0.35 * float((i * 7) % 5) / 4.0
+		Malha.abrir("hortensia_%d" % (i + 1))
 		g.ext.bolha(folha, p + Vector3(0, 0.38 * s, 0), Vector3(0.6 * s, 0.42 * s, 0.42 * s), rnd, 7, 2, 0.15,
 			Color(1.0, 1.0, 1.0), Color(0.4, 0.45, 0.4))
 		var cor_mae: Color = paleta[(i * 3) % paleta.size()]
@@ -199,6 +215,7 @@ static func _hortensias(c: Castelinho, g: Castelinho.Grupo) -> void:
 			var tom: Color = cor_mae.lerp(paleta[rnd.randi() % paleta.size()], 0.3) * rnd.randf_range(0.9, 1.05)
 			tom.a = 1.0
 			g.ext.bolha(flor, cp, Vector3(0.17, 0.14, 0.17) * s, rnd, 5, 2, 0.15, tom, tom * Color(0.62, 0.62, 0.7))
+	Malha.fechar(_et)
 
 
 ## Letreiros genéricos (sem brasão nem marca real): "Castelinho" (leste) e a placa da Casa de Cultura (sul).
@@ -209,6 +226,7 @@ static func _letreiros(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var w: float = fl.get("w", 2.1)
 	var h: float = fl.get("h", 0.45)
 	var x := -4.97
+	var _et := Malha.abrir("letreiro_castelinho_leste")
 	g.ext.quad_uv(c.m.letreiro, Vector3(x, y, z + w * 0.5), Vector3(x, y, z - w * 0.5), Vector3(x, y + h, z - w * 0.5), Vector3(x, y + h, z + w * 0.5), N_L,
 		Vector2(0, 1), Vector2(1, 1), Vector2(1, 0), Vector2(0, 0))
 	# placa na arcada
@@ -217,6 +235,7 @@ static func _letreiros(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var pw := 1.8
 	var ph := 0.56
 	var zp := -10.975
+	Malha.abrir("placa_casa_de_cultura")
 	g.ext.caixa(c.m.branco, Vector3(px - pw * 0.5, py, zp), Vector3(px + pw * 0.5, py + ph, zp + 0.03), Malha.F_SEM_BASE)
 	g.ext.caixa(c.m.bordo, Vector3(px - pw * 0.5, py + ph * 0.42, zp + 0.03), Vector3(px + pw * 0.5, py + ph, zp + 0.045), Malha.F_SEM_BASE)
 	var l1 := Construtor.rotulo(c, "PROGRAMA MUNICIPAL DE MEMÓRIA INTERATIVA", Vector3(px, py + ph * 0.18, zp + 0.05), 28, Color(0.15, 0.15, 0.18))
@@ -228,7 +247,9 @@ static func _letreiros(c: Castelinho, g: Castelinho.Grupo) -> void:
 		l.rotation_degrees = Vector3(0, 0, 0)
 		Epocas.marcar(l, [GameState.Epoca.E2020])
 	# plaquinha ao lado do arco de entrada
+	Malha.abrir("plaquinha_arco_entrada")
 	g.ext.caixa(c.m.branco, Vector3(-4.82, 1.1, -11.02), Vector3(-4.52, 1.35, -10.99), Malha.F_SEM_BASE)
+	Malha.fechar(_et)
 
 
 # ------------------------------------------------------------------ E2019: ruína
@@ -238,12 +259,16 @@ static func _ruina(c: Castelinho) -> void:
 	var e := g.ext
 	# chapas de fibrocimento empenadas/soltas sobre o telhado do corpo principal
 	var k := tan(deg_to_rad(10.0))
+	var _et := Malha.abrir("")
+	var ich := 0
 	for p in [[-11.2, -19.0, 1.3, 0.9, 0.35], [-9.4, -17.0, 1.1, 1.2, 0.28], [-7.2, -15.2, 1.2, 0.8, 0.4], [-10.2, -15.0, 0.9, 1.1, 0.3]]:
 		var x: float = p[0]
 		var z: float = p[1]
 		var w: float = p[2]
 		var d: float = p[3]
 		var lev: float = p[4]
+		ich += 1
+		Malha.abrir("chapa_fibrocimento_solta_%d" % ich)
 		var y := 4.3 + (-5.0 - x) * k + 0.04
 		var a := Vector3(x, y, z)
 		var b := Vector3(x + w, y - w * k, z)
@@ -263,6 +288,7 @@ static func _ruina(c: Castelinho) -> void:
 	rnd.seed = 2019
 	for i in tufos.size():
 		var p: Vector3 = tufos[i]
+		Malha.abrir("mato_alto_%d" % (i + 1))
 		for j in 4:
 			var dx := (float((i * 3 + j * 5) % 9) / 8.0 - 0.5) * 1.3
 			var dz := (float((i * 7 + j * 3) % 9) / 8.0 - 0.5) * 0.7
@@ -270,7 +296,9 @@ static func _ruina(c: Castelinho) -> void:
 	# mato nascendo nas ameias da Torre A
 	for i in 9:
 		var x := -22.2 + i * 0.6
+		Malha.abrir("mato_ameia_torre_a_%d" % (i + 1))
 		_touceira(e, capim, Vector3(x, 7.8, -14.75), 0.35 + 0.1 * float(i % 3), rnd)
+	Malha.fechar(_et)
 
 
 ## Touceira de capim: ~9 lâminas inclinadas em leque (cor de vértice: verde-escuro no pé, palha na ponta).
@@ -331,18 +359,22 @@ static func _nucleo_1950(c: Castelinho) -> void:
 	c.veneziana_fechada(g, Vector3(x0, 0, 0), U_Z, N_O, -13.2, 0.7, 1.0, 1.25, c.m.tabuas)
 	c.veneziana_fechada(g, Vector3(x0, 0, 0), U_Z, N_O, -18.0, 0.7, 1.0, 1.25, c.m.tabuas)
 	# folha da porta arqueada, aberta para dentro (encostada no vão)
+	var _et := Malha.abrir("porta_nucleo_1950")
 	me.quad(c.m.tabuas, Vector3(x1 - 0.4, 0.0, -18.95), Vector3(x1 - 1.3, 0.0, -18.95), Vector3(x1 - 1.3, 1.7, -18.95), Vector3(x1 - 0.4, 1.7, -18.95), Vector3(0, 0, 1), Vector2(1.0, 1.0))
 	me.quad(c.m.tabuas, Vector3(x1 - 0.4, 0.0, -18.99), Vector3(x1 - 1.3, 0.0, -18.99), Vector3(x1 - 1.3, 1.7, -18.99), Vector3(x1 - 0.4, 1.7, -18.99), Vector3(0, 0, -1), Vector2(1.0, 1.0))
 	# janela gradeada alta na face norte de A (foto antiga)
+	Malha.abrir("janela_gradeada_1950")
 	var on := Vector3(0, 0, -20.5)
 	c.decalque_vao(me, c.m.escuro, on, U_X, N_N, -10.3, 0.75, 3.7, 4.1, 4.1, "ret")
 	var ga := Vector3(-10.3 - 0.375, 3.7, -20.5 - 0.02)
 	me.quad(c.m.grade, ga, ga + Vector3(0.75, 0, 0), ga + Vector3(0.75, 0.4, 0), ga + Vector3(0, 0.4, 0), N_N, Vector2(0.75, 0.4))
 	# chaminé saliente na face norte de A
+	Malha.abrir("chamine_1950")
 	me.caixa(pe, Vector3(-7.1, 0, -21.2), Vector3(-6.0, 7.1, -20.5), Malha.F_SEM_BASE - Malha.F_PY)
 	me.caixa(pe, Vector3(-7.2, 7.1, -21.3), Vector3(-5.9, 7.25, -20.4), Malha.F_SEM_BASE)
 	# colisão: paredes são geradas pelo muro(); chaminé
 	me.col(Vector3(-7.1, 0, -21.2), Vector3(-6.0, 7.1, -20.5))
+	Malha.fechar(_et)
 	# cobertura do volume B encosta na parede de A: degrau da empena
 	# portas/janelas: porta aberta (escura) no leste de A
 
