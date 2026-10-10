@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Castelinho — Galeria 3D</title>
+<meta name="description" content="Galeria 3D dos objetos do Castelinho: modelos, fotos e onde cada um aparece no jogo.">
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
+<style>
+  :root {
+    --bg: #121214;
+    --painel: #1c1c20;
+    --borda: #2e2e35;
+    --texto: #e8e6e1;
+    --texto-suave: #a7a6a0;
+    --destaque: #c9a24a;
+    --nota-bg: #3a3112;
+    --nota-borda: #e0b84f;
+    --nota-texto: #ffe9a6;
+    --cinza-viewer: #3b3d42;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+  header.wrap { padding-top: 24px; text-align: center; }
+  h1 { font-size: 1.6rem; margin: 0 0 8px; color: var(--destaque); font-weight: 700; }
+  .aviso {
+    display: inline-block; font-size: .9rem; color: var(--nota-texto);
+    background: var(--nota-bg); border: 1px solid var(--nota-borda);
+    padding: 4px 10px; border-radius: 6px; margin: 0 0 16px;
+  }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
+  .links a {
+    color: var(--texto); text-decoration: none; font-size: .95rem;
+    border: 1px solid var(--borda); background: var(--painel);
+    padding: 8px 14px; border-radius: 8px;
+  }
+  .links a:hover { border-color: var(--destaque); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--destaque); outline-offset: 2px; }
+  .filtros { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 18px; }
+  .filtros button {
+    background: transparent; color: var(--texto-suave); border: 1px solid var(--borda);
+    border-radius: 999px; padding: 6px 14px; font: inherit; font-size: .9rem; cursor: pointer;
+  }
+  .filtros button[aria-pressed="true"] { color: #121214; background: var(--destaque); border-color: var(--destaque); }
+  .estado { text-align: center; color: var(--texto-suave); margin: 24px 0; }
+  .grade { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding-bottom: 32px; }
+  @media (min-width: 640px) { .grade { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1000px) { .grade { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .cartao {
+    background: var(--painel); border: 1px solid var(--borda); border-radius: 12px;
+    overflow: hidden; display: flex; flex-direction: column; min-width: 0;
+  }
+  .midia { width: 100%; aspect-ratio: 4 / 3; background: var(--cinza-viewer); position: relative; }
+  .midia model-viewer { width: 100%; height: 100%; display: block; }
+  .midia img.foto-grande { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vazio {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 12px; color: var(--texto-suave); font-size: .9rem;
+  }
+  .corpo { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .grupo { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--destaque); }
+  .cartao h2 { font-size: 1.1rem; margin: 0; overflow-wrap: anywhere; }
+  .campo { font-size: .92rem; color: var(--texto-suave); margin: 0; overflow-wrap: anywhere; }
+  .campo strong { color: var(--texto); font-weight: 600; }
+  .campo a { color: var(--destaque); }
+  .nota { background: var(--nota-bg); border-left: 3px solid var(--nota-borda); color: var(--nota-texto); padding: 8px 10px; border-radius: 6px; font-size: .88rem; }
+  .nota p { margin: 0 0 4px; overflow-wrap: anywhere; }
+  .nota p:last-child { margin-bottom: 0; }
+  .nota-titulo { font-weight: 700; text-transform: uppercase; font-size: .72rem !important; letter-spacing: .06em; }
+  .miniaturas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .mini { margin: 0; width: 84px; }
+  .mini button {
+    display: block; width: 100%; height: 63px; padding: 0; cursor: pointer;
+    border: 1px solid var(--borda); border-radius: 6px; overflow: hidden; background: var(--bg);
+  }
+  .mini button:disabled { cursor: default; }
+  .mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mini .sem-foto { font-size: .7rem; color: var(--texto-suave); display: flex; align-items: center; justify-content: center; height: 100%; }
+  .mini figcaption { font-size: .72rem; color: var(--texto-suave); text-align: center; margin-top: 2px; }
+  .rodape { text-align: center; color: var(--texto-suave); font-size: .8rem; padding-bottom: 28px; }
+  .lightbox {
+    position: fixed; inset: 0; z-index: 10; background: rgba(0, 0, 0, .9);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px; cursor: zoom-out;
+  }
+  .lightbox img { max-width: 100%; max-height: 80vh; border-radius: 8px; }
+  .lightbox p { color: var(--texto); margin: 12px 0 0; text-align: center; font-size: .95rem; }
+  .lightbox .fechar {
+    position: absolute; top: 12px; right: 12px; background: var(--painel); color: var(--texto);
+    border: 1px solid var(--borda); border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer;
+  }
+  body.com-lightbox { overflow: hidden; }
+</style>
+</head>
+<body>
+<header class="wrap">
+  <h1>Castelinho — Galeria 3D</h1>
+  <p class="aviso">Contém spoilers do jogo</p>
+  <nav class="links" aria-label="Links">
+    <a href="../">Jogar</a>
+    <a href="../?debug=1">Modo debug</a>
+    <a href="https://claude.ai/artifact/8QEcTF238ZrVzPWyTGaCtJ" target="_blank" rel="noopener">Mesa de som</a>
+    <a id="link-canva" href="#" target="_blank" rel="noopener" hidden>Design no Canva</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div class="filtros" id="filtros" role="group" aria-label="Filtrar por grupo"></div>
+  <p class="estado" id="estado" role="status">Carregando galeria…</p>
+  <section class="grade" id="grade" aria-live="polite"></section>
+</main>
+
+<footer class="wrap rodape" id="rodape"></footer>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Foto ampliada" hidden>
+  <img id="lightbox-img" alt="">
+  <p id="lightbox-legenda"></p>
+  <button type="button" class="fechar" id="lightbox-fechar">Fechar</button>
+</div>
+
+<noscript><p class="wrap estado">A galeria precisa de JavaScript para carregar os objetos.</p></noscript>
+
+<script>
+(function () {
+  'use strict';
+
+  var NOMES_GRUPO = {
+    castelo: 'Castelo',
+    barra: 'Barra (flashback)',
+    porao: 'Porão',
+    lago: 'Lago',
+    criaturas: 'Criaturas'
+  };
+  var GRUPOS = ['castelo', 'barra', 'porao', 'lago', 'criaturas'];
+  var REPO = 'https://github.com/IcaroPv01/jogo_castelinho_imb-/blob/main/';
+
+  var dados = null;
+  var filtroAtual = 'todos';
+
+  // Cria elementos com DOM (sem innerHTML), para o texto do manifesto nunca virar HTML.
+  function el(tag, props, filhos) {
+    var n = document.createElement(tag);
+    if (props) {
+      Object.keys(props).forEach(function (k) {
+        var v = props[k];
+        if (v === null || v === undefined || v === false) return;
+        if (k === 'text') n.textContent = v;
+        else if (k.indexOf('on') === 0) n.addEventListener(k.slice(2), v);
+        else n.setAttribute(k, v === true ? '' : String(v));
+      });
+    }
+    (filhos || []).forEach(function (f) { if (f !== null && f !== undefined) n.append(f); });
+    return n;
+  }
+
+  function urlHttps(u) {
+    return typeof u === 'string' && /^https:\/\//.test(u) ? u : null;
+  }
+
+  function linkCodigo(arquivo, linha) {
+    var caminho = String(arquivo || '').split('/').map(encodeURIComponent).join('/');
+    return REPO + caminho + (linha ? '#L' + linha : '');
+  }
+
+  function formatarData(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''));
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : (s || '');
+  }
+
+  // Lightbox simples
+  var lb = document.getElementById('lightbox');
+  var lbImg = document.getElementById('lightbox-img');
+  var lbLegenda = document.getElementById('lightbox-legenda');
+  var lbFechar = document.getElementById('lightbox-fechar');
+
+  function abrirFoto(src, legenda) {
+    lbImg.src = src;
+    lbImg.alt = legenda;
+    lbLegenda.textContent = legenda;
+    lb.hidden = false;
+    document.body.classList.add('com-lightbox');
+    lbFechar.focus();
+  }
+
+  function fecharFoto() {
+    lb.hidden = true;
+    lbImg.removeAttribute('src');
+    document.body.classList.remove('com-lightbox');
+  }
+
+  lb.addEventListener('click', fecharFoto);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !lb.hidden) fecharFoto();
+  });
+
+  function fotoOuAviso(src, alt, classe, textoFalha) {
+    var img = el('img', { class: classe, src: src, alt: alt, loading: 'lazy' });
+    img.addEventListener('error', function () {
+      img.replaceWith(el('div', { class: 'vazio', text: textoFalha }));
+    });
+    return img;
+  }
+
+  function miniatura(src, legenda) {
+    var img = el('img', { src: src, alt: legenda, loading: 'lazy' });
+    var botao = el('button', {
+      type: 'button',
+      title: legenda,
+      'aria-label': 'Ampliar: ' + legenda,
+      onclick: function () { abrirFoto(src, legenda); }
+    }, [img]);
+    img.addEventListener('error', function () {
+      botao.disabled = true;
+      botao.replaceChildren(el('span', { class: 'sem-foto', text: 'sem foto' }));
+    });
+    return el('figure', { class: 'mini' }, [botao, el('figcaption', { text: legenda })]);
+  }
+
+  function criarCartao(o) {
+    var fotos = Array.isArray(o.fotos) ? o.fotos.filter(Boolean) : [];
+    var notas = Array.isArray(o.notas) ? o.notas.filter(Boolean) : [];
+    var nome = o.nome || o.id || 'Sem nome';
+
+    var caixa = el('div', { class: 'midia' });
+    var semModelo = function () {
+      return fotos[0]
+        ? fotoOuAviso(fotos[0], nome, 'foto-grande', 'Foto ainda não disponível.')
+        : el('div', { class: 'vazio', text: 'Modelo 3D ainda não disponível.' });
+    };
+
+    if (o.glb) {
+      var viewer = el('model-viewer', {
+        src: o.glb,
+        alt: 'Modelo 3D: ' + nome,
+        poster: fotos[0],
+        loading: 'lazy',
+        'camera-controls': true,
+        'auto-rotate': true,
+        'background-color': '#3b3d42',
+        onerror: function () { caixa.replaceChildren(semModelo()); }
+      });
+      caixa.append(viewer);
+    } else {
+      caixa.append(semModelo());
+    }
+
+    var miniaturas = fotos.map(function (f, i) { return miniatura(f, 'Foto ' + (i + 1)); });
+    if (o.local) miniaturas.push(miniatura(o.local, 'Onde fica'));
+
+    var link = el('a', {
+      href: linkCodigo(o.arquivo, o.linha),
+      target: '_blank',
+      rel: 'noopener',
+      text: (o.arquivo || '?') + (o.linha ? ':' + o.linha : '')
+    });
+
+    return el('article', { class: 'cartao' }, [
+      caixa,
+      el('div', { class: 'corpo' }, [
+        el('span', { class: 'grupo', text: NOMES_GRUPO[o.grupo] || o.grupo || '' }),
+        el('h2', { text: nome }),
+        el('p', { class: 'campo' }, [el('strong', { text: 'Onde fica: ' }), o.onde || '—']),
+        el('p', { class: 'campo' }, [el('strong', { text: 'Código: ' }), link]),
+        notas.length ? el('div', { class: 'nota' }, [el('p', { class: 'nota-titulo', text: 'Em aberto' })].concat(
+          notas.map(function (t) { return el('p', { text: t }); }))) : null,
+        miniaturas.length ? el('div', { class: 'miniaturas' }, miniaturas) : null
+      ])
+    ]);
+  }
+
+  function objetos() {
+    return Array.isArray(dados.objetos) ? dados.objetos : [];
+  }
+
+  function renderFiltros() {
+    var f = document.getElementById('filtros');
+    var todos = objetos();
+    var itens = [{ chave: 'todos', nome: 'Todos', qtd: todos.length }].concat(GRUPOS.map(function (g) {
+      return { chave: g, nome: NOMES_GRUPO[g], qtd: todos.filter(function (o) { return o.grupo === g; }).length };
+    }));
+    f.replaceChildren.apply(f, itens.map(function (it) {
+      return el('button', {
+        type: 'button',
+        'aria-pressed': String(it.chave === filtroAtual),
+        text: it.nome + ' (' + it.qtd + ')',
+        onclick: function () { filtroAtual = it.chave; renderFiltros(); renderGrade(); }
+      });
+    }));
+  }
+
+  function renderGrade() {
+    var g = document.getElementById('grade');
+    var lista = objetos().filter(function (o) { return filtroAtual === 'todos' || o.grupo === filtroAtual; });
+    var estado = document.getElementById('estado');
+    g.replaceChildren.apply(g, lista.map(criarCartao));
+    estado.hidden = lista.length > 0;
+    estado.textContent = 'Nenhum objeto neste grupo ainda.';
+  }
+
+  function mostrarErro(msg) {
+    var estado = document.getElementById('estado');
+    estado.hidden = false;
+    estado.textContent = msg;
+  }
+
+  function carregar() {
+    fetch('manifesto.json', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (json) {
+        dados = json;
+        var canva = urlHttps(dados.canva);
+        if (canva) {
+          var a = document.getElementById('link-canva');
+          a.href = canva;
+          a.hidden = false;
+        }
+        document.getElementById('rodape').textContent = 'Manifesto gerado em ' + formatarData(dados.gerado) + '.';
+        renderFiltros();
+        renderGrade();
+      })
+      .catch(function (e) {
+        mostrarErro('Não foi possível carregar manifesto.json (' + e.message + ').');
+      });
+  }
+
+  carregar();
+})();
+</script>
+</body>
+</html>

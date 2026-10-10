@@ -72,6 +72,8 @@ jobs:
           "$GODOT" --headless --export-release "$EXPORT_PRESET" build/web/index.html
           test -s build/web/index.wasm && test -s build/web/index.pck
           ls -la build/web
+          cp -r galeria build/web/galeria
+          rm -f build/web/galeria/.gdignore
 
       - name: Exportar Windows (só sob pedido)
         if: github.event_name == 'workflow_dispatch' && inputs.windows
