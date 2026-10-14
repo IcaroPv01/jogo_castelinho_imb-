@@ -18,3 +18,11 @@ Rodar um: `timeout 300 godot --headless -s res://tests/varredura/<nome>.gd`
 | `web_extra.sh` | build Web com câmera em cada shader e época (Chromium) |
 
 Vários godot em paralelo gravam o mesmo `user://save.json`: rode os que mexem em save um de cada vez.
+
+## Verificador de colocação (módulo 10)
+
+`colocacao.gd` (+ `colocacao_lib.gd`) constrói cada nível/visita com o registro de `Malha` ligado (`castelinho/malha.gd`,
+`castelinho/registro.gd`) e procura: objeto flutuando, enfiado/atravessando parede, z-fighting, frestas (com raio de
+confirmação), degraus de piso e objetos que mudam entre visitas. Rodar: `godot --headless -s res://tests/varredura/colocacao.gd`
+(ou `-- castelo ato2 barra porao braco` para escolher). Saída: `tests/varredura/saida/colocacao.{json,md}` (ignorada pelo git).
+Depurar um objeto: `COLOC_DEBUG=etiqueta COLOC_DEBUG_V=1`; um par de z-fighting: `COLOC_ZF=etiqueta`.

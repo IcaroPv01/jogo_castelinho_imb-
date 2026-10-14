@@ -169,6 +169,7 @@ static func _lote(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var rnd := RandomNumberGenerator.new()
 	rnd.seed = 2026
 	var base := Vector3(-17.3, 0, -6.1)
+	var _et := Malha.abrir("arvore_retorcida_jardim")
 	prisma(m, tronco, base, 1.3, 0.13, 0.1, 5, Vector3(-0.25, 0, -0.1))
 	var forq := base + Vector3(-0.25, 1.3, -0.1)
 	var copa_c := Vector3(-17.4, 2.6, -6.2)
@@ -185,7 +186,9 @@ static func _lote(c: Castelinho, g: Castelinho.Grupo) -> void:
 			cinza, Color(0.34, 0.38, 0.33))
 	m.col(Vector3(-17.6, 0, -6.4), Vector3(-17.0, 2.0, -5.8))
 	# lixeira de madeira e vaso (cantinhos do jardim)
+	Malha.abrir("lixeira_madeira_jardim")
 	m.caixa(Castelinho.mat_tri("madeira_escura", Vector3(1, 1, 1)), Vector3(-3.0, 0, -9.8), Vector3(-2.4, 0.7, -9.2), Malha.F_SEM_BASE)
+	Malha.fechar(_et)
 
 
 # ------------------------------------------------------------------ casas vizinhas (baixas, genéricas)
@@ -222,6 +225,7 @@ static func _casas(c: Castelinho, g: Castelinho.Grupo) -> void:
 		var alt: float = h[4]
 		var tipo := idx % 4
 		idx += 1
+		var _et := Malha.abrir("casa_vizinha_%d" % idx)
 		m.caixa(mats[h[5]], Vector3(cx_ - w * 0.5, 0, cz - d * 0.5), Vector3(cx_ + w * 0.5, alt, cz + d * 0.5), Malha.F_SEM_BASE - Malha.F_PY)
 		# telhados variados (casas de praia do litoral norte): 4 águas de cerâmica, 2 águas, fibrocimento,
 		# e sobrado com segundo pavimento recuado
@@ -271,6 +275,7 @@ static func _casas(c: Castelinho, g: Castelinho.Grupo) -> void:
 				var a: Vector3 = fm + lado * (0.8 * sgn)
 				var b: Vector3 = fm + lado * (meia * sgn)
 				m.caixa(muro, Vector3(minf(a.x, b.x) - 0.08, 0, minf(a.z, b.z) - 0.08), Vector3(maxf(a.x, b.x) + 0.08, 0.9, maxf(a.z, b.z) + 0.08), Malha.F_SEM_BASE)
+		Malha.fechar(_et)
 
 
 ## Telhado de duas águas com oitões (cumeeira ao longo de x se `ao_longo_x`).
@@ -301,11 +306,15 @@ static func _postes(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var concreto: Material = Castelinho.mat_cor(Color(0.6, 0.6, 0.58), 0.9)
 	var ferro: Material = c.m.ferro
 	var luz: Material = Castelinho.mat_luz(Color(1.0, 0.95, 0.8), 1.0)
+	var ip := 0
 	for p in POSTES:
+		ip += 1
+		var _et := Malha.abrir("poste_luz_%d" % ip)
 		m.caixa(concreto, p + Vector3(-0.1, 0, -0.1), p + Vector3(0.1, 7.0, 0.1), Malha.F_SEM_BASE)
 		m.caixa(concreto, p + Vector3(-0.6, 6.6, -0.05), p + Vector3(0.6, 6.75, 0.05), Malha.F_TODAS)
 		m.caixa(ferro, p + Vector3(-1.3, 6.8, -0.05), p + Vector3(0.0, 6.88, 0.05), Malha.F_TODAS)
 		m.caixa(luz, p + Vector3(-1.5, 6.72, -0.1), p + Vector3(-1.2, 6.8, 0.1), Malha.F_TODAS)
+		Malha.fechar(_et)
 
 
 # ------------------------------------------------------------------ cercas
@@ -313,6 +322,7 @@ static func _cercas(c: Castelinho, g: Castelinho.Grupo, g_n: Castelinho.Grupo) -
 	var tab: Material = Castelinho.mat_tri("madeira_escura", Vector3(1, 1, 1), Color(1.2, 1.1, 1.0))
 	var verde: Material = Castelinho.mat_tri("folhagem", Vector3(1, 1, 1), Color(0.75, 1.0, 0.7))
 	# oeste (x = -30): tábuas de 1,6 m + moita no pé
+	var _et := Malha.abrir("cerca_madeira_oeste")
 	g.ext.caixa(tab, Vector3(-30.12, 0, -34.0), Vector3(-30.0, 1.7, 0.0), Malha.F_SEM_BASE, 1.0)
 	g.ext.col(Vector3(-30.3, 0, -34.0), Vector3(-30.0, 2.0, 0.0))
 	var z := -33.0
@@ -320,22 +330,28 @@ static func _cercas(c: Castelinho, g: Castelinho.Grupo, g_n: Castelinho.Grupo) -
 		g.ext.caixa(tab, Vector3(-30.25, 0, z - 0.08), Vector3(-30.0, 1.9, z + 0.08), Malha.F_TODAS, 1.0)
 		z += 3.0
 	# norte (z = -34): cerca e cerca-viva; some em 1975 para o corredor passar
+	Malha.abrir("cerca_madeira_norte")
 	g_n.ext.caixa(tab, Vector3(-30.0, 0, -34.12), Vector3(0.0, 1.7, -34.0), Malha.F_SEM_BASE, 1.0)
 	g_n.ext.col(Vector3(-30.0, 0, -34.3), Vector3(0.0, 2.0, -34.0))
 	# a cerca-viva tem um vão no eixo do corredor de 1975 (antes ela atravessava o corredor na sala 25);
 	# fora de 1975 o vão é fechado por um trecho que existe só em 2019/2020
 	var xa := X_CORREDOR - L_CORREDOR * 0.5 - 0.4
 	var xb := X_CORREDOR + L_CORREDOR * 0.5 + 0.4
+	Malha.abrir("cerca_viva_norte_oeste")
 	_cerca_viva(g.ext, verde, -30.0, xa, -34.0)
+	Malha.abrir("cerca_viva_norte_leste")
 	_cerca_viva(g.ext, verde, xb, 0.0, -34.0)
+	Malha.abrir("cerca_viva_norte_vao")
 	_cerca_viva(g_n.ext, verde, xa, xb, -34.0)
 	# cerca-viva baixa ao longo da Nilza (leste do lote): moitas espaçadas
 	var rnd := RandomNumberGenerator.new()
 	rnd.seed = 44
 	for zz in [-30.0, -26.0, -22.5, -9.0, -6.0, -3.0]:
 		for k in 2:
+			Malha.abrir("moita_nilza_%d_%d" % [roundi(absf(zz) * 10.0), k + 1])
 			g.ext.bolha(verde, Vector3(-0.5, 0.3, zz - 0.3 + k * 0.6), Vector3(0.38, 0.34, 0.42), rnd, 7, 3, 0.15,
 				Color(1.0, 1.0, 1.0), Color(0.5, 0.55, 0.48))
+	Malha.fechar(_et)
 
 
 ## Dunas baixas de areia (só E1950): colinas de baixo poligonagem ao redor.
@@ -575,8 +591,10 @@ static func _corredor_1975(c: Castelinho, g: Castelinho.Grupo) -> void:
 		m.caixa(rodape, Vector3(x if lado == 1 else x, 0, z1) + Vector3(0.0 if lado == -1 else -0.04, 0, 0), Vector3(x + (0.04 if lado == -1 else 0.0), 0.15, z0), Malha.F_TODAS)
 		var zz := z0 - 3.0
 		while zz > z1 + 3.0:
+			Malha.abrir("porta_corredor_1975_%s_%d" % ["o" if lado == -1 else "l", roundi(absf(zz))])
 			m.quad(c.m.porta, Vector3(x + normal.x * 0.01, 0.0, zz + 0.5), Vector3(x + normal.x * 0.01, 0.0, zz - 0.5), Vector3(x + normal.x * 0.01, 2.1, zz - 0.5), Vector3(x + normal.x * 0.01, 2.1, zz + 0.5), normal, Vector2(1, 1))
 			zz -= 4.0
+		Malha.abrir("")
 	# parede do fundo com a porta de saída (para o Ato II): o nível coloca o Interagivel
 	m.caixa(parede, Vector3(xa - t, 0, z1 - t), Vector3(xb + t, alt, z1), Malha.F_TODAS - Malha.F_PY - Malha.F_NY, 2.0)
 	g.ext.col(Vector3(xa - t, 0, z1 - t), Vector3(xb + t, alt, z1))
@@ -591,7 +609,9 @@ static func _corredor_1975(c: Castelinho, g: Castelinho.Grupo) -> void:
 	var zlz := z0 - 8.0
 	var i := 0
 	while zlz > z1 + 4.0:
+		var _et := Malha.abrir("lustre_corredor_1975_%d" % (i + 1))
 		InteriorCastelinho.lustre(c, m, Vector3(X_CORREDOR, 2.55, zlz), alt, 0.8)
+		Malha.fechar(_et)
 		if i % 3 == 0:
 			c.luzes.append({"pos": Vector3(X_CORREDOR, 2.4, zlz), "sala": "corredor1975"})
 		zlz -= 9.0

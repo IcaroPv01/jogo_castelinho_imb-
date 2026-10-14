@@ -166,9 +166,9 @@ func _chao() -> void:
 	# faixa de areia onde o jogador fica (com colisão) até a linha d'água
 	Construtor.caixa(self, Vector3(500, 0.6, 60.0), Vector3(0, -0.3, MARGEM_Z + 30.0), areia, true, "Areia")
 	# areia molhada (mais escura) junto à água
-	Construtor.caixa(self, Vector3(500, 0.02, 2.2), Vector3(0, 0.005, MARGEM_Z + 1.1), _mat_areia(0.6), false)
+	Construtor.caixa(self, Vector3(499.8, 0.02, 2.2), Vector3(0, 0.005, MARGEM_Z + 1.1), _mat_areia(0.6), false)       # (500: as pontas eram coplanares com as da areia)
 	# barranco que desce para dentro d'água
-	var rampa := Construtor.caixa(self, Vector3(500, 0.3, 5.0), Vector3(0, -0.45, MARGEM_Z - 2.3), _mat_areia(0.55), false)
+	var rampa := Construtor.caixa(self, Vector3(499.6, 0.3, 5.0), Vector3(0, -0.45, MARGEM_Z - 2.3), _mat_areia(0.55), false)
 	rampa.rotation_degrees.x = -7
 	# fundo escuro (areia do rio) para não ver o vazio por baixo da água
 	Construtor.caixa(self, Vector3(400, 0.2, 300), Vector3(0, -3.0, -140), Ato2Pecas.mat_cor(Color(0.1, 0.12, 0.13)), false)
@@ -245,7 +245,7 @@ func _margem_oposta_e_orla() -> void:
 		if rng.randf() < 0.5:
 			Construtor.caixa(self, Vector3(0.8, 0.8, 0.2), Vector3(x, h * 0.6, -163.0), janela, false)
 	# atrás do jogador: calçadão, postes e prédios da orla de Imbé
-	Construtor.caixa(self, Vector3(500, 0.5, 6.0), Vector3(0, -0.1, 20.0), Ato2Pecas.mat_cor(Color(0.55, 0.5, 0.48)), true)
+	Construtor.caixa(self, Vector3(499.5, 0.5, 6.0), Vector3(0, -0.1, 20.0), Ato2Pecas.mat_cor(Color(0.55, 0.5, 0.48)), true)
 	var pastel := [Color(0.9, 0.7, 0.6), Color(0.7, 0.8, 0.85), Color(0.9, 0.85, 0.6), Color(0.75, 0.6, 0.7)]
 	for i in 24:
 		var h := rng.randf_range(5.0, 16.0)

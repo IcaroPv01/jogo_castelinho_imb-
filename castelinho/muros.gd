@@ -117,10 +117,11 @@ static func muro(me: Malha, mi: Malha, mat_e: Material, mat_i: Material, o: Vect
 		me_quad_rev(me if not sem_ext else mi, mat_rev, o, u, n, t, ua, a["v0"], ua, a["vs"], u)
 		me_quad_rev(me if not sem_ext else mi, mat_rev, o, u, n, t, ub, a["v0"], ub, a["vs"], -u)
 		if a["v0"] > y0 + 0.0005:
-			var q0 := _p(o, u, n, ua, a["v0"], 0)
-			var q1 := _p(o, u, n, ub, a["v0"], 0)
-			var q2 := _p(o, u, n, ub, a["v0"], t)
-			var q3 := _p(o, u, n, ua, a["v0"], t)
+			# soleira 2 mm acima do piso do vão (coplanar com o piso da sala: piscava no porão)
+			var q0 := _p(o, u, n, ua, a["v0"] + 0.004, 0)
+			var q1 := _p(o, u, n, ub, a["v0"] + 0.004, 0)
+			var q2 := _p(o, u, n, ub, a["v0"] + 0.004, t)
+			var q3 := _p(o, u, n, ua, a["v0"] + 0.004, t)
 			(me if not sem_ext else mi).quad(mat_rev, q0, q1, q2, q3, Vector3.UP)
 		for i in pf.size() - 1:
 			var s0 := pf[i]
