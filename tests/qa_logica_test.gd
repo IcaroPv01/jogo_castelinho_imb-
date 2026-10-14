@@ -465,8 +465,9 @@ func _b15_bracomorto_chao() -> void:
 	_checar(p.global_position.y > -0.5, "em cima do calçadão o jogador não cai (y=%.2f)" % p.global_position.y)
 	p.global_position = Vector3(0, -20, 0)             # buraco: a rede de segurança devolve à margem
 	await _frames(5)
-	var perto := Vector2(p.global_position.x + 14.0, p.global_position.z - 6.0).length() < 1.6
-	_checar(perto and p.global_position.y > -1.0, "y=-20 volta para perto de (-14, 6) (%s)" % str(p.global_position))
+	# B26: a rede de segurança geral (world/rede_seguranca.gd) costuma agir antes e devolve ao último ponto seguro
+	await _frames(30)
+	_checar(p.global_position.y > -3.0 and p.is_on_floor(), "y=-20 volta para o chão (%s)" % str(p.global_position))
 
 
 # ---------------------------------------------------------------- B16

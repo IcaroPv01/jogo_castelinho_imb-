@@ -333,10 +333,27 @@ func _rotulo(pai: Node3D, texto: String, pos: Vector3, rot_y: float, tamanho: in
 
 
 # ============================================================================ terreno e dunas
+## Área andável das dunas (playtest do Bernardo: "o deserto é giga, demora muito pra cair no void"). Paredes
+## invisíveis fecham este retângulo; o terreno vai só um pouco além, o bastante para a névoa (80 m) esconder a borda.
+const DUNAS_X := 50.0
+const DUNAS_Z_FIM := -135.0
+const DUNAS_Z_INI := 25.0
+
+
 func _terreno() -> void:
-	var malha := Ato2Pecas.malha_dunas(-120.0, 120.0, -215.0, 30.0, 2.5)
+	var malha := Ato2Pecas.malha_dunas(-90.0, 90.0, -180.0, 30.0, 2.5)
 	var mi := Ato2Pecas.com_colisao_trimesh(self, malha, m_areia)
 	mi.name = "Dunas"
+	var bordas := Node3D.new()
+	bordas.name = "BordasDunas"
+	add_child(bordas)
+	var cx := DUNAS_X * 2.0
+	var cz := DUNAS_Z_INI - DUNAS_Z_FIM
+	var zm := (DUNAS_Z_INI + DUNAS_Z_FIM) * 0.5
+	Ato2Pecas.colisao_invisivel(bordas, Vector3(1.0, 40.0, cz), Vector3(-DUNAS_X, 10.0, zm))
+	Ato2Pecas.colisao_invisivel(bordas, Vector3(1.0, 40.0, cz), Vector3(DUNAS_X, 10.0, zm))
+	Ato2Pecas.colisao_invisivel(bordas, Vector3(cx, 40.0, 1.0), Vector3(0.0, 10.0, DUNAS_Z_FIM))
+	Ato2Pecas.colisao_invisivel(bordas, Vector3(cx, 40.0, 1.0), Vector3(0.0, 10.0, DUNAS_Z_INI))
 
 
 func _altura(x: float, z: float) -> float:
@@ -375,7 +392,7 @@ func _dunas_extras() -> void:
 	mm.instance_count = n
 	for i in n:
 		var x := rng.randf_range(-70.0, 70.0)
-		var z := rng.randf_range(-190.0, -20.0)
+		var z := rng.randf_range(-175.0, -20.0)
 		if absf(x) < 5.0 and z > -80.0:
 			x += 9.0 * signf(x if x != 0.0 else 1.0)
 		var s := rng.randf_range(0.7, 1.7)
