@@ -401,7 +401,8 @@ static func _castelo_nos() -> Array:
 	A.append(_e("passaporte_chave", "Chave velha do Passaporte", "castelo", "Sala do Meio Ambiente, perto do pinguim, " + _salas(9) + "; só na visita 1", N, "func _modelo_passaporte", "c_v1_hoje",
 		_nf(func(nv): return nv._modelo_passaporte("chave")), {"ref": func(nv): return nv.find_child("Passaporte_chave", true, false), "dist": 2.2}))
 	A.append(_e("folha_costela", "Folha de costela-de-Adão (no painel P02)", "castelo", "Brotando no canto do painel P02, " + _salas(2) + "; hoje (2020)", N, "func _folha_costela", "c_v1_hoje",
-		_no(func(): return _folha_costela()), {"ref": func(nv): return nv.find_child("FolhaCostelaDeAdao", true, false), "dist": 2.4}))
+		_no(func(): return _folha_costela()), {"ref": func(nv): return nv.find_child("FolhaCostelaDeAdao", true, false), "dist": 2.4,
+		"notas": ["é um Sprite3D (imagem de 48 px sempre virada para a câmera): o .glb não leva a folha"]}))
 	A.append(_e("disco_1967", "Disco do Visor (1967)", "castelo", "Vitrine de discos do Acervo, " + _salas(12) + "; a partir da visita 2, até ser pego", T, "static func criar_disco", "c_v2_hoje",
 		_no(func(): return TitoCastelinho.criar_disco(Color(0.85, 0.12, 0.1))), {"ref": func(nv): return nv._discos_chao[4][0], "dist": 1.6}))
 	A.append(_e("disco_1975", "Disco do Visor (1975)", "castelo", "Pedestal no topo da Torre A, " + _salas(17) + "; a partir da visita 3, até ser pego", T, "static func criar_disco", "c_v3_hoje",
@@ -507,7 +508,7 @@ static func _barra() -> Array:
 	A.append(_e("sandalia_crianca", "Sandália de criança", "barra", "Vem dentro da rede do 3º lance (e reaparece no trono do Castelinho)", B, "func _sandalia_na_rede", "barra",
 		_no(func(): return _sandalia()), {"colocar": {"pos": Vector3(0.3, 0.02, -1.0), "yaw": 35.0}, "dist": 1.4}))
 	A.append(_e("bloco_molhe", "Bloco de pedra do molhe", "barra", "Molhe de pedra que corre pela margem rumo ao mar (260 blocos), Barra", B, "func _molhe_e_ponte", "barra",
-		_no(func(): return _bloco_molhe()), {"colocar": {"pos": Vector3(1.8, -0.1, -2.6)}, "dist": 3.0}))
+		_no(func(): return _bloco_molhe()), {"colocar": {"pos": Vector3(1.8, 0.55, -2.0)}, "dist": 3.0}))
 	return A
 
 
@@ -556,7 +557,7 @@ static func _porao() -> Array:
 	A.append(_e("figura_slide", "Figura Branca do slide (silhueta)", "porao", "Sala 98, slide do último dia (só com o disco sem data)", Q, "static func _figura_slide", "porao_semdata",
 		_no(func(): return _figura_slide()), {"colocar": {"sala": 17, "pos": Vector3(0.0, 0.0, -6.0), "yaw": 180.0}, "dist": 5.0}))
 	A.append(_e("balde_boiando", "Balde vermelho boiando", "porao", "Sala 99, slide do último dia: água parada e o balde", Q, "static func _balde_boiando", "porao_semdata",
-		_no(func(): return PoraoQuarto._balde_boiando()), {"colocar": {"sala": 18, "pos": Vector3(0.4, -0.1, -4.0)}, "dist": 2.4}))
+		_no(func(): return PoraoQuarto._balde_boiando()), {"colocar": {"sala": 18, "pos": Vector3(0.4, 0.05, -1.6)}, "dist": 2.4}))
 	return A
 
 
@@ -608,6 +609,6 @@ static func _criaturas() -> Array:
 	A.append(_e("menino_em_pe", "Menino de pé com balde (slide)", "criaturas", "Sala 96 do porão, slide do último dia (só com o disco sem data)", "world/niveis/porao_quarto.gd", "static func _menino", "porao_semdata",
 		_no(func(): return _menino(false)), {"colocar": {"sala": 15, "pos": Vector3(0.0, 0.0, -5.0)}, "dist": 3.0}))
 	A.append(_e("mao_longa", "Mão longa da Figura", "criaturas", "Braço Morto: a mão que sai da água e pousa no ombro de quem afunda (final 'sala 101')", "world/niveis/braco_morto.gd", "func _mao_longa", "lago",
-		_nf(func(nv): return _mao(nv)), {"dist": 2.2, "colocar": {"pos": Vector3(5.0, 0.4, -3.0)},
+		_nf(func(nv): return _mao(nv)), {"dist": 2.2, "colocar": {"pos": Vector3(5.0, 1.0, -3.0)},
 		"notas": ["a foto de local mostra a mão solta no calçadão: no jogo ela só aparece no final"]}))
 	return A

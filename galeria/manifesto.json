@@ -31,10 +31,8 @@
         "fotos/mesa_acervo_2.jpg",
         "fotos/mesa_acervo_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/mesa_acervo_local.jpg",
+      "notas": []
     },
     {
       "id": "mural_pescador",
@@ -145,10 +143,8 @@
         "fotos/lareira_2.jpg",
         "fotos/lareira_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/lareira_local.jpg",
+      "notas": []
     },
     {
       "id": "capelo_escudo",
@@ -227,10 +223,8 @@
         "fotos/trono_2.jpg",
         "fotos/trono_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/trono_local.jpg",
+      "notas": []
     },
     {
       "id": "mesa_medieval",
@@ -277,10 +271,8 @@
         "fotos/bau_madeira_2.jpg",
         "fotos/bau_madeira_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/bau_madeira_local.jpg",
+      "notas": []
     },
     {
       "id": "lustre_ferro",
@@ -295,10 +287,8 @@
         "fotos/lustre_ferro_2.jpg",
         "fotos/lustre_ferro_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/lustre_ferro_local.jpg",
+      "notas": []
     },
     {
       "id": "mesa_pedra",
@@ -329,10 +319,8 @@
         "fotos/churrasqueira_2.jpg",
         "fotos/churrasqueira_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/churrasqueira_local.jpg",
+      "notas": []
     },
     {
       "id": "guarda_sol",
@@ -470,7 +458,7 @@
       "grupo": "castelo",
       "onde": "Sala do Meio Ambiente, sala 9 (V1) · 31 (V2) · 53 (V3) · 75 (V4); hoje (2020). Os olhos seguem o jogador a partir da visita 3",
       "arquivo": "castelinho/mobilia.gd",
-      "linha": 423,
+      "linha": 426,
       "glb": "modelos/pinguim.glb",
       "fotos": [
         "fotos/pinguim_1.jpg",
@@ -486,7 +474,7 @@
       "grupo": "castelo",
       "onde": "Mesa do Acervo, sala 12 (V1) · 34 (V2) · 56 (V3) · 78 (V4); hoje (2020). Toca na visita 2",
       "arquivo": "castelinho/mobilia.gd",
-      "linha": 478,
+      "linha": 481,
       "glb": "modelos/telefone_acervo.glb",
       "fotos": [
         "fotos/telefone_acervo_1.jpg",
@@ -559,10 +547,8 @@
         "fotos/passaporte_pedra_2.jpg",
         "fotos/passaporte_pedra_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/passaporte_pedra_local.jpg",
+      "notas": []
     },
     {
       "id": "passaporte_foto",
@@ -577,10 +563,8 @@
         "fotos/passaporte_foto_2.jpg",
         "fotos/passaporte_foto_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/passaporte_foto_local.jpg",
+      "notas": []
     },
     {
       "id": "passaporte_chave",
@@ -595,10 +579,8 @@
         "fotos/passaporte_chave_2.jpg",
         "fotos/passaporte_chave_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/passaporte_chave_local.jpg",
+      "notas": []
     },
     {
       "id": "folha_costela",
@@ -614,7 +596,9 @@
         "fotos/folha_costela_3.jpg"
       ],
       "local": "fotos/folha_costela_local.jpg",
-      "notas": []
+      "notas": [
+        "é um Sprite3D (imagem de 48 px sempre virada para a câmera): o .glb não leva a folha"
+      ]
     },
     {
       "id": "painel_p01",
@@ -768,7 +752,7 @@
       "grupo": "castelo",
       "onde": "Trono do fundo da Sala Medieval, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só aparece na visita 3",
       "arquivo": "castelinho/mobilia.gd",
-      "linha": 458,
+      "linha": 461,
       "glb": "modelos/armadura.glb",
       "fotos": [
         "fotos/armadura_1.jpg",
@@ -944,7 +928,7 @@
       "grupo": "castelo",
       "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
       "arquivo": "castelinho/mobilia.gd",
-      "linha": 359,
+      "linha": 362,
       "glb": "modelos/mesa_centro_1975.glb",
       "fotos": [
         "fotos/mesa_centro_1975_1.jpg",
@@ -960,17 +944,15 @@
       "grupo": "castelo",
       "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
       "arquivo": "castelinho/mobilia.gd",
-      "linha": 369,
+      "linha": 372,
       "glb": "modelos/estante_1975.glb",
       "fotos": [
         "fotos/estante_1975_1.jpg",
         "fotos/estante_1975_2.jpg",
         "fotos/estante_1975_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/estante_1975_local.jpg",
+      "notas": []
     },
     {
       "id": "abajur_1975",
@@ -978,7 +960,7 @@
       "grupo": "castelo",
       "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
       "arquivo": "castelinho/mobilia.gd",
-      "linha": 384,
+      "linha": 387,
       "glb": "modelos/abajur_1975.glb",
       "fotos": [
         "fotos/abajur_1975_1.jpg",
@@ -994,17 +976,15 @@
       "grupo": "castelo",
       "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
       "arquivo": "castelinho/mobilia.gd",
-      "linha": 389,
+      "linha": 392,
       "glb": "modelos/tv_1975.glb",
       "fotos": [
         "fotos/tv_1975_1.jpg",
         "fotos/tv_1975_2.jpg",
         "fotos/tv_1975_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/tv_1975_local.jpg",
+      "notas": []
     },
     {
       "id": "quadro_por_do_sol",
@@ -1012,7 +992,7 @@
       "grupo": "castelo",
       "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
       "arquivo": "castelinho/mobilia.gd",
-      "linha": 394,
+      "linha": 397,
       "glb": "modelos/quadro_por_do_sol.glb",
       "fotos": [
         "fotos/quadro_por_do_sol_1.jpg",
@@ -1028,7 +1008,7 @@
       "grupo": "castelo",
       "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
       "arquivo": "castelinho/mobilia.gd",
-      "linha": 402,
+      "linha": 405,
       "glb": "modelos/cadeira_palha_1975.glb",
       "fotos": [
         "fotos/cadeira_palha_1975_1.jpg",
@@ -1192,7 +1172,7 @@
       "grupo": "castelo",
       "onde": "Fachada sul da Torre A, sala 3 (V1) · 25 (V2) · 47 (V3) · 69 (V4); época 1967 (obra)",
       "arquivo": "castelinho/obra.gd",
-      "linha": 119,
+      "linha": 122,
       "glb": "modelos/andaime_madeira.glb",
       "fotos": [
         "fotos/andaime_madeira_1.jpg",
@@ -1208,17 +1188,15 @@
       "grupo": "castelo",
       "onde": "Canteiro diante do prédio, sala 3 (V1) · 25 (V2) · 47 (V3) · 69 (V4); época 1967",
       "arquivo": "castelinho/obra.gd",
-      "linha": 163,
+      "linha": 166,
       "glb": "modelos/pilha_blocos.glb",
       "fotos": [
         "fotos/pilha_blocos_1.jpg",
         "fotos/pilha_blocos_2.jpg",
         "fotos/pilha_blocos_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/pilha_blocos_local.jpg",
+      "notas": []
     },
     {
       "id": "barco_encalhado",
@@ -1226,17 +1204,15 @@
       "grupo": "castelo",
       "onde": "Gramado diante do prédio, sala 2 (V1) · 24 (V2) · 46 (V3) · 68 (V4); época 1967",
       "arquivo": "castelinho/obra.gd",
-      "linha": 185,
+      "linha": 188,
       "glb": "modelos/barco_encalhado.glb",
       "fotos": [
         "fotos/barco_encalhado_1.jpg",
         "fotos/barco_encalhado_2.jpg",
         "fotos/barco_encalhado_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/barco_encalhado_local.jpg",
+      "notas": []
     },
     {
       "id": "castelo_de_areia",
@@ -1244,7 +1220,7 @@
       "grupo": "castelo",
       "onde": "Ao lado de onde o Tito brinca, sala 1 (V1) · 23 (V2) · 45 (V3) · 67 (V4); época 1967",
       "arquivo": "castelinho/obra.gd",
-      "linha": 279,
+      "linha": 282,
       "glb": "modelos/castelo_de_areia.glb",
       "fotos": [
         "fotos/castelo_de_areia_1.jpg",
@@ -1260,17 +1236,15 @@
       "grupo": "castelo",
       "onde": "Canteiro, pé do andaime, sala 3 (V1) · 25 (V2) · 47 (V3) · 69 (V4); época 1967",
       "arquivo": "castelinho/obra.gd",
-      "linha": 305,
+      "linha": 308,
       "glb": "modelos/carrinho_de_mao.glb",
       "fotos": [
         "fotos/carrinho_de_mao_1.jpg",
         "fotos/carrinho_de_mao_2.jpg",
         "fotos/carrinho_de_mao_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/carrinho_de_mao_local.jpg",
+      "notas": []
     },
     {
       "id": "caixa_de_massa",
@@ -1278,7 +1252,7 @@
       "grupo": "castelo",
       "onde": "Canteiro, sala 4 (V1) · 26 (V2) · 48 (V3) · 70 (V4); época 1967",
       "arquivo": "castelinho/obra.gd",
-      "linha": 314,
+      "linha": 317,
       "glb": "modelos/caixa_de_massa.glb",
       "fotos": [
         "fotos/caixa_de_massa_1.jpg",
@@ -1294,7 +1268,7 @@
       "grupo": "castelo",
       "onde": "Canteiro, sala 4 (V1) · 26 (V2) · 48 (V3) · 70 (V4); época 1967",
       "arquivo": "castelinho/obra.gd",
-      "linha": 320,
+      "linha": 323,
       "glb": "modelos/monte_areia_sacos.glb",
       "fotos": [
         "fotos/monte_areia_sacos_1.jpg",
@@ -1310,7 +1284,7 @@
       "grupo": "castelo",
       "onde": "Muro baixo da Av. Garibaldi, sala 1 (V1) · 23 (V2) · 45 (V3) · 67 (V4); época 1967",
       "arquivo": "castelinho/obra.gd",
-      "linha": 256,
+      "linha": 259,
       "glb": "modelos/muro_buraco.glb",
       "fotos": [
         "fotos/muro_buraco_1.jpg",
@@ -1383,10 +1357,9 @@
         "fotos/boto_2.jpg",
         "fotos/boto_3.jpg"
       ],
-      "local": "",
+      "local": "fotos/boto_local.jpg",
       "notas": [
-        "a nadadeira dorsal CORTADA é um toco achatado: é de propósito",
-        "sem foto de local (nenhum ponto de vista livre achado)"
+        "a nadadeira dorsal CORTADA é um toco achatado: é de propósito"
       ]
     },
     {
@@ -1434,10 +1407,8 @@
         "fotos/bloco_molhe_2.jpg",
         "fotos/bloco_molhe_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/bloco_molhe_local.jpg",
+      "notas": []
     },
     {
       "id": "fitas_entrada_porao",
@@ -1468,10 +1439,9 @@
         "fotos/porta_porao_2.jpg",
         "fotos/porta_porao_3.jpg"
       ],
-      "local": "",
+      "local": "fotos/porta_porao_local.jpg",
       "notas": [
-        "no jogo a porta começa levantada e desce quando o jogador entra",
-        "sem foto de local (nenhum ponto de vista livre achado)"
+        "no jogo a porta começa levantada e desce quando o jogador entra"
       ]
     },
     {
@@ -1551,10 +1521,8 @@
         "fotos/mesinha_crianca_2.jpg",
         "fotos/mesinha_crianca_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/mesinha_crianca_local.jpg",
+      "notas": []
     },
     {
       "id": "cama_crianca",
@@ -1617,10 +1585,8 @@
         "fotos/poco_balde_2.jpg",
         "fotos/poco_balde_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/poco_balde_local.jpg",
+      "notas": []
     },
     {
       "id": "cama_quarto_tito",
@@ -1651,10 +1617,8 @@
         "fotos/guarda_roupa_quarto_2.jpg",
         "fotos/guarda_roupa_quarto_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/guarda_roupa_quarto_local.jpg",
+      "notas": []
     },
     {
       "id": "balde_pazinha_quarto",
@@ -1786,10 +1750,8 @@
         "fotos/balde_boiando_2.jpg",
         "fotos/balde_boiando_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/balde_boiando_local.jpg",
+      "notas": []
     },
     {
       "id": "menino_em_pe",
@@ -1836,10 +1798,8 @@
         "fotos/banco_calcadao_2.jpg",
         "fotos/banco_calcadao_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/banco_calcadao_local.jpg",
+      "notas": []
     },
     {
       "id": "canteiro_calcadao",
@@ -1936,10 +1896,8 @@
         "fotos/obra_blocos_tapume_2.jpg",
         "fotos/obra_blocos_tapume_3.jpg"
       ],
-      "local": "",
-      "notas": [
-        "sem foto de local (nenhum ponto de vista livre achado)"
-      ]
+      "local": "fotos/obra_blocos_tapume_local.jpg",
+      "notas": []
     },
     {
       "id": "fundo_lago_pecas",
@@ -1990,10 +1948,9 @@
         "fotos/mao_longa_2.jpg",
         "fotos/mao_longa_3.jpg"
       ],
-      "local": "",
+      "local": "fotos/mao_longa_local.jpg",
       "notas": [
-        "a foto de local mostra a mão solta no calçadão: no jogo ela só aparece no final",
-        "sem foto de local (nenhum ponto de vista livre achado)"
+        "a foto de local mostra a mão solta no calçadão: no jogo ela só aparece no final"
       ]
     }
   ]

@@ -253,6 +253,9 @@ func _esconder_ui() -> void:
 	for c in root.get_children():
 		if c is CanvasLayer:
 			(c as CanvasLayer).visible = false
+	if nivel:
+		for c in nivel.find_children("*", "CanvasLayer", true, false):
+			(c as CanvasLayer).visible = false
 	if main:
 		for c in main.get_children():
 			if c is CanvasLayer:
@@ -648,6 +651,7 @@ func _foto_local(o: Dictionary, info: Dictionary, bb_estudio: AABB) -> String:
 	raio = clampf(raio, 0.25, 12.0)
 	var pt = _achar_vista(centro, raio, base_y, float(o.get("frente", 0.0)), float(o.get("dist", 0.0)))
 	if pt == null:
+		print("      sem vista: centro ", centro, " raio ", raio, " base ", base_y, " ref ", ref_no)
 		if colocado:
 			colocado.queue_free()
 		return ""
@@ -714,7 +718,7 @@ func _achar_vista_lim(centro: Vector3, raio: float, base_y: float, frente_deg: f
 		for off in offs:
 			var az := deg_to_rad(frente_deg + off)
 			var xz := Vector3(centro.x + sin(az) * d, 0, centro.z + cos(az) * d)
-			var y_ini := base_y + 0.7
+			var y_ini := (centro.y + 1.5) if not coberto else minf(base_y + 0.7, centro.y)
 			var hit := _raio(Vector3(xz.x, y_ini, xz.z), Vector3(xz.x, y_ini - 8.0, xz.z))
 			if hit.is_empty() and not coberto:
 				hit = _raio(Vector3(xz.x, y_ini + 4.0, xz.z), Vector3(xz.x, y_ini - 8.0, xz.z))
