@@ -1,0 +1,2719 @@
+{
+  "gerado": "2026-10-14",
+  "canva": "",
+  "objetos": [
+    {
+      "id": "cavalete",
+      "nome": "Cavalete com tela",
+      "grupo": "castelo",
+      "onde": "Hall e Salão de Arte (galeria de quadros), sala 7 (V1) · 29 (V2) · 51 (V3) · 73 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 236,
+      "glb": "modelos/cavalete.glb",
+      "fotos": [
+        "fotos/cavalete_1.jpg",
+        "fotos/cavalete_2.jpg",
+        "fotos/cavalete_3.jpg"
+      ],
+      "local": "fotos/cavalete_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "mesa_acervo",
+      "nome": "Mesa do acervo com máquina de escrever e livros",
+      "grupo": "castelo",
+      "onde": "Acervo, sala 12 (V1) · 34 (V2) · 56 (V3) · 78 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 137,
+      "glb": "modelos/mesa_acervo.glb",
+      "fotos": [
+        "fotos/mesa_acervo_1.jpg",
+        "fotos/mesa_acervo_2.jpg",
+        "fotos/mesa_acervo_3.jpg"
+      ],
+      "local": "fotos/mesa_acervo_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "vitrine_discos",
+      "nome": "Vitrine de discos do Acervo",
+      "grupo": "castelo",
+      "onde": "Canto do Acervo, sala 12 (V1) · 34 (V2) · 56 (V3) · 78 (V4); hoje (2020). O disco de 1967 fica em cima, a partir da visita 2",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 144,
+      "glb": "modelos/vitrine_discos.glb",
+      "fotos": [
+        "fotos/vitrine_discos_1.jpg",
+        "fotos/vitrine_discos_2.jpg",
+        "fotos/vitrine_discos_3.jpg"
+      ],
+      "local": "fotos/vitrine_discos_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "mesa_corredor",
+      "nome": "Mesa do corredor da Secretaria",
+      "grupo": "castelo",
+      "onde": "Corredor da Secretaria, ponta leste, sala 10 (V1) · 32 (V2) · 54 (V3) · 76 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 220,
+      "glb": "modelos/mesa_corredor.glb",
+      "fotos": [
+        "fotos/mesa_corredor_1.jpg",
+        "fotos/mesa_corredor_2.jpg",
+        "fotos/mesa_corredor_3.jpg"
+      ],
+      "local": "fotos/mesa_corredor_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "mural_pescador",
+      "nome": "Mural do pescador",
+      "grupo": "castelo",
+      "onde": "Sala do Pescador, sala 13 (V1) · 35 (V2) · 57 (V3) · 79 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 147,
+      "glb": "modelos/mural_pescador.glb",
+      "fotos": [
+        "fotos/mural_pescador_1.jpg",
+        "fotos/mural_pescador_2.jpg",
+        "fotos/mural_pescador_3.jpg"
+      ],
+      "local": "fotos/mural_pescador_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "praia_conchas",
+      "nome": "Faixa de areia com conchas, tartaruga e boto de pano",
+      "grupo": "castelo",
+      "onde": "Sala do Pescador, sala 13 (V1) · 35 (V2) · 57 (V3) · 79 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 157,
+      "glb": "modelos/praia_conchas.glb",
+      "fotos": [
+        "fotos/praia_conchas_1.jpg",
+        "fotos/praia_conchas_2.jpg",
+        "fotos/praia_conchas_3.jpg"
+      ],
+      "local": "fotos/praia_conchas_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "banco_baixo_pescador",
+      "nome": "Banco baixo de madeira (Sala do Pescador)",
+      "grupo": "castelo",
+      "onde": "Sala do Pescador, sala 13 (V1) · 35 (V2) · 57 (V3) · 79 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 174,
+      "glb": "modelos/banco_baixo_pescador.glb",
+      "fotos": [
+        "fotos/banco_baixo_pescador_1.jpg",
+        "fotos/banco_baixo_pescador_2.jpg",
+        "fotos/banco_baixo_pescador_3.jpg"
+      ],
+      "local": "fotos/banco_baixo_pescador_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "vitrine_conchas",
+      "nome": "Vitrine longa de conchas (sambaqui)",
+      "grupo": "castelo",
+      "onde": "Sala dos Povos Originários, sala 8 (V1) · 30 (V2) · 52 (V3) · 74 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 177,
+      "glb": "modelos/vitrine_conchas.glb",
+      "fotos": [
+        "fotos/vitrine_conchas_1.jpg",
+        "fotos/vitrine_conchas_2.jpg",
+        "fotos/vitrine_conchas_3.jpg"
+      ],
+      "local": "fotos/vitrine_conchas_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "banco_povos",
+      "nome": "Banco baixo de madeira (Sala dos Povos)",
+      "grupo": "castelo",
+      "onde": "Sala dos Povos Originários, sala 8 (V1) · 30 (V2) · 52 (V3) · 74 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 186,
+      "glb": "modelos/banco_povos.glb",
+      "fotos": [
+        "fotos/banco_povos_1.jpg",
+        "fotos/banco_povos_2.jpg",
+        "fotos/banco_povos_3.jpg"
+      ],
+      "local": "fotos/banco_povos_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "vertebra_baleia",
+      "nome": "Vértebra de baleia",
+      "grupo": "castelo",
+      "onde": "Sala do Meio Ambiente, sala 9 (V1) · 31 (V2) · 53 (V3) · 75 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 190,
+      "glb": "modelos/vertebra_baleia.glb",
+      "fotos": [
+        "fotos/vertebra_baleia_1.jpg",
+        "fotos/vertebra_baleia_2.jpg",
+        "fotos/vertebra_baleia_3.jpg"
+      ],
+      "local": "fotos/vertebra_baleia_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "banner_ambiental",
+      "nome": "Banner de educação ambiental",
+      "grupo": "castelo",
+      "onde": "Sala do Meio Ambiente, parede oeste, sala 9 (V1) · 31 (V2) · 53 (V3) · 75 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 202,
+      "glb": "modelos/banner_ambiental.glb",
+      "fotos": [
+        "fotos/banner_ambiental_1.jpg",
+        "fotos/banner_ambiental_2.jpg",
+        "fotos/banner_ambiental_3.jpg"
+      ],
+      "local": "fotos/banner_ambiental_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "planta_vaso",
+      "nome": "Planta no vaso",
+      "grupo": "castelo",
+      "onde": "Corredor da Secretaria, ponta leste, perto da sala 12 (V1) · 34 (V2) · 56 (V3) · 78 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 221,
+      "glb": "modelos/planta_vaso.glb",
+      "fotos": [
+        "fotos/planta_vaso_1.jpg",
+        "fotos/planta_vaso_2.jpg",
+        "fotos/planta_vaso_3.jpg"
+      ],
+      "local": "fotos/planta_vaso_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "lareira",
+      "nome": "Lareira da Sala Medieval (com capelo)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, parede norte, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 259,
+      "glb": "modelos/lareira.glb",
+      "fotos": [
+        "fotos/lareira_1.jpg",
+        "fotos/lareira_2.jpg",
+        "fotos/lareira_3.jpg"
+      ],
+      "local": "fotos/lareira_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "escudo_machados",
+      "nome": "Escudo redondo com machados cruzados",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, sobre a lareira, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 284,
+      "glb": "modelos/escudo_machados.glb",
+      "fotos": [
+        "fotos/escudo_machados_1.jpg",
+        "fotos/escudo_machados_2.jpg",
+        "fotos/escudo_machados_3.jpg"
+      ],
+      "local": "fotos/escudo_machados_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "brasao_aguia",
+      "nome": "Brasão com águia",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, parede norte, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 97,
+      "glb": "modelos/brasao_aguia.glb",
+      "fotos": [
+        "fotos/brasao_aguia_1.jpg",
+        "fotos/brasao_aguia_2.jpg",
+        "fotos/brasao_aguia_3.jpg"
+      ],
+      "local": "fotos/brasao_aguia_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "espadas_escudo",
+      "nome": "Espadas cruzadas com escudo redondo",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, parede norte, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 81,
+      "glb": "modelos/espadas_escudo.glb",
+      "fotos": [
+        "fotos/espadas_escudo_1.jpg",
+        "fotos/espadas_escudo_2.jpg",
+        "fotos/espadas_escudo_3.jpg"
+      ],
+      "local": "fotos/espadas_escudo_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "lancas_parede",
+      "nome": "Lanças na parede",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, parede sul, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 289,
+      "glb": "modelos/lancas_parede.glb",
+      "fotos": [
+        "fotos/lancas_parede_1.jpg",
+        "fotos/lancas_parede_2.jpg",
+        "fotos/lancas_parede_3.jpg"
+      ],
+      "local": "fotos/lancas_parede_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "trono",
+      "nome": "Trono de madeira",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, lado leste, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 294,
+      "glb": "modelos/trono.glb",
+      "fotos": [
+        "fotos/trono_1.jpg",
+        "fotos/trono_2.jpg",
+        "fotos/trono_3.jpg"
+      ],
+      "local": "fotos/trono_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "mesa_medieval",
+      "nome": "Mesa grande com cadeiras",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, centro, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 300,
+      "glb": "modelos/mesa_medieval.glb",
+      "fotos": [
+        "fotos/mesa_medieval_1.jpg",
+        "fotos/mesa_medieval_2.jpg",
+        "fotos/mesa_medieval_3.jpg"
+      ],
+      "local": "fotos/mesa_medieval_local.jpg",
+      "notas": [
+        "Dúvida (cadeira_medieval_2_n): Na visita 4 a fita zebrada da Sala Medieval passa a 5 cm de uma cadeira. Não mexi."
+      ]
+    },
+    {
+      "id": "cadeira_medieval",
+      "nome": "Cadeira da mesa medieval",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, em volta da mesa grande, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 300,
+      "glb": "modelos/cadeira_medieval.glb",
+      "fotos": [
+        "fotos/cadeira_medieval_1.jpg",
+        "fotos/cadeira_medieval_2.jpg",
+        "fotos/cadeira_medieval_3.jpg"
+      ],
+      "local": "fotos/cadeira_medieval_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "tocha_parede",
+      "nome": "Tocha de parede (arandela)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, ao lado da porta de saída, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 313,
+      "glb": "modelos/tocha_parede.glb",
+      "fotos": [
+        "fotos/tocha_parede_1.jpg",
+        "fotos/tocha_parede_2.jpg",
+        "fotos/tocha_parede_3.jpg"
+      ],
+      "local": "fotos/tocha_parede_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "bau_madeira",
+      "nome": "Baú de madeira",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 319,
+      "glb": "modelos/bau_madeira.glb",
+      "fotos": [
+        "fotos/bau_madeira_1.jpg",
+        "fotos/bau_madeira_2.jpg",
+        "fotos/bau_madeira_3.jpg"
+      ],
+      "local": "fotos/bau_madeira_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "lustre_ferro",
+      "nome": "Lustre de ferro",
+      "grupo": "castelo",
+      "onde": "Teto do Salão de Arte (e de quase todas as salas), sala 11 (V1) · 33 (V2) · 55 (V3) · 77 (V4)",
+      "arquivo": "castelinho/interior.gd",
+      "linha": 126,
+      "glb": "modelos/lustre_ferro.glb",
+      "fotos": [
+        "fotos/lustre_ferro_1.jpg",
+        "fotos/lustre_ferro_2.jpg",
+        "fotos/lustre_ferro_3.jpg"
+      ],
+      "local": "fotos/lustre_ferro_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "mesa_pedra",
+      "nome": "Mesa de pedra com bancos",
+      "grupo": "castelo",
+      "onde": "Gramado, lado oeste do jardim, sala 2 (V1) · 24 (V2) · 46 (V3) · 68 (V4); hoje (2020)",
+      "arquivo": "castelinho/interior.gd",
+      "linha": 167,
+      "glb": "modelos/mesa_pedra.glb",
+      "fotos": [
+        "fotos/mesa_pedra_1.jpg",
+        "fotos/mesa_pedra_2.jpg",
+        "fotos/mesa_pedra_3.jpg"
+      ],
+      "local": "fotos/mesa_pedra_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "churrasqueira",
+      "nome": "Churrasqueira de pedra",
+      "grupo": "castelo",
+      "onde": "Gramado, lado oeste do jardim, sala 2 (V1) · 24 (V2) · 46 (V3) · 68 (V4); hoje (2020)",
+      "arquivo": "castelinho/interior.gd",
+      "linha": 179,
+      "glb": "modelos/churrasqueira.glb",
+      "fotos": [
+        "fotos/churrasqueira_1.jpg",
+        "fotos/churrasqueira_2.jpg",
+        "fotos/churrasqueira_3.jpg"
+      ],
+      "local": "fotos/churrasqueira_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "arvore_jardim",
+      "nome": "Árvore retorcida do jardim",
+      "grupo": "castelo",
+      "onde": "Jardim diante do prédio, sala 2 (V1) · 24 (V2) · 46 (V3) · 68 (V4); hoje, 1975 e 2019",
+      "arquivo": "castelinho/entorno.gd",
+      "linha": 172,
+      "glb": "modelos/arvore_jardim.glb",
+      "fotos": [
+        "fotos/arvore_jardim_1.jpg",
+        "fotos/arvore_jardim_2.jpg",
+        "fotos/arvore_jardim_3.jpg"
+      ],
+      "local": "fotos/arvore_jardim_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "lixeira_jardim",
+      "nome": "Lixeira de madeira",
+      "grupo": "castelo",
+      "onde": "Jardim, perto do deck, sala 4 (V1) · 26 (V2) · 48 (V3) · 70 (V4)",
+      "arquivo": "castelinho/entorno.gd",
+      "linha": 189,
+      "glb": "modelos/lixeira_jardim.glb",
+      "fotos": [
+        "fotos/lixeira_jardim_1.jpg",
+        "fotos/lixeira_jardim_2.jpg",
+        "fotos/lixeira_jardim_3.jpg"
+      ],
+      "local": "fotos/lixeira_jardim_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "pergola_deck",
+      "nome": "Pérgola do deck de madeira",
+      "grupo": "castelo",
+      "onde": "Deck, sala 4 (V1) · 26 (V2) · 48 (V3) · 70 (V4); hoje (2020) e 2019",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 126,
+      "glb": "modelos/pergola_deck.glb",
+      "fotos": [
+        "fotos/pergola_deck_1.jpg",
+        "fotos/pergola_deck_2.jpg",
+        "fotos/pergola_deck_3.jpg"
+      ],
+      "local": "fotos/pergola_deck_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "guarda_sol",
+      "nome": "Guarda-sol preto do deck",
+      "grupo": "castelo",
+      "onde": "Deck de madeira, sala 4 (V1) · 26 (V2) · 48 (V3) · 70 (V4); hoje (2020)",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 154,
+      "glb": "modelos/guarda_sol.glb",
+      "fotos": [
+        "fotos/guarda_sol_1.jpg",
+        "fotos/guarda_sol_2.jpg",
+        "fotos/guarda_sol_3.jpg"
+      ],
+      "local": "fotos/guarda_sol_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "cerca_corda",
+      "nome": "Cerca de corda trançada (trecho)",
+      "grupo": "castelo",
+      "onde": "Frente do lote, ao longo da calçada, sala 1 (V1) · 23 (V2) · 45 (V3) · 67 (V4); hoje (2020)",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 163,
+      "glb": "modelos/cerca_corda.glb",
+      "fotos": [
+        "fotos/cerca_corda_1.jpg",
+        "fotos/cerca_corda_2.jpg",
+        "fotos/cerca_corda_3.jpg"
+      ],
+      "local": "fotos/cerca_corda_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "hortensia",
+      "nome": "Hortênsia",
+      "grupo": "castelo",
+      "onde": "Jardim em volta do prédio, sala 3 (V1) · 25 (V2) · 47 (V3) · 69 (V4); hoje (2020)",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 186,
+      "glb": "modelos/hortensia.glb",
+      "fotos": [
+        "fotos/hortensia_1.jpg",
+        "fotos/hortensia_2.jpg",
+        "fotos/hortensia_3.jpg"
+      ],
+      "local": "fotos/hortensia_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "placa_casa_cultura",
+      "nome": "Placa da Casa de Cultura e Museu",
+      "grupo": "castelo",
+      "onde": "Arcada da fachada sul, sala 5 (V1) · 27 (V2) · 49 (V3) · 71 (V4); hoje (2020)",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 222,
+      "glb": "modelos/placa_casa_cultura.glb",
+      "fotos": [
+        "fotos/placa_casa_cultura_1.jpg",
+        "fotos/placa_casa_cultura_2.jpg",
+        "fotos/placa_casa_cultura_3.jpg"
+      ],
+      "local": "fotos/placa_casa_cultura_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "letreiro_castelinho",
+      "nome": "Letreiro 'Castelinho' da fachada leste",
+      "grupo": "castelo",
+      "onde": "Fachada leste, voltada para a Av. Nilza, sala 1 (V1) · 23 (V2) · 45 (V3) · 67 (V4); hoje (2020)",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 222,
+      "glb": "modelos/letreiro_castelinho.glb",
+      "fotos": [
+        "fotos/letreiro_castelinho_1.jpg",
+        "fotos/letreiro_castelinho_2.jpg",
+        "fotos/letreiro_castelinho_3.jpg"
+      ],
+      "local": "fotos/letreiro_castelinho_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "porta_vidro",
+      "nome": "Porta de vidro da entrada",
+      "grupo": "castelo",
+      "onde": "Arco de entrada, sala 6 (V1) · 28 (V2) · 50 (V3) · 72 (V4); hoje (2020)",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 70,
+      "glb": "modelos/porta_vidro.glb",
+      "fotos": [
+        "fotos/porta_vidro_1.jpg",
+        "fotos/porta_vidro_2.jpg",
+        "fotos/porta_vidro_3.jpg"
+      ],
+      "local": "fotos/porta_vidro_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "porta_secretaria",
+      "nome": "Porta da Secretaria (com plaquinha)",
+      "grupo": "castelo",
+      "onde": "Corredor da Secretaria, sala 10 (V1) · 32 (V2) · 54 (V3) · 76 (V4); hoje (2020)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 1,
+      "glb": "modelos/porta_secretaria.glb",
+      "fotos": [
+        "fotos/porta_secretaria_1.jpg",
+        "fotos/porta_secretaria_2.jpg",
+        "fotos/porta_secretaria_3.jpg"
+      ],
+      "local": "fotos/porta_secretaria_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "poste_luz",
+      "nome": "Poste de luz da rua",
+      "grupo": "castelo",
+      "onde": "Calçada da Av. Garibaldi, esquina do lote; vale em todas as visitas",
+      "arquivo": "castelinho/entorno.gd",
+      "linha": 304,
+      "glb": "modelos/poste_luz.glb",
+      "fotos": [
+        "fotos/poste_luz_1.jpg",
+        "fotos/poste_luz_2.jpg",
+        "fotos/poste_luz_3.jpg"
+      ],
+      "local": "fotos/poste_luz_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "moita_cerca_viva",
+      "nome": "Moita da cerca-viva",
+      "grupo": "castelo",
+      "onde": "Cerca-viva baixa ao longo da Av. Nilza, lado leste do lote",
+      "arquivo": "castelinho/entorno.gd",
+      "linha": 346,
+      "glb": "modelos/moita_cerca_viva.glb",
+      "fotos": [
+        "fotos/moita_cerca_viva_1.jpg",
+        "fotos/moita_cerca_viva_2.jpg",
+        "fotos/moita_cerca_viva_3.jpg"
+      ],
+      "local": "fotos/moita_cerca_viva_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "casa_vizinha_17",
+      "nome": "Casa vizinha (alvenaria)",
+      "grupo": "castelo",
+      "onde": "Terreno ao norte do lote, no eixo do corredor de 1975 (são 18 casas vizinhas)",
+      "arquivo": "castelinho/entorno.gd",
+      "linha": 195,
+      "glb": "modelos/casa_vizinha_17.glb",
+      "fotos": [
+        "fotos/casa_vizinha_17_1.jpg",
+        "fotos/casa_vizinha_17_2.jpg",
+        "fotos/casa_vizinha_17_3.jpg"
+      ],
+      "local": "fotos/casa_vizinha_17_local.jpg",
+      "notas": [
+        "Dúvida (casa_vizinha_17): O corredor de 1975 (visita 3, fim do jogo) atravessa a casa vizinha do lado norte: a parede do corredor entra uns 30 cm na casa. Erro, ou é a 'impossibilidade' de propósito? Não mexi.",
+        "Dúvida (corredor_1975): O corredor de 1975 sai do terreno do Castelinho e passa por dentro de casas vizinhas (casa_vizinha_17 e vizinhas). Se for de propósito, tudo bem; se não for, dá para encurtar o corredor ou tirar essas casas só em 1975."
+      ]
+    },
+    {
+      "id": "pinheiro",
+      "nome": "Pinheiro (pinus)",
+      "grupo": "castelo",
+      "onde": "Fundos e oeste do lote (dezenas deles, 3 variações)",
+      "arquivo": "castelinho/entorno.gd",
+      "linha": 396,
+      "glb": "modelos/pinheiro.glb",
+      "fotos": [
+        "fotos/pinheiro_1.jpg",
+        "fotos/pinheiro_2.jpg",
+        "fotos/pinheiro_3.jpg"
+      ],
+      "local": "fotos/pinheiro_local.jpg",
+      "notas": [
+        "no jogo é MultiMesh (3 variações); aqui a variação 0"
+      ]
+    },
+    {
+      "id": "pinguim",
+      "nome": "Pinguim empalhado",
+      "grupo": "castelo",
+      "onde": "Sala do Meio Ambiente, sala 9 (V1) · 31 (V2) · 53 (V3) · 75 (V4); hoje (2020). Os olhos seguem o jogador a partir da visita 3",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 426,
+      "glb": "modelos/pinguim.glb",
+      "fotos": [
+        "fotos/pinguim_1.jpg",
+        "fotos/pinguim_2.jpg",
+        "fotos/pinguim_3.jpg"
+      ],
+      "local": "fotos/pinguim_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "telefone_acervo",
+      "nome": "Telefone antigo de disco",
+      "grupo": "castelo",
+      "onde": "Mesa do Acervo, sala 12 (V1) · 34 (V2) · 56 (V3) · 78 (V4); hoje (2020). Toca na visita 2",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 481,
+      "glb": "modelos/telefone_acervo.glb",
+      "fotos": [
+        "fotos/telefone_acervo_1.jpg",
+        "fotos/telefone_acervo_2.jpg",
+        "fotos/telefone_acervo_3.jpg"
+      ],
+      "local": "fotos/telefone_acervo_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "recorte_visitante",
+      "nome": "Recorte de papelão: visitante",
+      "grupo": "castelo",
+      "onde": "Gramado diante da fachada, virado para a parede, sala 3 (V1) · 25 (V2) · 47 (V3) · 69 (V4); hoje (2020)",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1015,
+      "glb": "modelos/recorte_visitante.glb",
+      "fotos": [
+        "fotos/recorte_visitante_1.jpg",
+        "fotos/recorte_visitante_2.jpg",
+        "fotos/recorte_visitante_3.jpg"
+      ],
+      "local": "fotos/recorte_visitante_local.jpg",
+      "notas": [
+        "no jogo este fica virado para a parede: o jogador só vê o verso de papelão"
+      ]
+    },
+    {
+      "id": "recorte_pescador",
+      "nome": "Recorte de papelão: pescador",
+      "grupo": "castelo",
+      "onde": "Acervo, sala 12 (V1) · 34 (V2) · 56 (V3) · 78 (V4); aparece na visita 2 em diante",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1015,
+      "glb": "modelos/recorte_pescador.glb",
+      "fotos": [
+        "fotos/recorte_pescador_1.jpg",
+        "fotos/recorte_pescador_2.jpg",
+        "fotos/recorte_pescador_3.jpg"
+      ],
+      "local": "fotos/recorte_pescador_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "recorte_quico",
+      "nome": "Recorte de papelão: Quico",
+      "grupo": "castelo",
+      "onde": "Torre B, 2º andar, sala 19 (V1) · 41 (V2) · 63 (V3) · 85 (V4); aparece na visita 2 em diante",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1015,
+      "glb": "modelos/recorte_quico.glb",
+      "fotos": [
+        "fotos/recorte_quico_1.jpg",
+        "fotos/recorte_quico_2.jpg",
+        "fotos/recorte_quico_3.jpg"
+      ],
+      "local": "fotos/recorte_quico_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "passaporte_pedra",
+      "nome": "Pedra velha do Passaporte",
+      "grupo": "castelo",
+      "onde": "Perto do deck e da arcada, sala 4 (V1) · 26 (V2) · 48 (V3) · 70 (V4); só na visita 1 (caça ao Passaporte)",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1387,
+      "glb": "modelos/passaporte_pedra.glb",
+      "fotos": [
+        "fotos/passaporte_pedra_1.jpg",
+        "fotos/passaporte_pedra_2.jpg",
+        "fotos/passaporte_pedra_3.jpg"
+      ],
+      "local": "fotos/passaporte_pedra_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "passaporte_foto",
+      "nome": "Foto antiga do Passaporte",
+      "grupo": "castelo",
+      "onde": "Sala dos Povos Originários, sala 8 (V1) · 30 (V2) · 52 (V3) · 74 (V4); só na visita 1",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1387,
+      "glb": "modelos/passaporte_foto.glb",
+      "fotos": [
+        "fotos/passaporte_foto_1.jpg",
+        "fotos/passaporte_foto_2.jpg",
+        "fotos/passaporte_foto_3.jpg"
+      ],
+      "local": "fotos/passaporte_foto_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "passaporte_chave",
+      "nome": "Chave velha do Passaporte",
+      "grupo": "castelo",
+      "onde": "Sala do Meio Ambiente, perto do pinguim, sala 9 (V1) · 31 (V2) · 53 (V3) · 75 (V4); só na visita 1",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1387,
+      "glb": "modelos/passaporte_chave.glb",
+      "fotos": [
+        "fotos/passaporte_chave_1.jpg",
+        "fotos/passaporte_chave_2.jpg",
+        "fotos/passaporte_chave_3.jpg"
+      ],
+      "local": "fotos/passaporte_chave_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "folha_costela",
+      "nome": "Folha de costela-de-Adão (no painel P02)",
+      "grupo": "castelo",
+      "onde": "Brotando no canto do painel P02, sala 2 (V1) · 24 (V2) · 46 (V3) · 68 (V4); hoje (2020)",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 935,
+      "glb": "",
+      "fotos": [
+        "fotos/folha_costela_1.jpg",
+        "fotos/folha_costela_2.jpg",
+        "fotos/folha_costela_3.jpg"
+      ],
+      "local": "fotos/folha_costela_local.jpg",
+      "notas": [
+        "é um Sprite3D (imagem de 48 px sempre virada para a câmera): o .glb não leva a folha"
+      ]
+    },
+    {
+      "id": "painel_p01",
+      "nome": "Painel educativo (placa colorida)",
+      "grupo": "castelo",
+      "onde": "Em poste de madeira ao lado do caminho, sala 1 (V1) · 23 (V2) · 45 (V3) · 67 (V4); hoje (2020). São 25 painéis iguais (p01 a p25) com textos diferentes",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 1,
+      "glb": "modelos/painel_p01.glb",
+      "fotos": [
+        "fotos/painel_p01_1.jpg",
+        "fotos/painel_p01_2.jpg",
+        "fotos/painel_p01_3.jpg"
+      ],
+      "local": "fotos/painel_p01_local.jpg",
+      "notas": [
+        "o texto da placa é Label3D e não vai para o .glb; a placa em si é um shader, por isso o .glb leva cores lisas"
+      ]
+    },
+    {
+      "id": "painel_p03",
+      "nome": "Painel educativo P03 (lateral da torre)",
+      "grupo": "castelo",
+      "onde": "Lateral da torre, no jardim oeste, sala 3 (V1) · 25 (V2) · 47 (V3) · 69 (V4); hoje (2020), em poste de madeira",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 1,
+      "glb": "modelos/painel_p03.glb",
+      "fotos": [
+        "fotos/painel_p03_1.jpg",
+        "fotos/painel_p03_2.jpg",
+        "fotos/painel_p03_3.jpg"
+      ],
+      "local": "fotos/painel_p03_local.jpg",
+      "notas": [
+        "Dúvida (painel_p03): Afastei o painel P03 (lateral da torre) 75 cm para o norte: os postes dele atravessavam o banco de pedra. Se preferir ele onde estava, me diga e eu encurto o banco."
+      ]
+    },
+    {
+      "id": "painel_p17",
+      "nome": "Painel educativo P17 (topo da torre)",
+      "grupo": "castelo",
+      "onde": "Topo da Torre A, sala 17 (V1) · 39 (V2) · 61 (V3) · 83 (V4); hoje (2020)",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 1,
+      "glb": "modelos/painel_p17.glb",
+      "fotos": [
+        "fotos/painel_p17_1.jpg",
+        "fotos/painel_p17_2.jpg",
+        "fotos/painel_p17_3.jpg"
+      ],
+      "local": "fotos/painel_p17_local.jpg",
+      "notas": [
+        "Dúvida (painel_p17): O painel P17 (topo da torre) tem a moldura enfiada uns 8 cm na torreta; o texto aparece normal. Pode deixar assim?"
+      ]
+    },
+    {
+      "id": "painel_p07_parede",
+      "nome": "Painel educativo de parede",
+      "grupo": "castelo",
+      "onde": "Parede do hall, sala 7 (V1) · 29 (V2) · 51 (V3) · 73 (V4); hoje (2020)",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 140,
+      "glb": "modelos/painel_p07_parede.glb",
+      "fotos": [
+        "fotos/painel_p07_parede_1.jpg",
+        "fotos/painel_p07_parede_2.jpg",
+        "fotos/painel_p07_parede_3.jpg"
+      ],
+      "local": "fotos/painel_p07_parede_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "painel_quiz_final",
+      "nome": "Painel do quiz final",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, parede oeste, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); as 4 visitas (muda de cara em cada uma)",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 46,
+      "glb": "modelos/painel_quiz_final.glb",
+      "fotos": [
+        "fotos/painel_quiz_final_1.jpg",
+        "fotos/painel_quiz_final_2.jpg",
+        "fotos/painel_quiz_final_3.jpg"
+      ],
+      "local": "fotos/painel_quiz_final_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "desenho_1",
+      "nome": "Desenho de criança nº 1",
+      "grupo": "castelo",
+      "onde": "Salão de Arte, entre os quadros, sala 11 (V1) · 33 (V2) · 55 (V3) · 77 (V4); visita 1",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 289,
+      "glb": "modelos/desenho_1.glb",
+      "fotos": [
+        "fotos/desenho_1_1.jpg",
+        "fotos/desenho_1_2.jpg",
+        "fotos/desenho_1_3.jpg"
+      ],
+      "local": "fotos/desenho_1_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "disco_1967",
+      "nome": "Disco do Visor (1967)",
+      "grupo": "castelo",
+      "onde": "Vitrine de discos do Acervo, sala 12 (V1) · 34 (V2) · 56 (V3) · 78 (V4); a partir da visita 2, até ser pego",
+      "arquivo": "castelinho/tito.gd",
+      "linha": 376,
+      "glb": "modelos/disco_1967.glb",
+      "fotos": [
+        "fotos/disco_1967_1.jpg",
+        "fotos/disco_1967_2.jpg",
+        "fotos/disco_1967_3.jpg"
+      ],
+      "local": "fotos/disco_1967_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "balde_sandalia_trono",
+      "nome": "Balde vermelho com a sandália",
+      "grupo": "castelo",
+      "onde": "Trono da Sala Medieval, depois do apagão da visita 2 (fica nas visitas 3 e 4), sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4)",
+      "arquivo": "castelinho/tito.gd",
+      "linha": 349,
+      "glb": "modelos/balde_sandalia_trono.glb",
+      "fotos": [
+        "fotos/balde_sandalia_trono_1.jpg",
+        "fotos/balde_sandalia_trono_2.jpg",
+        "fotos/balde_sandalia_trono_3.jpg"
+      ],
+      "local": "fotos/balde_sandalia_trono_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "painel_seco_v2",
+      "nome": "Painel 'seco' (visita 2)",
+      "grupo": "castelo",
+      "onde": "Mesmo lugar do painel P05, sala 5 (V1) · 27 (V2) · 49 (V3) · 71 (V4) na visita 2: placa cinza, sem graça",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 42,
+      "glb": "modelos/painel_seco_v2.glb",
+      "fotos": [
+        "fotos/painel_seco_v2_1.jpg",
+        "fotos/painel_seco_v2_2.jpg",
+        "fotos/painel_seco_v2_3.jpg"
+      ],
+      "local": "fotos/painel_seco_v2_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "desenho_2",
+      "nome": "Desenho de criança nº 2 (mãe e menino na praia)",
+      "grupo": "castelo",
+      "onde": "Acervo, sala 12 (V1) · 34 (V2) · 56 (V3) · 78 (V4); visita 2",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 289,
+      "glb": "modelos/desenho_2.glb",
+      "fotos": [
+        "fotos/desenho_2_1.jpg",
+        "fotos/desenho_2_2.jpg",
+        "fotos/desenho_2_3.jpg"
+      ],
+      "local": "fotos/desenho_2_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "desenho_3",
+      "nome": "Desenho de criança nº 3 (a mulher branca na torre)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, parede oeste, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); depois do apagão da visita 2",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 289,
+      "glb": "modelos/desenho_3.glb",
+      "fotos": [
+        "fotos/desenho_3_1.jpg",
+        "fotos/desenho_3_2.jpg",
+        "fotos/desenho_3_3.jpg"
+      ],
+      "local": "fotos/desenho_3_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "armadura",
+      "nome": "Armadura de ferro",
+      "grupo": "castelo",
+      "onde": "Trono do fundo da Sala Medieval, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só aparece na visita 3",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 461,
+      "glb": "modelos/armadura.glb",
+      "fotos": [
+        "fotos/armadura_1.jpg",
+        "fotos/armadura_2.jpg",
+        "fotos/armadura_3.jpg"
+      ],
+      "local": "fotos/armadura_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "disco_1975",
+      "nome": "Disco do Visor (1975)",
+      "grupo": "castelo",
+      "onde": "Pedestal no topo da Torre A, sala 17 (V1) · 39 (V2) · 61 (V3) · 83 (V4); a partir da visita 3, até ser pego",
+      "arquivo": "castelinho/tito.gd",
+      "linha": 376,
+      "glb": "modelos/disco_1975.glb",
+      "fotos": [
+        "fotos/disco_1975_1.jpg",
+        "fotos/disco_1975_2.jpg",
+        "fotos/disco_1975_3.jpg"
+      ],
+      "local": "fotos/disco_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "fita_zebrada_reforma",
+      "nome": "Fitas zebradas e placa EM REFORMA",
+      "grupo": "castelo",
+      "onde": "Porta de saída da Sala Medieval, sala 22 (V1) · 44 (V2) · 66 (V3) · 88 (V4); hoje (2020), visitas 3 e 4",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1059,
+      "glb": "modelos/fita_zebrada_reforma.glb",
+      "fotos": [
+        "fotos/fita_zebrada_reforma_1.jpg",
+        "fotos/fita_zebrada_reforma_2.jpg",
+        "fotos/fita_zebrada_reforma_3.jpg"
+      ],
+      "local": "fotos/fita_zebrada_reforma_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "pedestal_disco",
+      "nome": "Pedestal de madeira do disco 1975",
+      "grupo": "castelo",
+      "onde": "Topo da Torre A, sala 17 (V1) · 39 (V2) · 61 (V3) · 83 (V4); hoje (2020), visita 3, até pegar o disco",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1478,
+      "glb": "modelos/pedestal_disco.glb",
+      "fotos": [
+        "fotos/pedestal_disco_1.jpg",
+        "fotos/pedestal_disco_2.jpg",
+        "fotos/pedestal_disco_3.jpg"
+      ],
+      "local": "fotos/pedestal_disco_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "porta_para_1950",
+      "nome": "Porta para 1950 (Ato II)",
+      "grupo": "castelo",
+      "onde": "Parede oeste do Salão de Arte, sala 11 (V1) · 33 (V2) · 55 (V3) · 77 (V4); só na visita 3, antes do Ato II",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1521,
+      "glb": "modelos/porta_para_1950.glb",
+      "fotos": [
+        "fotos/porta_para_1950_1.jpg",
+        "fotos/porta_para_1950_2.jpg",
+        "fotos/porta_para_1950_3.jpg"
+      ],
+      "local": "fotos/porta_para_1950_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "escada_interditada",
+      "nome": "Escada interditada (fitas zebradas)",
+      "grupo": "castelo",
+      "onde": "Porta da escada da Torre A, sala 16 (V1) · 38 (V2) · 60 (V3) · 82 (V4); hoje (2020), visitas 3 e 4",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1547,
+      "glb": "modelos/escada_interditada.glb",
+      "fotos": [
+        "fotos/escada_interditada_1.jpg",
+        "fotos/escada_interditada_2.jpg",
+        "fotos/escada_interditada_3.jpg"
+      ],
+      "local": "fotos/escada_interditada_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "painel_em_revisao_v3",
+      "nome": "Painel 'EM REVISÃO' (visita 3)",
+      "grupo": "castelo",
+      "onde": "Mesmo lugar do painel P05, sala 5 (V1) · 27 (V2) · 49 (V3) · 71 (V4) na visita 3: placa cinza com carimbo",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 245,
+      "glb": "modelos/painel_em_revisao_v3.glb",
+      "fotos": [
+        "fotos/painel_em_revisao_v3_1.jpg",
+        "fotos/painel_em_revisao_v3_2.jpg",
+        "fotos/painel_em_revisao_v3_3.jpg"
+      ],
+      "local": "fotos/painel_em_revisao_v3_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "desenho_4",
+      "nome": "Desenho de criança nº 4 (o castelo em cima do menino)",
+      "grupo": "castelo",
+      "onde": "Meio Ambiente, parede oeste, sala 9 (V1) · 31 (V2) · 53 (V3) · 75 (V4); visita 3",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 289,
+      "glb": "modelos/desenho_4.glb",
+      "fotos": [
+        "fotos/desenho_4_1.jpg",
+        "fotos/desenho_4_2.jpg",
+        "fotos/desenho_4_3.jpg"
+      ],
+      "local": "fotos/desenho_4_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "cartaz_procura_se",
+      "nome": "Cartaz PROCURA-SE do Tito",
+      "grupo": "castelo",
+      "onde": "Colado por cima de painéis (p01, p04, p07...), visitas 3 e 4",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 289,
+      "glb": "modelos/cartaz_procura_se.glb",
+      "fotos": [
+        "fotos/cartaz_procura_se_1.jpg",
+        "fotos/cartaz_procura_se_2.jpg",
+        "fotos/cartaz_procura_se_3.jpg"
+      ],
+      "local": "fotos/cartaz_procura_se_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "sofa_1975",
+      "nome": "Sofá de braços com almofadas (1975)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 341,
+      "glb": "modelos/sofa_1975.glb",
+      "fotos": [
+        "fotos/sofa_1975_1.jpg",
+        "fotos/sofa_1975_2.jpg",
+        "fotos/sofa_1975_3.jpg"
+      ],
+      "local": "fotos/sofa_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "poltrona_1975",
+      "nome": "Poltrona com pés (1975)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 351,
+      "glb": "modelos/poltrona_1975.glb",
+      "fotos": [
+        "fotos/poltrona_1975_1.jpg",
+        "fotos/poltrona_1975_2.jpg",
+        "fotos/poltrona_1975_3.jpg"
+      ],
+      "local": "fotos/poltrona_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "mesa_centro_1975",
+      "nome": "Mesa de centro de pés palito (1975)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 362,
+      "glb": "modelos/mesa_centro_1975.glb",
+      "fotos": [
+        "fotos/mesa_centro_1975_1.jpg",
+        "fotos/mesa_centro_1975_2.jpg",
+        "fotos/mesa_centro_1975_3.jpg"
+      ],
+      "local": "fotos/mesa_centro_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "estante_1975",
+      "nome": "Estante com livros e rádio (1975)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 372,
+      "glb": "modelos/estante_1975.glb",
+      "fotos": [
+        "fotos/estante_1975_1.jpg",
+        "fotos/estante_1975_2.jpg",
+        "fotos/estante_1975_3.jpg"
+      ],
+      "local": "fotos/estante_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "abajur_1975",
+      "nome": "Abajur de pé (1975)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 387,
+      "glb": "modelos/abajur_1975.glb",
+      "fotos": [
+        "fotos/abajur_1975_1.jpg",
+        "fotos/abajur_1975_2.jpg",
+        "fotos/abajur_1975_3.jpg"
+      ],
+      "local": "fotos/abajur_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "tv_1975",
+      "nome": "Televisão de madeira (1975)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 392,
+      "glb": "modelos/tv_1975.glb",
+      "fotos": [
+        "fotos/tv_1975_1.jpg",
+        "fotos/tv_1975_2.jpg",
+        "fotos/tv_1975_3.jpg"
+      ],
+      "local": "fotos/tv_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "quadro_por_do_sol",
+      "nome": "Quadro de pôr do sol (1975)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 397,
+      "glb": "modelos/quadro_por_do_sol.glb",
+      "fotos": [
+        "fotos/quadro_por_do_sol_1.jpg",
+        "fotos/quadro_por_do_sol_2.jpg",
+        "fotos/quadro_por_do_sol_3.jpg"
+      ],
+      "local": "fotos/quadro_por_do_sol_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "cadeira_palha_1975",
+      "nome": "Cadeira de palha (1975)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 405,
+      "glb": "modelos/cadeira_palha_1975.glb",
+      "fotos": [
+        "fotos/cadeira_palha_1975_1.jpg",
+        "fotos/cadeira_palha_1975_2.jpg",
+        "fotos/cadeira_palha_1975_3.jpg"
+      ],
+      "local": "fotos/cadeira_palha_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "tapete_1975",
+      "nome": "Tapete vermelho com barra (1975)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 338,
+      "glb": "modelos/tapete_1975.glb",
+      "fotos": [
+        "fotos/tapete_1975_1.jpg",
+        "fotos/tapete_1975_2.jpg",
+        "fotos/tapete_1975_3.jpg"
+      ],
+      "local": "fotos/tapete_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "praia_1975",
+      "nome": "Guarda-sol dobrado e prancha de praia (1975)",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, que em 1975 era sala de estar, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 406,
+      "glb": "modelos/praia_1975.glb",
+      "fotos": [
+        "fotos/praia_1975_1.jpg",
+        "fotos/praia_1975_2.jpg",
+        "fotos/praia_1975_3.jpg"
+      ],
+      "local": "fotos/praia_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "banco_hall_1975",
+      "nome": "Banco do hall (1975)",
+      "grupo": "castelo",
+      "onde": "Hall da casa de veraneio, sala 7 (V1) · 29 (V2) · 51 (V3) · 73 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 411,
+      "glb": "modelos/banco_hall_1975.glb",
+      "fotos": [
+        "fotos/banco_hall_1975_1.jpg",
+        "fotos/banco_hall_1975_2.jpg",
+        "fotos/banco_hall_1975_3.jpg"
+      ],
+      "local": "fotos/banco_hall_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "cabideiro_1975",
+      "nome": "Cabideiro do hall (1975)",
+      "grupo": "castelo",
+      "onde": "Hall da casa de veraneio, sala 7 (V1) · 29 (V2) · 51 (V3) · 73 (V4); só na época 1975",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 411,
+      "glb": "modelos/cabideiro_1975.glb",
+      "fotos": [
+        "fotos/cabideiro_1975_1.jpg",
+        "fotos/cabideiro_1975_2.jpg",
+        "fotos/cabideiro_1975_3.jpg"
+      ],
+      "local": "fotos/cabideiro_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "caixas_pesca_1975",
+      "nome": "Rede de pesca e caixa verde (1975)",
+      "grupo": "castelo",
+      "onde": "Sala do Pescador em 1975, sala 13 (V1) · 35 (V2) · 57 (V3) · 79 (V4)",
+      "arquivo": "castelinho/mobilia.gd",
+      "linha": 416,
+      "glb": "modelos/caixas_pesca_1975.glb",
+      "fotos": [
+        "fotos/caixas_pesca_1975_1.jpg",
+        "fotos/caixas_pesca_1975_2.jpg",
+        "fotos/caixas_pesca_1975_3.jpg"
+      ],
+      "local": "fotos/caixas_pesca_1975_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "marcas_altura",
+      "nome": "Marcas de altura a lápis (TITO 6, 7, 8, 9)",
+      "grupo": "castelo",
+      "onde": "Batente da porta de saída da Sala Medieval, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só em 1975",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 289,
+      "glb": "modelos/marcas_altura.glb",
+      "fotos": [
+        "fotos/marcas_altura_1.jpg",
+        "fotos/marcas_altura_2.jpg",
+        "fotos/marcas_altura_3.jpg"
+      ],
+      "local": "fotos/marcas_altura_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "duvida_corredor_1975_casa_vizinha",
+      "nome": "Dúvida: corredor de 1975 atravessa a casa vizinha",
+      "grupo": "castelo",
+      "onde": "Corredor de 1975 (visita 3, sala 25 (V1) · 47 (V2) · 69 (V3) · 91 (V4)), onde ele cruza a casa vizinha nº 17, ao norte do lote",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1,
+      "glb": "",
+      "fotos": [
+        "fotos/duvida_corredor_1975_casa_vizinha_1.jpg",
+        "fotos/duvida_corredor_1975_casa_vizinha_2.jpg",
+        "fotos/duvida_corredor_1975_casa_vizinha_3.jpg"
+      ],
+      "local": "fotos/duvida_corredor_1975_casa_vizinha_1.jpg",
+      "notas": [
+        "Dúvida (casa_vizinha_17): O corredor de 1975 (visita 3, fim do jogo) atravessa a casa vizinha do lado norte: a parede do corredor entra uns 30 cm na casa. Erro, ou é a 'impossibilidade' de propósito? Não mexi.",
+        "Dúvida (corredor_1975): O corredor de 1975 sai do terreno do Castelinho e passa por dentro de casas vizinhas (casa_vizinha_17 e vizinhas). Se for de propósito, tudo bem; se não for, dá para encurtar o corredor ou tirar essas casas só em 1975."
+      ]
+    },
+    {
+      "id": "pegada_molhada",
+      "nome": "Pegada molhada de criança",
+      "grupo": "castelo",
+      "onde": "Sala do Pescador, diante do mural, sala 13 (V1) · 35 (V2) · 57 (V3) · 79 (V4); hoje (2020), só na visita 4",
+      "arquivo": "world/pegada.gd",
+      "linha": 81,
+      "glb": "modelos/pegada_molhada.glb",
+      "fotos": [
+        "fotos/pegada_molhada_1.jpg",
+        "fotos/pegada_molhada_2.jpg",
+        "fotos/pegada_molhada_3.jpg"
+      ],
+      "local": "fotos/pegada_molhada_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "porta_zebrada_hall",
+      "nome": "Porta zebrada do hall (escada para o porão)",
+      "grupo": "castelo",
+      "onde": "Parede do hall, sala 7 (V1) · 29 (V2) · 51 (V3) · 73 (V4) (sala 80 na visita 4); visita 4, hoje e 2019",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1674,
+      "glb": "modelos/porta_zebrada_hall.glb",
+      "fotos": [
+        "fotos/porta_zebrada_hall_1.jpg",
+        "fotos/porta_zebrada_hall_2.jpg",
+        "fotos/porta_zebrada_hall_3.jpg"
+      ],
+      "local": "fotos/porta_zebrada_hall_local.jpg",
+      "notas": [
+        "a água e a escada que descem são um shader (escada_falsa); no .glb viram cor lisa"
+      ]
+    },
+    {
+      "id": "painel_solto",
+      "nome": "Painel solto da parede",
+      "grupo": "castelo",
+      "onde": "Sala dos Povos Originários, sala 8 (V1) · 30 (V2) · 52 (V3) · 74 (V4); visita 4 (esconde o disco 2019)",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1622,
+      "glb": "modelos/painel_solto.glb",
+      "fotos": [
+        "fotos/painel_solto_1.jpg",
+        "fotos/painel_solto_2.jpg",
+        "fotos/painel_solto_3.jpg"
+      ],
+      "local": "fotos/painel_solto_local.jpg",
+      "notas": [
+        "Dúvida (PainelSolto): O painel P08 da Sala dos Povos se solta da parede (fica 10 cm à frente). Está assim de propósito, para o susto? Não mexi."
+      ]
+    },
+    {
+      "id": "painel_riscado_v4",
+      "nome": "Painel riscado com desenho (visita 4)",
+      "grupo": "castelo",
+      "onde": "Mesmo lugar do painel P05, sala 5 (V1) · 27 (V2) · 49 (V3) · 71 (V4) na visita 4: título riscado e o desenho do Tito",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 228,
+      "glb": "modelos/painel_riscado_v4.glb",
+      "fotos": [
+        "fotos/painel_riscado_v4_1.jpg",
+        "fotos/painel_riscado_v4_2.jpg",
+        "fotos/painel_riscado_v4_3.jpg"
+      ],
+      "local": "fotos/painel_riscado_v4_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "desenho_5",
+      "nome": "Desenho de criança nº 5",
+      "grupo": "castelo",
+      "onde": "Painel solto da Sala dos Povos, sala 8 (V1) · 30 (V2) · 52 (V3) · 74 (V4); visita 4",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 289,
+      "glb": "modelos/desenho_5.glb",
+      "fotos": [
+        "fotos/desenho_5_1.jpg",
+        "fotos/desenho_5_2.jpg",
+        "fotos/desenho_5_3.jpg"
+      ],
+      "local": "fotos/desenho_5_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "desenho_7",
+      "nome": "Desenho de criança nº 7",
+      "grupo": "castelo",
+      "onde": "No lugar do painel P18 (2º andar), sala 18 (V1) · 40 (V2) · 62 (V3) · 84 (V4); hoje (2020), visita 4",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 289,
+      "glb": "modelos/desenho_7.glb",
+      "fotos": [
+        "fotos/desenho_7_1.jpg",
+        "fotos/desenho_7_2.jpg",
+        "fotos/desenho_7_3.jpg"
+      ],
+      "local": "fotos/desenho_7_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "duvida_fita_zebrada_cadeira",
+      "nome": "Dúvida: fita zebrada perto de uma cadeira da Sala Medieval",
+      "grupo": "castelo",
+      "onde": "Sala Medieval, porta de saída em reforma, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); visita 4",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1059,
+      "glb": "",
+      "fotos": [
+        "fotos/duvida_fita_zebrada_cadeira_1.jpg",
+        "fotos/duvida_fita_zebrada_cadeira_2.jpg"
+      ],
+      "local": "fotos/duvida_fita_zebrada_cadeira_1.jpg",
+      "notas": [
+        "Dúvida (cadeira_medieval_2_n): Na visita 4 a fita zebrada da Sala Medieval passa a 5 cm de uma cadeira. Não mexi."
+      ]
+    },
+    {
+      "id": "escada_2019",
+      "nome": "Alçapão com a escada de 2019",
+      "grupo": "castelo",
+      "onde": "Chão da Sala Medieval, sala 21 (V1) · 43 (V2) · 65 (V3) · 87 (V4); só em 2019, visita 4",
+      "arquivo": "world/niveis/castelinho.gd",
+      "linha": 1711,
+      "glb": "modelos/escada_2019.glb",
+      "fotos": [
+        "fotos/escada_2019_1.jpg",
+        "fotos/escada_2019_2.jpg",
+        "fotos/escada_2019_3.jpg"
+      ],
+      "local": "fotos/escada_2019_local.jpg",
+      "notas": [
+        "a escada que desce é um shader (escada_falsa); no .glb vira cor lisa"
+      ]
+    },
+    {
+      "id": "desenho_6",
+      "nome": "Desenho de criança nº 6 (dois olhos no escuro)",
+      "grupo": "castelo",
+      "onde": "Atrás do painel solto, Sala dos Povos, sala 8 (V1) · 30 (V2) · 52 (V3) · 74 (V4); só em 2019, visita 4",
+      "arquivo": "world/painel_3d.gd",
+      "linha": 289,
+      "glb": "modelos/desenho_6.glb",
+      "fotos": [
+        "fotos/desenho_6_1.jpg",
+        "fotos/desenho_6_2.jpg",
+        "fotos/desenho_6_3.jpg"
+      ],
+      "local": "fotos/desenho_6_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "andaime_madeira",
+      "nome": "Andaime de madeira",
+      "grupo": "castelo",
+      "onde": "Fachada sul da Torre A, sala 3 (V1) · 25 (V2) · 47 (V3) · 69 (V4); época 1967 (obra)",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 122,
+      "glb": "modelos/andaime_madeira.glb",
+      "fotos": [
+        "fotos/andaime_madeira_1.jpg",
+        "fotos/andaime_madeira_2.jpg",
+        "fotos/andaime_madeira_3.jpg"
+      ],
+      "local": "fotos/andaime_madeira_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "pilha_blocos",
+      "nome": "Pilha de blocos de pedra",
+      "grupo": "castelo",
+      "onde": "Canteiro diante do prédio, sala 3 (V1) · 25 (V2) · 47 (V3) · 69 (V4); época 1967 (são 8 pilhas)",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 166,
+      "glb": "modelos/pilha_blocos.glb",
+      "fotos": [
+        "fotos/pilha_blocos_1.jpg",
+        "fotos/pilha_blocos_2.jpg",
+        "fotos/pilha_blocos_3.jpg"
+      ],
+      "local": "fotos/pilha_blocos_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "blocos_soltos_torre_a",
+      "nome": "Três blocos soltos no topo da parede da Torre A",
+      "grupo": "castelo",
+      "onde": "Parede oeste da Torre A em obra, sala 3 (V1) · 25 (V2) · 47 (V3) · 69 (V4); época 1967",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 90,
+      "glb": "modelos/blocos_soltos_torre_a.glb",
+      "fotos": [
+        "fotos/blocos_soltos_torre_a_1.jpg",
+        "fotos/blocos_soltos_torre_a_2.jpg",
+        "fotos/blocos_soltos_torre_a_3.jpg"
+      ],
+      "local": "fotos/blocos_soltos_torre_a_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "barco_encalhado",
+      "nome": "Barco de madeira encalhado com remo",
+      "grupo": "castelo",
+      "onde": "Gramado diante do prédio, sala 2 (V1) · 24 (V2) · 46 (V3) · 68 (V4); época 1967",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 188,
+      "glb": "modelos/barco_encalhado.glb",
+      "fotos": [
+        "fotos/barco_encalhado_1.jpg",
+        "fotos/barco_encalhado_2.jpg",
+        "fotos/barco_encalhado_3.jpg"
+      ],
+      "local": "fotos/barco_encalhado_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "castelo_de_areia",
+      "nome": "Castelinho de areia do Tito",
+      "grupo": "castelo",
+      "onde": "Ao lado de onde o Tito brinca, sala 1 (V1) · 23 (V2) · 45 (V3) · 67 (V4); época 1967",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 282,
+      "glb": "modelos/castelo_de_areia.glb",
+      "fotos": [
+        "fotos/castelo_de_areia_1.jpg",
+        "fotos/castelo_de_areia_2.jpg",
+        "fotos/castelo_de_areia_3.jpg"
+      ],
+      "local": "fotos/castelo_de_areia_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "carrinho_de_mao",
+      "nome": "Carrinho de mão",
+      "grupo": "castelo",
+      "onde": "Canteiro, pé do andaime, sala 3 (V1) · 25 (V2) · 47 (V3) · 69 (V4); época 1967",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 308,
+      "glb": "modelos/carrinho_de_mao.glb",
+      "fotos": [
+        "fotos/carrinho_de_mao_1.jpg",
+        "fotos/carrinho_de_mao_2.jpg",
+        "fotos/carrinho_de_mao_3.jpg"
+      ],
+      "local": "fotos/carrinho_de_mao_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "caixa_de_massa",
+      "nome": "Caixa de massa com enxada",
+      "grupo": "castelo",
+      "onde": "Canteiro, sala 4 (V1) · 26 (V2) · 48 (V3) · 70 (V4); época 1967",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 317,
+      "glb": "modelos/caixa_de_massa.glb",
+      "fotos": [
+        "fotos/caixa_de_massa_1.jpg",
+        "fotos/caixa_de_massa_2.jpg",
+        "fotos/caixa_de_massa_3.jpg"
+      ],
+      "local": "fotos/caixa_de_massa_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "monte_areia_sacos",
+      "nome": "Monte de areia e sacos de cimento",
+      "grupo": "castelo",
+      "onde": "Canteiro, sala 4 (V1) · 26 (V2) · 48 (V3) · 70 (V4); época 1967",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 323,
+      "glb": "modelos/monte_areia_sacos.glb",
+      "fotos": [
+        "fotos/monte_areia_sacos_1.jpg",
+        "fotos/monte_areia_sacos_2.jpg",
+        "fotos/monte_areia_sacos_3.jpg"
+      ],
+      "local": "fotos/monte_areia_sacos_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "tabuas_soltas",
+      "nome": "Tábuas soltas no chão do canteiro",
+      "grupo": "castelo",
+      "onde": "Canteiro, perto do andaime, sala 2 (V1) · 24 (V2) · 46 (V3) · 68 (V4); época 1967",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 332,
+      "glb": "modelos/tabuas_soltas.glb",
+      "fotos": [
+        "fotos/tabuas_soltas_1.jpg",
+        "fotos/tabuas_soltas_2.jpg",
+        "fotos/tabuas_soltas_3.jpg"
+      ],
+      "local": "fotos/tabuas_soltas_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "muro_buraco",
+      "nome": "Muro com o buraco de criança",
+      "grupo": "castelo",
+      "onde": "Muro baixo da Av. Garibaldi, sala 1 (V1) · 23 (V2) · 45 (V3) · 67 (V4); época 1967",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 259,
+      "glb": "modelos/muro_buraco.glb",
+      "fotos": [
+        "fotos/muro_buraco_1.jpg",
+        "fotos/muro_buraco_2.jpg",
+        "fotos/muro_buraco_3.jpg"
+      ],
+      "local": "fotos/muro_buraco_local.jpg",
+      "notas": [
+        "Dúvida (buraco_muro_dentes): Os 'dentes' de bloco quebrado do buraco do muro (1967) ficam presos só pelo lado, alguns a 10 cm do chão. Parece ruína de propósito. Pode deixar?"
+      ]
+    },
+    {
+      "id": "casa_madeira_1967",
+      "nome": "Casa de madeira sobre pilotis (1967)",
+      "grupo": "castelo",
+      "onde": "Em volta do lote, 3 casas de madeira; época 1967",
+      "arquivo": "castelinho/obra.gd",
+      "linha": 343,
+      "glb": "modelos/casa_madeira_1967.glb",
+      "fotos": [
+        "fotos/casa_madeira_1967_1.jpg",
+        "fotos/casa_madeira_1967_2.jpg",
+        "fotos/casa_madeira_1967_3.jpg"
+      ],
+      "local": "fotos/casa_madeira_1967_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "tito_boneco",
+      "nome": "Tito (boneco de 1967)",
+      "grupo": "criaturas",
+      "onde": "Brincando de castelo de areia diante do prédio, sala 1 (V1) · 23 (V2) · 45 (V3) · 67 (V4); só em 1967",
+      "arquivo": "castelinho/tito.gd",
+      "linha": 393,
+      "glb": "modelos/tito_boneco.glb",
+      "fotos": [
+        "fotos/tito_boneco_1.jpg",
+        "fotos/tito_boneco_2.jpg",
+        "fotos/tito_boneco_3.jpg"
+      ],
+      "local": "fotos/tito_boneco_local.jpg",
+      "notas": [
+        "Tito é fictício; o boneco acena e cava a areia no jogo"
+      ]
+    },
+    {
+      "id": "touceira_capim",
+      "nome": "Touceira de capim alto (ruína)",
+      "grupo": "castelo",
+      "onde": "Ao pé das paredes, em volta do prédio abandonado; época 2019",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 305,
+      "glb": "modelos/touceira_capim.glb",
+      "fotos": [
+        "fotos/touceira_capim_1.jpg",
+        "fotos/touceira_capim_2.jpg",
+        "fotos/touceira_capim_3.jpg"
+      ],
+      "local": "fotos/touceira_capim_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "chapa_fibro_solta",
+      "nome": "Chapa de fibrocimento solta no telhado",
+      "grupo": "castelo",
+      "onde": "Telhado do corpo principal, época 2019",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 260,
+      "glb": "modelos/chapa_fibro_solta.glb",
+      "fotos": [
+        "fotos/chapa_fibro_solta_1.jpg",
+        "fotos/chapa_fibro_solta_2.jpg",
+        "fotos/chapa_fibro_solta_3.jpg"
+      ],
+      "local": "fotos/chapa_fibro_solta_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "chamine_1950",
+      "nome": "Chaminé do núcleo de 1950",
+      "grupo": "castelo",
+      "onde": "Face norte do núcleo original, sala 12 (V1) · 34 (V2) · 56 (V3) · 78 (V4); época 1950",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 320,
+      "glb": "modelos/chamine_1950.glb",
+      "fotos": [
+        "fotos/chamine_1950_1.jpg",
+        "fotos/chamine_1950_2.jpg",
+        "fotos/chamine_1950_3.jpg"
+      ],
+      "local": "fotos/chamine_1950_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "porta_nucleo_1950",
+      "nome": "Porta do núcleo de 1950",
+      "grupo": "castelo",
+      "onde": "Núcleo original, época 1950",
+      "arquivo": "castelinho/extras.gd",
+      "linha": 320,
+      "glb": "modelos/porta_nucleo_1950.glb",
+      "fotos": [
+        "fotos/porta_nucleo_1950_1.jpg",
+        "fotos/porta_nucleo_1950_2.jpg",
+        "fotos/porta_nucleo_1950_3.jpg"
+      ],
+      "local": "fotos/porta_nucleo_1950_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_lustre_hall",
+      "nome": "Lustre de ferro que balança sem vento",
+      "grupo": "castelo",
+      "onde": "Ato II (visita 3), sala 55: o hall errado (a sala 7 de novo, mas errada)",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 457,
+      "glb": "modelos/ato2_lustre_hall.glb",
+      "fotos": [
+        "fotos/ato2_lustre_hall_1.jpg",
+        "fotos/ato2_lustre_hall_2.jpg",
+        "fotos/ato2_lustre_hall_3.jpg"
+      ],
+      "local": "fotos/ato2_lustre_hall_local.jpg",
+      "notas": [
+        "no jogo balança de um lado para o outro; a foto é uma pose parada"
+      ]
+    },
+    {
+      "id": "ato2_painel_corrompido",
+      "nome": "Painel P07 corrompido",
+      "grupo": "castelo",
+      "onde": "Ato II (visita 3), sala 55: o hall errado (a sala 7 de novo, mas errada), parede direita",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 445,
+      "glb": "modelos/ato2_painel_corrompido.glb",
+      "fotos": [
+        "fotos/ato2_painel_corrompido_1.jpg",
+        "fotos/ato2_painel_corrompido_2.jpg",
+        "fotos/ato2_painel_corrompido_3.jpg"
+      ],
+      "local": "fotos/ato2_painel_corrompido_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_porta_falsa_hall",
+      "nome": "Porta falsa com arco (uma de três iguais)",
+      "grupo": "castelo",
+      "onde": "Ato II (visita 3), sala 55: o hall errado (a sala 7 de novo, mas errada), parede esquerda: 3 portas iguais e fechadas",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 438,
+      "glb": "modelos/ato2_porta_falsa_hall.glb",
+      "fotos": [
+        "fotos/ato2_porta_falsa_hall_1.jpg",
+        "fotos/ato2_porta_falsa_hall_2.jpg",
+        "fotos/ato2_porta_falsa_hall_3.jpg"
+      ],
+      "local": "fotos/ato2_porta_falsa_hall_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_recorte_hall",
+      "nome": "Recorte de papelão de visitante, virado para a parede",
+      "grupo": "castelo",
+      "onde": "Ato II (visita 3), sala 55: o hall errado (a sala 7 de novo, mas errada), parede esquerda",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 450,
+      "glb": "modelos/ato2_recorte_hall.glb",
+      "fotos": [
+        "fotos/ato2_recorte_hall_1.jpg",
+        "fotos/ato2_recorte_hall_2.jpg",
+        "fotos/ato2_recorte_hall_3.jpg"
+      ],
+      "local": "fotos/ato2_recorte_hall_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_porta_hall",
+      "nome": "Porta de duas folhas do fundo do hall",
+      "grupo": "castelo",
+      "onde": "Ato II (visita 3), sala 55: o hall errado (a sala 7 de novo, mas errada); abre para as dunas de 1950 (sala 56)",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 489,
+      "glb": "modelos/ato2_porta_hall.glb",
+      "fotos": [
+        "fotos/ato2_porta_hall_1.jpg",
+        "fotos/ato2_porta_hall_2.jpg",
+        "fotos/ato2_porta_hall_3.jpg"
+      ],
+      "local": "fotos/ato2_porta_hall_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_estaca_duna",
+      "nome": "Estaca de madeira do caminho nas dunas",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 56: duas fileiras de estacas marcam o caminho até o núcleo de 1950",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 355,
+      "glb": "modelos/ato2_estaca_duna.glb",
+      "fotos": [
+        "fotos/ato2_estaca_duna_1.jpg",
+        "fotos/ato2_estaca_duna_2.jpg",
+        "fotos/ato2_estaca_duna_3.jpg"
+      ],
+      "local": "fotos/ato2_estaca_duna_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_capim_duna",
+      "nome": "Tufo de capim de duna",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 56: 140 tufos espalhados pelas dunas",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 364,
+      "glb": "modelos/ato2_capim_duna.glb",
+      "fotos": [
+        "fotos/ato2_capim_duna_1.jpg",
+        "fotos/ato2_capim_duna_2.jpg",
+        "fotos/ato2_capim_duna_3.jpg"
+      ],
+      "local": "fotos/ato2_capim_duna_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_janela_veneziana",
+      "nome": "Janela de venezianas do núcleo de 1950",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 57: frente da casa de pedra (núcleo de 1950)",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 581,
+      "glb": "modelos/ato2_janela_veneziana.glb",
+      "fotos": [
+        "fotos/ato2_janela_veneziana_1.jpg",
+        "fotos/ato2_janela_veneziana_2.jpg",
+        "fotos/ato2_janela_veneziana_3.jpg"
+      ],
+      "local": "fotos/ato2_janela_veneziana_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_chamine_1950",
+      "nome": "Chaminé de pedra do núcleo (por fora)",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 57: lado leste do núcleo de 1950",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 575,
+      "glb": "modelos/ato2_chamine_1950.glb",
+      "fotos": [
+        "fotos/ato2_chamine_1950_1.jpg",
+        "fotos/ato2_chamine_1950_2.jpg",
+        "fotos/ato2_chamine_1950_3.jpg"
+      ],
+      "local": "fotos/ato2_chamine_1950_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_lareira_1950",
+      "nome": "Lareira do núcleo (por dentro)",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 57: dentro da casa de 1950, parede leste",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 575,
+      "glb": "modelos/ato2_lareira_1950.glb",
+      "fotos": [
+        "fotos/ato2_lareira_1950_1.jpg",
+        "fotos/ato2_lareira_1950_2.jpg",
+        "fotos/ato2_lareira_1950_3.jpg"
+      ],
+      "local": "fotos/ato2_lareira_1950_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_mesa_casa",
+      "nome": "Mesa de madeira da casa de 1950",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 57: dentro do núcleo de 1950",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 587,
+      "glb": "modelos/ato2_mesa_casa.glb",
+      "fotos": [
+        "fotos/ato2_mesa_casa_1.jpg",
+        "fotos/ato2_mesa_casa_2.jpg",
+        "fotos/ato2_mesa_casa_3.jpg"
+      ],
+      "local": "fotos/ato2_mesa_casa_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_montinho_areia",
+      "nome": "Montinho de areia que entrou pela porta",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 57: três montinhos meio enterrados no chão da casa",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 596,
+      "glb": "modelos/ato2_montinho_areia.glb",
+      "fotos": [
+        "fotos/ato2_montinho_areia_1.jpg",
+        "fotos/ato2_montinho_areia_2.jpg",
+        "fotos/ato2_montinho_areia_3.jpg"
+      ],
+      "local": "fotos/ato2_montinho_areia_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_aviso_visitantes",
+      "nome": "Aviso aos visitantes (regra do contato visual)",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 57: parede dos fundos da casa de 1950",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 598,
+      "glb": "modelos/ato2_aviso_visitantes.glb",
+      "fotos": [
+        "fotos/ato2_aviso_visitantes_1.jpg",
+        "fotos/ato2_aviso_visitantes_2.jpg",
+        "fotos/ato2_aviso_visitantes_3.jpg"
+      ],
+      "local": "fotos/ato2_aviso_visitantes_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_janela_gradeada",
+      "nome": "Janelinha gradeada do anexo",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 57: parede oeste do anexo do núcleo",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 553,
+      "glb": "modelos/ato2_janela_gradeada.glb",
+      "fotos": [
+        "fotos/ato2_janela_gradeada_1.jpg",
+        "fotos/ato2_janela_gradeada_2.jpg",
+        "fotos/ato2_janela_gradeada_3.jpg"
+      ],
+      "local": "fotos/ato2_janela_gradeada_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_modulo_arcada",
+      "nome": "Módulo da arcada repetida (pilar, arco abatido, peitoril)",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 58: 8 módulos IGUAIS de arcos abatidos sobre pilares quadrados",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 621,
+      "glb": "modelos/ato2_modulo_arcada.glb",
+      "fotos": [
+        "fotos/ato2_modulo_arcada_1.jpg",
+        "fotos/ato2_modulo_arcada_2.jpg",
+        "fotos/ato2_modulo_arcada_3.jpg"
+      ],
+      "local": "fotos/ato2_modulo_arcada_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_lanterna_arcada",
+      "nome": "Lanterna da parede da arcada",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 58: parede direita da arcada, uma por módulo",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 636,
+      "glb": "modelos/ato2_lanterna_arcada.glb",
+      "fotos": [
+        "fotos/ato2_lanterna_arcada_1.jpg",
+        "fotos/ato2_lanterna_arcada_2.jpg",
+        "fotos/ato2_lanterna_arcada_3.jpg"
+      ],
+      "local": "fotos/ato2_lanterna_arcada_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_porta_final",
+      "nome": "Porta da Sala Medieval, fora de lugar",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 59: no fim da arcada; atravessar leva ao Castelinho (sala 60)",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 670,
+      "glb": "modelos/ato2_porta_final.glb",
+      "fotos": [
+        "fotos/ato2_porta_final_1.jpg",
+        "fotos/ato2_porta_final_2.jpg",
+        "fotos/ato2_porta_final_3.jpg"
+      ],
+      "local": "fotos/ato2_porta_final_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_trono_vermelho",
+      "nome": "Trono vermelho",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 60: Sala Medieval atrás da porta (o escudo dourado fica na parede atrás)",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 704,
+      "glb": "modelos/ato2_trono_vermelho.glb",
+      "fotos": [
+        "fotos/ato2_trono_vermelho_1.jpg",
+        "fotos/ato2_trono_vermelho_2.jpg",
+        "fotos/ato2_trono_vermelho_3.jpg"
+      ],
+      "local": "fotos/ato2_trono_vermelho_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "ato2_trono_armadura",
+      "nome": "Trono vermelho com a armadura sentada",
+      "grupo": "castelo",
+      "onde": "Ato II, sala 60: Sala Medieval atrás da porta (a mesma armadura da sala 21)",
+      "arquivo": "world/niveis/ato2.gd",
+      "linha": 721,
+      "glb": "modelos/ato2_trono_armadura.glb",
+      "fotos": [
+        "fotos/ato2_trono_armadura_1.jpg",
+        "fotos/ato2_trono_armadura_2.jpg",
+        "fotos/ato2_trono_armadura_3.jpg"
+      ],
+      "local": "fotos/ato2_trono_armadura_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "pescador",
+      "nome": "Pescador com tarrafa (silhueta)",
+      "grupo": "barra",
+      "onde": "Beira d'água da Barra do Tramandaí, flashback da visita 2 (sala 14 (V1) · 36 (V2) · 58 (V3) · 80 (V4))",
+      "arquivo": "world/niveis/barra.gd",
+      "linha": 294,
+      "glb": "modelos/pescador.glb",
+      "fotos": [
+        "fotos/pescador_1.jpg",
+        "fotos/pescador_2.jpg",
+        "fotos/pescador_3.jpg"
+      ],
+      "local": "fotos/pescador_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "boto",
+      "nome": "Boto de nadadeira cortada",
+      "grupo": "barra",
+      "onde": "Água da Barra, vem até a margem durante o minigame da tarrafa (visita 2)",
+      "arquivo": "world/niveis/barra.gd",
+      "linha": 335,
+      "glb": "modelos/boto.glb",
+      "fotos": [
+        "fotos/boto_1.jpg",
+        "fotos/boto_2.jpg",
+        "fotos/boto_3.jpg"
+      ],
+      "local": "fotos/boto_local.jpg",
+      "notas": [
+        "a nadadeira dorsal CORTADA é um toco achatado: é de propósito"
+      ]
+    },
+    {
+      "id": "tarrafa_rede",
+      "nome": "Rede de tarrafa",
+      "grupo": "barra",
+      "onde": "Lançada pelo jogador e pelos pescadores no minigame (3 lances), Barra",
+      "arquivo": "world/niveis/barra.gd",
+      "linha": 713,
+      "glb": "modelos/tarrafa_rede.glb",
+      "fotos": [
+        "fotos/tarrafa_rede_1.jpg",
+        "fotos/tarrafa_rede_2.jpg",
+        "fotos/tarrafa_rede_3.jpg"
+      ],
+      "local": "fotos/tarrafa_rede_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "sandalia_crianca",
+      "nome": "Sandália de criança",
+      "grupo": "barra",
+      "onde": "Vem dentro da rede do 3º lance (e reaparece no trono do Castelinho)",
+      "arquivo": "world/niveis/barra.gd",
+      "linha": 741,
+      "glb": "modelos/sandalia_crianca.glb",
+      "fotos": [
+        "fotos/sandalia_crianca_1.jpg",
+        "fotos/sandalia_crianca_2.jpg",
+        "fotos/sandalia_crianca_3.jpg"
+      ],
+      "local": "fotos/sandalia_crianca_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "bloco_molhe",
+      "nome": "Bloco de pedra do molhe",
+      "grupo": "barra",
+      "onde": "Molhe de pedra que corre pela margem rumo ao mar (260 blocos), Barra",
+      "arquivo": "world/niveis/barra.gd",
+      "linha": 196,
+      "glb": "modelos/bloco_molhe.glb",
+      "fotos": [
+        "fotos/bloco_molhe_1.jpg",
+        "fotos/bloco_molhe_2.jpg",
+        "fotos/bloco_molhe_3.jpg"
+      ],
+      "local": "fotos/bloco_molhe_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "fitas_entrada_porao",
+      "nome": "Fitas zebradas, batente e placa EM REFORMA",
+      "grupo": "porao",
+      "onde": "Entrada do porão, sala 81 (sempre igual: o porão tem sequência fixa)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 570,
+      "glb": "modelos/fitas_entrada_porao.glb",
+      "fotos": [
+        "fotos/fitas_entrada_porao_1.jpg",
+        "fotos/fitas_entrada_porao_2.jpg",
+        "fotos/fitas_entrada_porao_3.jpg"
+      ],
+      "local": "fotos/fitas_entrada_porao_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "porta_porao",
+      "nome": "Porta de tábuas que se fecha atrás do jogador",
+      "grupo": "porao",
+      "onde": "Abertura de entrada de cada sala do porão (81 a 99)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 617,
+      "glb": "modelos/porta_porao.glb",
+      "fotos": [
+        "fotos/porta_porao_1.jpg",
+        "fotos/porta_porao_2.jpg",
+        "fotos/porta_porao_3.jpg"
+      ],
+      "local": "fotos/porta_porao_local.jpg",
+      "notas": [
+        "no jogo a porta começa levantada e desce quando o jogador entra"
+      ]
+    },
+    {
+      "id": "tocha_porao",
+      "nome": "Tocha de parede do porão",
+      "grupo": "porao",
+      "onde": "Paredes das salas 82 a 94 (a chama é a única luz de cada sala)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 668,
+      "glb": "modelos/tocha_porao.glb",
+      "fotos": [
+        "fotos/tocha_porao_1.jpg",
+        "fotos/tocha_porao_2.jpg",
+        "fotos/tocha_porao_3.jpg"
+      ],
+      "local": "fotos/tocha_porao_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "grade_cela",
+      "nome": "Grade de cela com nicho",
+      "grupo": "porao",
+      "onde": "Masmorra, sala 84 (sempre igual: o porão tem sequência fixa)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 337,
+      "glb": "modelos/grade_cela.glb",
+      "fotos": [
+        "fotos/grade_cela_1.jpg",
+        "fotos/grade_cela_2.jpg",
+        "fotos/grade_cela_3.jpg"
+      ],
+      "local": "fotos/grade_cela_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "correntes_parede",
+      "nome": "Correntes velhas e algema na parede",
+      "grupo": "porao",
+      "onde": "Sala 87 (masmorra com celas) (sempre igual: o porão tem sequência fixa)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 377,
+      "glb": "modelos/correntes_parede.glb",
+      "fotos": [
+        "fotos/correntes_parede_1.jpg",
+        "fotos/correntes_parede_2.jpg",
+        "fotos/correntes_parede_3.jpg"
+      ],
+      "local": "fotos/correntes_parede_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "cela_giz",
+      "nome": "Cela aberta com desenhos de giz e riscos de dias",
+      "grupo": "porao",
+      "onde": "Sala 90, a 1ª Figura (nicho na parede leste) (sempre igual: o porão tem sequência fixa)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 430,
+      "glb": "modelos/cela_giz.glb",
+      "fotos": [
+        "fotos/cela_giz_1.jpg",
+        "fotos/cela_giz_2.jpg",
+        "fotos/cela_giz_3.jpg"
+      ],
+      "local": "fotos/cela_giz_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "mesinha_crianca",
+      "nome": "Mesinha de criança com giz de cera",
+      "grupo": "porao",
+      "onde": "Sala 83 (desenhos) (sempre igual: o porão tem sequência fixa)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 1015,
+      "glb": "modelos/mesinha_crianca.glb",
+      "fotos": [
+        "fotos/mesinha_crianca_1.jpg",
+        "fotos/mesinha_crianca_2.jpg",
+        "fotos/mesinha_crianca_3.jpg"
+      ],
+      "local": "fotos/mesinha_crianca_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "cama_crianca",
+      "nome": "Cama de solteiro de criança",
+      "grupo": "porao",
+      "onde": "Sala 85 (quarto de criança impossível) (sempre igual: o porão tem sequência fixa)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 1051,
+      "glb": "modelos/cama_crianca.glb",
+      "fotos": [
+        "fotos/cama_crianca_1.jpg",
+        "fotos/cama_crianca_2.jpg",
+        "fotos/cama_crianca_3.jpg"
+      ],
+      "local": "fotos/cama_crianca_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "cavalinho_balanco",
+      "nome": "Cavalinho de balanço",
+      "grupo": "porao",
+      "onde": "Sala 85 (quarto de criança impossível) (sempre igual: o porão tem sequência fixa)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 1076,
+      "glb": "modelos/cavalinho_balanco.glb",
+      "fotos": [
+        "fotos/cavalinho_balanco_1.jpg",
+        "fotos/cavalinho_balanco_2.jpg",
+        "fotos/cavalinho_balanco_3.jpg"
+      ],
+      "local": "fotos/cavalinho_balanco_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "mesa_telefone_porao",
+      "nome": "Mesa de escritório com telefone preto",
+      "grupo": "porao",
+      "onde": "Sala 88 (o telefone toca) (sempre igual: o porão tem sequência fixa)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 1227,
+      "glb": "modelos/mesa_telefone_porao.glb",
+      "fotos": [
+        "fotos/mesa_telefone_porao_1.jpg",
+        "fotos/mesa_telefone_porao_2.jpg",
+        "fotos/mesa_telefone_porao_3.jpg"
+      ],
+      "local": "fotos/mesa_telefone_porao_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "poco_balde",
+      "nome": "Poço com roldana e balde vermelho",
+      "grupo": "porao",
+      "onde": "Sala 92 (poço) (sempre igual: o porão tem sequência fixa)",
+      "arquivo": "world/niveis/porao_salas.gd",
+      "linha": 1253,
+      "glb": "modelos/poco_balde.glb",
+      "fotos": [
+        "fotos/poco_balde_1.jpg",
+        "fotos/poco_balde_2.jpg",
+        "fotos/poco_balde_3.jpg"
+      ],
+      "local": "fotos/poco_balde_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "cama_quarto_tito",
+      "nome": "Cama e criado-mudo do quarto do Tito",
+      "grupo": "porao",
+      "onde": "Quarto do Tito, sala 95 (quarto de 1967 inteiro e seco no meio da masmorra)",
+      "arquivo": "world/niveis/porao_quarto.gd",
+      "linha": 57,
+      "glb": "modelos/cama_quarto_tito.glb",
+      "fotos": [
+        "fotos/cama_quarto_tito_1.jpg",
+        "fotos/cama_quarto_tito_2.jpg",
+        "fotos/cama_quarto_tito_3.jpg"
+      ],
+      "local": "fotos/cama_quarto_tito_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "guarda_roupa_quarto",
+      "nome": "Guarda-roupa de duas portas",
+      "grupo": "porao",
+      "onde": "Quarto do Tito, sala 95",
+      "arquivo": "world/niveis/porao_quarto.gd",
+      "linha": 69,
+      "glb": "modelos/guarda_roupa_quarto.glb",
+      "fotos": [
+        "fotos/guarda_roupa_quarto_1.jpg",
+        "fotos/guarda_roupa_quarto_2.jpg",
+        "fotos/guarda_roupa_quarto_3.jpg"
+      ],
+      "local": "fotos/guarda_roupa_quarto_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "balde_pazinha_quarto",
+      "nome": "Balde vermelho, pazinha e sandália",
+      "grupo": "porao",
+      "onde": "Quarto do Tito, ao lado do tapete, sala 95",
+      "arquivo": "world/niveis/porao_quarto.gd",
+      "linha": 72,
+      "glb": "modelos/balde_pazinha_quarto.glb",
+      "fotos": [
+        "fotos/balde_pazinha_quarto_1.jpg",
+        "fotos/balde_pazinha_quarto_2.jpg",
+        "fotos/balde_pazinha_quarto_3.jpg"
+      ],
+      "local": "fotos/balde_pazinha_quarto_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "disco_sem_data",
+      "nome": "Disco sem data (vermelho brilhante)",
+      "grupo": "porao",
+      "onde": "Em cima da cama do Tito, sala 95; é o disco da época sem data",
+      "arquivo": "world/niveis/porao_quarto.gd",
+      "linha": 117,
+      "glb": "modelos/disco_sem_data.glb",
+      "fotos": [
+        "fotos/disco_sem_data_1.jpg",
+        "fotos/disco_sem_data_2.jpg",
+        "fotos/disco_sem_data_3.jpg"
+      ],
+      "local": "fotos/disco_sem_data_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "figura_branca",
+      "nome": "Figura Branca",
+      "grupo": "criaturas",
+      "onde": "Perseguidora do jogo todo: Castelinho (visitas 2 a 4), Ato II, porão (salas 90 e 94). Aqui: sala 90",
+      "arquivo": "creatures/figura_branca.gd",
+      "linha": 1,
+      "glb": "modelos/figura_branca.glb",
+      "fotos": [
+        "fotos/figura_branca_1.jpg",
+        "fotos/figura_branca_2.jpg",
+        "fotos/figura_branca_3.jpg"
+      ],
+      "local": "fotos/figura_branca_local.jpg",
+      "notas": [
+        "pose parada (a pose muda um pouco a cada passo)",
+        "a mão e o braço longos também aparecem em braco_morto.gd (mão do afogamento)"
+      ]
+    },
+    {
+      "id": "costela_cipo",
+      "nome": "Costela-de-Adão (cipó)",
+      "grupo": "criaturas",
+      "onde": "Cipós que crescem nas paredes e no chão quando o jogador fica parado (salas 87 e 92 do porão)",
+      "arquivo": "creatures/costela.gd",
+      "linha": 232,
+      "glb": "modelos/costela_cipo.glb",
+      "fotos": [
+        "fotos/costela_cipo_1.jpg",
+        "fotos/costela_cipo_2.jpg",
+        "fotos/costela_cipo_3.jpg"
+      ],
+      "local": "fotos/costela_cipo_local.jpg",
+      "notas": [
+        "no jogo existem 3 variações de cipó e dezenas deles; aqui a variação 1"
+      ]
+    },
+    {
+      "id": "silhueta_susto",
+      "nome": "Vulto de susto (silhueta de criança)",
+      "grupo": "criaturas",
+      "onde": "Usada pelos sustos do porão e do Castelinho (Susto.disparar)",
+      "arquivo": "creatures/susto.gd",
+      "linha": 203,
+      "glb": "modelos/silhueta_susto.glb",
+      "fotos": [
+        "fotos/silhueta_susto_1.jpg",
+        "fotos/silhueta_susto_2.jpg",
+        "fotos/silhueta_susto_3.jpg"
+      ],
+      "local": "fotos/silhueta_susto_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "menino_sentado_slide",
+      "nome": "Menino de costas sentado, com balde (slide)",
+      "grupo": "porao",
+      "onde": "Salas 97 e 98, slides do último dia (só com o disco sem data)",
+      "arquivo": "world/niveis/porao_quarto.gd",
+      "linha": 231,
+      "glb": "modelos/menino_sentado_slide.glb",
+      "fotos": [
+        "fotos/menino_sentado_slide_1.jpg",
+        "fotos/menino_sentado_slide_2.jpg",
+        "fotos/menino_sentado_slide_3.jpg"
+      ],
+      "local": "fotos/menino_sentado_slide_local.jpg",
+      "notas": [
+        "Dúvida (Slide97): No slide do último dia (sala 97) o menino sentado fica com as canelas dentro do chão (uns 18 cm), porque a pose foi pensada para uma borda. Quer que eu sente ele numa borda de verdade, ou está bom assim (é uma lembrança, não precisa fazer sentido)?",
+        "Dúvida (Slide98): Mesma coisa na sala 98: o menino sentado afunda as canelas no chão da passarela. De propósito ou arrumo?"
+      ]
+    },
+    {
+      "id": "figura_slide",
+      "nome": "Figura Branca do slide (silhueta)",
+      "grupo": "porao",
+      "onde": "Sala 98, slide do último dia (só com o disco sem data)",
+      "arquivo": "world/niveis/porao_quarto.gd",
+      "linha": 328,
+      "glb": "modelos/figura_slide.glb",
+      "fotos": [
+        "fotos/figura_slide_1.jpg",
+        "fotos/figura_slide_2.jpg",
+        "fotos/figura_slide_3.jpg"
+      ],
+      "local": "fotos/figura_slide_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "balde_boiando",
+      "nome": "Balde vermelho boiando",
+      "grupo": "porao",
+      "onde": "Sala 99, slide do último dia: água parada e o balde",
+      "arquivo": "world/niveis/porao_quarto.gd",
+      "linha": 216,
+      "glb": "modelos/balde_boiando.glb",
+      "fotos": [
+        "fotos/balde_boiando_1.jpg",
+        "fotos/balde_boiando_2.jpg",
+        "fotos/balde_boiando_3.jpg"
+      ],
+      "local": "fotos/balde_boiando_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "menino_em_pe",
+      "nome": "Menino de pé com balde (slide)",
+      "grupo": "criaturas",
+      "onde": "Sala 96 do porão, slide do último dia (só com o disco sem data)",
+      "arquivo": "world/niveis/porao_quarto.gd",
+      "linha": 231,
+      "glb": "modelos/menino_em_pe.glb",
+      "fotos": [
+        "fotos/menino_em_pe_1.jpg",
+        "fotos/menino_em_pe_2.jpg",
+        "fotos/menino_em_pe_3.jpg"
+      ],
+      "local": "fotos/menino_em_pe_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "duvida_menino_slide_canelas",
+      "nome": "Dúvida: menino sentado dos slides com as canelas no piso",
+      "grupo": "porao",
+      "onde": "Porão, slides do último dia: sala 97 (borda de pedra) e sala 98 (passarela); só com o disco sem data",
+      "arquivo": "world/niveis/porao_quarto.gd",
+      "linha": 231,
+      "glb": "",
+      "fotos": [
+        "fotos/duvida_menino_slide_canelas_1.jpg",
+        "fotos/duvida_menino_slide_canelas_2.jpg",
+        "fotos/duvida_menino_slide_canelas_3.jpg"
+      ],
+      "local": "fotos/duvida_menino_slide_canelas_1.jpg",
+      "notas": [
+        "Dúvida (Slide97): No slide do último dia (sala 97) o menino sentado fica com as canelas dentro do chão (uns 18 cm), porque a pose foi pensada para uma borda. Quer que eu sente ele numa borda de verdade, ou está bom assim (é uma lembrança, não precisa fazer sentido)?",
+        "Dúvida (Slide98): Mesma coisa na sala 98: o menino sentado afunda as canelas no chão da passarela. De propósito ou arrumo?"
+      ]
+    },
+    {
+      "id": "poste_calcadao",
+      "nome": "Poste do calçadão",
+      "grupo": "lago",
+      "onde": "Calçadão do Braço Morto (sala 100), a cada 18 m ao longo do lago",
+      "arquivo": "world/niveis/braco_morto.gd",
+      "linha": 305,
+      "glb": "modelos/poste_calcadao.glb",
+      "fotos": [
+        "fotos/poste_calcadao_1.jpg",
+        "fotos/poste_calcadao_2.jpg",
+        "fotos/poste_calcadao_3.jpg"
+      ],
+      "local": "fotos/poste_calcadao_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "banco_calcadao",
+      "nome": "Banco do calçadão",
+      "grupo": "lago",
+      "onde": "Calçadão do Braço Morto (sala 100), de frente para o lago",
+      "arquivo": "world/niveis/braco_morto.gd",
+      "linha": 319,
+      "glb": "modelos/banco_calcadao.glb",
+      "fotos": [
+        "fotos/banco_calcadao_1.jpg",
+        "fotos/banco_calcadao_2.jpg",
+        "fotos/banco_calcadao_3.jpg"
+      ],
+      "local": "fotos/banco_calcadao_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "canteiro_calcadao",
+      "nome": "Canteiro com folhagem baixa",
+      "grupo": "lago",
+      "onde": "Calçadão do Braço Morto, junto aos postes",
+      "arquivo": "world/niveis/braco_morto.gd",
+      "linha": 331,
+      "glb": "modelos/canteiro_calcadao.glb",
+      "fotos": [
+        "fotos/canteiro_calcadao_1.jpg",
+        "fotos/canteiro_calcadao_2.jpg",
+        "fotos/canteiro_calcadao_3.jpg"
+      ],
+      "local": "fotos/canteiro_calcadao_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "pontilhao_pintado",
+      "nome": "Pontilhão pintado (trecho)",
+      "grupo": "lago",
+      "onde": "Dois pontilhões entram no lago, Braço Morto",
+      "arquivo": "world/niveis/braco_morto.gd",
+      "linha": 352,
+      "glb": "modelos/pontilhao_pintado.glb",
+      "fotos": [
+        "fotos/pontilhao_pintado_1.jpg",
+        "fotos/pontilhao_pintado_2.jpg",
+        "fotos/pontilhao_pintado_3.jpg"
+      ],
+      "local": "fotos/pontilhao_pintado_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "pedalinho_cisne",
+      "nome": "Pedalinho em forma de cisne",
+      "grupo": "lago",
+      "onde": "Atracados na margem do lago, Braço Morto",
+      "arquivo": "world/niveis/braco_morto.gd",
+      "linha": 381,
+      "glb": "modelos/pedalinho_cisne.glb",
+      "fotos": [
+        "fotos/pedalinho_cisne_1.jpg",
+        "fotos/pedalinho_cisne_2.jpg",
+        "fotos/pedalinho_cisne_3.jpg"
+      ],
+      "local": "fotos/pedalinho_cisne_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "placa_atracadouro",
+      "nome": "Placa PEDALINHOS EMBARQUE",
+      "grupo": "lago",
+      "onde": "Ao lado da rampa do atracadouro, Braço Morto",
+      "arquivo": "world/niveis/braco_morto.gd",
+      "linha": 405,
+      "glb": "modelos/placa_atracadouro.glb",
+      "fotos": [
+        "fotos/placa_atracadouro_1.jpg",
+        "fotos/placa_atracadouro_2.jpg",
+        "fotos/placa_atracadouro_3.jpg"
+      ],
+      "local": "fotos/placa_atracadouro_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "lapide_areia",
+      "nome": "Lápide de areia com torres de balde",
+      "grupo": "lago",
+      "onde": "Calçada diante do lago, Braço Morto (sala 100): é onde o jogo termina",
+      "arquivo": "world/niveis/braco_morto.gd",
+      "linha": 646,
+      "glb": "modelos/lapide_areia.glb",
+      "fotos": [
+        "fotos/lapide_areia_1.jpg",
+        "fotos/lapide_areia_2.jpg",
+        "fotos/lapide_areia_3.jpg"
+      ],
+      "local": "fotos/lapide_areia_local.jpg",
+      "notas": [
+        "o nome TITO riscado na lápide é Label3D e não vai para o .glb"
+      ]
+    },
+    {
+      "id": "obra_blocos_tapume",
+      "nome": "Obra de rua: blocos pretos, cones e tapume",
+      "grupo": "lago",
+      "onde": "Canto da calçada do Braço Morto",
+      "arquivo": "world/niveis/braco_morto.gd",
+      "linha": 570,
+      "glb": "modelos/obra_blocos_tapume.glb",
+      "fotos": [
+        "fotos/obra_blocos_tapume_1.jpg",
+        "fotos/obra_blocos_tapume_2.jpg",
+        "fotos/obra_blocos_tapume_3.jpg"
+      ],
+      "local": "fotos/obra_blocos_tapume_local.jpg",
+      "notas": []
+    },
+    {
+      "id": "fundo_lago_pecas",
+      "nome": "Tênis, balde tombado e algas do fundo do lago",
+      "grupo": "lago",
+      "onde": "Fundo do lago, onde o jogador afunda (final 'sala 101')",
+      "arquivo": "world/niveis/braco_morto.gd",
+      "linha": 1312,
+      "glb": "modelos/fundo_lago_pecas.glb",
+      "fotos": [
+        "fotos/fundo_lago_pecas_1.jpg",
+        "fotos/fundo_lago_pecas_2.jpg",
+        "fotos/fundo_lago_pecas_3.jpg"
+      ],
+      "local": "",
+      "notas": [
+        "sem foto de local: o fundo do lago só existe quando o jogador afunda (final 'sala 101'), longe de qualquer chão"
+      ]
+    },
+    {
+      "id": "tito_margem",
+      "nome": "Tito sentado na margem do lago",
+      "grupo": "criaturas",
+      "onde": "Margem do Braço Morto (sala 100), só com o disco sem data ou 1967",
+      "arquivo": "world/niveis/porao_quarto.gd",
+      "linha": 457,
+      "glb": "modelos/tito_margem.glb",
+      "fotos": [
+        "fotos/tito_margem_1.jpg",
+        "fotos/tito_margem_2.jpg",
+        "fotos/tito_margem_3.jpg"
+      ],
+      "local": "fotos/tito_margem_local.jpg",
+      "notas": [
+        "sempre de costas, sempre uma silhueta: peso por sugestão",
+        "Dúvida (TitoNaMargem): Mexi pouco: sentei o Tito na ponta do calçadão do Braço Morto (0,5 m mais perto do lago) para as canelas ficarem penduradas para fora do meio-fio e não dentro do chão. Olhe a cena do final para ver se ficou bom."
+      ]
+    },
+    {
+      "id": "mao_longa",
+      "nome": "Mão longa da Figura",
+      "grupo": "criaturas",
+      "onde": "Braço Morto: a mão que sai da água e pousa no ombro de quem afunda (final 'sala 101')",
+      "arquivo": "world/niveis/braco_morto.gd",
+      "linha": 1026,
+      "glb": "modelos/mao_longa.glb",
+      "fotos": [
+        "fotos/mao_longa_1.jpg",
+        "fotos/mao_longa_2.jpg",
+        "fotos/mao_longa_3.jpg"
+      ],
+      "local": "fotos/mao_longa_local.jpg",
+      "notas": [
+        "a foto de local mostra a mão solta no calçadão: no jogo ela só aparece no final"
+      ]
+    }
+  ]
+}

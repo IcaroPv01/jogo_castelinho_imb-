@@ -315,7 +315,7 @@ static func _menino(pai: Node3D, pos: Vector3, yaw: float, sentado: bool, balde:
 		cil.radial_segments = 8
 		cil.rings = 1
 		if sentado:
-			_peca(n, cil, Vector3(0.38, 0.11 + y0 + 0.2, 0.05), vermelho)
+			_peca(n, cil, Vector3(0.38, 0.11, 0.05), vermelho)       # (estava 0,18 m enterrado no piso: y0 + 0,2)
 		else:
 			_peca(n, cil, Vector3(0.28, 0.32, 0.0), vermelho)
 			braco_d.rotation_degrees = Vector3(0, 0, -22)
