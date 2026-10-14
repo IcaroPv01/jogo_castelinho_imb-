@@ -74,7 +74,9 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
   etiqueta; porão, lago e Barra por caixa de recorte medida no código: revise se mexer nesses objetos). Gera fotos,
   `.glb` e `galeria/manifesto.json`. Dúvidas para o Icaro: `tools/galeria/duvidas.json` (vão para as notas). Depois
   `python3 tools/galeria/gerar_canva.py` gera `galeria/canva.html` (uma página por objeto, para o Canva importar).
-- **Canva:** o design foi importado de `.../galeria/canva.html` (link no topo da galeria, campo `canva` do manifesto).
+- **Canva:** design "Castelinho — Galeria 3D (objetos e dúvidas)", id `DAHYBywfhYE`, 172 páginas, importado de
+  `.../galeria/canva.html` (ver: https://www.canva.com/d/MFcSEKkAWuZuGo8; editar: https://www.canva.com/d/ICFrQtm7LqyqR5n;
+  link também no topo da galeria, campo `canva` do manifesto).
   **Para ler os comentários do Icaro:** carregue `mcp__Canva__list-comments` (ToolSearch) com o id do design (começa com
   "D", está no link) e `list-replies` para as respostas; cada página tem o nome do objeto no título (`data-label`) e o id
   nas notas do apresentador. Responda com `reply-to-comment`. Para refazer o design depois de mudar a galeria: gere o
