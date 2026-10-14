@@ -249,13 +249,13 @@ func _terreno() -> void:
 	_terra(m, grama, sx0, sx1, gz0, sz0)
 	_terra(m, grama, sx0, sx1, sz1, gz1)
 	# calçadão de lajotas junto à água e uma rua de asfalto ao fundo
-	m.caixa(concreto, Vector3(gx0, -0.05, LAGO_Z1), Vector3(gx1, 0.02, gz0), Malha.F_PY, 0.0, Color.WHITE)
+	m.caixa(concreto, Vector3(gx0, -0.05, LAGO_Z1), Vector3(gx1, 0.02, gz0), Malha.F_PY | Malha.F_NZ, 0.0, Color.WHITE)       # + face da frente (aparecia o vazio no vão da rampa)
 	m.col(Vector3(gx0, -1.0, LAGO_Z1), Vector3(gx1, 0.02, gz0))     # sem isto o calçadão (e a lápide) era um buraco
 	m.caixa(asfalto, Vector3(gx0, -0.05, 30.0), Vector3(gx1, 0.01, 38.0), Malha.F_PY, 0.0, Color.WHITE)       # topo 1 cm acima da grama (era coplanar: a rua piscava)
 	# meio-fio do lago: parede de concreto de -0,9 a 0 e a calçada que o cobre
 	# (com uma abertura na rampa do atracadouro: ver _atracadouro)
 	for seg in [[gx0, RAMPA_X0], [RAMPA_X1, gx1]]:
-		m.caixa(concreto, Vector3(seg[0], -1.0, LAGO_Z1 - 0.3), Vector3(seg[1], 0.02, LAGO_Z1), Malha.F_PZ | Malha.F_PY, 0.0, Color(0.7, 0.7, 0.7))
+		m.caixa(concreto, Vector3(seg[0], -1.0, LAGO_Z1 - 0.3), Vector3(seg[1], 0.02, LAGO_Z1), Malha.F_PZ | Malha.F_PY | (Malha.F_PX if seg[1] == RAMPA_X0 else Malha.F_NX), 0.0, Color(0.7, 0.7, 0.7))       # + tampa da ponta do meio-fio junto à rampa
 		m.col(Vector3(seg[0], -2.0, LAGO_Z1 - 1.0), Vector3(seg[1], 1.2, LAGO_Z1 + 0.05))      # impede de cair no lago
 	# fundo e margens do lago (terra escura, só visual)
 	var lama := SalasGd.mat_vc()

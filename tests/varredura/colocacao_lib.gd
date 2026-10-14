@@ -19,6 +19,31 @@ const ZF := 0.0021
 const TODAS := 63
 const NOMES_EPOCA := ["1950", "1975", "2019", "2020", "1967", "sem_data"]
 
+## EXCEÇÕES CONHECIDAS (revisadas na fase 2 do módulo 10): achados que parecem erro mas foram avaliados como
+## de propósito, ou ficaram como DÚVIDA para o Icaro (tools/galeria/duvidas.json). {tipo, padrao, motivo}: casa se
+## `padrao` aparece na etiqueta, no arquivo:linha, no detalhe ou no arquivo do outro objeto. O teste de regressão
+## (tests/colocacao_test.gd) falha para qualquer achado "real" que NÃO esteja aqui.
+const EXCECOES := [
+	{"tipo": "flutuando", "padrao": "painel_p", "motivo": "painel de parede/poste: a base fica acima do piso por desenho (preso pela lateral)"},
+	{"tipo": "flutuando", "padrao": "buraco_muro_dentes", "motivo": "dentes de bloco quebrado presos às bordas do buraco do muro (1967)"},
+	{"tipo": "flutuando", "padrao": "PainelSolto", "motivo": "o painel P08 se solta da parede de propósito (evento da Sala dos Povos)"},
+	{"tipo": "enfiado", "padrao": "painel_p", "motivo": "a moldura do painel afunda ~8 cm na parede (montagem rente); o texto fica na frente"},
+	{"tipo": "enfiado", "padrao": "Arcada/MeshInstance3D", "motivo": "colar do pilar 0 da arcada, rente à parede dos fundos da casa (junção)"},
+	{"tipo": "enfiado", "padrao": "TitoNaMargem", "motivo": "as canelas do Tito sentado pendem para fora do meio-fio e cruzam a barreira INVISÍVEL que impede de cair no lago"},
+	{"tipo": "enfiado", "padrao": "Slide", "motivo": "DÚVIDA: menino sentado nos slides do último dia afunda no piso (pose sentada pensada para uma borda); ver duvidas.json"},
+	{"tipo": "atravessa_parede", "padrao": "casa_vizinha", "motivo": "DÚVIDA: o corredor de 1975 atravessa casas vizinhas (pode ser a impossibilidade de propósito); ver duvidas.json"},
+	{"tipo": "atravessa_parede", "padrao": "cadeira_medieval", "motivo": "fita zebrada da visita 4 passa rente à cadeira (5 cm)"},
+	{"tipo": "degrau_de_piso", "padrao": "_gramado", "motivo": "caminho de lajotas 3 cm acima do gramado: camada visual, o chão de colisão é plano"},
+	{"tipo": "zfighting", "padrao": "parapeito", "motivo": "parapeito x ameia: mesmo shader com tons parecidos, 0,1 m2 a 4 m de altura"},
+	{"tipo": "zfighting", "padrao": "merloes", "motivo": "ameia x parede: mesmo shader com tons parecidos, 0,07 m2 a 4 m de altura"},
+	{"tipo": "zfighting", "padrao": "_escada_torre", "motivo": "contato bloco da escada x parede: 0,03 m2, encostado e sem vista"},
+	{"tipo": "zfighting", "padrao": "_escada_patio", "motivo": "contato bloco da escada x parede: 0,03 m2, encostado e sem vista"},
+	{"tipo": "zfighting", "padrao": "criar_tito", "motivo": "peças do boneco do Tito (112 cm2, caixas encostadas do mesmo corpo)"},
+	{"tipo": "zfighting", "padrao": "Arcada/MeshInstance3D", "motivo": "vigas de madeira rentes ao topo/face externa da parede da arcada (0,09 m2 cada, lado de fora)"},
+	{"tipo": "zfighting", "padrao": "porao_salas.gd:346", "motivo": "moldura da cela: 192 cm2, atrás das barras"},
+	{"tipo": "zfighting", "padrao": "_escada_do_porao", "motivo": "poço da escada do Braço Morto: 0,12 m2 entre degrau e muro lateral, no escuro"},
+]
+
 # ---- achados
 var achados: Array = []
 var contexto: Dictionary = {}
@@ -239,6 +264,14 @@ func _acha(tipo: String, grav: String, e: E, p: Vector3, medida_cm: float, desc:
 		"pilha": e.d.get("onde", "") if e else "", "provavel_intencional": intencional, "motivo": motivo}
 	for k in extra:
 		d[k] = extra[k]
+	if not d["provavel_intencional"]:
+		var texto: String = "%s|%s|%s|%s" % [d["etiqueta"], d["arquivo"], d["detalhe"], d.get("outro_arquivo", "")]
+		for ex in EXCECOES:
+			if ex["tipo"] == tipo and texto.contains(ex["padrao"]):
+				d["provavel_intencional"] = true
+				d["motivo"] = "exceção documentada: " + ex["motivo"]
+				d["excecao"] = true
+				break
 	achados.append(d)
 
 
@@ -754,7 +787,9 @@ func _montar_faces_estruturais() -> void:
 			var ax2: int = ee.fino
 			var u2 := (ax2 + 1) % 3
 			var v2 := (ax2 + 2) % 3
-			_fe.append([ee, ax2, 1 if ee.n[ax2] > 0 else 0, ee.mn[ax2], ee.mn[u2], ee.mx[u2], ee.mn[v2], ee.mx[v2]])
+			var bba := (ee.mx[u2] - ee.mn[u2]) * (ee.mx[v2] - ee.mn[v2])
+			var retangular := ee.tipo == "quad" and ee.area >= 0.9995 * bba
+			_fe.append([ee, ax2, 1 if ee.n[ax2] > 0 else 0, ee.mn[ax2], ee.mn[u2], ee.mx[u2], ee.mn[v2], ee.mx[v2], retangular])
 	_gf = Grade.new(_fe.size() + 1, 1.0)
 	for i in _fe.size():
 		var f: Array = _fe[i]
@@ -818,6 +853,10 @@ func checar_frestas() -> void:
 		if (u1 - u0) * (v1 - v0) < 0.25 or minf(u1 - u0, v1 - v0) < 0.12:
 			continue
 		var co: float = f[3]
+		if f.size() > 8 and not f[8]:
+			continue          # triângulo/trapézio: as bordas do AABB não são bordas reais
+		if String(e.d.get("no", "")).contains("Agua"):
+			continue          # plano d'água: passa de propósito da parede
 		for aresta in 4:
 			var comp := (u1 - u0) if aresta < 2 else (v1 - v0)
 			var n_amostras := clampi(int(ceil(comp / 0.5)), 2, 14)
@@ -855,6 +894,10 @@ func checar_frestas() -> void:
 						gmin = ge
 				if dmin <= 0.004 or dmin > 0.09:
 					continue
+				if OS.get_environment("COLOC_FRESTA") != "":
+					var pp := OS.get_environment("COLOC_FRESTA").split(",")
+					if p.distance_to(Vector3(float(pp[0]), float(pp[1]), float(pp[2]))) < 0.6:
+						print("FR p=", p, " f ax=", ax, " rect u[", u0, ",", u1, "] v[", v0, ",", v1, "] co=", co, " vizinho=", qmin, " d=", dmin, " ", String(e.d.get("onde", "")).get_slice(" < ", 0), " | ", String(gmin.d.get("onde", "")).get_slice(" < ", 0))
 				var dirv := (qmin - p).normalized()
 				if absf(dirv[ax]) > 0.9:
 					continue          # camada paralela (decalque)

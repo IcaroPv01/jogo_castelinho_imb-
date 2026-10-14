@@ -211,6 +211,8 @@ func _continuidade() -> void:
 			for k in por_v[v]:
 				todas_et[k] = true
 		for k in todas_et:
+			if String(k).contains("#"):
+				continue          # nome automático (índice do nó): não dá para comparar entre visitas
 			var presentes: Array = []
 			for v in vs:
 				if por_v[v].has(k):

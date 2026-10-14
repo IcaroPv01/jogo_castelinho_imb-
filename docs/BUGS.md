@@ -33,6 +33,17 @@ Gravidade: **A** = trava/perde progresso, **M** = errado mas dá para seguir, **
 | B23 | A | Porão, bifurcação: o corredor lateral não tinha uma das paredes (e, quando a bifurcação abre para o outro lado, também não tinha a do fim): o jogador saía do mapa e caía para sempre. | Sala da bifurcação, andar pelo corredor lateral até o fim. | `_bifurcacao()`: caixas de colisão de espessura zero (`zz - 0.1*s2 - 0.1` a `zz + 0.1*s2 + 0.1`) que a malha descarta. | Paredes de 0,4 m. | `porao_test` (raios nas paredes da bifurcação) |
 | B24 | A | Porão, sala 98, sem o disco "sem data": o vão do meio-fio deixava cair no poço da cisterna, sem fundo e sem morte. | Sala 98 em 2020, andar para o vão do meio-fio. | `_cisterna()`: os poços não tinham colisão de fundo. | Chão no fundo de todo poço e, na 98, água que afoga e devolve ao checkpoint (como a bifurcação errada). | `porao_test` (vão da cisterna) |
 | B25 | M | Porão, salas 97 a 99 com o disco "sem data": a água continuava alta (cintura) mesmo sem deixar lento; só a da 96 sumia. | Pegar o disco, ir à sala 97-99 e segurar Q. | `_lentidao_da_agua` zerava a lentidão em ESEMDATA, mas o plano d'água não acompanhava. | Em ESEMDATA, nas salas 97-99, a água desce suavemente ao tornozelo (continua espelho, sem lentidão, passos com splash leve); fora dele volta ao normal. | `porao_test` (ajustes da revisão) |
+| B26 | B | Sala Medieval: a 3ª tocha ficava 13 cm solta da parede oeste; as 3 lanças flutuavam 15 cm acima do piso e 10 cm da parede; as 2 poltronas de 1975 (sem pés) flutuavam 10 cm. | Olhar a Sala Medieval de perto (2020 e 1975). | Posições escritas à mão sem conferir com a parede/piso. | Tocha em x -16,55; lanças rente à parede (z -23,54) e apoiadas no piso; poltronas ganharam 4 pés. | `colocacao_test` (`mobilia.gd`) |
+| B27 | B | Placa pequena ao lado do arco de entrada flutuava 18 cm fora da quina da fachada; papéis de parede soltos: Cartazes de PROCURA-SE da visita 4 (10 cm do papel), desenho_4 (visita 3, 10 cm) e desenho_1/2 (9 cm). | Visitas 1-4, olhar de lado. | Folgas escritas para painéis grossos (11 cm) também sobre papéis finos; coordenadas de parede erradas. | Placa em x -5,5..-5,2 sobre a fachada; `cartaz_sobre(..., folga)` com 4,5 cm na visita 4; desenhos a 2 cm da parede. | `colocacao_test` (`extras.gd`, `tito.gd`, `castelinho.gd`) |
+| B28 | M | Torre A em obra (1967): 3 blocos soltos ficavam 20 cm enfiados na parede norte. Tábuas soltas do canteiro flutuavam 2 a 12 cm. | Época 1967, topo da parede oeste da Torre A e o canteiro. | Blocos em z -14,8..-14,5 (dentro da parede de 40 cm); tábuas com y crescente. | Blocos assentados no topo inclinado da parede oeste; tábuas no chão. | `colocacao_test` (`obra.gd`) |
+| B29 | B | Painel P03 (lateral da torre): os 2 postes atravessavam o banco de pedra; a pilha de blocos nº 3 (1967) também. | Jardim oeste, 2020 e 1967. | Painel e pilha no mesmo lugar do banco. | Painel P03 75 cm mais ao norte (z -8,35); pilha nº 3 em z -8,9. | `colocacao_test` |
+| B30 | M | Porão, sala 83 (desenhos): um desenho ficava solto na abertura de saída da sala (23 cm da parede), no meio da passagem. | Sala 83, olhar para a saída. | O 8º desenho era posto em `z = -L` em frente à lâmina da próxima sala, que tem um arco no meio. | Desenho movido para a parede direita (z -1,1). | `colocacao_test` (`porao_salas.gd`) |
+| B31 | B | Menino sentado (Braço Morto e slides do porão): o balde ficava 18 cm enterrado no chão; no Braço Morto o menino sentava a 0,8 m da borda e as canelas ficavam dentro do calçadão. | Final "encontrado"; slides 97/98. | Balde em `y0 + 0,2`; `POS_TITO.z` -7,2. | Balde apoiado no chão; Tito sentado na borda (z -7,72). | `colocacao_test` (`porao_quarto.gd`, `braco_morto.gd`) |
+| B32 | M | Z-fighting visível no Castelinho: faixa da laje na escada do pátio e da torre piscava contra a parede; manchas dos cavaletes (5 camadas coplanares); prancha x guarda-sol e rádio x estante de 1975. | Olhar para a escada do pátio / cavaletes. | Faces no mesmo plano com materiais diferentes. | Deslocadas 3 a 5 mm (4 mm na laje, 3 mm por camada de tinta etc.). | `colocacao_test` |
+| B33 | A | Braço Morto: a rua de asfalto (320 x 8 m) estava no mesmo plano da grama e piscava. A Barra tinha pontas coplanares (areia, rampa, calçadão a 250 m). | Braço Morto, olhar para a rua do fundo. | `asfalto` com topo y = 0,0 igual ao da grama. | Asfalto 1 cm acima; pontas das caixas da Barra 20 a 40 cm mais curtas. | `colocacao_test` |
+| B34 | M | Porão: soleira dos vãos coplanar com o piso (arcos, bifurcação, `muro`); topos dos pilares da cisterna e dos postes do poço coplanares com os capitéis; ponte de tábuas (sala 98) no mesmo plano da passarela; fundo escuro das celas coplanar com a moldura. | Porão, olhar o chão dos vãos de longe. | Alturas iguais. | Soleira do `Muros` 4 mm acima; pilar/poste 1 a 2 cm mais baixos; ponte 5 mm acima; fundo da cela recuado 5 mm. | `colocacao_test` |
+| B35 | B | Ato II: vigas da arcada coplanares com a face externa da parede direita; colar do pilar 0 atravessava a parede dos fundos da casa; batente da porta final coplanar com a abertura. Braço Morto: bloco do poço da escada coplanar com os muros. | Ato II sala 58-59; escada do Braço. | Dimensões iguais. | Vigas 1 cm mais curtas; colar do pilar 0 para na face da casa; batente +5 mm; bloco -1 cm. | `colocacao_test` |
+| B36 | M | Braço Morto: o meio-fio junto à rampa do atracadouro era oco (sem tampa na ponta) e o calçadão não tinha a face da frente: via-se o vazio pelo vão. | Atracadouro, olhar de dentro da rampa. | `caixa(... F_PZ \| F_PY)` sem as faces de ponta. | Tampa da ponta do meio-fio e face da frente do calçadão. | varredura (fresta, `colocacao.gd`) |
 
 ## Verificado e sem problema
 
@@ -65,3 +76,30 @@ Da rodada anterior:
 - O contador "SALA nn" **desce** quando o jogador volta por salas já visitadas (ex.: depois da Barra, 15 → 12 → 11 → 16), e a corrupção acompanha o número atual. `GameState.entrar_sala` aceita números menores de propósito (a morte no Ato II volta para a 26), então não mexi.
 - Áudio nunca foi ouvido (a nuvem não tem placa de som). A lógica (troca de música por corrupção, ambiente por época, silêncio na troca de nível) foi conferida por teste.
 - Os números de tempo medidos aqui são de renderização por software; em GPU real o aquecimento custa bem menos, mas o ganho de não congelar o título vale igual.
+
+## Varredura de colocação (módulo 10)
+
+Ferramenta: `tests/varredura/colocacao.gd` (relatório completo em `tests/varredura/saida/`, ~13 s) e o teste de regressão
+`tests/colocacao_test.gd` (~8 s, no CI). Constroem o Castelinho (4 visitas), Ato II, Barra, porão 81-99 e Braço Morto com o registro de
+`Malha` ligado (`castelinho/malha.gd`, `castelinho/registro.gd`) e procuram objeto flutuando, enfiado, atravessando parede, z-fighting,
+frestas e degraus de piso. O teste falha para qualquer achado de flutuando/enfiado/atravessa/z-fighting que não esteja em `EXCECOES`
+(`tests/varredura/colocacao_lib.gd`, cada uma com o motivo).
+
+Antes da correção: 40 flutuando, 22 enfiado, 17 atravessa parede, 65 z-fighting reais (fora os "provável intencional"). Depois: 0 reais.
+
+**Falsos positivos conhecidos** (a ferramenta acusa, mas não é erro):
+- *Frestas* em paredes com topo inclinado ou arcos: os triângulos/trapézios entram pelo retângulo (AABB) e geravam "fresta de 1,8 cm" (ex.: o muro da
+  Sala Medieval). Agora só retângulos exatos são testados; as frestas que sobram são B (sem vazamento de luz) e ficam só no relatório.
+- Planos d'água do porão passam 5 cm da parede de propósito (ignorados nas frestas).
+- Colar de pilar da arcada, moldura do painel afundada ~8 cm, moldura da porta final: peças que envolvem o sólido.
+- Monte de areia/meia esfera (`montinho_areia`): meio enterrada de propósito. Dentes do buraco do muro, painel P08 solto, peças do boneco do Tito.
+- Camada de caminho de lajotas 3 cm acima do gramado (degrau só visual; a colisão é plana).
+- Colisores invisíveis (barreira do meio-fio do lago, `Barreiras`) não contam como parede, mas o colisor aproximado dos arcos pode acusar peças de vão (vidro/porta).
+- Continuidade entre visitas só compara objetos com nome fixo; objetos de nó (sem `Malha.nomear`) têm nome automático e ficam de fora.
+
+**Foi para dúvida do Icaro** (`tools/galeria/duvidas.json`, nada mudou): corredor de 1975 atravessando a casa vizinha; menino sentado dos slides 97/98
+afundando no piso; painel P08 que se solta; moldura do P17; dentes do buraco do muro; fita zebrada rente à cadeira (visita 4).
+Mudei pouco e pedi conferência: Tito sentado na borda do Braço Morto (0,5 m) e painel P03 75 cm ao norte.
+
+**Não coberto**: épocas de piso do castelo (uma altura por época), cenas dos finais do Braço Morto criadas por evento (mão, Tito de pé, fundo do lago),
+objetos soltos em tween, e qualquer coisa só visível com shader/câmera (a varredura é geométrica).
