@@ -88,7 +88,10 @@ static func _torre_a(c: Castelinho, g: Castelinho.Grupo, info: Dictionary) -> vo
 	# blocos soltos no alto da parede mais baixa
 	for k in 3:
 		var _et := Malha.abrir("bloco_solto_torre_a_%d" % (k + 1))
-		g.ext.caixa(c.m.parede_clara, Vector3(-22.4 + k * 0.5, 2.6, -14.8), Vector3(-22.0 + k * 0.5, 2.95, -14.5), Malha.F_SEM_BASE)
+		# (antes estavam enfiados 20 cm na parede norte; agora assentados no topo inclinado da parede oeste: y = 2,6 + 0,075 (z + 15))
+		var zb := -14.4 + k * 0.5
+		var yb := 2.6 + 0.075 * (zb + 15.0)
+		g.ext.caixa(c.m.parede_clara, Vector3(-22.55, yb, zb), Vector3(-22.25, yb + 0.35, zb + 0.3), Malha.F_SEM_BASE)
 	Malha.abrir("")
 	info["volumes"].append([-22.6, -15.8, -15.0, -11.0, 4.2])
 
@@ -163,7 +166,7 @@ static func _andaime(c: Castelinho, g: Castelinho.Grupo) -> void:
 static func _pilhas(c: Castelinho, g: Castelinho.Grupo, info: Dictionary) -> void:
 	var mat: Material = c.m.parede_clara
 	var pilhas := [
-		[-20.4, -8.3, 0.0], [-18.2, -8.9, 15.0], [-24.8, -7.6, -10.0], [-3.1, -15.5, 0.0], [-3.7, -27.0, 8.0],
+		[-20.4, -8.3, 0.0], [-18.2, -8.9, 15.0], [-24.8, -8.9, -10.0], [-3.1, -15.5, 0.0], [-3.7, -27.0, 8.0],
 		[-14.2, -6.4, 0.0], [-26.5, -16.0, 20.0], [-4.0, -19.0, -6.0],
 	]
 	var ip := 0

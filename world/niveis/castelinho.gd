@@ -923,7 +923,7 @@ func _montar_paineis() -> void:
 		for id in lista:
 			if _paineis.has(id):
 				var painel: Node3D = _paineis[id]
-				var cartaz := TitoCastelinho.cartaz_sobre(self, painel, 1 if id.hash() % 2 == 0 else -1)
+				var cartaz := TitoCastelinho.cartaz_sobre(self, painel, 1 if id.hash() % 2 == 0 else -1, 4.0, 0.045 if visita == 4 else 0.11)
 				cartaz.name = "Cartaz_" + id
 				if id == lista[0]:
 					_interagivel_pista("Ler o cartaz", cartaz.position + Vector3(0, 0, 0.03), Vector3(0.55, 0.75, 0.25), "cartaz",
@@ -1111,16 +1111,16 @@ func _montar_visita() -> void:
 	match visita:
 		1:
 			# semente nº 2: um desenho de criança entre os quadros dos artistas locais (Salão de Arte, sala 11)
-			_desenhos["desenho_1"] = TitoCastelinho.folha(self, "desenho_1", Vector3(-9.62, 1.25, -20.01), 0.0, 0.46, 2)
+			_desenhos["desenho_1"] = TitoCastelinho.folha(self, "desenho_1", Vector3(-9.62, 1.25, -20.08), 0.0, 0.46, 2)
 			_montar_passaporte()
 		2:
-			_desenhos["desenho_2"] = TitoCastelinho.folha(self, "desenho_2", Vector3(-6.45, 1.45, -20.01), 0.0, 0.5, 2)
+			_desenhos["desenho_2"] = TitoCastelinho.folha(self, "desenho_2", Vector3(-6.45, 1.45, -20.08), 0.0, 0.5, 2)
 			_interagivel_pista("Olhar o desenho", Vector3(-6.45, 1.45, -19.9), Vector3(0.6, 0.6, 0.3), "desenho_2",
 				["Um desenho de giz de cera: um menino e a mãe, de mãos dadas, na praia.", "Está assinado \"TITO\", com o T ao contrário."], [E2020])
 			if GameState.flag(_chave("apagao")):
 				_criar_balde_e_desenho3()
 		3:
-			_desenhos["desenho_4"] = TitoCastelinho.folha(self, "desenho_4", Vector3(-24.5, 1.25, -16.0), 90.0, 0.5, 2)
+			_desenhos["desenho_4"] = TitoCastelinho.folha(self, "desenho_4", Vector3(-24.58, 1.25, -16.0), 90.0, 0.5, 2)
 			_interagivel_pista("Olhar o desenho", Vector3(-24.4, 1.25, -16.0), Vector3(0.3, 0.6, 0.6), "desenho_4",
 				["Um menino pequeno embaixo de um castelo enorme, todo de pedra.", "O castelo está em cima dele."], [E2020])
 			_montar_porta_ato2()

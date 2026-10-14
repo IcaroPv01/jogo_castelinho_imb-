@@ -171,7 +171,7 @@ static func _bancos_de_pedra(c: Castelinho) -> void:
 	g.ext.caixa(pe, Vector3(-24.6, 0, -7.4), Vector3(-23.2, 0.75, -6.6), Malha.F_TODAS)
 	g.ext.col(Vector3(-24.6, 0, -7.4), Vector3(-23.2, 0.75, -6.6))
 	Malha.abrir("banco_pedra_jardim_norte")
-	g.ext.caixa(pe, Vector3(-25.0, 0.0, -8.1), Vector3(-22.8, 0.42, -7.5), Malha.F_TODAS)
+	g.ext.caixa(pe, Vector3(-24.78, 0.0, -8.1), Vector3(-22.8, 0.42, -7.5), Malha.F_TODAS)       # (começava em -25,0: o poste do painel P03 atravessava o banco)
 	Malha.abrir("banco_pedra_jardim_sul")
 	g.ext.caixa(pe, Vector3(-25.0, 0.0, -6.5), Vector3(-22.8, 0.42, -5.9), Malha.F_TODAS)
 	g.ext.col(Vector3(-25.0, 0.0, -8.1), Vector3(-22.8, 0.42, -5.9))

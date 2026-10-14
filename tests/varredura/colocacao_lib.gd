@@ -358,8 +358,17 @@ static func _epm_cluster(c: Array) -> int:
 
 
 const _PAL_INTENC := ["luz", "chama", "brilho", "halo", "raio", "sombra", "mancha", "fumaca", "poeira", "faisca", "particula", "brasa", "fogo", "vento", "agua", "onda", "espuma",
-	"passaporte", "disco_", "chuva", "pegada", "rastro", "mosca", "estrela", "brilha", "lampada", "balao", "folha_costela"]
+	"passaporte", "disco_", "chuva", "montinho", "recolhida", "pegada", "rastro", "mosca", "estrela", "brilha", "lampada", "balao", "folha_costela"]
 const _PAL_VAO := ["vidro", "porta", "janela", "grade", "arco", "veneziana", "folha_e", "folha_d"]
+
+
+## O sólido cabe inteiro dentro do objeto em dois eixos (colar de pilar, moldura): a sobreposição é só o miolo do próprio sólido.
+static func _envolve(o: E, s: E) -> bool:
+	var dentro := 0
+	for ax in 3:
+		if s.mn[ax] >= o.mn[ax] - 0.01 and s.mx[ax] <= o.mx[ax] + 0.01:
+			dentro += 1
+	return dentro >= 2
 
 
 static func _palavra_vao(et: String) -> String:
@@ -538,6 +547,9 @@ func checar_enfiado() -> void:
 		elif _palavra_vao(e0.et) != "":
 			intenc = true
 			motivo = "peça de vão (%s): fica dentro da espessura da parede; o colisor do vão é aproximado" % _palavra_vao(e0.et)
+		elif _envolve(melhor, melhor_s) and not melhor_atrav:
+			intenc = true
+			motivo = "o objeto ENVOLVE o sólido (colar/moldura em volta de pilar ou poste)"
 		elif minf(ts2.x, minf(ts2.y, ts2.z)) <= 0.12 and _bb_cluster(c).size.length() >= 0.9 and not melhor_atrav:
 			intenc = true
 			motivo = "poste/haste fina fixa o objeto (sobreposição de fixação)"

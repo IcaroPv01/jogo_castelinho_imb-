@@ -617,6 +617,7 @@ static func _fitas_entrada(c: Ctx) -> void:
 static func _porta_entrada(c: Ctx) -> void:
 	var porta := Node3D.new()
 	porta.name = "Porta"
+	Malha.nomear(porta, "porta_entrada_porao_recolhida")      # a folha sobe para dentro da lâmina quando aberta (flutua de propósito)
 	porta.position = Vector3(0, c.piso_y, T * 0.5)
 	c.raiz.add_child(porta)
 	var m: Malha = MalhaGd.new()
@@ -1029,7 +1030,7 @@ static func _desenhos(c: Ctx) -> void:
 		[Vector3(-c.w * 0.5 + 0.02, 1.7, -2.2), Vector3.RIGHT], [Vector3(-c.w * 0.5 + 0.02, 1.6, -4.7), Vector3.RIGHT],
 		[Vector3(-c.w * 0.5 + 0.02, 1.8, -7.3), Vector3.RIGHT], [Vector3(-c.w * 0.5 + 0.02, 1.5, -9.0), Vector3.RIGHT],
 		[Vector3(c.w * 0.5 - 0.02, 1.7, -2.8), Vector3.LEFT], [Vector3(c.w * 0.5 - 0.02, 1.5, -5.3), Vector3.LEFT],
-		[Vector3(c.w * 0.5 - 0.02, 1.8, -7.8), Vector3.LEFT], [Vector3(0.0, 1.8, -c.L + 0.02), Vector3.BACK]]
+		[Vector3(c.w * 0.5 - 0.02, 1.8, -7.8), Vector3.LEFT], [Vector3(c.w * 0.5 - 0.02, 1.8, -1.1), Vector3.LEFT]]      # (o 8º ficava na abertura de saída da sala, flutuando no vão)
 	for i in seq.size():
 		var tam := 1.05 + rng.randf() * 0.3
 		quadro(c, tex_desenho(seq[i]), pos[i][0], pos[i][1], tam, tam * 0.75, rng.randf_range(-6.0, 6.0))

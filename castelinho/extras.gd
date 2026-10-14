@@ -248,7 +248,7 @@ static func _letreiros(c: Castelinho, g: Castelinho.Grupo) -> void:
 		Epocas.marcar(l, [GameState.Epoca.E2020])
 	# plaquinha ao lado do arco de entrada
 	Malha.abrir("plaquinha_arco_entrada")
-	g.ext.caixa(c.m.branco, Vector3(-4.82, 1.1, -11.02), Vector3(-4.52, 1.35, -10.99), Malha.F_SEM_BASE)
+	g.ext.caixa(c.m.branco, Vector3(-5.5, 1.1, -11.0), Vector3(-5.2, 1.35, -10.97), Malha.F_SEM_BASE)
 	Malha.fechar(_et)
 
 

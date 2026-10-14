@@ -289,8 +289,8 @@ static func _sala_medieval(c: Castelinho, g: Castelinho.Grupo) -> void:
 	# lanças e estandartes na parede oeste/leste
 	for x in [-10.5, -10.0, -9.5]:
 		Malha.abrir("lanca_medieval_%d" % roundi((x + 10.5) * 2.0 + 1.0))
-		cx(g, madeira, Vector3(x, 1.4, -23.65), Vector3(0.05, 2.5, 0.05))
-		cx(g, c.m.ferro, Vector3(x, 2.75, -23.65), Vector3(0.07, 0.3, 0.07))
+		cx(g, madeira, Vector3(x, 1.4, -23.54), Vector3(0.05, 2.5, 0.05))       # encostadas na parede (z -23,5)
+		cx(g, c.m.ferro, Vector3(x, 2.75, -23.54), Vector3(0.07, 0.3, 0.07))
 	# tronos (dois), encosto alto de madeira escura
 	for z in [-27.0, -28.2]:
 		Malha.abrir("trono_medieval_%d" % (1 if z > -27.5 else 2))
@@ -311,7 +311,7 @@ static func _sala_medieval(c: Castelinho, g: Castelinho.Grupo) -> void:
 			cx(g, madeira, Vector3(x, 0.25, -26.0 + dz), Vector3(0.45, 0.5, 0.45), true, 1.0)
 			cx(g, madeira, Vector3(x, 0.7, -26.0 + dz * 1.1), Vector3(0.45, 0.5, 0.06), false, 1.0)
 	# tochas (arandelas) ao lado da porta de saída e da lareira
-	for p in [Vector3(-11.4, 1.9, -29.05), Vector3(-9.0, 1.9, -29.05), Vector3(-16.4, 1.9, -24.5)]:
+	for p in [Vector3(-11.4, 1.9, -29.05), Vector3(-9.0, 1.9, -29.05), Vector3(-16.55, 1.9, -24.5)]:
 		Malha.abrir("tocha_medieval_%d" % roundi(absf(p.x)))
 		cx(g, ferro, p, Vector3(0.1, 0.5, 0.1))
 		cx(g, Castelinho.mat_luz(Color(1.0, 0.55, 0.15), 1.6), p + Vector3(0, 0.4, 0), Vector3(0.14, 0.24, 0.14))
@@ -351,6 +351,9 @@ static func _veraneio_1975(c: Castelinho) -> void:
 	# poltronas
 	for px in [-15.5, -9.7]:
 		Malha.abrir("poltrona_1975_%s" % ("oeste" if px < -12.0 else "leste"))
+		for lx in [-1.0, 1.0]:      # pés (a poltrona flutuava 10 cm acima do piso)
+			for lz in [-1.0, 1.0]:
+				cx(g, madeira, Vector3(px + 0.33 * lx, 0.06, -26.3 + 0.33 * lz), Vector3(0.06, 0.12, 0.06))
 		cx(g, tecido2, Vector3(px, 0.28, -26.3), Vector3(0.8, 0.34, 0.8), true)
 		var fora := 1.0 if px > -12.0 else -1.0
 		cx(g, tecido2, Vector3(px + 0.32 * fora, 0.65, -26.3), Vector3(0.16, 0.5, 0.8))

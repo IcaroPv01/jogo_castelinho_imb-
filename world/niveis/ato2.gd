@@ -590,8 +590,10 @@ func _casa() -> void:
 		for dz in [-0.3, 0.3]:
 			Construtor.caixa(casa, Vector3(0.07, 0.76, 0.07), Vector3(1.9 + dx, 0.38, -76.2 + dz), m_madeira, false)
 	var duna_peq := SphereMesh.new()
+	var idu := 0
 	for p in [Vector3(0.3, 0.0, -73.5), Vector3(-1.2, 0.0, -73.9), Vector3(2.4, 0.0, -73.6)]:
-		Ato2Pecas.malha(casa, duna_peq, p, m_areia, Vector3.ZERO, Vector3(1.4, 0.35, 0.9))
+		idu += 1
+		Malha.nomear(Ato2Pecas.malha(casa, duna_peq, p, m_areia, Vector3.ZERO, Vector3(1.4, 0.35, 0.9)), "montinho_areia_%d" % idu)   # meia esfera: metade enterrada de propósito
 
 	# aviso diegético da regra
 	Construtor.caixa(casa, Vector3(1.9, 0.9, 0.05), Vector3(1.5, 1.8, -77.28), m_madeira, false)
@@ -620,7 +622,8 @@ func _arcada() -> void:
 	for k in ARC_N + 1:
 		var zp := ARC_Z0 - k * ARC_BAIA
 		_bloco(arc, ARC_X_ESQ - 0.4, ARC_X_ESQ + 0.4, 0.0, teto, zp - 0.4, zp + 0.4, m_pedra)
-		_bloco(arc, ARC_X_ESQ - 0.48, ARC_X_ESQ + 0.48, 2.15, 2.3, zp - 0.48, zp + 0.48, m_pedra_cinza, false)
+		# colar do pilar (o do pilar 0 para na face de trás da casa: antes atravessava a parede dos fundos)
+		_bloco(arc, ARC_X_ESQ - 0.48, ARC_X_ESQ + 0.48, 2.15, 2.3, zp - 0.48, zp if k == 0 else zp + 0.48, m_pedra_cinza, false)
 	var vao := ARC_BAIA - 0.8
 	var m_luz_lant := Ato2Pecas.mat_cor(Color(1.0, 0.75, 0.4), true, 1.0)
 	for k in ARC_N:
@@ -668,11 +671,12 @@ func _porta_final() -> void:
 	var z_fim := ARC_Z0 - ARC_BAIA * ARC_N
 	var raiz := Node3D.new()
 	raiz.name = "PortaFinal"
+	Malha.nomear(raiz, "porta_final_ato2")
 	add_child(raiz)
 	# moldura de pedra CINZA (não combina com o resto): a porta da Sala Medieval, fora de lugar
 	Ato2Pecas.malha(raiz, Ato2Pecas.arco_abatido(1.8, 2.5, 0.3, 3.3, 0.9), Vector3(ARC_XC, 0, z_fim - 0.4), m_pedra_cinza)
 	for lado in [-1.0, 1.0]:
-		_bloco(raiz, ARC_XC + lado * 1.05 - 0.15, ARC_XC + lado * 1.05 + 0.15, 0.0, 2.5, z_fim - 0.85, z_fim + 0.05, m_pedra_cinza)
+		_bloco(raiz, ARC_XC + lado * 1.055 - 0.15, ARC_XC + lado * 1.055 + 0.15, 0.0, 2.5, z_fim - 0.85, z_fim + 0.05, m_pedra_cinza)
 	# folhas com 4 vidros acesos cada
 	var m_vidro := Ato2Pecas.mat_cor(Color(1.0, 0.72, 0.35), true, 1.0)
 	for lado in [-1.0, 1.0]:
