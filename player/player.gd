@@ -11,7 +11,7 @@ signal stamina_mudou(valor: float)
 const VEL_ANDAR := 3.0
 const VEL_CORRER := 5.4
 const GRAVIDADE := 18.0
-const VEL_PULO := 3.8    # m/s para cima: pulo baixo (~0,4 m), um pulinho, não passa por cima de nada alto
+const VEL_PULO := 3.5    # m/s para cima: pulo baixo (~0,37 m medido), um pulinho, não passa por cima de nada alto
 const ALTURA_OLHOS := 1.55
 const SENS_MOUSE := 0.0022
 const ALCANCE := 2.4

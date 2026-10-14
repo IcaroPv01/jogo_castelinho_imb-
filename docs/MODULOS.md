@@ -22,6 +22,7 @@ Decisões do Icaro (07/10/2026):
 | 8 | Celular | Jogar no navegador do celular (Android/iPhone), deitado, pelo mesmo link; computador igual | `ui/celular.gd`, `ui/controles_toque.gd`, `ui/aviso_retrato.gd`, `export_presets.cfg` (head_include) | feito (PR #17): toque, pausa sem pointer lock, retrato, modo leve, som no 1º toque; reabre quando o Icaro testar no celular |
 | 9 | Modo debug e Figura no Q | Q possível e tenso (sem perseguição cedo); painel de debug para testar sem morrer | `world/visor.gd`, `world/rastro.gd`, `creatures/figura_branca.gd`, `ui/debug.gd`, `ui/painel_debug.gd` | feito (PR #19): Figura do slide no mundo, perseguição "tipo Granny", olho mais lento, modo debug `?debug=1`; reabre quando o Icaro testar o Q |
 | 10 | Galeria 3D e colocação dos objetos | Varredura automática de colocação (flutuando, enfiado, fora da sala, z-fighting, frestas, continuidade); galeria `/galeria/` com fotos e glTF; design no Canva para comentários | `tests/varredura/colocacao*.gd`, `tests/colocacao_test.gd`, `castelinho/malha.gd` (registro), `castelinho/registro.gd`, `tools/galeria/`, `galeria/` | feito (PR #20): achados reais zerados (correções B26–B36 ou exceções com motivo), 166 objetos na galeria, dúvidas no Canva; reabre quando o Icaro comentar |
+| 11 | Q liga/desliga, pulo e relatório | Pedidos do playtest do Bernardo (14/10): Q como o Correr, pulo baixo, botão de enviar relatório | `world/visor.gd`, `player/player.gd`, `ui/controles_toque.gd`, `ui/relatorio.gd`, `ui/menu_pausa.gd` | feito (PR #21): Q/Visor liga e desliga com um toque, Espaço/botão Pular (pulo baixo), "Enviar relatório" na pausa; reabre quando o Icaro testar |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -47,6 +48,30 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 11: Q liga/desliga, pulo baixo e relatório (14/10/2026)
+
+- **Origem:** o amigo Bernardo jogou e zerou (conversa repassada pelo Icaro). Decisões do Icaro: Q igual ao Correr; pulo
+  baixo; relatório para quem trava ou bugou. Fora deste módulo (esperam o módulo 1 e os seguintes): paredes e void,
+  épocas mais distintas, caminho e história (o sumiço do Tito continua em 1967), sustos no caminho, pedalinho e final secreto.
+- **Q liga/desliga** (`world/visor.gd`): a tecla Q agora é a ação `visor_alternar` (a ação `visor` não tem mais tecla).
+  `Visor.alternar()` aperta ou solta a ação `visor` e o resto do código segue perguntando `Input.is_action_pressed("visor")`
+  (atenção, Figura, época, testes antigos que simulam o Q seguram a ação como antes). O Visor só solta sozinho o Q que ele
+  mesmo ligou (`_latch`): tela aberta (`ui_aberta`), sem Visor, estouro da atenção (bloqueio) ou saída do nível.
+  Sem disco ou bloqueado, tocar no Q dá só o tique de erro. Celular: o botão Visor chama `alternar()` (liga/desliga, azul
+  quando ligado). Textos "segure Q" viraram "aperte Q" (painéis, falas, faixa de discos, README).
+- **Pulo baixo** (`player/player.gd`): ação `pular` = Espaço, botão Pular no celular (acima do Visor, `ui/controles_toque.gd`).
+  `VEL_PULO` 3,5 m/s com gravidade 18: **sobe ~0,37 m** (medido em `tests/pulo_test.gd`), sem pulo duplo, sem pular em fala da
+  Guia, tela aberta ou cena (`pode_mover` falso), e não acelera o andar (a Figura não é driblada por pulo). Quem mexer
+  em degraus, muretas ou bordas do mapa: nada deve ter entre 0,3 e 0,4 m de altura sem querer.
+- **Relatório** (`ui/relatorio.gd` + página nova em `ui/menu_pausa.gd`, 1 linha em `scenes/main/main.gd`): como o site é
+  estático, o jogador abre Pausa → "Enviar relatório" e vê um texto curto (versão, plataforma, nível, sala, visita, época, disco,
+  atenção, posição, qps, trilha das últimas 12 salas com tempo, últimos 8 erros do motor via `Logger`) com **Copiar** e
+  **Mandar pelo WhatsApp** (`wa.me/?text=`, o jogador escolhe o contato). Sem servidor, sem dados pessoais. A versão sai "?"
+  porque o `project.godot` não define `application/config/version`.
+- **Testes novos:** `tests/pulo_test.gd`, `tests/relatorio_test.gd`, bloco "Q liga e desliga" em `visor_test`, botões Visor/Pular em
+  `celular_test`. Não conferido: o clipboard e o WhatsApp de verdade no navegador, e o layout do relatório no celular deitado.
+- Pendente: o Icaro testar (Q com um toque no PC e no celular, pulo, relatório) e dizer se o pulo está bom.
 
 ### Módulo 10: Galeria 3D e colocação dos objetos (14/10/2026)
 
