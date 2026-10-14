@@ -10,7 +10,7 @@ extends RefCounted
 ##   Celular.capturar_mouse() / soltar_mouse()   no celular não fazem nada (sem pointer lock)
 ##   Celular.olhar_liberado()    o jogador pode olhar/agir? (celular ligado OU mouse capturado)
 ##   Celular.dica(teclado, toque)  texto de dica conforme o aparelho
-##   Celular.adaptar(texto)      troca "segure Q" etc. por "segure o botão Visor" no celular
+##   Celular.adaptar(texto)      troca "aperte Q" etc. por "toque no botão Visor" no celular
 ##   Celular.margens()           Vector4(esq, topo, dir, baixo) da área segura (entalhe) em unidades do canvas
 
 const MODOS: Array[String] = ["auto", "sempre", "nunca"]
@@ -158,7 +158,7 @@ static func dica(teclado: String, toque: String) -> String:
 
 
 const _TROCAS: Array = [
-	["segure Q", "segure o botão Visor"], ["Segure Q", "Segure o botão Visor"],
+	["aperte Q", "toque no botão Visor"], ["Aperte Q", "Toque no botão Visor"],
 	["(Q)", "(botão Visor)"],
 	["Aperta F para ligar e desligar", "Toque em Lanterna para ligar e desligar"],
 	["Aperte 1 a 5 (ou a rolagem do mouse) para trocar de disco", "Toque nos discos, no canto, para trocar"],

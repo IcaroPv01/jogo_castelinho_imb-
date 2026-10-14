@@ -16,8 +16,9 @@ Jogo 3D de terror em Godot 4 sobre o Castelinho de Imbé (RS). Começa como um "
 | E ou clique | Ler painel / usar |
 | **1–5** | Selecionar disco do Visor |
 | **Rolagem do mouse** | Trocar disco do Visor |
-| Q (segurar) | Mostrar época do disco (Visor do Tempo) |
+| Q (apertar: liga/desliga) | Mostrar época do disco (Visor do Tempo) |
 | **F** | Lanterna (a partir da visita 3) |
+| Espaço | Pular (pulo baixo) |
 | Espaço / Enter | Avançar diálogo |
 | Esc ou P | Pausar (clique para voltar) |
 
@@ -32,7 +33,8 @@ aparecem sozinhos; dá para forçar em Pausa → Opções → Controles de toque
 | Arrastar no lado direito (analógico com o olho) | Girar a câmera: quanto mais longe do centro, mais rápido |
 | **Interagir** (fica amarelo perto de algo) | Ler painel / usar |
 | **Correr** | Liga a corrida; para sozinha ao soltar o analógico |
-| **Visor** (segurar) | Mostrar época do disco |
+| **Pular** | Pulo baixo |
+| **Visor** (toque: liga/desliga) | Mostrar época do disco |
 | Tocar num disco da faixa | Selecionar disco |
 | **Lanterna** | Lanterna (a partir da visita 3) |
 | Tocar na tela | Avançar diálogo |

@@ -17,6 +17,7 @@ var _carregando := false
 
 
 func _ready() -> void:
+	Relatorio.instalar()   # coletor de erros + trilha de salas para o relatório do menu de pausa
 	add_to_group("main")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	mundo = Node3D.new()

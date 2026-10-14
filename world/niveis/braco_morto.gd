@@ -726,7 +726,7 @@ func _usar_lapide(_p: Node) -> void:
 	if cena_feita:
 		_encerrar()
 		return
-	_mostrar_legenda("Alguém fez isto com as mãos. A areia ainda está úmida.\nSegure Q: o Visor (disco sem data, tecla 5) mostra o resto.", 5.5)
+	_mostrar_legenda("Alguém fez isto com as mãos. A areia ainda está úmida.\nAperte Q: o Visor (disco sem data, tecla 5) mostra o resto.", 5.5)
 
 
 # ============================================================================ Tito (só pelo Visor)

@@ -230,7 +230,7 @@ func _teste_botoes() -> void:
 
 # ---------------------------------------------------------------- visor e faixa de discos
 func _teste_visor_e_faixa() -> void:
-	print("-- visor (segurar) e faixa de discos")
+	print("-- visor (liga/desliga), pular e faixa de discos")
 	var c = hud.controles
 	var visor = load("res://world/visor.gd").instalar(main.mundo)
 	GS.ganhar_disco(0)
@@ -240,9 +240,15 @@ func _teste_visor_e_faixa() -> void:
 	var lay: Dictionary = c.layout()
 	_checar(lay.has("visor"), "botão Visor aparece com discos")
 	c.processar_toque(5, lay.visor.c, true)
-	_checar(Input.is_action_pressed("visor"), "Visor: segurar aperta")
 	c.processar_toque(5, lay.visor.c, false)
-	_checar(not Input.is_action_pressed("visor"), "Visor: soltar solta")
+	_checar(Input.is_action_pressed("visor"), "Visor: um toque liga (e continua ligado ao soltar o dedo)")
+	c.processar_toque(5, lay.visor.c, true)
+	c.processar_toque(5, lay.visor.c, false)
+	_checar(not Input.is_action_pressed("visor"), "Visor: segundo toque desliga")
+	_checar(lay.has("pular") and lay.pular.c.distance_to(lay.visor.c) > 2.0 * lay.visor.r, "botão Pular existe e não cobre o Visor")
+	c.processar_toque(6, lay.pular.c, true)
+	_checar(Input.is_action_pressed("pular"), "Pular: toque aperta a ação")
+	c.processar_toque(6, lay.pular.c, false)
 	var f = hud.faixa_discos
 	_checar(f.visible and f.discos_mostrados().size() == 2, "faixa mostra os 2 discos")
 	var alvo: Vector2 = f.global_position + Vector2(10.0 + f.LARG_SLOT * 0.5, 40.0)
@@ -417,7 +423,7 @@ func _teste_opcao() -> void:
 func _teste_textos() -> void:
 	print("-- textos de dica")
 	Cel.ativo = true
-	_checar(Cel.adaptar("Segure Q para ver").contains("Visor") and not Cel.adaptar("Segure Q para ver").contains(" Q "), "'Segure Q' vira botão Visor")
+	_checar(Cel.adaptar("Aperte Q para ver").contains("Visor") and not Cel.adaptar("Aperte Q para ver").contains(" Q "), "'Aperte Q' vira botão Visor")
 	_checar(not Cel.adaptar("Aperta F para ligar e desligar").contains(" F "), "dica da lanterna adaptada")
 	_checar(Cel.adaptar("texto sem tecla") == "texto sem tecla", "texto neutro intacto")
 	Cel.ativo = false

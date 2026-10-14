@@ -87,7 +87,7 @@
 	},
 	"p10": {
 		"titulo": "O Castelinho através do tempo",
-		"texto": "Com o Visor do Tempo você viaja! Por volta de 1950 era só uma casa de pedra na areia, sem torres. A obra terminou em 1975. Em 2019 o prédio, quase em ruínas, foi comprado pelo município, e em 2020 abriu o museu. Segure Q para espiar o passado!",
+		"texto": "Com o Visor do Tempo você viaja! Por volta de 1950 era só uma casa de pedra na areia, sem torres. A obra terminou em 1975. Em 2019 o prédio, quase em ruínas, foi comprado pelo município, e em 2020 abriu o museu. Aperte Q para espiar o passado!",
 		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/ https://litoralnarede.com.br/castelinho-de-imbe-sera-transformado-em-centro-cultural/",
 		"icone": "relogio",
 		"anfitriao": "bentinho"
@@ -136,7 +136,7 @@
 	},
 	"p17": {
 		"titulo": "As torres vieram depois",
-		"texto": "Sabia que o Castelinho começou sem torres? A Secretaria de Cultura conta: \"De início, era só esse miolo aqui, as torres foram construídas em momentos diferentes.\" Use o Visor do Tempo (segure Q): em 1950, a torre ainda não existia!",
+		"texto": "Sabia que o Castelinho começou sem torres? A Secretaria de Cultura conta: \"De início, era só esse miolo aqui, as torres foram construídas em momentos diferentes.\" Use o Visor do Tempo (aperte Q): em 1950, a torre ainda não existia!",
 		"fonte": "https://www.betaredacao.com.br/o-castelinho-de-imbe-um-sonho-de-pedra-a-beira-mar/",
 		"icone": "torre",
 		"anfitriao": "bentinho"

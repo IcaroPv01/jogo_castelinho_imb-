@@ -883,7 +883,7 @@ func _pegar_disco(_p: Node, c) -> void:
 	for it in c.interativos:
 		if is_instance_valid(it) and it.name == "InteragivelDisco":
 			it.queue_free()
-	_mostrar_legenda("Um disco sem data. Segure Q.", 4.0)
+	_mostrar_legenda("Um disco sem data. Aperte Q.", 4.0)
 	# a grade da sala 96 sobe (e a legenda avisa, depois da primeira)
 	if salas.has(15):
 		_abrir_porta(15)
