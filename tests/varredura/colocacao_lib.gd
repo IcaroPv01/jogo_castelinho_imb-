@@ -357,7 +357,17 @@ static func _epm_cluster(c: Array) -> int:
 	return m
 
 
-const _PAL_INTENC := ["luz", "chama", "brilho", "halo", "raio", "sombra", "mancha", "fumaca", "poeira", "faisca", "particula", "brasa", "fogo", "vento", "agua", "onda", "espuma"]
+const _PAL_INTENC := ["luz", "chama", "brilho", "halo", "raio", "sombra", "mancha", "fumaca", "poeira", "faisca", "particula", "brasa", "fogo", "vento", "agua", "onda", "espuma",
+	"passaporte", "disco_", "chuva", "pegada", "rastro", "mosca", "estrela", "brilha", "lampada", "balao", "folha_costela"]
+const _PAL_VAO := ["vidro", "porta", "janela", "grade", "arco", "veneziana", "folha_e", "folha_d"]
+
+
+static func _palavra_vao(et: String) -> String:
+	var l := et.to_lower()
+	for p in _PAL_VAO:
+		if l.contains(p):
+			return p
+	return ""
 
 
 static func _palavra_intencional(et: String) -> String:
@@ -424,9 +434,13 @@ func checar_flutuando() -> void:
 			if not (e as E).emis:
 				emis = false
 		var intenc := pal != "" or emis
-		var motivo := ("nome sugere efeito (%s)" % pal) if pal != "" else ("material emissivo/sem luz" if emis else "")
+		var motivo := ("nome sugere efeito/objeto flutuante de propósito (%s)" % pal) if pal != "" else ("material emissivo/sem luz" if emis else "")
 		if gap_y <= FOLGA or gap_up <= FOLGA:
 			continue
+		var fino_min := minf(tam.x, minf(tam.y, tam.z))
+		if not intenc and fino_min <= 0.05 and gap_any <= 0.055:
+			intenc = true
+			motivo = "folha/decalque fino afastado ~%.0f cm do plano de propósito (anti z-fighting)" % (gap_any * 100.0)
 		if gap_any <= FOLGA:
 			# encostado só em parede/outro objeto. Perto do chão (< 35 cm) sem apoio embaixo = provável degrau mal calculado
 			if gap_y < 0.35 and gap_y > FOLGA:
@@ -521,6 +535,12 @@ func checar_enfiado() -> void:
 		elif _palavra_intencional(e0.et) != "":
 			intenc = true
 			motivo = "nome sugere efeito/decalque (%s)" % _palavra_intencional(e0.et)
+		elif _palavra_vao(e0.et) != "":
+			intenc = true
+			motivo = "peça de vão (%s): fica dentro da espessura da parede; o colisor do vão é aproximado" % _palavra_vao(e0.et)
+		elif minf(ts2.x, minf(ts2.y, ts2.z)) <= 0.12 and _bb_cluster(c).size.length() >= 0.9 and not melhor_atrav:
+			intenc = true
+			motivo = "poste/haste fina fixa o objeto (sobreposição de fixação)"
 		var eixo_nome: String = ["X", "Y", "Z"][maxi(melhor_eixo, 0)]
 		var tipo := "atravessa_parede" if melhor_atrav else "enfiado"
 		var quem := melhor_s.et if melhor_s.et != "" else "estrutura/colisão"
@@ -604,6 +624,7 @@ func checar_zfight() -> void:
 		if area < 0.004:
 			return
 		var ax: int = f_ax[a]
+		var oculta := _face_oculta(ea, eb, ax, f_sg[a], f_c[a], (maxf(f_u0[a], f_u0[b]) + minf(f_u1[a], f_u1[b])) * 0.5, (maxf(f_v0[a], f_v0[b]) + minf(f_v1[a], f_v1[b])) * 0.5)
 		if OS.get_environment("COLOC_ZF") != "" and (ea.et == OS.get_environment("COLOC_ZF") or String(eb.d.get("onde", "")).contains(OS.get_environment("COLOC_ZF"))):
 			print("ZF ", ea.tipo, ea.mn, ea.mx, " f=", ea.faces, " n=", ea.n, " sg=", f_sg[a], " x ", eb.tipo, eb.mn, eb.mx, " f=", eb.faces, " n=", eb.n, " sg=", f_sg[b], " ", ea.mat, " ", eb.mat, " coord ", f_c[a], f_c[b], " ", ea.d.get("onde", "").get_slice(" < ", 0), " ", eb.d.get("onde", "").get_slice(" < ", 0))
 		var chave := "%s|%s|%d|%s|%s" % [ea.et if ea.et != "" else _nome_estrutura(ea), eb.et if eb.et != "" else _nome_estrutura(eb), ax, String(ea.d.get("onde", "")).get_slice(" < ", 0), String(eb.d.get("onde", "")).get_slice(" < ", 0)]
@@ -616,8 +637,9 @@ func checar_zfight() -> void:
 		if achou.has(chave):
 			achou[chave]["area"] += area
 			achou[chave]["n"] += 1
+			achou[chave]["oculta"] = achou[chave]["oculta"] and oculta
 		else:
-			achou[chave] = {"area": area, "n": 1, "a": ea, "b": eb, "p": p, "ax": ax, "dist": absf(f_c[a] - f_c[b])}
+			achou[chave] = {"area": area, "n": 1, "a": ea, "b": eb, "p": p, "ax": ax, "dist": absf(f_c[a] - f_c[b]), "oculta": oculta}
 	var chaves := baldes.keys()
 	for k in chaves:
 		var lst: PackedInt32Array = baldes[k]
@@ -650,12 +672,38 @@ func checar_zfight() -> void:
 		var motivo := ""
 		var pa := _palavra_intencional(ea.et)
 		var pb := _palavra_intencional(eb.et)
-		if pa != "" or pb != "":
+		var so := String(ea.d.get("onde", "")) + String(eb.d.get("onde", ""))
+		if r["oculta"]:
+			intenc = true
+			motivo = "faces voltadas para dentro de outro sólido (não aparecem)"
+			grav = "B"
+		elif pa != "" or pb != "":
 			intenc = true
 			motivo = "nome sugere decalque/efeito"
+		elif so.contains("sombras.gd") or ma.get("transparente", false) or mb.get("transparente", false):
+			intenc = true
+			motivo = "decalque/sombra pintada sobre o chão (coplanar de propósito, material transparente/multiplicado)"
 		_acha("zfighting", grav, ea, r["p"], area * 10000.0, "faces coplanares (%s, dist %.1f mm) com materiais diferentes: '%s' (%s) x '%s' (%s); %d par(es), %.3f m2 sobrepostos" % [["X", "Y", "Z"][int(r["ax"])], float(r["dist"]) * 1000.0,
 			ea.et if ea.et != "" else _nome_estrutura(ea), ma.get("nome", "?"), eb.et if eb.et != "" else _nome_estrutura(eb), mb.get("nome", "?"), int(r["n"]), area], intenc, motivo,
 			{"outro": eb.et if eb.et != "" else _nome_estrutura(eb), "outro_arquivo": _arquivo(eb), "area_m2": snappedf(area, 0.001)})
+
+
+## A face (eixo ax, sinal sg, coordenada co, ponto u,v no plano) aponta para dentro de uma caixa sólida (ou seja, não aparece)?
+func _face_oculta(ea: E, eb: E, ax: int, sg: int, co: float, u: float, v: float) -> bool:
+	var q := Vector3.ZERO
+	q[ax] = co + (0.01 if sg == 1 else -0.01)
+	q[(ax + 1) % 3] = u
+	q[(ax + 2) % 3] = v
+	for i in grade.consultar(q - Vector3.ONE * 0.02, q + Vector3.ONE * 0.02):
+		var o: E = es[i]
+		if o == ea or o == eb or o.tipo != "caixa" or (o.epm & ea.epm) == 0:
+			continue
+		var t := o.tam()
+		if minf(t.x, minf(t.y, t.z)) < 0.03:
+			continue
+		if q.x > o.mn.x + 0.001 and q.x < o.mx.x - 0.001 and q.y > o.mn.y + 0.001 and q.y < o.mx.y - 0.001 and q.z > o.mn.z + 0.001 and q.z < o.mx.z - 0.001:
+			return true
+	return false
 
 
 static func ov_ok(a0: float, a1: float, b0: float, b1: float) -> bool:
@@ -664,12 +712,20 @@ static func ov_ok(a0: float, a1: float, b0: float, b1: float) -> bool:
 
 # ============================================================================ 5) frestas (emendas com folga)
 ## Para cada borda de cada face ESTRUTURAL grande, amostra pontos: se não encosta (<= 4 mm) em nenhuma outra superfície
-## mas há uma a menos de 9 cm numa direção que NÃO é a normal da face (camada/decalque), é uma fresta.
-func checar_frestas() -> void:
-	var fe: Array = []     # faces estruturais: [ent, ax, sg, co, u0,u1,v0,v1]
+## mas há uma a menos de 9 cm numa direção que NÃO é a normal da face (camada/decalque), é uma fresta. Cada fresta
+## é confirmada por um RAIO que atravessa o vão (nas duas direções da normal): se escapa (> 60 m sem bater em nada
+## estrutural) a luz/o vazio aparece pelo buraco.
+var _fe: Array = []        # faces estruturais [ent, ax, sg, co, u0,u1,v0,v1]
+var _gf: Grade
+
+
+func _montar_faces_estruturais() -> void:
+	_fe = []
 	for e in es:
 		var ee: E = e
 		if ee.col or ee.obj or not ee.visivel or ee.tipo == "no" or ee.tipo == "bolha" or ee.tipo == "rampa" or ee.tipo == "telhado" or ee.tipo == "piramide":
+			continue
+		if ee.transp:
 			continue
 		if ee.tipo == "caixa":
 			var spec := [[1, 0, 1], [2, 0, 0], [4, 1, 1], [8, 1, 0], [16, 2, 1], [32, 2, 0]]
@@ -679,16 +735,15 @@ func checar_frestas() -> void:
 					var sg: int = sp[2]
 					var u := (ax + 1) % 3
 					var v := (ax + 2) % 3
-					fe.append([ee, ax, sg, ee.mx[ax] if sg == 1 else ee.mn[ax], ee.mn[u], ee.mx[u], ee.mn[v], ee.mx[v]])
+					_fe.append([ee, ax, sg, ee.mx[ax] if sg == 1 else ee.mn[ax], ee.mn[u], ee.mx[u], ee.mn[v], ee.mx[v]])
 		elif ee.fino >= 0:
 			var ax2: int = ee.fino
 			var u2 := (ax2 + 1) % 3
 			var v2 := (ax2 + 2) % 3
-			fe.append([ee, ax2, 1 if ee.n[ax2] > 0 else 0, ee.mn[ax2], ee.mn[u2], ee.mx[u2], ee.mn[v2], ee.mx[v2]])
-	# índice espacial das faces
-	var gf := Grade.new(fe.size() + 1, 1.0)
-	for i in fe.size():
-		var f: Array = fe[i]
+			_fe.append([ee, ax2, 1 if ee.n[ax2] > 0 else 0, ee.mn[ax2], ee.mn[u2], ee.mx[u2], ee.mn[v2], ee.mx[v2]])
+	_gf = Grade.new(_fe.size() + 1, 1.0)
+	for i in _fe.size():
+		var f: Array = _fe[i]
 		var mn := Vector3.ZERO
 		var mx := Vector3.ZERO
 		var ax: int = f[1]
@@ -700,10 +755,44 @@ func checar_frestas() -> void:
 		mx[u] = f[5]
 		mn[v] = f[6]
 		mx[v] = f[7]
-		gf.inserir(i, mn, mx, 0.0)
+		_gf.inserir(i, mn, mx, 0.0)
+
+
+## O raio de `p` na direção `dir` escapa (nenhuma face estrutural em `alcance` m)?  `engorda` = tolerância (m) de cada face.
+func _raio_escapa(p: Vector3, dir: Vector3, alcance := 60.0, engorda := 0.0) -> bool:
+	var passo := 0.75
+	var t := 0.0
+	var q0 := p
+	while t < alcance:
+		var q1 := q0 + dir * passo
+		var mn := q0.min(q1) - Vector3.ONE * (0.01 + engorda)
+		var mx := q0.max(q1) + Vector3.ONE * (0.01 + engorda)
+		for fi in _gf.consultar(mn, mx):
+			var f: Array = _fe[fi]
+			var ax: int = f[1]
+			var co: float = f[3]
+			var d0 := q0[ax] - co
+			var d1 := q1[ax] - co
+			if (d0 > engorda and d1 > engorda) or (d0 < -engorda and d1 < -engorda):
+				continue
+			var den := q1[ax] - q0[ax]
+			var tt := 0.0 if absf(den) < 1e-9 else clampf((co - q0[ax]) / den, 0.0, 1.0)
+			var hit := q0 + (q1 - q0) * tt
+			var u := (ax + 1) % 3
+			var v := (ax + 2) % 3
+			if hit[u] >= f[4] - engorda and hit[u] <= f[5] + engorda and hit[v] >= f[6] - engorda and hit[v] <= f[7] + engorda:
+				if t + tt * passo > 0.03:
+					return false
+		q0 = q1
+		t += passo
+	return true
+
+
+func checar_frestas() -> void:
+	_montar_faces_estruturais()
 	var achou := {}
-	for fi in fe.size():
-		var f: Array = fe[fi]
+	for fi in _fe.size():
+		var f: Array = _fe[fi]
 		var e: E = f[0]
 		var ax: int = f[1]
 		var u := (ax + 1) % 3
@@ -715,10 +804,9 @@ func checar_frestas() -> void:
 		if (u1 - u0) * (v1 - v0) < 0.25 or minf(u1 - u0, v1 - v0) < 0.12:
 			continue
 		var co: float = f[3]
-		# 4 arestas: (fixo = v0|v1, varia u) e (fixo = u0|u1, varia v)
 		for aresta in 4:
 			var comp := (u1 - u0) if aresta < 2 else (v1 - v0)
-			var n_amostras := clampi(int(ceil(comp / 0.5)), 2, 12)
+			var n_amostras := clampi(int(ceil(comp / 0.5)), 2, 14)
 			for s in n_amostras:
 				var t := float(s) / float(n_amostras - 1)
 				var p := Vector3.ZERO
@@ -729,15 +817,13 @@ func checar_frestas() -> void:
 				else:
 					p[v] = lerpf(v0, v1, t)
 					p[u] = u0 if aresta == 2 else u1
-				# recua 1 mm para dentro do canto (evita contar o canto como "encosta em si mesma")
-				var cand := gf.consultar(p - Vector3.ONE * 0.09, p + Vector3.ONE * 0.09)
 				var dmin := 99.0
 				var qmin := Vector3.ZERO
 				var gmin: E = null
-				for gi in cand:
+				for gi in _gf.consultar(p - Vector3.ONE * 0.09, p + Vector3.ONE * 0.09):
 					if gi == fi:
 						continue
-					var g: Array = fe[gi]
+					var g: Array = _fe[gi]
 					var ge: E = g[0]
 					if (ge.epm & e.epm) == 0:
 						continue
@@ -755,48 +841,73 @@ func checar_frestas() -> void:
 						gmin = ge
 				if dmin <= 0.004 or dmin > 0.09:
 					continue
-				# camada paralela (decalque/tapete): o vão é ao longo da normal da face
 				var dirv := (qmin - p).normalized()
 				if absf(dirv[ax]) > 0.9:
-					continue
-				var chave := "%s|%s|%s" % [String(e.d.get("onde", "")).get_slice(" < ", 0), String(gmin.d.get("onde", "")).get_slice(" < ", 0), "%d" % ax]
+					continue          # camada paralela (decalque)
+				var celula := "%d,%d,%d" % [floori(p.x / 2.0), floori(p.y / 2.0), floori(p.z / 2.0)]
+				var chave := "%s|%s|%d|%s" % [String(e.d.get("onde", "")).get_slice(" < ", 0), String(gmin.d.get("onde", "")).get_slice(" < ", 0), ax, celula]
+				var meio := (p + qmin) * 0.5
+				var nrm := Vector3.ZERO
+				nrm[ax] = 1.0
 				if achou.has(chave):
 					var r: Dictionary = achou[chave]
 					r["n"] += 1
 					r["wmin"] = minf(r["wmin"], dmin)
 					r["wmax"] = maxf(r["wmax"], dmin)
-					r["bmn"] = (r["bmn"] as Vector3).min(p)
-					r["bmx"] = (r["bmx"] as Vector3).max(p)
+					r["bmn"] = (r["bmn"] as Vector3).min(meio)
+					r["bmx"] = (r["bmx"] as Vector3).max(meio)
+					if (r["amostras"] as Array).size() < 6:
+						r["amostras"].append(meio)
 				else:
-					achou[chave] = {"n": 1, "wmin": dmin, "wmax": dmin, "a": e, "b": gmin, "p": p, "bmn": p, "bmx": p, "ax": ax}
+					achou[chave] = {"n": 1, "wmin": dmin, "wmax": dmin, "a": e, "b": gmin, "bmn": meio, "bmx": meio, "ax": ax, "nrm": nrm, "amostras": [meio]}
 	for ch in achou:
 		var r: Dictionary = achou[ch]
 		var ea: E = r["a"]
 		var eb: E = r["b"]
 		var comp: float = ((r["bmx"] as Vector3) - (r["bmn"] as Vector3)).length()
 		var w: float = r["wmin"]
-		var grav := "M" if (int(r["n"]) >= 4 and w < 0.05) else "B"
+		if int(r["n"]) < 2:
+			continue          # um ponto isolado não é fresta
+		# confirmação por raio: de um ponto no vão, nas duas direções da normal
+		var nrm: Vector3 = r["nrm"]
+		var escapa := false
+		var lados := 0
+		for am in r["amostras"]:
+			for sg in [-1.0, 1.0]:
+				if _raio_escapa((am as Vector3) + nrm * sg * 0.02, nrm * sg):
+					escapa = true
+					lados += 1
+		var grav := "B"
+		if escapa and int(r["n"]) >= 3:
+			grav = "A" if (w < 0.06 and comp >= 1.0) else "M"
+		elif escapa or (int(r["n"]) >= 4 and w < 0.05):
+			grav = "M"
 		_acha("fresta", grav, ea, ((r["bmn"] as Vector3) + (r["bmx"] as Vector3)) * 0.5, w * 100.0,
-			"emenda com folga de %.1f-%.1f cm entre '%s' e '%s' (%d pontos de borda, ~%.1f m de extensão)" % [w * 100.0, float(r["wmax"]) * 100.0, _nome_estrutura(ea), _nome_estrutura(eb), int(r["n"]), comp],
-			false, "", {"outro_arquivo": _arquivo(eb), "extensao_m": snappedf(comp, 0.1), "pontos": int(r["n"])})
+			"emenda com folga de %.1f-%.1f cm entre '%s' e '%s' (%d pontos de borda, ~%.1f m); %s" % [w * 100.0, float(r["wmax"]) * 100.0, _nome_estrutura(ea), _nome_estrutura(eb), int(r["n"]), comp,
+				("o RAIO ATRAVESSA o vão e escapa (>60 m): vê-se o vazio/céu pela fresta" if escapa else "o raio pelo vão bate em algo (fresta sem vazamento)")],
+			false, "", {"outro_arquivo": _arquivo(eb), "extensao_m": snappedf(comp, 0.1), "pontos": int(r["n"]), "vaza_luz": escapa})
 
 
 # ============================================================================ 6a) degraus de piso (emendas de altura)
 func checar_degraus() -> void:
 	var passo := 0.5
-	var tops := []        # [ent, x0,x1,z0,z1,y]
+	var tops: Array = []        # [ent, x0,x1,z0,z1,y]
 	for e in es:
 		var ee: E = e
-		if ee.col or ee.obj or not ee.visivel or ee.tipo == "no" or ee.tipo == "rampa":
+		if ee.col or ee.obj or not ee.visivel or ee.tipo == "no" or ee.tipo == "rampa" or ee.transp:
+			continue
+		if String(ee.d.get("onde", "")).contains("sombras.gd") or ee.d.get("no", "") != "":
 			continue
 		if ee.tipo == "caixa" and (ee.faces & 4):
 			tops.append([ee, ee.mn.x, ee.mx.x, ee.mn.z, ee.mx.z, ee.mx.y])
-		elif ee.fino == 1 and ee.n.y > 0.0:
+		elif ee.fino == 1 and ee.n.y > 0.0 and ee.area <= 0.0 or (ee.fino == 1 and ee.n.y > 0.0 and ee.area >= 0.5 * (ee.mx.x - ee.mn.x) * (ee.mx.z - ee.mn.z)):
 			tops.append([ee, ee.mn.x, ee.mx.x, ee.mn.z, ee.mx.z, ee.mn.y])
 	var cel := {}
 	for ti in tops.size():
 		var t: Array = tops[ti]
 		if t[5] > 12.0 or t[5] < -3.0:
+			continue
+		if (t[2] - t[1]) < 0.4 or (t[4] - t[3]) < 0.4:
 			continue
 		if (t[2] - t[1]) > 150.0 or (t[4] - t[3]) > 150.0:
 			continue
@@ -806,57 +917,74 @@ func checar_degraus() -> void:
 		var iz1 := int(floor(t[4] / passo))
 		for ix in range(ix0, ix1 + 1):
 			for iz in range(iz0, iz1 + 1):
+				var cx: float = (ix + 0.5) * passo
+				var cz: float = (iz + 0.5) * passo
+				if cx < t[1] or cx > t[2] or cz < t[3] or cz > t[4]:
+					continue
 				var k := Vector2i(ix, iz)
 				if not cel.has(k):
 					cel[k] = []
 				(cel[k] as Array).append(ti)
-	var achou := {}
+	# níveis por célula: tops agrupados (<= 12 cm) -> nível = o mais alto
+	var niveis := {}
 	for kk in cel:
 		var k: Vector2i = kk
-		var lst: Array = cel[k]
+		var lst: Array = (cel[k] as Array).duplicate()
+		lst.sort_custom(func(a: int, b: int) -> bool: return tops[a][5] < tops[b][5])
+		var res: Array = []
+		var grupo: Array = []
+		for ti in lst:
+			if grupo.is_empty() or tops[ti][5] - tops[grupo[grupo.size() - 1]][5] <= 0.12:
+				grupo.append(ti)
+			else:
+				res.append(grupo[grupo.size() - 1])
+				grupo = [ti]
+		if not grupo.is_empty():
+			res.append(grupo[grupo.size() - 1])
+		niveis[k] = res
+	var achou := {}
+	for kk in niveis:
+		var k: Vector2i = kk
 		for dk in [Vector2i(1, 0), Vector2i(0, 1)]:
 			var k2: Vector2i = k + dk
-			if not cel.has(k2):
+			if not niveis.has(k2):
 				continue
-			var lst2: Array = cel[k2]
-			for ia in lst:
+			for ia in niveis[k]:
 				var ta: Array = tops[ia]
-				var ea: E = ta[0]
-				# o ponto central da célula tem de estar mesmo dentro da face
-				var cx: float = (k.x + 0.5) * passo
-				var cz: float = (k.y + 0.5) * passo
-				if cx < ta[1] or cx > ta[2] or cz < ta[3] or cz > ta[4]:
+				var melhor := -1
+				var md := 99.0
+				for ib in niveis[k2]:
+					var dd := absf(ta[5] - tops[ib][5])
+					if dd < md:
+						md = dd
+						melhor = ib
+				if melhor < 0 or md < 0.02 or md > 0.12:
 					continue
-				for ib in lst2:
-					var tb: Array = tops[ib]
-					var eb: E = tb[0]
-					if (ea.epm & eb.epm) == 0 or ea == eb:
-						continue
-					var cx2: float = (k2.x + 0.5) * passo
-					var cz2: float = (k2.y + 0.5) * passo
-					if cx2 < tb[1] or cx2 > tb[2] or cz2 < tb[3] or cz2 > tb[4]:
-						continue
-					var dy := absf(ta[5] - tb[5])
-					if dy < 0.008 or dy > 0.12:
-						continue
-					# existe alguma superfície na célula A ou B no meio dessa diferença? (então é escada/rampa)
-					var ch := "%s|%s" % [String(ea.d.get("onde", "")).get_slice(" < ", 0), String(eb.d.get("onde", "")).get_slice(" < ", 0)]
-					var p := Vector3((cx + cx2) * 0.5, maxf(ta[5], tb[5]), (cz + cz2) * 0.5)
-					if achou.has(ch):
-						achou[ch]["n"] += 1
-						achou[ch]["dy"] = maxf(achou[ch]["dy"], dy)
-						achou[ch]["bmn"] = (achou[ch]["bmn"] as Vector3).min(p)
-						achou[ch]["bmx"] = (achou[ch]["bmx"] as Vector3).max(p)
-					else:
-						achou[ch] = {"n": 1, "dy": dy, "a": ea, "b": eb, "p": p, "bmn": p, "bmx": p}
+				var tb: Array = tops[melhor]
+				var ea: E = ta[0]
+				var eb: E = tb[0]
+				if (ea.epm & eb.epm) == 0 or ea == eb:
+					continue
+				var p := Vector3((k.x + 0.5 + dk.x * 0.5) * passo, maxf(ta[5], tb[5]), (k.y + 0.5 + dk.y * 0.5) * passo)
+				var ch := "%d,%d,%d" % [floori(p.x / 3.0), floori(p.z / 3.0), roundi(p.y * 2.0)]
+				if achou.has(ch):
+					var r: Dictionary = achou[ch]
+					r["n"] += 1
+					r["dy"] = maxf(r["dy"], md)
+					r["bmn"] = (r["bmn"] as Vector3).min(p)
+					r["bmx"] = (r["bmx"] as Vector3).max(p)
+				else:
+					achou[ch] = {"n": 1, "dy": md, "a": ea, "b": eb, "bmn": p, "bmx": p}
 	for ch in achou:
 		var r: Dictionary = achou[ch]
 		var dy: float = r["dy"]
 		var ea: E = r["a"]
 		var eb: E = r["b"]
-		var grav := "M" if dy >= 0.03 else "B"
+		if int(r["n"]) < 2:
+			continue
+		var grav := "M" if dy >= 0.04 else "B"
 		_acha("degrau_de_piso", grav, ea, ((r["bmn"] as Vector3) + (r["bmx"] as Vector3)) * 0.5, dy * 100.0,
-			"pisos vizinhos '%s' e '%s' com %.1f cm de diferença de altura (%d células de %.1f m)" % [_nome_estrutura(ea), _nome_estrutura(eb), dy * 100.0, int(r["n"]), passo],
+			"pisos vizinhos '%s' e '%s' com até %.1f cm de diferença de altura (%d células de %.1f m)" % [_nome_estrutura(ea), _nome_estrutura(eb), dy * 100.0, int(r["n"]), passo],
 			false, "", {"outro_arquivo": _arquivo(eb), "celulas": int(r["n"])})
 
 
