@@ -716,6 +716,8 @@ func _achar_vista_lim(centro: Vector3, raio: float, base_y: float, frente_deg: f
 			var xz := Vector3(centro.x + sin(az) * d, 0, centro.z + cos(az) * d)
 			var y_ini := base_y + 0.7
 			var hit := _raio(Vector3(xz.x, y_ini, xz.z), Vector3(xz.x, y_ini - 8.0, xz.z))
+			if hit.is_empty() and not coberto:
+				hit = _raio(Vector3(xz.x, y_ini + 4.0, xz.z), Vector3(xz.x, y_ini - 8.0, xz.z))
 			if hit.is_empty():
 				continue
 			if (hit["normal"] as Vector3).y < 0.7:
