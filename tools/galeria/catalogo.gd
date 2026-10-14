@@ -20,14 +20,16 @@ const TOCHA_CORES := [Color(0.1, 0.1, 0.11), Color(1.0, 0.55, 0.15)]
 
 ## Cenários: cada um carrega um nível numa visita/época. A ordem daqui é a ordem de execução.
 const CEN := {
-	"c_v1_hoje": {"cena": NIVEIS + "castelinho.tscn", "visita": 1, "epoca": 3},
-	"c_v2_hoje": {"cena": NIVEIS + "castelinho.tscn", "visita": 2, "epoca": 3},
-	"c_v3_hoje": {"cena": NIVEIS + "castelinho.tscn", "visita": 3, "epoca": 3},
-	"c_v3_1975": {"cena": NIVEIS + "castelinho.tscn", "visita": 3, "epoca": 1},
-	"c_v4_hoje": {"cena": NIVEIS + "castelinho.tscn", "visita": 4, "epoca": 3},
-	"c_v4_2019": {"cena": NIVEIS + "castelinho.tscn", "visita": 4, "epoca": 2},
-	"c_v1_1967": {"cena": NIVEIS + "castelinho.tscn", "visita": 1, "epoca": 4},
-	"c_v1_2019": {"cena": NIVEIS + "castelinho.tscn", "visita": 1, "epoca": 2},
+	"c_v1_hoje": {"cena": NIVEIS + "castelinho.tscn", "visita": 1, "epoca": 3, "malha": "castelinho"},
+	"c_v2_hoje": {"cena": NIVEIS + "castelinho.tscn", "visita": 2, "epoca": 3, "malha": "castelinho"},
+	"c_v3_hoje": {"cena": NIVEIS + "castelinho.tscn", "visita": 3, "epoca": 3, "malha": "castelinho"},
+	"c_v3_1975": {"cena": NIVEIS + "castelinho.tscn", "visita": 3, "epoca": 1, "malha": "castelinho"},
+	"c_v4_hoje": {"cena": NIVEIS + "castelinho.tscn", "visita": 4, "epoca": 3, "malha": "castelinho"},
+	"c_v4_2019": {"cena": NIVEIS + "castelinho.tscn", "visita": 4, "epoca": 2, "malha": "castelinho"},
+	"c_v1_1967": {"cena": NIVEIS + "castelinho.tscn", "visita": 1, "epoca": 4, "malha": "castelinho"},
+	"c_v1_2019": {"cena": NIVEIS + "castelinho.tscn", "visita": 1, "epoca": 2, "malha": "castelinho"},
+	"c_v1_1950": {"cena": NIVEIS + "castelinho.tscn", "visita": 1, "epoca": 0, "malha": "castelinho"},
+	"ato2": {"cena": NIVEIS + "ato2.tscn", "visita": 3, "epoca": 3, "corr": 0.3},
 	"barra": {"cena": NIVEIS + "barra.tscn", "visita": 2, "epoca": 3},
 	"porao": {"cena": NIVEIS + "porao.tscn", "visita": 5, "epoca": 3, "novo_jogo": true, "comecar_visita": 5, "corr": 0.2, "preparar": "porao"},
 	"porao_semdata": {"cena": NIVEIS + "porao.tscn", "visita": 5, "epoca": 5, "novo_jogo": true, "comecar_visita": 5, "corr": 0.2, "preparar": "porao"},
@@ -62,6 +64,17 @@ static func _nn(nome: String) -> Dictionary:
 
 static func _nf(f: Callable) -> Dictionary:
 	return {"t": "nivel_fn", "f": f}
+
+
+## Objeto por etiqueta da Malha (castelinho/malha.gd): lista de "nome" exato ou "prefixo*".
+static func _et(ets: Array, extra := {}) -> Dictionary:
+	var d := {"t": "et", "et": ets}
+	d.merge(extra, true)
+	return d
+
+
+static func _ponto(vistas: Array) -> Dictionary:
+	return {"t": "ponto", "vistas": vistas}
 
 
 static func _crop(caixa: AABB, grupo := "", extra := {}) -> Dictionary:
@@ -117,6 +130,33 @@ static func _recorte(tipo: String) -> Node3D:
 	pe.material_override = Castelinho.mat_tri("madeira_escura", Vector3(1, 1, 1))
 	pe.position = Vector3(0, 0.025, 0)
 	raiz.add_child(pe)
+	return raiz
+
+
+static func _por_classe(nv: Node, classe: String) -> Node3D:
+	var l := nv.find_children("*", classe, true, false)
+	return l[0] as Node3D if not l.is_empty() else null
+
+
+static func _capim() -> Node3D:
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.0
+	cone.bottom_radius = 0.14
+	cone.height = 0.9
+	cone.radial_segments = 5
+	cone.rings = 1
+	var raiz := Node3D.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	for i in 5:
+		var mi := MeshInstance3D.new()
+		mi.mesh = cone
+		mi.material_override = Ato2Pecas.mat_cor(Color(0.56, 0.53, 0.30))
+		var s := rng.randf_range(0.8, 1.5)
+		mi.scale = Vector3(s, s, s)
+		mi.position = Vector3(rng.randf_range(-0.25, 0.25), 0.45 * s, rng.randf_range(-0.25, 0.25))
+		mi.rotation = Vector3(rng.randf_range(-0.15, 0.15), rng.randf() * TAU, rng.randf_range(-0.15, 0.15))
+		raiz.add_child(mi)
 	return raiz
 
 
@@ -269,80 +309,106 @@ static func lista() -> Array:
 	L.append_array(_castelo_nos())
 	L.append_array(_castelo_paineis())
 	L.append_array(_castelo_1967())
+	L.append_array(_castelo_ato2())
 	L.append_array(_barra())
 	L.append_array(_porao())
 	L.append_array(_lago())
 	L.append_array(_criaturas())
+	L.append_array(_duvidas_pontos())
 	return L
 
 
 # ---------------------------------------------------------------------------------------- castelo: museu (2020)
+## Agora por etiqueta da Malha (o outro agente etiquetou cada objeto do Castelinho): pega o objeto inteiro e só ele.
 static func _castelo_museu() -> Array:
 	var M := "castelinho/mobilia.gd"
 	var cen := "c_v1_hoje"
+	var med := _salas(21)
 	var A: Array = []
 	A.append(_e("cavalete", "Cavalete com tela", "castelo", "Hall e Salão de Arte (galeria de quadros), " + _salas(7) + "; hoje (2020)", M, "static func _cavalete", cen,
-		_crop(_c(-9.65, -8.55, 0, 1.92, -13.46, -13.26), "Museu_2020"), {"frente": 0.0, "dist": 2.2}))
-	A.append(_e("mesa_acervo", "Mesa do acervo com máquina de escrever", "castelo", "Acervo, " + _salas(12) + "; hoje (2020)", M, "# --- Acervo (metade leste)", cen,
-		_crop(_c(-7.12, -5.62, 0, 1.15, -19.42, -18.6), "Museu_2020"), {"frente": 0.0, "dist": 2.6}))
+		_et(["cavalete_1"]), {"frente": 0.0, "dist": 2.2}))
+	A.append(_e("mesa_acervo", "Mesa do acervo com máquina de escrever e livros", "castelo", "Acervo, " + _salas(12) + "; hoje (2020)", M, "# --- Acervo (metade leste)", cen,
+		_et(["mesa_acervo", "maquina_escrever_acervo", "livros_acervo"]), {"frente": 0.0, "dist": 2.6}))
+	A.append(_e("vitrine_discos", "Vitrine de discos do Acervo", "castelo", "Canto do Acervo, " + _salas(12) + "; hoje (2020). O disco de 1967 fica em cima, a partir da visita 2", M, "# vitrine de discos no canto", cen,
+		_et(["vitrine_discos_acervo"]), {"frente": 0.0, "dist": 2.4}))
+	A.append(_e("mesa_corredor", "Mesa do corredor da Secretaria", "castelo", "Corredor da Secretaria, ponta leste, " + _salas(10) + "; hoje (2020)", M, "cx(g, madeira, Vector3(-6.2, 0.4, -22.5)", cen,
+		_et(["mesa_corredor"]), {"frente": 0.0, "dist": 2.6}))
 	A.append(_e("mural_pescador", "Mural do pescador", "castelo", "Sala do Pescador, " + _salas(13) + "; hoje (2020)", M, "# --- Sala do Pescador: mural", cen,
-		_crop(_c(-10.6, -6.8, 0.5, 2.5, -14.32, -14.18), "Museu_2020"), {"frente": 180.0, "dist": 3.4}))
+		_et(["mural_pescador"]), {"frente": 180.0, "dist": 3.4}))
 	A.append(_e("praia_conchas", "Faixa de areia com conchas, tartaruga e boto de pano", "castelo", "Sala do Pescador, " + _salas(13) + "; hoje (2020)", M, "# conchas, tartaruga e boto", cen,
-		_crop(_c(-10.8, -6.6, 0, 0.45, -15.12, -14.3), "Museu_2020"), {"frente": 180.0, "dist": 3.2}))
+		_et(["faixa_areia_pescador", "corda_amarela_pescador", "concha_pescador_*", "tartaruga_pescador", "boto_de_pano_pescador"]), {"frente": 180.0, "dist": 3.2}))
+	A.append(_e("banco_baixo_pescador", "Banco baixo de madeira (Sala do Pescador)", "castelo", "Sala do Pescador, " + _salas(13) + "; hoje (2020)", M, "# bancos baixos de madeira", cen,
+		_et(["banco_baixo_pescador"]), {"frente": 0.0, "dist": 2.6}))
 	A.append(_e("vitrine_conchas", "Vitrine longa de conchas (sambaqui)", "castelo", "Sala dos Povos Originários, " + _salas(8) + "; hoje (2020)", M, "# --- Povos Originários", cen,
-		_crop(_c(-25.25, -22.95, 0, 1.2, -13.8, -13.0), "Museu_2020"), {"frente": 0.0}))
+		_et(["vitrine_povos_base", "vitrine_povos_vidro", "sambaqui_concha_*"]), {"frente": 0.0}))
+	A.append(_e("banco_povos", "Banco baixo de madeira (Sala dos Povos)", "castelo", "Sala dos Povos Originários, " + _salas(8) + "; hoje (2020)", M, "cx(g, madeira, Vector3(-23.4, 0.3, -14.3)", cen,
+		_et(["banco_povos"]), {"frente": 0.0, "dist": 2.6}))
 	A.append(_e("vertebra_baleia", "Vértebra de baleia", "castelo", "Sala do Meio Ambiente, " + _salas(9) + "; hoje (2020)", M, "# vértebra de baleia", cen,
-		_crop(_c(-22.5, -21.1, 0, 0.62, -17.95, -17.3), "Museu_2020"), {"frente": 0.0, "dist": 2.2}))
+		_et(["vertebra_baleia", "faixa_areia_meio_ambiente"]), {"frente": 0.0, "dist": 2.6}))
 	A.append(_e("banner_ambiental", "Banner de educação ambiental", "castelo", "Sala do Meio Ambiente, parede oeste, " + _salas(9) + "; hoje (2020)", M, "# banner enrolável", cen,
-		_crop(_c(-24.62, -24.45, 0.68, 2.5, -19.7, -18.7), "Museu_2020"), {"frente": 90.0, "dist": 3.0}))
+		_et(["banner_ambiental"]), {"frente": 90.0, "dist": 3.0}))
 	A.append(_e("planta_vaso", "Planta no vaso", "castelo", "Corredor da Secretaria, ponta leste, perto da " + _salas(12) + "; hoje (2020)", M, "# planta no vaso (corredor)", cen,
-		_crop(_c(-6.3, -5.3, 0, 1.3, -21.8, -20.8), "Museu_2020"), {"frente": 0.0, "dist": 2.4}))
-	var cen2 := cen
-	A.append(_e("lareira", "Lareira da Sala Medieval", "castelo", "Sala Medieval, parede norte, " + _salas(21) + "; hoje (2020)", M, "# lareira (parede norte", cen2,
-		_crop(_c(-15.5, -12.9, 0, 1.66, -29.15, -28.38), "Museu_2020", {"shader": true}), {"frente": 0.0, "dist": 3.6}))
-	A.append(_e("capelo_escudo", "Capelo da lareira com escudo e machados", "castelo", "Sala Medieval, sobre a lareira, " + _salas(21) + "; hoje (2020)", M, "_machados(g, Vector3(-14.2", cen2,
-		_crop(_c(-15.5, -12.9, 1.67, 3.45, -29.15, -28.4), "Museu_2020", {"shader": false}), {"frente": 0.0, "dist": 4.0}))
-	A.append(_e("brasao_aguia", "Brasão com águia", "castelo", "Sala Medieval, parede norte, " + _salas(21) + "; hoje (2020)", M, "static func _brasao", cen2,
-		_crop(_c(-12.35, -11.45, 1.58, 2.55, -29.13, -28.95), "Museu_2020", {"excluir_cores": TOCHA_CORES}), {"frente": 0.0, "dist": 3.0}))
-	A.append(_e("espadas_escudo", "Espadas cruzadas com escudo redondo", "castelo", "Sala Medieval, parede norte, " + _salas(21) + "; hoje (2020)", M, "static func _espadas", cen2,
-		_crop(_c(-9.5, -8.5, 1.45, 2.7, -29.13, -28.95), "Museu_2020", {"excluir_cores": TOCHA_CORES}), {"frente": 0.0, "dist": 3.0}))
-	A.append(_e("lancas_parede", "Lanças na parede", "castelo", "Sala Medieval, parede sul, " + _salas(21) + "; hoje (2020)", M, "# lanças e estandartes", cen2,
-		_crop(_c(-10.65, -9.35, 0, 3.0, -23.72, -23.58), "Museu_2020"), {"frente": 180.0, "dist": 4.0}))
-	A.append(_e("trono", "Trono de madeira", "castelo", "Sala Medieval, lado leste, " + _salas(21) + "; hoje (2020)", M, "# tronos (dois)", cen2,
-		_crop(_c(-9.6, -8.8, 0, 1.95, -27.42, -26.6), "Museu_2020"), {"frente": 270.0, "dist": 3.0}))
-	A.append(_e("mesa_medieval", "Mesa grande com cadeiras", "castelo", "Sala Medieval, centro, " + _salas(21) + "; hoje (2020)", M, "# mesa grande com cadeiras", cen2,
-		_crop(_c(-14.85, -11.6, 0, 1.35, -27.2, -24.8), "Museu_2020"), {"frente": 0.0, "dist": 5.0}))
-	A.append(_e("tocha_parede", "Tocha de parede (arandela)", "castelo", "Sala Medieval, ao lado da porta de saída, " + _salas(21) + "; hoje (2020)", M, "# tochas (arandelas)", cen2,
-		_crop(_c(-11.52, -11.28, 1.6, 2.5, -29.15, -28.95), "Museu_2020"), {"frente": 0.0, "dist": 2.4}))
-	A.append(_e("bau_madeira", "Baú de madeira", "castelo", "Sala Medieval, " + _salas(21) + "; hoje (2020)", M, "# baú de ferro", cen2,
-		_crop(_c(-10.0, -9.4, 0, 0.55, -24.77, -23.83), "Museu_2020"), {"frente": 90.0, "dist": 2.4}))
+		_et(["vaso_planta_corredor", "folhagem_planta_corredor"]), {"frente": 0.0, "dist": 2.4}))
+	A.append(_e("lareira", "Lareira da Sala Medieval (com capelo)", "castelo", "Sala Medieval, parede norte, " + med + "; hoje (2020)", M, "# lareira (parede norte", cen,
+		_et(["lareira_medieval"]), {"frente": 0.0, "dist": 3.8}))
+	A.append(_e("escudo_machados", "Escudo redondo com machados cruzados", "castelo", "Sala Medieval, sobre a lareira, " + med + "; hoje (2020)", M, "_machados(g, Vector3(-14.2", cen,
+		_et(["escudo_redondo_-142_25", "machados_cruzados_-142"]), {"frente": 0.0, "dist": 3.0}))
+	A.append(_e("brasao_aguia", "Brasão com águia", "castelo", "Sala Medieval, parede norte, " + med + "; hoje (2020)", M, "static func _brasao", cen,
+		_et(["brasao_aguia"]), {"frente": 0.0, "dist": 3.0}))
+	A.append(_e("espadas_escudo", "Espadas cruzadas com escudo redondo", "castelo", "Sala Medieval, parede norte, " + med + "; hoje (2020)", M, "static func _espadas", cen,
+		_et(["espadas_cruzadas_-90", "escudo_redondo_-90_20"]), {"frente": 0.0, "dist": 3.0}))
+	A.append(_e("lancas_parede", "Lanças na parede", "castelo", "Sala Medieval, parede sul, " + med + "; hoje (2020)", M, "# lanças e estandartes", cen,
+		_et(["lanca_medieval_*"]), {"frente": 180.0, "dist": 4.0}))
+	A.append(_e("trono", "Trono de madeira", "castelo", "Sala Medieval, lado leste, " + med + "; hoje (2020)", M, "# tronos (dois)", cen,
+		_et(["trono_medieval_1"]), {"frente": 270.0, "dist": 3.0}))
+	A.append(_e("mesa_medieval", "Mesa grande com cadeiras", "castelo", "Sala Medieval, centro, " + med + "; hoje (2020)", M, "# mesa grande com cadeiras", cen,
+		_et(["mesa_grande_medieval", "cadeira_medieval_*"]), {"frente": 90.0, "dist": 3.8, "duvidas": ["cadeira_medieval_2_n"]}))
+	A.append(_e("cadeira_medieval", "Cadeira da mesa medieval", "castelo", "Sala Medieval, em volta da mesa grande, " + med + "; hoje (2020)", M, "# mesa grande com cadeiras", cen,
+		_et(["cadeira_medieval_1_n"]), {"frente": 0.0, "dist": 2.4}))
+	A.append(_e("tocha_parede", "Tocha de parede (arandela)", "castelo", "Sala Medieval, ao lado da porta de saída, " + med + "; hoje (2020)", M, "# tochas (arandelas)", cen,
+		_et(["tocha_medieval_11"]), {"frente": 0.0, "dist": 2.4}))
+	A.append(_e("bau_madeira", "Baú de madeira", "castelo", "Sala Medieval, " + med + "; hoje (2020)", M, "# baú de ferro", cen,
+		_et(["bau_medieval"]), {"frente": 90.0, "dist": 2.4}))
 	return A
 
 
 # ---------------------------------------------------------------------------------------- castelo: exterior e interior geral
 static func _castelo_externo() -> Array:
 	var cen := "c_v1_hoje"
+	var E := "castelinho/extras.gd"
 	var A: Array = []
 	A.append(_e("lustre_ferro", "Lustre de ferro", "castelo", "Teto do Salão de Arte (e de quase todas as salas), " + _salas(11), "castelinho/interior.gd", "static func lustre", cen,
-		_crop(_c(-17.4, -16.6, 2.4, 3.22, -18.05, -17.35), "Casa"), {"frente": 0.0, "dist": 3.4}))
+		_et(["lustre_ambiente_4"]), {"frente": 0.0, "dist": 3.4}))
 	A.append(_e("mesa_pedra", "Mesa de pedra com bancos", "castelo", "Gramado, lado oeste do jardim, " + _salas(2) + "; hoje (2020)", "castelinho/interior.gd", "static func _bancos_de_pedra", cen,
-		_crop(_c(-25.1, -22.7, 0, 0.8, -8.2, -5.8), "Casa", {"shader": true}), {"frente": 0.0, "dist": 5.5}))
+		_et(["mesa_pedra_jardim", "banco_pedra_jardim_*"]), {"frente": 0.0, "dist": 5.5}))
 	A.append(_e("churrasqueira", "Churrasqueira de pedra", "castelo", "Gramado, lado oeste do jardim, " + _salas(2) + "; hoje (2020)", "castelinho/interior.gd", "# churrasqueira de pedra", cen,
-		_crop(_c(-27.1, -25.55, 0, 0.95, -6.95, -5.65), "Casa", {"shader": true}), {"frente": 0.0, "dist": 4.5}))
-	A.append(_e("guarda_sol", "Guarda-sol preto do deck", "castelo", "Deck de madeira, " + _salas(4) + "; hoje (2020)", "castelinho/extras.gd", "# guarda-sóis pretos", cen,
-		_crop(_c(-13.3, -11.1, 0, 2.5, -6.9, -4.7), "Museu_2020"), {"frente": 0.0, "dist": 5.0}))
-	A.append(_e("cerca_corda", "Cerca de corda trançada (trecho)", "castelo", "Frente do lote, ao longo da calçada, " + _salas(1) + "; hoje (2020)", "castelinho/extras.gd", "static func _corda", cen,
-		_crop(_c(-27.1, -22.1, 0, 0.55, -2.7, -2.5), "Museu_2020"), {"frente": 0.0, "dist": 5.0}))
-	A.append(_e("hortensia", "Hortênsia", "castelo", "Jardim em volta do prédio, " + _salas(3) + "; hoje (2020)", "castelinho/extras.gd", "static func _hortensias", cen,
-		_crop(_c(-5.1, -3.5, 0, 1.3, -15.8, -14.2), "Museu_2020"), {"frente": 90.0, "dist": 3.4}))
-	A.append(_e("placa_casa_cultura", "Placa da Casa de Cultura e Museu", "castelo", "Arcada da fachada sul, " + _salas(5) + "; hoje (2020)", "castelinho/extras.gd", "static func _letreiros", cen,
-		_crop(_c(-12.7, -10.7, 2.55, 3.25, -11.05, -10.9), "Museu_2020"), {"frente": 0.0, "dist": 4.0}))
-	A.append(_e("porta_vidro", "Porta de vidro da entrada", "castelo", "Arco de entrada, " + _salas(6) + "; hoje (2020)", "castelinho/extras.gd", "static func _porta_entrada", cen,
+		_et(["churrasqueira_pedra"]), {"frente": 0.0, "dist": 4.5}))
+	A.append(_e("arvore_jardim", "Árvore retorcida do jardim", "castelo", "Jardim diante do prédio, " + _salas(2) + "; hoje, 1975 e 2019", "castelinho/entorno.gd", "arvore_retorcida_jardim", cen,
+		_et(["arvore_retorcida_jardim"]), {"frente": 0.0, "dist": 8.0}))
+	A.append(_e("lixeira_jardim", "Lixeira de madeira", "castelo", "Jardim, perto do deck, " + _salas(4), "castelinho/entorno.gd", "lixeira_madeira_jardim", cen,
+		_et(["lixeira_madeira_jardim"]), {"frente": 0.0, "dist": 2.6}))
+	A.append(_e("pergola_deck", "Pérgola do deck de madeira", "castelo", "Deck, " + _salas(4) + "; hoje (2020) e 2019", E, "static func _deck", cen,
+		_et(["pergola_poste_*", "pergola_vigas", "deck_madeira"]), {"frente": 0.0, "dist": 10.0}))
+	A.append(_e("guarda_sol", "Guarda-sol preto do deck", "castelo", "Deck de madeira, " + _salas(4) + "; hoje (2020)", E, "# guarda-sóis pretos", cen,
+		_et(["guarda_sol_deck_1"]), {"frente": 0.0, "dist": 5.0}))
+	A.append(_e("cerca_corda", "Cerca de corda trançada (trecho)", "castelo", "Frente do lote, ao longo da calçada, " + _salas(1) + "; hoje (2020)", E, "static func _corda", cen,
+		_et(["cerca_corda_1", "cerca_corda_2", "cerca_corda_poste_1", "cerca_corda_poste_2", "cerca_corda_poste_3"]), {"frente": 0.0, "dist": 5.0}))
+	A.append(_e("hortensia", "Hortênsia", "castelo", "Jardim em volta do prédio, " + _salas(3) + "; hoje (2020)", E, "static func _hortensias", cen,
+		_et(["hortensia_9"]), {"frente": 90.0, "dist": 3.4}))
+	A.append(_e("placa_casa_cultura", "Placa da Casa de Cultura e Museu", "castelo", "Arcada da fachada sul, " + _salas(5) + "; hoje (2020)", E, "static func _letreiros", cen,
+		_et(["placa_casa_de_cultura"], {"rotulos": _c(-12.8, -10.6, 2.55, 3.3, -11.1, -10.8)}), {"frente": 0.0, "dist": 4.0}))
+	A.append(_e("letreiro_castelinho", "Letreiro 'Castelinho' da fachada leste", "castelo", "Fachada leste, voltada para a Av. Nilza, " + _salas(1) + "; hoje (2020)", E, "static func _letreiros", cen,
+		_et(["letreiro_castelinho_leste"]), {"frente": 90.0, "dist": 6.0}))
+	A.append(_e("porta_vidro", "Porta de vidro da entrada", "castelo", "Arco de entrada, " + _salas(6) + "; hoje (2020)", E, "static func _porta_entrada", cen,
 		_nf(func(nv): return nv.castelo.porta_entrada), {"frente": 0.0, "dist": 4.0}))
+	A.append(_e("porta_secretaria", "Porta da Secretaria (com plaquinha)", "castelo", "Corredor da Secretaria, " + _salas(10) + "; hoje (2020)", "castelinho/mobilia.gd", "# corredor da Secretaria: portas com plaquinhas", cen,
+		_et(["porta_secretaria_2"]), {"frente": 180.0, "dist": 3.2}))
 	A.append(_e("poste_luz", "Poste de luz da rua", "castelo", "Calçada da Av. Garibaldi, esquina do lote; vale em todas as visitas", "castelinho/entorno.gd", "static func _postes", cen,
-		_crop(_c(-4.7, -2.4, 0, 7.1, 1.9, 2.5), "Cidade"), {"frente": 0.0, "dist": 11.0}))
+		_et(["poste_luz_1"]), {"frente": 0.0, "dist": 11.0}))
 	A.append(_e("moita_cerca_viva", "Moita da cerca-viva", "castelo", "Cerca-viva baixa ao longo da Av. Nilza, lado leste do lote", "castelinho/entorno.gd", "# cerca-viva baixa ao longo da Nilza", cen,
-		_crop(_c(-1.1, 0.2, 0, 0.8, -31.0, -29.0), "Cidade"), {"frente": 90.0, "dist": 3.4}))
+		_et(["moita_nilza_30_1", "moita_nilza_30_2"]), {"frente": 90.0, "dist": 3.4}))
+	A.append(_e("casa_vizinha_17", "Casa vizinha (alvenaria)", "castelo", "Terreno ao norte do lote, no eixo do corredor de 1975 (são 18 casas vizinhas)", "castelinho/entorno.gd", "static func _casas", cen,
+		_et(["casa_vizinha_17"]), {"frente": 0.0, "dist": 22.0, "duvidas": ["casa_vizinha_17", "corredor_1975"]}))
 	A.append(_e("pinheiro", "Pinheiro (pinus)", "castelo", "Fundos e oeste do lote (dezenas deles, 3 variações)", "castelinho/entorno.gd", "static func _pinus_mesh", cen,
 		_no(func(): return _pinheiro()), {"colocar": {"pos": Vector3(-27.0, 0.0, -2.0)}, "dist": 14.0,
 		"notas": ["no jogo é MultiMesh (3 variações); aqui a variação 0"]}))
@@ -353,25 +419,34 @@ static func _castelo_externo() -> Array:
 static func _castelo_1975() -> Array:
 	var M := "castelinho/mobilia.gd"
 	var cen := "c_v3_1975"
-	var G := "Veraneio_1975"
 	var onde := "Sala Medieval, que em 1975 era sala de estar, " + _salas(21) + "; só na época 1975"
 	var A: Array = []
 	A.append(_e("sofa_1975", "Sofá de braços com almofadas (1975)", "castelo", onde, M, "# sofá (encosto na parede norte)", cen,
-		_crop(_c(-13.7, -11.1, 0, 1.05, -29.1, -28.0), G), {"frente": 0.0, "dist": 3.8}))
-	A.append(_e("poltrona_1975", "Poltrona (1975)", "castelo", onde, M, "# poltronas", cen,
-		_crop(_c(-15.97, -15.0, 0, 0.95, -26.75, -25.85), G), {"frente": 90.0, "dist": 2.8}))
+		_et(["sofa_1975"]), {"frente": 0.0, "dist": 3.8}))
+	A.append(_e("poltrona_1975", "Poltrona com pés (1975)", "castelo", onde, M, "# poltronas", cen,
+		_et(["poltrona_1975_oeste"]), {"frente": 90.0, "dist": 2.8}))
 	A.append(_e("mesa_centro_1975", "Mesa de centro de pés palito (1975)", "castelo", onde, M, "# mesa de centro de pés palito", cen,
-		_crop(_c(-13.05, -11.75, 0, 0.68, -26.5, -25.7), G), {"frente": 0.0, "dist": 2.6}))
+		_et(["mesa_centro_1975", "cinzeiro_mesa_centro_1975", "vaso_mesa_centro_1975"]), {"frente": 0.0, "dist": 2.6}))
 	A.append(_e("estante_1975", "Estante com livros e rádio (1975)", "castelo", onde, M, "# estante na parede oeste", cen,
-		_crop(_c(-16.5, -15.9, 0, 2.1, -25.2, -23.8), G), {"frente": 90.0, "dist": 3.4}))
+		_et(["estante_1975", "radio_estante_1975"]), {"frente": 90.0, "dist": 3.4}))
 	A.append(_e("abajur_1975", "Abajur de pé (1975)", "castelo", onde, M, "# abajur de pé", cen,
-		_crop(_c(-14.25, -13.75, 0, 1.75, -28.95, -28.45), G), {"frente": 0.0, "dist": 2.6}))
+		_et(["abajur_1975"]), {"frente": 0.0, "dist": 2.6}))
 	A.append(_e("tv_1975", "Televisão de madeira (1975)", "castelo", onde, M, "# TV de madeira", cen,
-		_crop(_c(-9.4, -8.6, 0, 1.15, -24.7, -24.08), G), {"frente": 0.0, "dist": 2.6}))
+		_et(["tv_1975"]), {"frente": 0.0, "dist": 2.6}))
 	A.append(_e("quadro_por_do_sol", "Quadro de pôr do sol (1975)", "castelo", onde, M, "# quadro de pôr do sol", cen,
-		_crop(_c(-12.95, -11.85, 1.35, 2.07, -29.13, -29.0), G), {"frente": 0.0, "dist": 3.4}))
+		_et(["quadro_por_do_sol_1975"]), {"frente": 0.0, "dist": 3.4}))
 	A.append(_e("cadeira_palha_1975", "Cadeira de palha (1975)", "castelo", onde, M, "cadeira de palha", cen,
-		_crop(_c(-10.3, -9.7, 0, 1.05, -24.5, -23.9), G), {"frente": 0.0, "dist": 2.6}))
+		_et(["cadeira_palha_1975"]), {"frente": 0.0, "dist": 2.6}))
+	A.append(_e("tapete_1975", "Tapete vermelho com barra (1975)", "castelo", onde, M, "g.inte.quad(Castelinho.mat_cor(Color(0.45, 0.14, 0.1)", cen,
+		_et(["tapete_1975", "tapete_barra_1975"]), {"frente": 90.0, "dist": 3.6}))
+	A.append(_e("praia_1975", "Guarda-sol dobrado e prancha de praia (1975)", "castelo", onde, M, "# bilhete de praia", cen,
+		_et(["guarda_sol_dobrado_1975", "prancha_praia_1975"]), {"frente": 0.0, "dist": 2.6}))
+	A.append(_e("banco_hall_1975", "Banco do hall (1975)", "castelo", "Hall da casa de veraneio, " + _salas(7) + "; só na época 1975", M, "# corredor/hall: banco e cabideiro", cen,
+		_et(["banco_hall_1975"]), {"frente": 0.0, "dist": 2.8}))
+	A.append(_e("cabideiro_1975", "Cabideiro do hall (1975)", "castelo", "Hall da casa de veraneio, " + _salas(7) + "; só na época 1975", M, "# corredor/hall: banco e cabideiro", cen,
+		_et(["cabideiro_hall_1975"]), {"frente": 0.0, "dist": 2.8}))
+	A.append(_e("caixas_pesca_1975", "Rede de pesca e caixa verde (1975)", "castelo", "Sala do Pescador em 1975, " + _salas(13), M, "# Sala do Pescador em 1975", cen,
+		_et(["caixa_rede_pesca_1975", "caixa_verde_pescador_1975"]), {"frente": 0.0, "dist": 3.4}))
 	return A
 
 
@@ -424,7 +499,7 @@ static func _castelo_nos() -> Array:
 	A.append(_e("escada_2019", "Alçapão com a escada de 2019", "castelo", "Chão da Sala Medieval, " + _salas(21) + "; só em 2019, visita 4", N, "func _montar_escada_2019", "c_v4_2019",
 		_nn("Escada2019"), {"dist": 3.0, "notas": ["a escada que desce é um shader (escada_falsa); no .glb vira cor lisa"]}))
 	A.append(_e("painel_solto", "Painel solto da parede", "castelo", "Sala dos Povos Originários, " + _salas(8) + "; visita 4 (esconde o disco 2019)", N, "func _montar_painel_solto", "c_v4_hoje",
-		_nn("PainelSolto"), {"frente": 90.0, "dist": 3.0}))
+		_nn("PainelSolto"), {"frente": 90.0, "dist": 3.0, "duvidas": ["PainelSolto"]}))
 	return A
 
 
@@ -434,6 +509,10 @@ static func _castelo_paineis() -> Array:
 	var A: Array = []
 	A.append(_e("painel_p01", "Painel educativo (placa colorida)", "castelo", "Em poste de madeira ao lado do caminho, " + _salas(1) + "; hoje (2020). São 25 painéis iguais (p01 a p25) com textos diferentes", P, "class_name Painel3D", "c_v1_hoje",
 		_no(func(): return _painel("p01")), {"ref": func(nv): return nv._paineis["p01"], "dist": 3.6, "notas": ["o texto da placa é Label3D e não vai para o .glb; a placa em si é um shader, por isso o .glb leva cores lisas"]}))
+	A.append(_e("painel_p03", "Painel educativo P03 (lateral da torre)", "castelo", "Lateral da torre, no jardim oeste, " + _salas(3) + "; hoje (2020), em poste de madeira", P, "func _montar_paineis", "c_v1_hoje",
+		_no(func(): return _painel("p03")), {"ref": func(nv): return nv._paineis["p03"], "dist": 3.6, "duvidas": ["painel_p03"]}))
+	A.append(_e("painel_p17", "Painel educativo P17 (topo da torre)", "castelo", "Topo da Torre A, " + _salas(17) + "; hoje (2020)", P, "func _montar_paineis", "c_v1_hoje",
+		_no(func(): return _painel("p17")), {"ref": func(nv): return nv._paineis["p17"], "frente": 180.0, "dist": 3.4, "duvidas": ["painel_p17"]}))
 	A.append(_e("painel_p07_parede", "Painel educativo de parede", "castelo", "Parede do hall, " + _salas(7) + "; hoje (2020)", P, "func _construir", "c_v1_hoje",
 		_no(func(): return _painel("p07")), {"ref": func(nv): return nv._paineis["p07"], "dist": 3.0}))
 	A.append(_e("painel_quiz_final", "Painel do quiz final", "castelo", "Sala Medieval, parede oeste, " + _salas(21) + "; as 4 visitas (muda de cara em cada uma)", P, "func _init", "c_v1_hoje",
@@ -467,30 +546,115 @@ static func _castelo_paineis() -> Array:
 	return A
 
 
-# ---------------------------------------------------------------------------------------- castelo: 1967 (obra) e 2019 (ruína)
+# ---------------------------------------------------------------------------------------- castelo: 1967 (obra), 2019 (ruína) e 1950
 static func _castelo_1967() -> Array:
 	var O := "castelinho/obra.gd"
 	var cen := "c_v1_1967"
-	var G := "Obra_1967"
 	var A: Array = []
 	A.append(_e("andaime_madeira", "Andaime de madeira", "castelo", "Fachada sul da Torre A, " + _salas(3) + "; época 1967 (obra)", O, "static func _andaime", cen,
-		_crop(_c(-23.6, -16.1, 0, 5.6, -10.95, -10.0), G, {"aresta_max": 9.0}), {"frente": 0.0, "dist": 11.0}))
-	A.append(_e("pilha_blocos", "Pilha de blocos de pedra", "castelo", "Canteiro diante do prédio, " + _salas(3) + "; época 1967", O, "static func _pilhas", cen,
-		_crop(_c(-21.2, -19.6, 0, 0.95, -8.8, -7.8), G, {"shader": true}), {"frente": 0.0, "dist": 4.0}))
-	A.append(_e("barco_encalhado", "Barco de madeira encalhado", "castelo", "Gramado diante do prédio, " + _salas(2) + "; época 1967", O, "static func _barco", cen,
-		_crop(_c(-18.7, -13.7, -0.05, 1.3, -5.7, -2.4), G), {"frente": 0.0, "dist": 6.5}))
+		_et(["andaime_torre_a", "escada_de_mao_andaime"]), {"frente": 0.0, "dist": 11.0}))
+	A.append(_e("pilha_blocos", "Pilha de blocos de pedra", "castelo", "Canteiro diante do prédio, " + _salas(3) + "; época 1967 (são 8 pilhas)", O, "static func _pilhas", cen,
+		_et(["pilha_blocos_1"]), {"frente": 0.0, "dist": 4.0}))
+	A.append(_e("blocos_soltos_torre_a", "Três blocos soltos no topo da parede da Torre A", "castelo", "Parede oeste da Torre A em obra, " + _salas(3) + "; época 1967", O, "bloco_solto_torre_a", cen,
+		_et(["bloco_solto_torre_a_*"]), {"frente": 90.0, "dist": 5.0}))
+	A.append(_e("barco_encalhado", "Barco de madeira encalhado com remo", "castelo", "Gramado diante do prédio, " + _salas(2) + "; época 1967", O, "static func _barco", cen,
+		_et(["barco_encalhado", "remo_barco"]), {"frente": 0.0, "dist": 6.5}))
 	A.append(_e("castelo_de_areia", "Castelinho de areia do Tito", "castelo", "Ao lado de onde o Tito brinca, " + _salas(1) + "; época 1967", O, "static func _castelo_de_areia", cen,
-		_crop(_c(-2.15, -1.2, 0, 0.42, -7.45, -6.75), G), {"frente": 0.0, "dist": 2.6}))
+		_et(["castelinho_de_areia", "poca_de_areia_tito"]), {"frente": 0.0, "dist": 2.6}))
 	A.append(_e("carrinho_de_mao", "Carrinho de mão", "castelo", "Canteiro, pé do andaime, " + _salas(3) + "; época 1967", O, "# carrinho de mão", cen,
-		_crop(_c(-18.8, -16.9, 0, 0.72, -9.0, -8.2), G), {"frente": 0.0, "dist": 3.0}))
+		_et(["carrinho_de_mao"]), {"frente": 0.0, "dist": 3.0}))
 	A.append(_e("caixa_de_massa", "Caixa de massa com enxada", "castelo", "Canteiro, " + _salas(4) + "; época 1967", O, "# caixa de massa", cen,
-		_crop(_c(-14.0, -11.55, 0, 0.3, -8.95, -7.98), G), {"frente": 0.0, "dist": 3.4}))
+		_et(["caixa_de_massa"]), {"frente": 0.0, "dist": 3.4}))
 	A.append(_e("monte_areia_sacos", "Monte de areia e sacos de cimento", "castelo", "Canteiro, " + _salas(4) + "; época 1967", O, "# monte de areia grossa", cen,
-		_crop(_c(-12.7, -9.2, 0, 1.0, -8.0, -6.2), G), {"frente": 0.0, "dist": 5.0}))
+		_et(["monte_de_areia_grossa", "saco_de_cimento_*"]), {"frente": 0.0, "dist": 5.0}))
+	A.append(_e("tabuas_soltas", "Tábuas soltas no chão do canteiro", "castelo", "Canteiro, perto do andaime, " + _salas(2) + "; época 1967", O, "# tábuas soltas no chão", cen,
+		_et(["tabua_solta_*"]), {"frente": 0.0, "dist": 4.0}))
 	A.append(_e("muro_buraco", "Muro com o buraco de criança", "castelo", "Muro baixo da Av. Garibaldi, " + _salas(1) + "; época 1967", O, "static func _muro_com_buraco", cen,
-		_crop(_c(-22.7, -20.5, 0, 1.2, -1.45, -0.15), G, {"shader": true}), {"frente": 180.0, "dist": 4.2}))
+		_crop(_c(-22.7, -20.5, 0, 1.2, -1.45, -0.15), "Obra_1967", {"shader": true}), {"frente": 180.0, "dist": 4.2, "duvidas": ["buraco_muro_dentes"]}))
+	A.append(_e("casa_madeira_1967", "Casa de madeira sobre pilotis (1967)", "castelo", "Em volta do lote, 3 casas de madeira; época 1967", O, "static func _casas", cen,
+		_et(["casa_madeira_1967_1"]), {"frente": 0.0, "dist": 14.0}))
 	A.append(_e("touceira_capim", "Touceira de capim alto (ruína)", "castelo", "Ao pé das paredes, em volta do prédio abandonado; época 2019", "castelinho/extras.gd", "static func _touceira", "c_v1_2019",
-		_crop(_c(-6.9, -5.1, 0, 1.4, -10.95, -9.85), "Ruina_2019"), {"frente": 0.0, "dist": 3.0}))
+		_et(["mato_alto_1"]), {"frente": 0.0, "dist": 3.0}))
+	A.append(_e("chapa_fibro_solta", "Chapa de fibrocimento solta no telhado", "castelo", "Telhado do corpo principal, época 2019", "castelinho/extras.gd", "# chapas de fibrocimento", "c_v1_2019",
+		_et(["chapa_fibrocimento_solta_1"]), {"frente": 0.0, "dist": 9.0}))
+	A.append(_e("chamine_1950", "Chaminé do núcleo de 1950", "castelo", "Face norte do núcleo original, " + _salas(12) + "; época 1950", "castelinho/extras.gd", "static func _nucleo_1950", "c_v1_1950",
+		_et(["chamine_1950"]), {"frente": 90.0, "dist": 8.0}))
+	A.append(_e("porta_nucleo_1950", "Porta do núcleo de 1950", "castelo", "Núcleo original, época 1950", "castelinho/extras.gd", "static func _nucleo_1950", "c_v1_1950",
+		_et(["porta_nucleo_1950"]), {"frente": 90.0, "dist": 3.2}))
+	return A
+
+
+# ---------------------------------------------------------------------------------------- castelo: Ato II (dunas de 1950, salas 55 a 60)
+static func _castelo_ato2() -> Array:
+	var X := "world/niveis/ato2.gd"
+	var cen := "ato2"
+	var A: Array = []
+	var hall := "Ato II (visita 3), sala 55: o hall errado (a sala 7 de novo, mas errada)"
+	A.append(_e("ato2_lustre_hall", "Lustre de ferro que balança sem vento", "castelo", hall, X, "# lustre de ferro balançando sem vento", cen,
+		_nf(func(nv): return nv._lustre), {"ref": func(nv): return nv._lustre, "dist": 5.0, "notas": ["no jogo balança de um lado para o outro; a foto é uma pose parada"]}))
+	A.append(_e("ato2_painel_corrompido", "Painel P07 corrompido", "castelo", hall + ", parede direita", X, "Painel3D.new(\"p07_corrompido\")", cen,
+		_no(func(): return _painel("p07_corrompido")), {"ref": func(nv): return _por_classe(nv, "Painel3D"), "frente": 270.0, "dist": 3.4}))
+	A.append(_e("ato2_porta_falsa_hall", "Porta falsa com arco (uma de três iguais)", "castelo", hall + ", parede esquerda: 3 portas iguais e fechadas", X, "# três portas IGUAIS e fechadas", cen,
+		_crop(_c(-5.1, -4.8, 0, 3.1, -4.4, -2.6), "Hall"), {"frente": 90.0, "dist": 3.4}))
+	A.append(_e("ato2_recorte_hall", "Recorte de papelão de visitante, virado para a parede", "castelo", hall + ", parede esquerda", X, "# recorte de papelão de visitante", cen,
+		_crop(_c(-4.25, -3.75, 0, 2.45, -2.1, -0.9), "Hall"), {"frente": 90.0, "dist": 3.0}))
+	A.append(_e("ato2_porta_hall", "Porta de duas folhas do fundo do hall", "castelo", hall + "; abre para as dunas de 1950 (sala 56)", X, "# a porta do fundo (duas folhas)", cen,
+		_crop(_c(-1.3, 1.3, 0.0, 2.65, -14.4, -14.1), "Hall"), {"frente": 0.0, "dist": 4.0}))
+	A.append(_e("ato2_estaca_duna", "Estaca de madeira do caminho nas dunas", "castelo", "Ato II, sala 56: duas fileiras de estacas marcam o caminho até o núcleo de 1950", X, "# estacas de madeira marcando um caminho", cen,
+		_crop(_c(-3.65, -3.15, -0.2, 1.3, -22.4, -21.8)), {"frente": 0.0, "dist": 3.0}))
+	A.append(_e("ato2_capim_duna", "Tufo de capim de duna", "castelo", "Ato II, sala 56: 140 tufos espalhados pelas dunas", X, "# tufos de capim de duna", cen,
+		_no(func(): return _capim()), {"colocar": {"pos": Vector3(6.0, 0.0, -30.0)}, "dist": 3.0}))
+	A.append(_e("ato2_janela_veneziana", "Janela de venezianas do núcleo de 1950", "castelo", "Ato II, sala 57: frente da casa de pedra (núcleo de 1950)", X, "# janelas de venezianas na frente", cen,
+		_crop(_c(-2.95, -1.45, 0.9, 2.3, -72.45, -72.1), "Casa1950"), {"frente": 0.0, "dist": 3.4}))
+	A.append(_e("ato2_chamine_1950", "Chaminé de pedra do núcleo (por fora)", "castelo", "Ato II, sala 57: lado leste do núcleo de 1950", X, "# chaminé grande saliente", cen,
+		_crop(_c(3.75, 4.7, 0, 6.4, -76.3, -73.7), "Casa1950"), {"frente": 90.0, "dist": 9.0}))
+	A.append(_e("ato2_lareira_1950", "Lareira do núcleo (por dentro)", "castelo", "Ato II, sala 57: dentro da casa de 1950, parede leste", X, "# chaminé grande saliente", cen,
+		_crop(_c(2.4, 3.29, -0.02, 1.6, -76.2, -73.8), "Casa1950"), {"frente": 270.0, "dist": 3.0,
+		"pre": func(nv, _f): nv._ambiente("casa", 0.01)}))
+	A.append(_e("ato2_mesa_casa", "Mesa de madeira da casa de 1950", "castelo", "Ato II, sala 57: dentro do núcleo de 1950", X, "# mesa e areia que entrou pela porta", cen,
+		_crop(_c(1.2, 2.6, 0, 0.9, -76.7, -75.7), "Casa1950"), {"frente": 0.0, "dist": 2.6, "pre": func(nv, _f): nv._ambiente("casa", 0.01)}))
+	A.append(_e("ato2_montinho_areia", "Montinho de areia que entrou pela porta", "castelo", "Ato II, sala 57: três montinhos meio enterrados no chão da casa", X, "montinho_areia_%d", cen,
+		_crop(_c(-0.5, 1.1, -0.2, 0.3, -74.1, -73.0), "Casa1950"), {"frente": 0.0, "dist": 3.0, "pre": func(nv, _f): nv._ambiente("casa", 0.01)}))
+	A.append(_e("ato2_aviso_visitantes", "Aviso aos visitantes (regra do contato visual)", "castelo", "Ato II, sala 57: parede dos fundos da casa de 1950", X, "# aviso diegético da regra", cen,
+		_crop(_c(0.5, 2.5, 1.3, 2.3, -77.35, -77.2), "Casa1950"), {"frente": 0.0, "dist": 3.4, "pre": func(nv, _f): nv._ambiente("casa", 0.01)}))
+	A.append(_e("ato2_janela_gradeada", "Janelinha gradeada do anexo", "castelo", "Ato II, sala 57: parede oeste do anexo do núcleo", X, "# janelinha gradeada no alto", cen,
+		_crop(_c(-7.6, -7.3, 1.6, 2.3, -75.5, -74.5), "Casa1950"), {"frente": 90.0, "dist": 2.8, "pre": func(nv, _f): nv._ambiente("casa", 0.01)}))
+	A.append(_e("ato2_modulo_arcada", "Módulo da arcada repetida (pilar, arco abatido, peitoril)", "castelo", "Ato II, sala 58: 8 módulos IGUAIS de arcos abatidos sobre pilares quadrados", X, "# 9 pilares quadrados + 8 baías", cen,
+		_crop(_c(-4.9, 0.5, -0.05, 3.7, -83.6, -78.0), "Arcada", {"aresta_max": 8.0}), {"frente": 270.0, "dist": 7.0, "pre": func(nv, _f): nv._ambiente("arcada", 0.01)}))
+	A.append(_e("ato2_lanterna_arcada", "Lanterna da parede da arcada", "castelo", "Ato II, sala 58: parede direita da arcada, uma por módulo", X, "# lanterna", cen,
+		_nn("Lanterna"), {"frente": 90.0, "dist": 3.0, "pre": func(nv, _f): nv._ambiente("arcada", 0.01)}))
+	A.append(_e("ato2_porta_final", "Porta da Sala Medieval, fora de lugar", "castelo", "Ato II, sala 59: no fim da arcada; atravessar leva ao Castelinho (sala 60)", X, "func _porta_final", cen,
+		_nn("PortaFinal"), {"frente": 0.0, "dist": 5.0, "pre": func(nv, _f): nv._ambiente("arcada", 0.01)}))
+	A.append(_e("ato2_trono_vermelho", "Trono vermelho", "castelo", "Ato II, sala 60: Sala Medieval atrás da porta (o escudo dourado fica na parede atrás)", X, "func _sala_medieval", cen,
+		_crop(_c(-3.4, -2.4, 0, 1.95, -128.1, -127.15), "SalaMedieval"), {"frente": 0.0, "dist": 4.0, "pre": func(nv, _f): nv._ambiente("arcada", 0.01)}))
+	A.append(_e("ato2_trono_armadura", "Trono vermelho com a armadura sentada", "castelo", "Ato II, sala 60: Sala Medieval atrás da porta (a mesma armadura da sala 21)", X, "# a armadura sentada no trono da direita", cen,
+		_crop(_c(-1.2, -0.2, 0, 1.95, -128.1, -127.0), "SalaMedieval"), {"frente": 0.0, "dist": 3.4, "pre": func(nv, _f): nv._ambiente("arcada", 0.01)}))
+	return A
+
+
+# ---------------------------------------------------------------------------------------- dúvidas (pontos do problema, sem glb)
+static func _duvidas_pontos() -> Array:
+	var A: Array = []
+	A.append(_e("duvida_corredor_1975_casa_vizinha", "Dúvida: corredor de 1975 atravessa a casa vizinha", "castelo",
+		"Corredor de 1975 (visita 3, " + _salas(25) + "), onde ele cruza a casa vizinha nº 17, ao norte do lote", "world/niveis/castelinho.gd", "func _corredor", "c_v3_1975",
+		_ponto([
+			{"alvo": func(nv): return Vector3(-12.3, 1.3, -40.7), "pes": func(nv): return Vector3(-16.5, 0.03, -37.0)},
+			{"alvo": func(nv): return Vector3(-9.05, 1.2, -41.5), "pes": func(nv): return Vector3(-10.2, 0.03, -36.0)},
+			{"alvo": func(nv): return Vector3(-11.35, 1.2, -50.5), "pes": func(nv): return Vector3(-10.2, 0.03, -56.0)},
+		]), {"duvidas": ["casa_vizinha_17", "corredor_1975"]}))
+	A.append(_e("duvida_menino_slide_canelas", "Dúvida: menino sentado dos slides com as canelas no piso", "porao",
+		"Porão, slides do último dia: sala 97 (borda de pedra) e sala 98 (passarela); só com o disco sem data", "world/niveis/porao_quarto.gd", "static func _menino", "porao_semdata",
+		_ponto([
+			{"pre": func(nv, _f): nv.ir_para_sala(16), "alvo": func(nv): return nv.salas[16].raiz.find_child("Tito", true, false).global_position + Vector3(0, 0.3, 0), "raio": 0.6, "frente": 0.0, "dist": 2.2},
+			{"alvo": func(nv): return nv.salas[16].raiz.find_child("Tito", true, false).global_position + Vector3(0, 0.15, 0), "raio": 0.5, "frente": 90.0, "dist": 1.8},
+			{"pre": func(nv, _f): nv.ir_para_sala(17), "alvo": func(nv): return nv.salas[17].raiz.find_child("Tito", true, false).global_position + Vector3(0, 0.3, 0), "raio": 0.6, "frente": 0.0, "dist": 2.2},
+		]), {"duvidas": ["Slide97", "Slide98"]}))
+	A.append(_e("duvida_fita_zebrada_cadeira", "Dúvida: fita zebrada perto de uma cadeira da Sala Medieval", "castelo",
+		"Sala Medieval, porta de saída em reforma, " + _salas(21) + "; visita 4", "world/niveis/castelinho.gd", "func _fita_zebrada", "c_v4_hoje",
+		_ponto([
+			{"alvo": func(nv): return Vector3(-12.2, 0.9, -28.0), "raio": 1.8, "frente": 0.0, "dist": 3.6},
+			{"alvo": func(nv): return Vector3(-13.2, 0.5, -27.0), "raio": 0.9, "frente": 60.0, "dist": 2.6},
+		]), {"duvidas": ["cadeira_medieval_2_n"]}))
 	return A
 
 
@@ -553,7 +717,7 @@ static func _porao() -> Array:
 		"ref": func(nv): return nv.salas[14].raiz.find_child("Disco", true, false)}))
 	# slides do último dia (só na época sem data)
 	A.append(_e("menino_sentado_slide", "Menino de costas sentado, com balde (slide)", "porao", "Salas 97 e 98, slides do último dia (só com o disco sem data)", Q, "static func _menino", "porao_semdata",
-		_no(func(): return _menino(true)), {"colocar": {"sala": 16, "pos": Vector3(0.0, 0.0, -6.0)}, "dist": 3.0}))
+		_no(func(): return _menino(true)), {"colocar": {"sala": 16, "pos": Vector3(0.0, 0.0, -6.0)}, "dist": 3.0, "duvidas": ["Slide97", "Slide98"]}))
 	A.append(_e("figura_slide", "Figura Branca do slide (silhueta)", "porao", "Sala 98, slide do último dia (só com o disco sem data)", Q, "static func _figura_slide", "porao_semdata",
 		_no(func(): return _figura_slide()), {"colocar": {"sala": 17, "pos": Vector3(0.0, 0.0, -6.0), "yaw": 180.0}, "dist": 5.0}))
 	A.append(_e("balde_boiando", "Balde vermelho boiando", "porao", "Sala 99, slide do último dia: água parada e o balde", Q, "static func _balde_boiando", "porao_semdata",
@@ -604,7 +768,7 @@ static func _criaturas() -> Array:
 		_no(func(): return TitoCastelinho.criar_tito()), {"ref": func(nv): return nv._tito, "dist": 3.0, "frente": 0.0,
 		"notas": ["Tito é fictício; o boneco acena e cava a areia no jogo"]}))
 	A.append(_e("tito_margem", "Tito sentado na margem do lago", "criaturas", "Margem do Braço Morto (sala 100), só com o disco sem data ou 1967", "world/niveis/porao_quarto.gd", "static func menino", "lago",
-		_no(func(): return _menino(true)), {"ref": func(nv): return nv.tito, "dist": 3.0, "frente": 0.0,
+		_no(func(): return _menino(true)), {"ref": func(nv): return nv.tito, "dist": 3.0, "frente": 0.0, "duvidas": ["TitoNaMargem"],
 		"notas": ["sempre de costas, sempre uma silhueta: peso por sugestão"]}))
 	A.append(_e("menino_em_pe", "Menino de pé com balde (slide)", "criaturas", "Sala 96 do porão, slide do último dia (só com o disco sem data)", "world/niveis/porao_quarto.gd", "static func _menino", "porao_semdata",
 		_no(func(): return _menino(false)), {"colocar": {"sala": 15, "pos": Vector3(0.0, 0.0, -5.0)}, "dist": 3.0}))

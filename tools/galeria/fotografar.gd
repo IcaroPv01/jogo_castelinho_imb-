@@ -71,6 +71,7 @@ func _rodar() -> void:
 	root.size = Vector2i(1280, 720)
 	gs = root.get_node("/root/GameState")
 	Cat = load("res://tools/galeria/catalogo.gd")
+	_carregar_duvidas()
 	_montar_estudio()
 	var lista: Array = Cat.lista()
 	var por_cen := {}
@@ -97,6 +98,10 @@ func _rodar() -> void:
 			var t1 := Time.get_ticks_msec()
 			await _processar(o)
 			print("   ", o["id"], "  ", Time.get_ticks_msec() - t1, " ms")
+	if so_ids.size() == 0 and so_cen == "":
+		for k in _duvidas:
+			if not _duvidas_usadas.has(k):
+				falhas.append("dúvida sem objeto/foto: " + str(k))
 	_escrever_manifesto()
 	print("galeria: ", manifesto.size(), " objetos fotografados; falhas: ", falhas.size())
 	for f in falhas:
@@ -283,6 +288,11 @@ func _carregar_cenario(chave: String) -> bool:
 			gs.comecar_visita(int(c["comecar_visita"]))
 		gs.jogando = false
 	gs.epoca = int(c.get("epoca", 3))
+	# etiquetas por objeto (castelinho/malha.gd): ligadas só nos cenários do Castelinho, antes de construir o nível
+	if str(c.get("malha", "")) != "":
+		Malha.ligar(str(c["malha"]))
+	else:
+		Malha.desligar()
 	await main.carregar_mundo(c["cena"], "Spawn")
 	if main.mundo.get_child_count() == 0:
 		return false
@@ -307,6 +317,9 @@ func _carregar_cenario(chave: String) -> bool:
 func _processar(o: Dictionary) -> void:
 	var id: String = o["id"]
 	_esconder_ui()
+	if o["fonte"]["t"] == "ponto":
+		await _processar_duvida(o)
+		return
 	if o.has("pre"):
 		await (o["pre"] as Callable).call(nivel, self)
 		await _quadros(3)
@@ -361,6 +374,7 @@ func _processar(o: Dictionary) -> void:
 		falhas.append(id + " (fotos do estúdio incompletas)")
 		return
 	var notas: Array = (o.get("notas", []) as Array).duplicate()
+	notas.append_array(_notas_duvidas(o))
 	if info.get("aviso", "") != "":
 		notas.append(info["aviso"])
 	if local == "" and not sem_local and not bool(o.get("sem_local", false)):
@@ -393,6 +407,8 @@ func _montar_objeto(o: Dictionary, f: Dictionary) -> Node3D:
 			if n3.is_inside_tree():
 				return _copiar_do_nivel(n3)
 			return n3
+		"et":
+			return _por_etiquetas(f)
 		"crop":
 			return _recortar_do_nivel(o, f)
 		"crop_sala":
@@ -415,6 +431,37 @@ func _copiar_do_nivel(alvo: Node3D) -> Node3D:
 	d.transform = alvo.global_transform
 	envelope.set_meta("_frame", {"centro": caixa_mundo.get_center(), "raio": caixa_mundo.size.length() * 0.5, "base": caixa_mundo.position.y})
 	return envelope
+
+
+# ---------------------------------------------------------------------------------------- por etiqueta (Malha.registrar)
+## Junta as malhas das etiquetas pedidas ("nome" exato ou "prefixo*"). Opcional: "rotulos" = AABB de onde copiar Label3D.
+func _por_etiquetas(f: Dictionary) -> Node3D:
+	var am := ArrayMesh.new()
+	for et in f["et"]:
+		var pre: bool = (et as String).ends_with("*")
+		var nome: String = (et as String).trim_suffix("*")
+		var m: ArrayMesh = Malha.mesh_da_etiqueta(nome, pre)
+		for sidx in m.get_surface_count():
+			am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, m.surface_get_arrays(sidx))
+			am.surface_set_material(am.get_surface_count() - 1, m.surface_get_material(sidx))
+	var raiz := Node3D.new()
+	raiz.name = "PorEtiqueta"
+	if am.get_surface_count() > 0:
+		var mi := MeshInstance3D.new()
+		mi.name = "Malha"
+		mi.mesh = am
+		raiz.add_child(mi)
+	if f.has("rotulos"):
+		var caixa: AABB = f["rotulos"]
+		for n in _descendentes(nivel):
+			if (n is Label3D or n is Sprite3D) and (n as Node3D).is_visible_in_tree() and caixa.has_point((n as Node3D).global_position):
+				var cp := (n as Node3D).duplicate() as Node3D
+				raiz.add_child(cp)
+				cp.transform = (n as Node3D).global_transform
+	if am.get_surface_count() == 0 and raiz.get_child_count() == 0:
+		return null
+	raiz.set_meta("_frame", {"centro": _centro_real(raiz), "raio": _raio_real(raiz), "base": _base_real(raiz)})
+	return raiz
 
 
 # ---------------------------------------------------------------------------------------- recorte
@@ -706,7 +753,7 @@ func _achar_vista(centro: Vector3, raio: float, base_y: float, frente_deg: float
 
 func _achar_vista_lim(centro: Vector3, raio: float, base_y: float, frente_deg: float, dist_pref: float, lim: float, folga: float, exige_teto: bool, extra: bool):
 	var alt_olho: float = player.cabeca.position.y
-	var d0: float = dist_pref if dist_pref > 0.0 else maxf(2.0, raio * 2.5)
+	var d0: float = dist_pref if dist_pref > 0.0 else maxf(2.0, raio * 1.9)
 	var dists: Array = [d0, d0 * 1.3, d0 * 0.8, d0 * 1.7, d0 * 0.6, d0 * 2.3]
 	if extra:
 		dists.append_array([d0 * 0.45, d0 * 0.35, d0 * 3.0])
@@ -930,3 +977,74 @@ func _escrever_manifesto() -> void:
 	f.store_string(JSON.stringify(d, "  ", false))
 	f.close()
 	print("galeria: escrito ", saida.path_join(nome))
+
+
+# ====================================================================================== dúvidas
+var _duvidas: Dictionary = {}
+var _duvidas_usadas := {}
+
+
+func _carregar_duvidas() -> void:
+	var f := FileAccess.open("res://tools/galeria/duvidas.json", FileAccess.READ)
+	if f == null:
+		return
+	var j = JSON.parse_string(f.get_as_text())
+	if typeof(j) == TYPE_DICTIONARY:
+		_duvidas = j
+
+
+func _notas_duvidas(o: Dictionary) -> Array:
+	var r: Array = []
+	for k in o.get("duvidas", []):
+		if _duvidas.has(k):
+			_duvidas_usadas[k] = true
+			for t in _duvidas[k]:
+				r.append("Dúvida (" + str(k) + "): " + str(t))
+		else:
+			print("   AVISO: dúvida '", k, "' não existe em duvidas.json")
+	return r
+
+
+## Entrada "duvida_*": não há objeto isolado; são 2 a 3 vistas do PONTO do problema no nível.
+func _processar_duvida(o: Dictionary) -> void:
+	var id: String = o["id"]
+	var fotos: Array = []
+	var k := 0
+	for v in o["fonte"]["vistas"]:
+		var vd: Dictionary = v
+		if vd.has("pre"):
+			await (vd["pre"] as Callable).call(nivel, self)
+			await _quadros(3)
+		var alvo: Vector3 = (vd["alvo"] as Callable).call(nivel)
+		var raio: float = float(vd.get("raio", 0.8))
+		var base_y: float = alvo.y - raio * 0.6
+		var pt = null
+		if vd.has("pes"):
+			pt = [(vd["pes"] as Callable).call(nivel), Vector3.ZERO]
+		else:
+			pt = _achar_vista(alvo, raio, base_y, float(vd.get("frente", 0.0)), float(vd.get("dist", 0.0)))
+		if pt == null:
+			print("      sem vista para a dúvida ", id, " #", k)
+			k += 1
+			continue
+		_olhar(pt[0], alvo)
+		_esconder_ui()
+		await _quadros(14)
+		var img := root.get_texture().get_image()
+		if img:
+			img.convert(Image.FORMAT_RGB8)
+			img.resize(960, 540, Image.INTERPOLATE_LANCZOS)
+			var rel := "fotos/%s_%d.jpg" % [id, fotos.size() + 1]
+			if img.save_jpg(saida.path_join(rel), 0.82) == OK:
+				fotos.append(rel)
+		k += 1
+	if fotos.is_empty():
+		falhas.append(id + " (dúvida sem foto)")
+		return
+	var notas: Array = (o.get("notas", []) as Array).duplicate()
+	notas.append_array(_notas_duvidas(o))
+	manifesto.append({
+		"id": id, "nome": o["nome"], "grupo": o["grupo"], "onde": o["onde"],
+		"arquivo": o["arquivo"], "linha": _achar_linha(o["arquivo"], o.get("padrao", "")),
+		"glb": "", "fotos": fotos, "local": fotos[0], "notas": notas,
+	})
