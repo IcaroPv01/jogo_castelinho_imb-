@@ -332,7 +332,7 @@ static func _canteiro(c: Castelinho, g: Castelinho.Grupo) -> void:
 	# tábuas soltas no chão
 	for k in 4:
 		Malha.abrir("tabua_solta_%d" % (k + 1))
-		e.caixa(pinho, Vector3(-21.0 + k * 0.05, 0.02 + k * 0.035, -6.4 - k * 0.32), Vector3(-18.0 + k * 0.05, 0.05 + k * 0.035, -6.15 - k * 0.32), Malha.F_TODAS, 1.0)
+		e.caixa(pinho, Vector3(-21.0 + k * 0.05, 0.0, -6.4 - k * 0.32), Vector3(-18.0 + k * 0.05, 0.03, -6.15 - k * 0.32), Malha.F_TODAS, 1.0)       # (flutuavam 2 a 12 cm: agora no chão)
 	Malha.abrir("")
 	g.ext.col(Vector3(-13.9, 0, -8.9), Vector3(-12.5, 0.3, -7.9))
 	g.ext.col(Vector3(-12.6, 0, -8.1), Vector3(-10.4, 0.7, -6.3))

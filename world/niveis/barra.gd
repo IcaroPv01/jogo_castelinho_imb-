@@ -166,7 +166,7 @@ func _chao() -> void:
 	# faixa de areia onde o jogador fica (com colisão) até a linha d'água
 	Construtor.caixa(self, Vector3(500, 0.6, 60.0), Vector3(0, -0.3, MARGEM_Z + 30.0), areia, true, "Areia")
 	# areia molhada (mais escura) junto à água
-	Construtor.caixa(self, Vector3(500, 0.02, 2.2), Vector3(0, 0.005, MARGEM_Z + 1.1), _mat_areia(0.6), false)
+	Construtor.caixa(self, Vector3(499.8, 0.02, 2.2), Vector3(0, 0.005, MARGEM_Z + 1.1), _mat_areia(0.6), false)       # (500: as pontas eram coplanares com as da areia)
 	# barranco que desce para dentro d'água
 	var rampa := Construtor.caixa(self, Vector3(500, 0.3, 5.0), Vector3(0, -0.45, MARGEM_Z - 2.3), _mat_areia(0.55), false)
 	rampa.rotation_degrees.x = -7

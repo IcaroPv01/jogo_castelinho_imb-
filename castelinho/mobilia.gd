@@ -248,7 +248,7 @@ static func _cavalete(c: Castelinho, g: Castelinho.Grupo, p: Vector3, frente: Ve
 		var cor: Color = cores[(i + k) % cores.size()]
 		var off := lado * (0.3 * float((k * 3) % 5 - 2) / 2.0) + Vector3(0, 0.25 * float((k * 2) % 5 - 2) / 2.0, 0)
 		var t2 := Vector3(0.3, 0.3, 0.02) if absf(s.z) > 0.5 else Vector3(0.02, 0.3, 0.3)
-		cx(g, Castelinho.mat_cor(cor, 0.8), tela + s * 0.03 + off, t2)
+		cx(g, Castelinho.mat_cor(cor, 0.8), tela + s * (0.03 + 0.003 * k) + off, t2)       # camadas 3 mm uma da outra (antes coplanares: piscavam)
 	Malha.fechar(_et)
 
 
@@ -289,8 +289,8 @@ static func _sala_medieval(c: Castelinho, g: Castelinho.Grupo) -> void:
 	# lanças e estandartes na parede oeste/leste
 	for x in [-10.5, -10.0, -9.5]:
 		Malha.abrir("lanca_medieval_%d" % roundi((x + 10.5) * 2.0 + 1.0))
-		cx(g, madeira, Vector3(x, 1.4, -23.54), Vector3(0.05, 2.5, 0.05))       # encostadas na parede (z -23,5)
-		cx(g, c.m.ferro, Vector3(x, 2.75, -23.54), Vector3(0.07, 0.3, 0.07))
+		cx(g, madeira, Vector3(x, 1.25, -23.54), Vector3(0.05, 2.5, 0.05))       # encostadas na parede (z -23,5), apoiadas no piso
+		cx(g, c.m.ferro, Vector3(x, 2.6, -23.54), Vector3(0.07, 0.3, 0.07))
 	# tronos (dois), encosto alto de madeira escura
 	for z in [-27.0, -28.2]:
 		Malha.abrir("trono_medieval_%d" % (1 if z > -27.5 else 2))
@@ -383,7 +383,7 @@ static func _veraneio_1975(c: Castelinho) -> void:
 			zz += lw
 			k += 1
 	Malha.abrir("radio_estante_1975")
-	cx(g, Castelinho.mat_cor(Color(0.55, 0.35, 0.2), 0.7), Vector3(-15.96, 1.92, -24.5), Vector3(0.02, 0.18, 0.5))   # rádio
+	cx(g, Castelinho.mat_cor(Color(0.55, 0.35, 0.2), 0.7), Vector3(-15.955, 1.92, -24.5), Vector3(0.02, 0.18, 0.5))   # rádio (5 mm à frente das lombadas)
 	# abajur de pé (cúpula laranja acesa) ao lado do sofá
 	Malha.abrir("abajur_1975")
 	cx(g, Castelinho.mat_cor(Color(0.15, 0.13, 0.12), 0.5), Vector3(-14.0, 0.75, -28.7), Vector3(0.04, 1.5, 0.04))
@@ -407,7 +407,7 @@ static func _veraneio_1975(c: Castelinho) -> void:
 	Malha.abrir("guarda_sol_dobrado_1975")
 	cx(g, Castelinho.mat_cor(Color(0.9, 0.3, 0.3), 0.9), Vector3(-9.0, 0.5, -28.7), Vector3(0.5, 1.0, 0.1))
 	Malha.abrir("prancha_praia_1975")
-	cx(g, Castelinho.mat_cor(Color(0.95, 0.85, 0.3), 0.9), Vector3(-9.4, 0.35, -28.7), Vector3(0.5, 0.7, 0.1))
+	cx(g, Castelinho.mat_cor(Color(0.95, 0.85, 0.3), 0.9), Vector3(-9.4, 0.35, -28.69), Vector3(0.5, 0.7, 0.1))
 	# corredor/hall: banco e cabideiro
 	Malha.abrir("banco_hall_1975")
 	cx(g, madeira, Vector3(-9.0, 0.25, -13.4), Vector3(1.4, 0.5, 0.4), true, 1.0)

@@ -702,6 +702,8 @@ func checar_zfight() -> void:
 
 ## A face (eixo ax, sinal sg, coordenada co, ponto u,v no plano) aponta para dentro de uma caixa sólida (ou seja, não aparece)?
 func _face_oculta(ea: E, eb: E, ax: int, sg: int, co: float, u: float, v: float) -> bool:
+	if ax == 1 and sg == 0 and absf(co) <= 0.02:
+		return true          # face de baixo no nível do chão: nunca aparece
 	var q := Vector3.ZERO
 	q[ax] = co + (0.01 if sg == 1 else -0.01)
 	q[(ax + 1) % 3] = u

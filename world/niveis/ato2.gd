@@ -639,7 +639,7 @@ func _arcada() -> void:
 	# viga transversal a cada meia baía
 	for i in ARC_N * 2:
 		var zv := ARC_Z0 - (i + 0.5) * ARC_BAIA * 0.5
-		_bloco(arc, -4.4, 0.4, teto - 0.3, teto, zv - 0.15, zv + 0.15, m_madeira, false)
+		_bloco(arc, -4.4, 0.39, teto - 0.3, teto, zv - 0.15, zv + 0.15, m_madeira, false)      # 1 cm antes da face externa da parede (coplanar piscava)
 	# cornija de mísulas (dentes) na face de fora, sob a laje
 	var dente := BoxMesh.new()
 	dente.size = Vector3(0.22, 0.16, 0.2)

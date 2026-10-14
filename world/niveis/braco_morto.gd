@@ -38,7 +38,7 @@ const LAGO_X := 100.0              # meia extensão do lago (200 m)
 const LAGO_Z0 := -44.0
 const LAGO_Z1 := -8.0              # margem (muro do calçadão)
 const AGUA_Y := -0.3
-const POS_TITO := Vector3(3.0, 0.0, -7.2)
+const POS_TITO := Vector3(3.0, 0.0, -7.72)   # sentado na borda do calçadão (z -8): as canelas pendem para fora do meio-fio
 const POS_LAPIDE := Vector3(8.5, 0.0, -5.6)
 const EPOCAS_TITO: Array[int] = [5, 4]     # ESEMDATA, E1967
 # rampa do atracadouro dos pedalinhos: o único jeito de entrar no lago (o resto do meio-fio tem parede de colisão)
@@ -251,7 +251,7 @@ func _terreno() -> void:
 	# calçadão de lajotas junto à água e uma rua de asfalto ao fundo
 	m.caixa(concreto, Vector3(gx0, -0.05, LAGO_Z1), Vector3(gx1, 0.02, gz0), Malha.F_PY, 0.0, Color.WHITE)
 	m.col(Vector3(gx0, -1.0, LAGO_Z1), Vector3(gx1, 0.02, gz0))     # sem isto o calçadão (e a lápide) era um buraco
-	m.caixa(asfalto, Vector3(gx0, -0.05, 30.0), Vector3(gx1, 0.0, 38.0), Malha.F_PY, 0.0, Color.WHITE)
+	m.caixa(asfalto, Vector3(gx0, -0.05, 30.0), Vector3(gx1, 0.01, 38.0), Malha.F_PY, 0.0, Color.WHITE)       # topo 1 cm acima da grama (era coplanar: a rua piscava)
 	# meio-fio do lago: parede de concreto de -0,9 a 0 e a calçada que o cobre
 	# (com uma abertura na rampa do atracadouro: ver _atracadouro)
 	for seg in [[gx0, RAMPA_X0], [RAMPA_X1, gx1]]:
@@ -600,7 +600,7 @@ func _escada_do_porao() -> void:
 		m.caixa(piso, Vector3(-15.6, y, za - 0.14), Vector3(-12.4, y + 0.008, za), Malha.F_PY, 0.0, Color(1.45, 1.45, 1.4))
 	m.rampa(PackedVector3Array([Vector3(-15.6, -2.4, z0), Vector3(-12.4, -2.4, z0), Vector3(-15.6, 0.0, 7.2), Vector3(-12.4, 0.0, 7.2),
 		Vector3(-15.6, -2.9, z0), Vector3(-12.4, -2.9, z0), Vector3(-15.6, -2.9, 7.2), Vector3(-12.4, -2.9, 7.2)]))
-	m.caixa(pedra, Vector3(-15.6, -2.4, z0), Vector3(-12.4, -2.0, z0 + 0.6), Malha.F_TODAS, 0.0, Color.WHITE)
+	m.caixa(pedra, Vector3(-15.6, -2.4, z0), Vector3(-12.4, -2.0, z0 + 0.59), Malha.F_TODAS, 0.0, Color.WHITE)       # 1 cm menos: a face de trás era coplanar com a dos muros laterais
 	m.col(Vector3(-15.6, -3.0, z0 - 6.2), Vector3(-12.4, -2.4, z0 + 0.6))
 	for lado in [-1.0, 1.0]:
 		var x: float = -14.0 + lado * 1.6

@@ -342,7 +342,7 @@ static func _grade(c: Ctx, x_face: float, lado: float, zc: float, larg: float, a
 	var meia := larg * 0.5
 	# fundo escuro do nicho e moldura de pedra (viga em cima, soleira embaixo)
 	if not aberta:   # (a cela aberta da sala 90 mostra o nicho de verdade, com fundo e objetos: um plano liso parecia porta pintada)
-		c.vc.caixa(mv, Vector3(x_face, 0.0, zc - meia), Vector3(x_face + d * 0.02, alt, zc + meia), Malha.F_TODAS, 0.0, Color(0.012, 0.012, 0.016))
+		c.vc.caixa(mv, Vector3(x_face + d * 0.005, 0.0, zc - meia), Vector3(x_face + d * 0.02, alt, zc + meia), Malha.F_TODAS, 0.0, Color(0.012, 0.012, 0.016))     # recuado 5 mm (coplanar com a moldura)
 	c.vc.caixa(mv, Vector3(x_face, alt, zc - meia - 0.1), Vector3(x_face + d * 0.22, alt + 0.2, zc + meia + 0.1), Malha.F_TODAS, 0.0, Color(0.32, 0.3, 0.3))
 	c.vc.caixa(mv, Vector3(x_face, 0.0, zc - meia - 0.1), Vector3(x_face + d * 0.22, 0.12, zc + meia + 0.1), Malha.F_TODAS, 0.0, Color(0.32, 0.3, 0.3))
 	for lat in [-1.0, 1.0]:
@@ -896,7 +896,7 @@ static func _cisterna(c: Ctx) -> void:
 	for lado in [-1, 1]:
 		for z in [-3.6, -7.2, -10.8]:
 			var x: float = lado * 4.4
-			caixa(c.pedra, mp, x - 0.5, fundo, z - 0.5, x + 0.5, h - 0.3, z + 0.5, Color(0.85, 0.82, 0.82))
+			caixa(c.pedra, mp, x - 0.5, fundo, z - 0.5, x + 0.5, h - 0.32, z + 0.5, Color(0.85, 0.82, 0.82))      # topo 2 cm abaixo do capitel (coplanar)
 			caixa(c.pedra, mp, x - 0.75, h - 0.6, z - 0.75, x + 0.75, h - 0.3, z + 0.75, Color(0.7, 0.68, 0.68))
 	if c.ultimo == 98:
 		_ponte_semdata(c, half, fundo)
@@ -947,9 +947,9 @@ static func _ponte_semdata(c: Ctx, half: float, fundo: float) -> void:
 	ponte.name = "PasserelaSemData"
 	c.raiz.add_child(ponte)
 	var mb: Malha = MalhaGd.new()
-	mb.caixa(mv, Vector3(half - 0.2, -0.12, -5.9), Vector3(x0 + 0.2, 0.0, -5.1), Malha.F_SEM_BASE, 0.0, Color(0.5, 0.34, 0.2))
+	mb.caixa(mv, Vector3(half - 0.2, -0.12, -5.9), Vector3(x0 + 0.2, 0.005, -5.1), Malha.F_SEM_BASE, 0.0, Color(0.5, 0.34, 0.2))     # topo 5 mm acima da passarela (era coplanar)
 	for k in 4:
-		mb.caixa(mv, Vector3(half - 0.2 + k * 0.45, 0.0, -5.9), Vector3(half - 0.2 + k * 0.45 + 0.04, 0.02, -5.1), Malha.F_SEM_BASE, 0.0, Color(0.3, 0.2, 0.12))
+		mb.caixa(mv, Vector3(half - 0.2 + k * 0.45, 0.005, -5.9), Vector3(half - 0.2 + k * 0.45 + 0.04, 0.025, -5.1), Malha.F_SEM_BASE, 0.0, Color(0.3, 0.2, 0.12))
 	mb.col(Vector3(half - 0.2, -0.3, -5.9), Vector3(x0 + 0.2, 0.0, -5.1))
 	mb.construir_instancia(ponte, "Tabuas")
 	mb.construir_colisao(ponte, "ColisaoPonte")
@@ -1271,7 +1271,7 @@ static func _poco(c: Ctx) -> void:
 	caixa(c.vc, mv, -0.02, 1.6, zc - 0.02, 0.02, 3.2, zc + 0.02, Color(0.55, 0.45, 0.3))
 	caixa(c.vc, mv, -0.17, 1.1, zc - 0.17, 0.17, 1.6, zc + 0.17, Color(0.8, 0.12, 0.1))
 	for lado in [-1, 1]:
-		caixa(c.pedra, mp, lado * (r + 0.2) - 0.1, 0.0, zc - 0.1, lado * (r + 0.2) + 0.1, 3.5, zc + 0.1, Color(0.75, 0.72, 0.72))
+		caixa(c.pedra, mp, lado * (r + 0.2) - 0.1, 0.0, zc - 0.1, lado * (r + 0.2) + 0.1, 3.48, zc + 0.1, Color(0.75, 0.72, 0.72))
 	# a mão pequena na borda, só no disco de 1967 (uma pista)
 	var mao := rotulo(c, "✋", Vector3(0, 0.96, zc + r - 0.2), 0.0, 40, Color(0.35, 0.65, 0.95, 0.9), 0.004)
 	mao.rotation_degrees.x = -90.0

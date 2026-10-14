@@ -95,8 +95,9 @@ static func _escada_patio(c: Castelinho) -> void:
 	var e := g.ext
 	var m: Material = c.m.laje
 	var y0 := 3.2
-	e.quad(m, Vector3(-21.0, y0, -20.1), Vector3(-16.0, y0, -20.1), Vector3(-16.0, Y, -20.1), Vector3(-21.0, Y, -20.1), Vector3(0, 0, 1))
-	e.quad(m, Vector3(-21.0, y0, -19.0), Vector3(-16.0, y0, -19.0), Vector3(-16.0, Y, -19.0), Vector3(-21.0, Y, -19.0), Vector3(0, 0, -1))
+	# (4 mm para dentro do furo: era coplanar com a face interna da parede e piscava)
+	e.quad(m, Vector3(-21.0, y0, -20.096), Vector3(-16.0, y0, -20.096), Vector3(-16.0, Y, -20.096), Vector3(-21.0, Y, -20.096), Vector3(0, 0, 1))
+	e.quad(m, Vector3(-21.0, y0, -19.004), Vector3(-16.0, y0, -19.004), Vector3(-16.0, Y, -19.004), Vector3(-21.0, Y, -19.004), Vector3(0, 0, -1))
 	e.quad(m, Vector3(-21.0, y0, -20.1), Vector3(-21.0, y0, -19.0), Vector3(-21.0, Y, -19.0), Vector3(-21.0, Y, -20.1), Vector3(1, 0, 0))
 	e.quad(m, Vector3(-16.0, y0, -20.1), Vector3(-16.0, y0, -19.0), Vector3(-16.0, Y, -19.0), Vector3(-16.0, Y, -20.1), Vector3(-1, 0, 0))
 
@@ -116,8 +117,8 @@ static func _escada_torre(c: Castelinho) -> void:
 	var m: Material = c.m.laje
 	var ya := 6.5
 	var yb := 6.8
-	e.quad(m, Vector3(-22.2, ya, -14.6), Vector3(-18.2, ya, -14.6), Vector3(-18.2, yb, -14.6), Vector3(-22.2, yb, -14.6), Vector3(0, 0, 1))
-	e.quad(m, Vector3(-22.2, ya, -13.5), Vector3(-18.2, ya, -13.5), Vector3(-18.2, yb, -13.5), Vector3(-22.2, yb, -13.5), Vector3(0, 0, -1))
+	e.quad(m, Vector3(-22.2, ya, -14.596), Vector3(-18.2, ya, -14.596), Vector3(-18.2, yb, -14.596), Vector3(-22.2, yb, -14.596), Vector3(0, 0, 1))
+	e.quad(m, Vector3(-22.2, ya, -13.504), Vector3(-18.2, ya, -13.504), Vector3(-18.2, yb, -13.504), Vector3(-22.2, yb, -13.504), Vector3(0, 0, -1))
 	e.quad(m, Vector3(-18.2, ya, -14.6), Vector3(-18.2, ya, -13.5), Vector3(-18.2, yb, -13.5), Vector3(-18.2, yb, -14.6), Vector3(-1, 0, 0))
 
 
@@ -171,7 +172,7 @@ static func _bancos_de_pedra(c: Castelinho) -> void:
 	g.ext.caixa(pe, Vector3(-24.6, 0, -7.4), Vector3(-23.2, 0.75, -6.6), Malha.F_TODAS)
 	g.ext.col(Vector3(-24.6, 0, -7.4), Vector3(-23.2, 0.75, -6.6))
 	Malha.abrir("banco_pedra_jardim_norte")
-	g.ext.caixa(pe, Vector3(-24.78, 0.0, -8.1), Vector3(-22.8, 0.42, -7.5), Malha.F_TODAS)       # (começava em -25,0: o poste do painel P03 atravessava o banco)
+	g.ext.caixa(pe, Vector3(-25.0, 0.0, -8.1), Vector3(-22.8, 0.42, -7.5), Malha.F_TODAS)
 	Malha.abrir("banco_pedra_jardim_sul")
 	g.ext.caixa(pe, Vector3(-25.0, 0.0, -6.5), Vector3(-22.8, 0.42, -5.9), Malha.F_TODAS)
 	g.ext.col(Vector3(-25.0, 0.0, -8.1), Vector3(-22.8, 0.42, -5.9))
