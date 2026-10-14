@@ -652,6 +652,11 @@ func _foto_local(o: Dictionary, info: Dictionary, bb_estudio: AABB) -> String:
 			colocado.queue_free()
 		return ""
 	print("      local: pés ", pt[0], " alvo ", centro, " raio ", snappedf(raio, 0.01))
+	if OS.get_environment("GALERIA_DEBUG") != "":
+		var h := _raio(pt[1], centro)
+		print("      debug raio olho->centro: ", h.get("collider", null), " ", h.get("position", null))
+		var h2 := _raio(centro + Vector3(5, 0, 0), centro - Vector3(5, 0, 0))
+		print("      debug raio horizontal x: ", h2.get("collider", null), " ", h2.get("position", null))
 	_olhar(pt[0], centro)
 	_esconder_ui()
 	await _quadros(14)
@@ -687,10 +692,23 @@ func _raio(de: Vector3, para: Vector3) -> Dictionary:
 
 ## Procura um lugar onde o jogador possa ficar em pé, com a vista livre para o objeto. Devolve [pés, olho] ou null.
 func _achar_vista(centro: Vector3, raio: float, base_y: float, frente_deg: float, dist_pref: float):
+	# passes do mais exigente ao mais frouxo: [limite da batida no objeto, folga do corpo, exige teto, dists extras]
+	for p in [[0.6, 0.42, true, false], [1.1, 0.42, true, false], [1.1, 0.3, true, true], [1.6, 0.25, false, true]]:
+		var r = _achar_vista_lim(centro, raio, base_y, frente_deg, dist_pref, p[0], p[1], p[2], p[3])
+		if r != null:
+			return r
+	return null
+
+
+func _achar_vista_lim(centro: Vector3, raio: float, base_y: float, frente_deg: float, dist_pref: float, lim: float, folga: float, exige_teto: bool, extra: bool):
 	var alt_olho: float = player.cabeca.position.y
 	var d0: float = dist_pref if dist_pref > 0.0 else maxf(2.0, raio * 2.5)
 	var dists: Array = [d0, d0 * 1.3, d0 * 0.8, d0 * 1.7, d0 * 0.6, d0 * 2.3]
+	if extra:
+		dists.append_array([d0 * 0.45, d0 * 0.35, d0 * 3.0])
 	var offs: Array = [0.0, 35.0, -35.0, 70.0, -70.0, 110.0, -110.0, 150.0, -150.0, 180.0]
+	# objeto sob teto (dentro do prédio): a câmera também precisa estar sob teto (senão espia por janela sem colisão)
+	var coberto := exige_teto and not _raio(Vector3(centro.x, base_y + 0.5, centro.z), Vector3(centro.x, base_y + 9.0, centro.z)).is_empty()
 	var pontos_alvo: Array = [Vector3.ZERO, Vector3(0, minf(raio, 0.5) * 0.8, 0), Vector3(0, -minf(raio, 0.5) * 0.8, 0)]
 	for d in dists:
 		for off in offs:
@@ -708,7 +726,7 @@ func _achar_vista(centro: Vector3, raio: float, base_y: float, frente_deg: float
 			var livre := true
 			for k in 8:
 				var a := TAU * float(k) / 8.0
-				var dd := Vector3(cos(a), 0, sin(a)) * 0.42
+				var dd := Vector3(cos(a), 0, sin(a)) * folga
 				if not _raio(olho, olho + dd).is_empty() or not _raio(pes + Vector3(0, 0.9, 0), pes + Vector3(0, 0.9, 0) + dd).is_empty():
 					livre = false
 					break
@@ -716,13 +734,14 @@ func _achar_vista(centro: Vector3, raio: float, base_y: float, frente_deg: float
 				continue
 			if not _raio(olho, olho + Vector3(0, 0.3, 0)).is_empty():
 				continue
+			if coberto and _raio(olho, olho + Vector3(0, 9.0, 0)).is_empty():
+				continue
 			# vista livre até a superfície do objeto
 			var vista_ok := true
 			for pa in pontos_alvo:
 				var alvo: Vector3 = centro + pa
-				var para: Vector3 = (olho - alvo).normalized()
-				var ponto: Vector3 = alvo + para * raio * 1.25
-				if not _raio(olho, ponto).is_empty():
+				var h := _raio(olho, alvo)
+				if not h.is_empty() and ((h["position"] as Vector3) - alvo).length() > raio * lim:
 					vista_ok = false
 					break
 			if not vista_ok:
