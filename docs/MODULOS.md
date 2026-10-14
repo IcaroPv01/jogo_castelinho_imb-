@@ -21,6 +21,7 @@ Decisões do Icaro (07/10/2026):
 | 7 | Arte e gráficos | Acabamento visual mantendo o estilo Flash educativo | `shaders/`, `tools/gerar_texturas.py`, `castelinho/` | feito (PR #16): capturas das cenas só testadas, revisão gráfica (Opus), Figura nova no slide 98, mão/dedos de afogada, pegadas com forma de pé, lago e chegada; reabre quando o Icaro jogar |
 | 8 | Celular | Jogar no navegador do celular (Android/iPhone), deitado, pelo mesmo link; computador igual | `ui/celular.gd`, `ui/controles_toque.gd`, `ui/aviso_retrato.gd`, `export_presets.cfg` (head_include) | feito (PR #17): toque, pausa sem pointer lock, retrato, modo leve, som no 1º toque; reabre quando o Icaro testar no celular |
 | 9 | Modo debug e Figura no Q | Q possível e tenso (sem perseguição cedo); painel de debug para testar sem morrer | `world/visor.gd`, `world/rastro.gd`, `creatures/figura_branca.gd`, `ui/debug.gd`, `ui/painel_debug.gd` | feito (PR #19): Figura do slide no mundo, perseguição "tipo Granny", olho mais lento, modo debug `?debug=1`; reabre quando o Icaro testar o Q |
+| 10 | Galeria 3D e colocação dos objetos | Varredura automática de colocação (flutuando, enfiado, fora da sala, z-fighting, frestas, continuidade); galeria `/galeria/` com fotos e glTF; design no Canva para comentários | `tests/varredura/colocacao*.gd`, `tests/colocacao_test.gd`, `castelinho/malha.gd` (registro), `castelinho/registro.gd`, `tools/galeria/`, `galeria/` | feito (PR #20): achados reais zerados (correções B26–B36 ou exceções com motivo), 166 objetos na galeria, dúvidas no Canva; reabre quando o Icaro comentar |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -46,6 +47,44 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 10: Galeria 3D e colocação dos objetos (14/10/2026)
+
+- **Pedido do Icaro:** "erros de continuação/colocação dos objetos 3D" (não lembrava onde: varrer tudo) e uma visão de todos
+  os objetos, com comentários no Canva. Não respondeu às perguntas da abertura: segui as recomendações (galeria pública com
+  aviso de spoiler e sem link no jogo; Canva com uma página por objeto, agrupado por lugar; correção direta do que é
+  claramente erro; teste no CI porque roda em ~8 s).
+- **Registro de objetos** (`castelinho/malha.gd`, topo do arquivo): `Malha.ligar(nivel)` / `desligar()`; nas construtoras,
+  `var _et := Malha.abrir("nome")` … `Malha.fechar(_et)`. Desligado, custa um `if` por primitiva. `Malha.registro`,
+  `info_por_etiqueta()`, `mesh_da_etiqueta(et)`. Nós soltos: `RegistroObjetos.varrer(raiz, nivel)` (`castelinho/registro.gd`),
+  nome por `Malha.nomear(no, "nome")`. Só o castelo tem etiquetas; porão, Ato II, Barra e lago usam nome automático do nó.
+  **Regra nova:** objeto novo no castelo ganha `Malha.abrir/fechar` com nome legível.
+- **Verificador:** `godot --headless -s res://tests/varredura/colocacao.gd [-- castelo ato2 barra porao braco]` (~12 s),
+  relatório em `tests/varredura/saida/colocacao.{json,md}`. `tests/colocacao_test.gd` (CI, ~8 s) falha com qualquer
+  flutuando/enfiado/atravessa parede/z-fighting real fora de `EXCECOES` (`tests/varredura/colocacao_lib.gd`, cada uma com
+  o motivo). Frestas, degraus de piso e continuidade ficam só no relatório. Não cobre: cenas dos finais, piso por época,
+  continuidade de objetos-nó.
+- **Corrigido** (B26–B36 em `docs/BUGS.md`): tocha, lanças e poltronas da Sala Medieval, plaquinha da entrada, cartazes e
+  desenhos colados na parede, blocos da Torre A (1967), P03 75 cm ao norte (postes atravessavam o banco), desenho da sala
+  83, balde do menino, Tito do Braço Morto sentado na borda (`POS_TITO.z` -7,72), z-fighting (escadas, cavaletes, pisos
+  do porão, soleiras de todos os vãos +4 mm em `muros.gd`, Barra, rua do lago), meio-fio e calçadão do lago sem face.
+- **Galeria** (`galeria/`, tem `.gdignore`; o workflow copia para `build/web/galeria/`):
+  `xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 -s res://tools/galeria/fotografar.gd -- galeria`
+  (~4,5 min; `ids=a,b`, `cen=chave`, `sem_local`, `sem_glb`). Catálogo em `tools/galeria/catalogo.gd` (castelo por
+  etiqueta; porão, lago e Barra por caixa de recorte medida no código: revise se mexer nesses objetos). Gera fotos,
+  `.glb` e `galeria/manifesto.json`. Dúvidas para o Icaro: `tools/galeria/duvidas.json` (vão para as notas). Depois
+  `python3 tools/galeria/gerar_canva.py` gera `galeria/canva.html` (uma página por objeto, para o Canva importar).
+- **Canva:** o design foi importado de `.../galeria/canva.html` (link no topo da galeria, campo `canva` do manifesto).
+  **Para ler os comentários do Icaro:** carregue `mcp__Canva__list-comments` (ToolSearch) com o id do design (começa com
+  "D", está no link) e `list-replies` para as respostas; cada página tem o nome do objeto no título (`data-label`) e o id
+  nas notas do apresentador. Responda com `reply-to-comment`. Para refazer o design depois de mudar a galeria: gere o
+  `canva.html`, publique (merge) e importe de novo (`import-design-from-url`); comentários antigos ficam no design velho.
+- **Dúvidas em aberto (no Canva):** corredor de 1975 atravessando a casa vizinha, menino dos slides 97/98 com as canelas
+  no piso, P08 solto da parede, moldura do P17 na torreta, dentes do buraco do muro, fita zebrada perto da cadeira, e
+  conferir as duas mudanças (Tito do lago, P03).
+- **Limites:** mascotes só existem em 2D (fora da galeria); `folha_costela` e as dúvidas sem `.glb`; textos de Label3D e
+  shaders saem como cor lisa no `.glb`; `fundo_lago_pecas` sem foto de local. 64 frestas pequenas (B) só no relatório.
+- Pendente: o Icaro comentar no Canva; a próxima sessão lê os comentários e corrige.
 
 ### Módulo 9: Modo debug e Figura no Q (09/10/2026)
 

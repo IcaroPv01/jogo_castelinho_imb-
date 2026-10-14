@@ -1,6 +1,7 @@
 # Castelinho: Visita Guiada
 
 **▶ Jogar no navegador (computador ou celular):** https://icaropv01.github.io/jogo_castelinho_imb-/
+**Galeria 3D dos objetos (contém spoilers):** https://icaropv01.github.io/jogo_castelinho_imb-/galeria/
 **Versão para Windows (offline):** gerada só sob pedido. Fica em https://icaropv01.github.io/jogo_castelinho_imb-/Castelinho_Windows.zip até a próxima atualização do site.
 
 Jogo 3D de terror em Godot 4 sobre o Castelinho de Imbé (RS). Começa como um "jogo educativo da prefeitura" sobre a história de Imbé e vai ficando cada vez mais estranho até descer a uma masmorra. Inspiração: *Spooky's Jump Scare Mansion*.
