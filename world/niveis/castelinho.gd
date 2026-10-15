@@ -211,6 +211,8 @@ func iniciar(p: Player) -> void:
 		visor.figura_atravessou.connect(_on_figura_atravessou)
 		_visor_v4 = visor
 	_ambiente_sonoro()
+	if visita >= 3:
+		SustosCaminho.instalar(self)      # sustos garantidos no caminho obrigatório (world/niveis/sustos_caminho.gd)
 	if GameState.flag("porta_entrada_aberta"):
 		_abrir_porta_entrada(true)
 	_atualizar_luzes()
@@ -2380,6 +2382,7 @@ func _evt_sala25() -> void:
 ## Visita 4, sala 80: a porta zebrada do hall. Água escorrendo pelos degraus.
 func _evt_sala80() -> void:
 	if _uma_vez("sala80"):
+		FlashAgua.na_linha(self, "Ouça. A água desce por aqui.")      # 3 lampejos de água subindo no hall quando essa linha aparece
 		await Guia.falar("???", ["Essa porta nunca existiu.", "Ouça. A água desce por aqui."])
 
 
@@ -2570,6 +2573,8 @@ func _fim_de_visita() -> void:
 		await _beat_final_v3()
 	if n <= 2:
 		await _volte_sempre()
+	if n == 2:
+		await Jornal.exibir_uma_vez()      # recorte do jornal de 1967 entre as visitas 2 e 3 (ui/jornal.gd; uma vez por save)
 	if n >= 3:
 		GameState.trocar_epoca(GameState.Epoca.E2020)
 	await Transicao.ir_para(GameState.CENA_CASTELINHO, "Spawn")

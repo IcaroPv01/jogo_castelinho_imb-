@@ -680,6 +680,9 @@ func _loop_para(prox: int, _ja_diploma := false, pelo_corredor := false) -> void
 			if no.get_script() and no.get_script().get_global_name() == "VolteSempre":
 				visto_placa = true
 				no.continuar()
+			elif no.get_script() and no.get_script().get_global_name() == "Jornal":
+				no._t = 3.0        # recorte de jornal entre as visitas 2 e 3: pula o tempo mínimo e fecha
+				no.continuar()
 		await physics_frame
 		if main.mundo.get_child_count() > 0 and main.mundo.get_child(0) != nivel and not main._carregando and not root.get_node("/root/Transicao").ocupado:
 			break
