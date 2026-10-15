@@ -49,15 +49,15 @@ const ITENS := {
 	},
 	E2019: {
 		"tito_6": {"texto": "Olhar o risco na parede", "pos": Vector3(-11.6, 1.0, -20.06), "yaw": 0.0, "n": 6,
-			"tam": Vector3(1.0, 0.8, 0.5), "interno": true, "quem": "???",
+			"tam": Vector3(1.4, 1.0, 0.5), "interno": true, "quem": "???",
 			"fala": ["Um risco de lápis na parede: \"TITO 6\".", "Alguém media o menino aqui."],
 			"dica": "Uma marca de lápis está na parede do Salão de Arte."},
 		"tito_7": {"texto": "Olhar o risco na parede", "pos": Vector3(-16.53, 1.08, -27.6), "yaw": 90.0, "n": 7,
-			"tam": Vector3(0.5, 0.8, 1.0), "interno": true, "quem": "???",
+			"tam": Vector3(0.5, 1.0, 1.4), "interno": true, "quem": "???",
 			"fala": ["\"TITO 7\". O risco está mais alto.", "Ele crescia, ano a ano, dentro deste prédio."],
 			"dica": "Uma marca de lápis está na parede da Sala Medieval."},
 		"tito_8": {"texto": "Olhar o risco na parede", "pos": Vector3(-24.55, 1.16, -17.8), "yaw": 90.0, "n": 8,
-			"tam": Vector3(0.5, 0.8, 1.0), "interno": true, "quem": "???",
+			"tam": Vector3(0.5, 1.0, 1.4), "interno": true, "quem": "???",
 			"fala": ["\"TITO 8\". Mais um risco, mais alto.", "A letra é de criança."],
 			"dica": "Uma marca de lápis está na parede da sala do Meio Ambiente."},
 	},
@@ -316,21 +316,21 @@ func _pazinha(r: Node3D) -> void:
 
 ## Risco horizontal de lápis com um tracinho de "régua" e o texto "TITO n" (a face aponta para +Z local do nó).
 func _marca_de_altura(r: Node3D, num: int) -> void:
-	var grafite := Color(0.2, 0.2, 0.28)
+	var grafite := Color(0.07, 0.07, 0.1)
 	var risco := BoxMesh.new()
-	risco.size = Vector3(0.5, 0.014, 0.006)
-	n._peca(r, risco, grafite, Vector3(0, 0, 0.003))
+	risco.size = Vector3(0.9, 0.03, 0.008)
+	n._peca(r, risco, grafite, Vector3(0, 0, 0.004))
 	var tick := BoxMesh.new()
-	tick.size = Vector3(0.014, 0.1, 0.006)
-	n._peca(r, tick, grafite, Vector3(-0.25, 0.043, 0.003))
+	tick.size = Vector3(0.03, 0.2, 0.008)
+	n._peca(r, tick, grafite, Vector3(-0.435, 0.085, 0.004))
 	var l := Label3D.new()
 	l.text = "TITO %d" % num
-	l.font_size = 30
-	l.pixel_size = 0.0045
+	l.font_size = 48
+	l.pixel_size = 0.007
 	l.modulate = grafite
 	l.outline_size = 0
 	l.double_sided = false
-	l.position = Vector3(0.0, 0.1, 0.006)
+	l.position = Vector3(0.0, 0.2, 0.01)
 	r.add_child(l)
 
 
@@ -354,7 +354,7 @@ func trilha_ate_torre() -> void:
 		dir = dir.normalized()
 		var esquerdo: bool = i % 2 == 0
 		var pos := a + Vector3(-dir.z, 0, dir.x) * 0.09 * (-1.0 if esquerdo else 1.0)
-		_trilha.add_child(Pegada.criar(pos, dir, esquerdo, 0.3, 1.35))
+		_trilha.add_child(Pegada.criar(pos, dir, esquerdo, 0.42, 1.8))
 	Epocas.marcar(_trilha, [E1967])
 
 
