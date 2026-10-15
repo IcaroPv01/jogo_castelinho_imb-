@@ -15,11 +15,11 @@ const IDX_QUARTO := 14
 
 ## idx da sala -> {id, pos local, normal, desenho (textura 1..7), fala}
 const ITENS := {
-	1: {"id": "desenho_a", "pos": Vector3(-1.7, 1.45, -7.0), "normal": Vector3.RIGHT, "n": 2,
+	1: {"id": "desenho_a", "pos": Vector3(-1.68, 1.45, -7.0), "normal": Vector3.RIGHT, "n": 2,
 		"fala": "Um menino e a mãe, de mãos dadas na praia. O giz já desbotou."},
-	4: {"id": "desenho_b", "pos": Vector3(3.0, 1.5, -3.8), "normal": Vector3.LEFT, "n": 4,
+	4: {"id": "desenho_b", "pos": Vector3(2.98, 1.5, -3.8), "normal": Vector3.LEFT, "n": 4,
 		"fala": "Um menino pequeno debaixo de um castelo enorme. O castelo é maior do que ele."},
-	7: {"id": "desenho_c", "pos": Vector3(-2.5, 1.5, -3.0), "normal": Vector3.RIGHT, "n": 1,
+	7: {"id": "desenho_c", "pos": Vector3(-2.48, 1.5, -3.0), "normal": Vector3.RIGHT, "n": 1,
 		"fala": "Uma casinha com a janela acesa. Assinado: TITO, com o T ao contrário."},
 }
 ## Onde os desenhos que faltam reaparecem no quarto (parede direita, antes da cama).
@@ -42,14 +42,14 @@ static func criar(nivel: Node, c) -> void:
 			var d: Dictionary = ITENS[k]
 			if GameState.caca_tem(SEMDATA, d["id"]):
 				continue
-			_item(nivel, c, d["id"], Vector3(w * 0.5, 1.5, RESERVA_Z[d["id"]]), Vector3.LEFT, d["n"], d["fala"])
+			_item(nivel, c, d["id"], Vector3(w * 0.5 - 0.02, 1.5, RESERVA_Z[d["id"]]), Vector3.LEFT, d["n"], d["fala"])
 
 
 static func _item(nivel: Node, c, id: String, pos: Vector3, normal: Vector3, n: int, fala: String) -> void:
 	var raiz := Node3D.new()
 	raiz.name = "Caca_%s" % id
 	c.raiz.add_child(raiz)
-	var q := SalasGd.quadro(c, SalasGd.tex_desenho(n), pos - normal * 0.01, normal, 0.9, 0.68, -2.0)
+	var q := SalasGd.quadro(c, SalasGd.tex_desenho(n), pos, normal, 0.9, 0.68, -2.0)
 	q.reparent(raiz, true)
 	var brilho := Sprite3D.new()
 	brilho.name = "Brilho"
