@@ -37,6 +37,9 @@ func _rodar() -> void:
 		var cams: Array = c[4]
 		if cams.is_empty():
 			await _quadros(40)
+		if c[0].ends_with("castelinho.tscn") and c[1] == 4 and c[2] == 3:
+			FlashAgua.disparar(nivel)   # shader dos lampejos de água (sala 80) também compila no WebGL
+			await _quadros(60)
 		for nome in cams:
 			var m := nivel.find_child(nome, true, false) as Node3D
 			if m == null:
