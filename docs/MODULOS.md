@@ -78,7 +78,12 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
 - **Testes:** `tests/braco_pedalinho_test.gd` (trava por pistas, luz, embarcar/pedalar/descer, limites, olhar só na época certa, puxão,
   cena final até a dedicatória). Capturas (xvfb, fora do CI): `tests/captura_pedalinho.gd` (modos doca|barco|olhar|cena) e
   `captura_final.gd titulos` com o 4º final.
-- **Fundo da Sala 101:** FUNDO_PLACEHOLDER
+- **Fundo da Sala 101** (`world/niveis/fundo_do_lago.gd`, `FundoDoLago.chao_e_algas/pecas`, chamados por `_areia_e_algas` e `_pecas_do_fundo`):
+  areia com ondulações e lodo, mais algas; sapatinhos e balde (com areia derramada), pazinha, bolinha listrada, óculos de natação, um
+  chinelo, garrafas, pedras, âncora enferrujada com corrente e um pedalinho-cisne tombado ao longe; seis raios de luz que pulsam, a
+  superfície vista de baixo, 30 bolhas e poeira em suspensão, névoa azul-esverdeada. Só sugestão, nada de corpo. Custo: 2 Malhas,
+  8 quads aditivos, 2 emissores (≤40), 2 luzes, sem sombra. A câmera, o pitch e a mão da Figura não mudaram. Os óculos leem como duas
+  lentes azuis (pouco nítidos).
 - **Não conferido:** sons (nenhum som novo: pedalada usa `splash` baixo; a voz da mãe é só legenda + `crianca_ei`), o pedalinho no
   celular de verdade (usa o joystick e o botão E), desempenho do barco na web.
 - **Para o próximo (módulo D, mais partes da cidade):** o lago continua sendo um retângulo de 200 x 36 m; se a cidade ganhar mais água
