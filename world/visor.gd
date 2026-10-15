@@ -33,6 +33,7 @@ extends Node
 ##     nunca atrás do jogador por mágica). Uso no nível:
 ##         Visor.instalar(self).figura_atravessou.connect(func(_v): _soltar_figura())
 ##     (na visita 3 o susto não solta nada: só pulso, som e bloqueio; é só susto). `atencao_cheia(visita)` sai em todas.
+##   - A flag `visor_calmo` (cena final "Tito salvo", Módulo 13) mantém a atenção em zero.
 ##   - Debug (ui/debug.gd): `figura_off` = a Figura do slide nunca aparece; `atencao_congelada` = o Visor não mexe na atenção.
 ##
 ## Como usar (cada nível que quiser o Visor), em `_ready()` ou `iniciar(player)`:
@@ -340,6 +341,10 @@ func _desligar() -> void:
 # ---------------------------------------------------------------- atenção
 func _atualizar_atencao(dt: float) -> void:
 	if Debug.atencao_congelada:   # debug: o Visor não mexe na atenção
+		return
+	if GameState.flag("visor_calmo"):   # cena especial (final "tito salvo"): ninguém percebe o jogador
+		if GameState.atencao > 0.0:
+			GameState.definir_atencao(0.0)
 		return
 	var enche: float = TEMPO_ENCHER.get(GameState.visita, 0.0)
 	if enche <= 0.0:   # visitas 1 e 2: o Visor é só um brinquedo

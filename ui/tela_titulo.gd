@@ -426,7 +426,7 @@ func _montar_lapide() -> void:
 	if ultimo == "":
 		return
 	var frase := {"encontrado": "Ele foi para casa.", "visita_concluida": "Ele ainda está esperando.",
-		"sala_101": "Ele tem companhia agora."}.get(ultimo, "") as String
+		"sala_101": "Ele tem companhia agora.", "tito_salvo": "Ele chegou a tempo."}.get(ultimo, "") as String
 	var pos := Vector2(1196, 556)     # no gramado à direita do botão, perto das flores do castelo
 	var pedra := Panel.new()
 	pedra.position = pos
@@ -447,17 +447,22 @@ func _montar_lapide() -> void:
 		l.add_theme_font_override("font", Flash.fonte_titulo())
 		l.add_theme_font_size_override("font_size", 18)
 		l.add_theme_color_override("font_color", Flash.NAVY)
-		if i == 0 and ultimo != "encontrado":
+		if i == 0 and ultimo != "encontrado" and ultimo != Finais.SECRETO:
 			l.rotation = PI
 		_palco.add_child(l)
 	var vistos: Array = Finais.vistos()
-	for i in Finais.TODOS.size():
+	var normais: int = vistos.size() - (1 if vistos.has(Finais.SECRETO) else 0)
+	var marcas: int = Finais.TODOS.size() - 1 + (1 if vistos.has(Finais.SECRETO) else 0)     # o final secreto só ganha marquinha depois de visto
+	var esp := 20 if marcas == 3 else 16
+	for i in marcas:
 		var m := Panel.new()
-		m.size = Vector2(14, 14)
-		m.position = pos + Vector2(8 + i * 20, 52)
+		m.size = Vector2(14, 14) if marcas == 3 else Vector2(12, 12)
+		m.position = pos + Vector2(8 + i * esp, 52)
 		m.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var cor := Flash.AMARELO if i < vistos.size() else Color("E8D49A")
-		m.add_theme_stylebox_override("panel", Flash.caixa(cor, Flash.NAVY, 7, 2, false))
+		var cor := Flash.AMARELO if i < normais else Color("E8D49A")
+		if i == 3:
+			cor = Color("FFFFFF")     # a marquinha do final secreto é branca
+		m.add_theme_stylebox_override("panel", Flash.caixa(cor, Flash.NAVY, 6 if marcas == 4 else 7, 2, false))
 		_palco.add_child(m)
 	var f := Label.new()
 	f.text = frase

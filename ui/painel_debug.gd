@@ -91,6 +91,7 @@ func _montar_painel() -> void:
 	esq.add_child(_botao("Final: Encontrado", func(): _final("encontrado")))
 	esq.add_child(_botao("Final: Visita concluída", func(): _final("visita_concluida")))
 	esq.add_child(_botao("Final: Sala 101", func(): _final("sala_101")))
+	esq.add_child(_botao("Final secreto: Salvar o Tito", func(): _final("tito_salvo")))
 
 	# ---- coluna da direita: pular
 	dir.add_child(_rotulo("Pular para", FONTE))

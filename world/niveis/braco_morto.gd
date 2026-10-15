@@ -20,6 +20,10 @@ extends Node3D
 ##                       pedalinhos (convite do Tito + aviso "(a água está gelada.)" no primeiro passo; ~3,5 m adentro o
 ##                       controle trava e a câmera afunda). No fundo, só sugestão: sapatinhos e um balde vermelho; os dedos
 ##                       longos da Figura fecham sobre a lente; preto. "VOCÊ FICOU." e o cartão "Sala 101 - Visitante registrado."
+##   "Tito salvo"        SECRETO (Módulo 13, `braco_salvar.gd`): com `pistas_tito >= 12` uma luz se acende no lago; o jogador pedala o
+##                       pedalinho amarelo do atracadouro até ela e, com o Visor, segura o olhar no Tito de 1967 (sozinho num
+##                       pedalinho, fim de tarde) enquanto a Figura tenta atravessar. Completo: a mãe chama, ele agradece, a Figura
+##                       afunda e ele volta para a margem em 1967. Título "TITO VOLTOU PRA CASA" + cartão + dedicatória.
 ## Peso só por sugestão: nenhuma violência explícita contra criança. Dedicatória (Disque 100) igual nos três finais.
 ## Contadores/flags que este nível LÊ: `pistas_tito` (contador; quem acha uma pista com o Visor faz
 ## `set_flag("pista_<id>")` + `somar("pistas_tito")`, uma vez por pista). Que ESCREVE: flags `viu_tito_final`,
@@ -83,6 +87,7 @@ var _entrada_pos := Vector3.ZERO
 var _filtro: AudioEffectLowPassFilter
 var _marola: MeshInstance3D       # anel de marola em volta da Figura na água
 var _ult_pegada := -1.0           # fração do caminho da última pegada deixada
+var salvar: BracoSalvar           # o final secreto "salvar o Tito" (pedalinho no lago)
 
 
 func _ready() -> void:
@@ -100,6 +105,8 @@ func _ready() -> void:
 	_lapide_de_areia()
 	_tito()
 	_hud_proprio()
+	salvar = BracoSalvar.new()
+	salvar.montar(self)
 	GameState.epoca_mudou.connect(_ao_mudar_epoca)
 
 
@@ -110,6 +117,7 @@ func iniciar(p: Player) -> void:
 	GameState.definir_corruption_manual(0.4)     # a cena final é calma: o pós-processamento do porão (1.0) não cabe aqui
 	GameState.set_flag("visor_travado", false)
 	_visor = Visor.instalar(self)
+	salvar.jogador(p, _visor)
 	Audio.musica("", 1.0)
 	Audio.ambiente("rio", -14.0, 3.0)
 	_legenda_de_chegada()
@@ -131,8 +139,8 @@ func pontos_aquecer() -> Array:
 
 ## Sem morte aqui, mas o Main chama se alguma coisa matar: volta ao começo da margem.
 func ao_morrer() -> void:
-	if encerrando:
-		return     # o fim já está rolando: não teletransporta nem devolve o controle
+	if encerrando or salvar.ativo:
+		return     # o fim já está rolando (ou o jogador está no pedalinho, sem nada que o mate): não teletransporta
 	await Transicao.fade_out(0.3)
 	if player and not encerrando:
 		player.global_position = Vector3(-14, 0.05, 6)
@@ -395,7 +403,9 @@ func _pedalinhos() -> void:
 		m.caixa(mv, Vector3(x + 0.1, y + 0.55, z - 0.5), Vector3(x + 0.45, y + 0.9, z + 0.5), Malha.F_SEM_BASE, 0.0, Color(0.9, 0.2, 0.2) if i % 2 == 0 else Color(0.2, 0.4, 0.8))
 		# a corda para a margem
 		m.caixa(mv, Vector3(x - 0.01, y + 0.4, z), Vector3(x + 0.01, y + 0.42, LAGO_Z1 - 0.1), Malha.F_SEM_BASE, 0.0, Color(0.2, 0.18, 0.15))
+		m.col(Vector3(x - 1.05, y - 0.3, z - 0.75), Vector3(x + 1.05, y + 1.0, z + 0.75))     # o pedalinho do jogador (final secreto) bate neles
 	m.construir_instancia(self, "Pedalinhos")
+	m.construir_colisao(self, "ColisaoPedalinhos")
 
 
 # ============================================================================ atracadouro: a rampa para dentro d'água
@@ -745,7 +755,7 @@ func _process(dt: float) -> void:
 	if player and player.global_position.y < -8.0:
 		player.global_position = Vector3(-14, 0.05, 6)
 		player.velocity = Vector3.ZERO
-	if player == null or cena_feita or encerrando:
+	if player == null or cena_feita or encerrando or salvar.ativo:
 		return
 	# dica gentil, uma vez só: 45 s na superfície sem ter usado a lápide
 	if not _dica_dada and player.global_position.y > -0.5:
@@ -1164,12 +1174,14 @@ static func _tex_enrugada() -> Texture2D:
 func _titulos_e_dedicatoria() -> void:
 	if Audio.has_method("silenciar"):
 		Audio.silenciar(0.5)
-	var textos := {"encontrado": "ENCONTRADO", "visita_concluida": "VISITA CONCLUÍDA", "sala_101": "VOCÊ FICOU."}
+	var textos := {"encontrado": "ENCONTRADO", "visita_concluida": "VISITA CONCLUÍDA", "sala_101": "VOCÊ FICOU.", "tito_salvo": "TITO VOLTOU PRA CASA"}
 	_titulo_final.text = textos.get(final, "VISITA CONCLUÍDA")
-	var tem_cartao := final == "visita_concluida" or final == "sala_101"
+	var tem_cartao := final == "visita_concluida" or final == "sala_101" or final == "tito_salvo"
 	if tem_cartao:
 		_titulo_final.offset_bottom = -200.0     # o título sobe para o cartão ficar no centro
-		_montar_cartao("Obrigado pela visita! Volte sempre!" if final == "visita_concluida" else "Sala 101 - Visitante registrado.\nVolte sempre!")
+		var linha_cartao := {"visita_concluida": "Obrigado pela visita! Volte sempre!", "sala_101": "Sala 101 - Visitante registrado.\nVolte sempre!",
+			"tito_salvo": "Obrigado por olhar na água."}
+		_montar_cartao(linha_cartao[final])
 	var tw2 := create_tween()
 	tw2.tween_property(_titulo_final, "modulate:a", 1.0, 1.2)
 	if tem_cartao:
@@ -1307,8 +1319,8 @@ func _afundar() -> void:
 	await _titulos_e_dedicatoria()
 
 
-## O fundo do lago, perto de onde o jogador afunda: um par de tênis pequenos e um balde vermelho de areia tombado (a
-## ~1 m, dentro do quadro), uma luz fria fraca em cima deles, areia em ondas e touceiras de alga escura em volta.
+## O fundo do lago, perto de onde o jogador afunda: brinquedos esquecidos (sapatinhos, balde, pazinha, bola, óculos, chinelo),
+## âncora com corrente, garrafas, pedras, um pedalinho-cisne tombado ao longe, raios de luz, bolhas. Tudo em fundo_do_lago.gd.
 func _pecas_do_fundo(fundo: Vector3) -> void:
 	var raiz := Node3D.new()
 	raiz.name = "FundoDoLago"
@@ -1316,76 +1328,12 @@ func _pecas_do_fundo(fundo: Vector3) -> void:
 	raiz.global_position = fundo
 	raiz.scale = Vector3.ONE * 1.5
 	_areia_e_algas(raiz)
-	var azul := Construtor.material(Color(0.25, 0.42, 0.9), 0.9)
-	var branco := Construtor.material(Color(0.88, 0.88, 0.82), 0.9)
-	for i in 2:
-		var sola := MeshInstance3D.new()
-		var bs := BoxMesh.new()
-		bs.size = Vector3(0.09, 0.025, 0.2)
-		sola.mesh = bs
-		sola.material_override = branco
-		sola.position = Vector3(-0.2 + i * 0.17, 0.02, -0.62 - i * 0.08)
-		sola.rotation.y = 0.25 - i * 0.7
-		raiz.add_child(sola)
-		var topo := MeshInstance3D.new()
-		var bt := BoxMesh.new()
-		bt.size = Vector3(0.08, 0.06, 0.13)
-		topo.mesh = bt
-		topo.material_override = azul
-		topo.position = Vector3(0, 0.04, -0.03)
-		sola.add_child(topo)
-	var balde := MeshInstance3D.new()
-	var cil := CylinderMesh.new()
-	cil.top_radius = 0.17
-	cil.bottom_radius = 0.12
-	cil.height = 0.26
-	cil.radial_segments = 10
-	balde.mesh = cil
-	balde.material_override = Construtor.material(Color(0.95, 0.14, 0.09), 0.8)
-	balde.position = Vector3(0.38, 0.1, -0.78)
-	balde.rotation_degrees = Vector3(0, 25, 80)
-	raiz.add_child(balde)
-	# luz fria e fraca em cima das peças, para lerem no escuro (uma luz só, sem sombra)
-	var luz := OmniLight3D.new()
-	luz.position = Vector3(0.05, 0.75, -0.35)
-	luz.light_color = Color(0.55, 0.78, 1.0)
-	luz.light_energy = 2.6
-	luz.omni_range = 4.5
-	luz.shadow_enabled = false
-	raiz.add_child(luz)
+	FundoDoLago.pecas(raiz)
 
 
-## Areia em ondas (montes baixos de dois tons) e touceiras de alga (fitas de duas partes, escuras) no espaço da raiz do fundo.
+## Areia em ondas, lodo e touceiras de alga no espaço da raiz do fundo (fundo_do_lago.gd).
 func _areia_e_algas(raiz: Node3D) -> void:
-	var m: Malha = MalhaGd.new()
-	var mv := SalasGd.mat_vc()
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 101
-	for i in 14:
-		var c := Vector3(rng.randf_range(-1.6, 1.6), 0.0, rng.randf_range(-2.6, -0.5))
-		var r := Vector3(rng.randf_range(0.2, 0.4), rng.randf_range(0.02, 0.045), rng.randf_range(0.1, 0.2))
-		var tom := rng.randf_range(0.8, 1.15)
-		m.bolha(mv, c, r, rng, 6, 2, 0.12, Color(0.40, 0.44, 0.40) * tom, Color(0.2, 0.24, 0.23))
-	var touceiras := [Vector2(-0.95, -0.7), Vector2(-0.6, -1.1), Vector2(0.95, -1.05), Vector2(1.15, -0.6), Vector2(-0.25, -1.5),
-		Vector2(0.35, -1.6), Vector2(-1.3, -0.95), Vector2(0.75, -0.45)]
-	for t in touceiras:
-		for k in rng.randi_range(4, 6):
-			var base := Vector3(t.x + rng.randf_range(-0.12, 0.12), 0.0, t.y + rng.randf_range(-0.12, 0.12))
-			var alt := rng.randf_range(0.35, 0.8)
-			var giro := rng.randf_range(0.0, TAU)
-			var lado := Vector3(cos(giro), 0, sin(giro))
-			var inclina := Vector3(-lado.z, 0, lado.x) * rng.randf_range(-0.12, 0.12)
-			var meio := base + Vector3(0, alt * 0.5, 0) + inclina
-			var ponta := base + Vector3(0, alt, 0) + inclina * 2.6 + lado * 0.03
-			var w := 0.028
-			var c0 := Color(0.04, 0.1, 0.07)
-			var c1 := Color(0.13, 0.28, 0.18)
-			var c2 := Color(0.24, 0.44, 0.27)
-			for dica in [lado.cross(Vector3.UP), -lado.cross(Vector3.UP)]:
-				m.tri_cores(mv, base - lado * w, base + lado * w, meio + lado * w * 0.7, dica, c0, c0, c1)
-				m.tri_cores(mv, base - lado * w, meio + lado * w * 0.7, meio - lado * w * 0.7, dica, c0, c1, c1)
-				m.tri_cores(mv, meio - lado * w * 0.7, meio + lado * w * 0.7, ponta, dica, c1, c1, c2)
-	m.construir_instancia(raiz, "AreiaEAlgas")
+	FundoDoLago.chao_e_algas(raiz)
 
 
 ## A mão da Figura diante da câmera: dedos longos, afilados, com dois nós e pele pálida enrugada, que entram pelas bordas

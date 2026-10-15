@@ -212,6 +212,8 @@ func _teste_pulos() -> void:
 	_checar(nivel != null and nivel.cena_feita and GS.contadores.get("pistas_tito", 0) == 3, "final visita concluída: cena do Tito com 3 pistas")
 	nivel = await Debug.pular_final("sala_101")
 	_checar(nivel != null and nivel.encerrando and nivel.final == "sala_101", "final sala 101 dispara o afundar")
+	nivel = await Debug.pular_final("tito_salvo")
+	_checar(nivel != null and nivel.salvar.concluindo and nivel.final == "tito_salvo" and GS.contadores.get("pistas_tito", 0) == 12, "final secreto: embarca e a cena de salvar o Tito começou (12 pistas)")
 	main.queue_free()
 	await process_frame
 
