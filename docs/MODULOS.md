@@ -67,6 +67,10 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
   todos os níveis. Achou só o corredor de 1975 (B40). Não reproduziu "preso na parede" nem "trava de fase" em colisão
   estática: devem vir de eventos de script (portas, cenas). Barra e Braço Morto têm chão largo sem parede além da área
   de jogo, mas o jogador não chega lá andando (a rede cobre se chegar).
+- **Para áreas novas (módulo 14 em diante):** área andável fora do lote do Castelinho precisa entrar em
+  `castelinho.gd` `limites_mapa()` (senão a rede devolve o jogador ao lote); nível novo pode dar o seu `limites_mapa()`
+  ou deixar a rede medir a colisão. Cena em que o jogador deve cair/afundar: `pode_mover = false`, física desligada ou
+  `rede_seguranca_ativa()` false (ex.: Barra a partir do PUXADO). Fechar bordas com paredes invisíveis, como as dunas.
 - Pendente: alguém jogar e dizer se a rede disparou sem motivo (aviso na tela) ou se ainda prendeu; o relatório da
   pausa (módulo 11) ajuda a achar o lugar.
 ### Módulo 13: pedalinho, final secreto e fundo da Sala 101 (15/10/2026)
