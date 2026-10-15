@@ -149,6 +149,8 @@ var _discos_chao := {}                # época -> [raiz, interagível]
 var _balde: Node3D
 var _passaporte_itens := {}           # id -> [raiz, interagível] dos objetos do Passaporte ainda não achados (visita 1)
 var _passaporte_falando := false
+var _cacas: CacasCastelo               # caças dos discos 1967, 1975 e 2019 (world/niveis/castelinho_cacas.gd)
+var _discos_ocultos := {}              # época -> argumentos de _disco_no_chao dos discos que só aparecem depois da caça
 var _desenhos := {}                   # nome -> nó
 var _tito: Node3D                     # Tito vivo (E1967)
 var _tito_visor: Node3D               # Tito "no canto da sala", só dentro do Visor (visitas 3 e 4)
@@ -1105,6 +1107,7 @@ func _montar_props() -> void:
 
 # ================================================================== o estado de cada visita (objetos extras)
 func _montar_visita() -> void:
+	_cacas = CacasCastelo.new(self, visita)
 	# --- discos do Visor: ficam nos lugares do V2_ROTEIRO §4.1 até serem pegos
 	_disco_no_chao(E1967, POS_DISCO_1967, Color(0.85, 0.12, 0.1), "Pegar o disco da vitrine", 2,
 		["Um disco do Visor! A etiqueta, escrita à mão, diz: \"não catalogado\".", "Aperte 1 a 5 (ou a rolagem do mouse) para trocar de disco e aperte Q para ver. Aperte de novo para voltar."], true)
@@ -1134,6 +1137,7 @@ func _montar_visita() -> void:
 			_montar_porta_porao()
 			_montar_escada_2019()
 			_montar_desenho_oculto_2019()
+	_cacas.montar()
 	if visita >= 3 and GameState.flag("evt_v2_apagao"):
 		_criar_balde_e_desenho3()      # o balde do fim da visita 2 não some (p21_v3 fala dele)
 	for d in _desenhos.values():
@@ -1181,7 +1185,8 @@ func _montar_epoca_1967() -> void:
 	add_child(_tito)
 	Epocas.marcar(_tito, [E1967])
 	_interagivel_pista("Acenar para o Tito", _tito.position + Vector3(0, 0.65, 0), Vector3(0.9, 1.4, 0.9), "tito_1967",
-		["Um menino de bermuda azul brinca de castelo na areia, com um balde vermelho.", "Ele acena para você. Ninguém mais parece vê-lo."], [E1967])
+		["Um menino de bermuda azul brinca de castelo na areia, com um balde vermelho.", "Ele acena para você. Ninguém mais parece vê-lo."], [E1967],
+		"sistema", [E1975, "tito"])
 	# o buraco no muro: pista que só existe em 1967 (Interagivel só nessa época)
 	var bp: Vector3 = info.get("buraco_pos", ObraCastelinho.BURACO_POS)
 	var it := Interagivel.new("Olhar o buraco no muro", Vector3(1.0, 1.0, 0.8), _olhar_buraco)
@@ -1203,13 +1208,16 @@ func _pista(id: String) -> void:
 
 
 ## Interagivel sobre um objeto de pista: olhar (E) fala a linha e conta a pista.
-func _interagivel_pista(texto: String, pos: Vector3, tam: Vector3, id: String, fala: Array, epocas: Array, quem := "sistema") -> Interagivel:
+## `caca` = [disco, id]: o objeto também é um achado da caça desse disco (conta depois da fala).
+func _interagivel_pista(texto: String, pos: Vector3, tam: Vector3, id: String, fala: Array, epocas: Array, quem := "sistema", caca := []) -> Interagivel:
 	var it := Interagivel.new(texto, tam, Callable())
 	it.position = pos
 	it.name = "Pista_" + id
 	it.acao = func(_p: Node) -> void:
 		_pista(id)
 		await Guia.falar(quem, fala)
+		if not caca.is_empty():
+			await _cacas.achar(caca[0], caca[1], false)
 	add_child(it)
 	Epocas.marcar(it, epocas)
 	return it
@@ -1218,12 +1226,17 @@ func _interagivel_pista(texto: String, pos: Vector3, tam: Vector3, id: String, f
 func _olhar_buraco(_p: Node) -> void:
 	await Guia.falar("sistema", ["Um buraco no muro, do tamanho de uma criança.", "Marcas de pezinhos na areia levam para dentro da obra."])
 	_pista("buraco")
+	await _cacas.achar(E1975, "buraco", false)
 
 
 # ---------------------------------------------------------------- discos
 ## Disco do Visor na vitrine/pedestal, até o jogador pegá-lo. `a_partir_da_visita`: só existe desta visita em diante.
 func _disco_no_chao(epoca: int, pos: Vector3, cor: Color, texto: String, a_partir_da_visita: int, fala: Array, etiqueta: bool) -> void:
 	if GameState.discos.has(epoca) or visita < a_partir_da_visita:
+		return
+	# o disco do pedestal (1975) só aparece quando a caça está completa; o da vitrine (1967) está lá, trancada, desde a visita 2
+	if epoca == E1975 and not GameState.caca_completa(epoca):
+		_discos_ocultos[epoca] = [pos, cor, texto, a_partir_da_visita, fala, etiqueta]
 		return
 	var raiz := Node3D.new()
 	raiz.name = "Disco_%s" % GameState.NOMES_EPOCA[epoca]
@@ -1269,6 +1282,16 @@ func _disco_no_chao(epoca: int, pos: Vector3, cor: Color, texto: String, a_parti
 	_discos_chao[epoca] = [raiz, it]
 
 
+## A caça do disco `d` terminou (3 achados): o disco escondido aparece e as pegadas da obra mostram o caminho.
+func _caca_completa(d: int) -> void:
+	if d == E1975:
+		if _discos_ocultos.has(d):
+			var a: Array = _discos_ocultos[d]
+			_discos_ocultos.erase(d)
+			_disco_no_chao(d, a[0], a[1], a[2], a[3], a[4], a[5])
+		_cacas.trilha_ate_torre()
+
+
 ## Brilho de 4 pontas, 16 px, pixelado (para o disco no chão).
 static func _tex_brilho() -> ImageTexture:
 	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
@@ -1305,6 +1328,9 @@ func _animar_discos(dt: float) -> void:
 func _pegar_disco(epoca: int, fala: Array) -> void:
 	var par: Array = _discos_chao.get(epoca, [])
 	if par.is_empty():
+		return
+	if not GameState.caca_completa(epoca):
+		await _cacas.falta_fala(epoca, "A vitrine está trancada.")
 		return
 	_discos_chao.erase(epoca)
 	for n in par:
@@ -1646,6 +1672,9 @@ func _olhar_painel_solto(_p: Node) -> void:
 	if GameState.discos.has(E2019):
 		await Guia.falar("sistema", ["Atrás do painel só ficou a marca da fita."])
 		return
+	if not GameState.caca_completa(E2019):
+		await _cacas.falta_fala(E2019, "O painel está torto, mas preso: não solta.")
+		return
 	if _painel_solto and is_instance_valid(_painel_solto):
 		var t := create_tween()
 		t.tween_property(_painel_solto, "rotation_degrees:z", -38.0, 0.7).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
@@ -1854,6 +1883,7 @@ func _exit_tree() -> void:
 func _process(dt: float) -> void:
 	_t += dt
 	_animar_passaporte(dt)
+	_cacas.animar(dt)
 	_t_luzes -= dt
 	if _t_luzes <= 0.0:
 		_t_luzes = 0.3
@@ -2059,10 +2089,13 @@ func _evt_sala1() -> void:
 			# o recorte de papelão virado para a parede não é comentado por ninguém
 		2:
 			await Guia.falar("bentinho", ["Bem-vindo de volta!", "Atualizamos as informações da visita. Agora com mais verdade!"])
+			await _cacas.lancar()
 		3:
 			await _quico_da_lanterna()
+			await _cacas.lancar()
 		4:
 			await Guia.falar("???", ["Ninguém mais visita.", "Ninguém mais."])
+			await _cacas.lancar()
 
 
 ## Visita 3: o Quico entrega a lanterna na calçada e some.
@@ -2176,13 +2209,17 @@ func _evt_sala12() -> void:
 		_tocar_telefone()
 		if not GameState.discos.has(E1967):
 			await get_tree().create_timer(1.0).timeout
-			Guia.falar("sistema", ["Tem um disco numa vitrine do Acervo, com uma etiqueta escrita à mão."])
+			await Guia.falar("sistema", ["Tem um disco numa vitrine do Acervo, com uma etiqueta escrita à mão."])
+			if not GameState.caca_completa(E1967):
+				await Guia.falar("sistema", ["A vitrine está trancada.", "O disco de 1950 (tecla 1, e Q) mostra o que sobrou da casa original: ache 3 vestígios."])
 	elif visita == 2 and not GameState.flag(_chave("telefone_atendido")) and not _telefone_tocando:
 		# não atendeu (ou o nível foi recriado pela Barra): volta a tocar ao reentrar na sala, até atender
 		_telefone_tocando = true
 		_tocar_telefone()
 	elif visita >= 3 and not GameState.discos.has(E1967) and _uma_vez("dica1967"):
 		await Guia.falar("sistema", ["Na vitrine do Acervo ainda há um disco \"não catalogado\"."])
+		if not GameState.caca_completa(E1967):
+			await _cacas.falta_fala(E1967, "A vitrine está trancada.")
 
 
 func _tocar_telefone() -> void:
@@ -2265,7 +2302,10 @@ func _evt_sala17() -> void:
 	if visita == 3:
 		_ato2_concluido()
 		if not GameState.discos.has(E1975) and _uma_vez("dica1975"):
-			await Guia.falar("sistema", ["Algo brilha num pedestal, aqui no topo da torre."])
+			if GameState.caca_completa(E1975):
+				await Guia.falar("sistema", ["Algo brilha num pedestal, aqui no topo da torre."])
+			else:
+				await Guia.falar("sistema", ["Um pedestal vazio, no topo da torre. Falta alguma coisa.", "As marcas do Tito na obra de 1967 (tecla 2, e Q) mostram o caminho."])
 
 
 func _evt_sala19() -> void:
@@ -2293,6 +2333,8 @@ func _evt_sala21() -> void:
 			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Aperte Q e escolha o disco de 2019: lá ela existe."])
 		else:
 			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Falta o disco de 2019.", "Ele ficou atrás de algo solto."])
+			if not GameState.caca_completa(E2019):
+				await Guia.falar("???", ["Mas o painel não solta sozinho.", "Aperte 3 e Q: o Tito media a altura dele nas paredes."])
 
 
 func _evt_sala22() -> void:
