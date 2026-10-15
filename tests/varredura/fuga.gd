@@ -17,7 +17,7 @@ const BARRA := "res://world/niveis/barra.tscn"
 const PORAO := "res://world/niveis/porao.tscn"
 const BRACO := "res://world/niveis/braco_morto.tscn"
 const DT := 1.0 / 60.0
-const PULO_BAIXO := 6.0   # sqrt(2 * 18 * 1.0)
+var PULO_BAIXO := 6.0   # padrão: apogeu 1,0 m; o real é ~0,37 m (--pulo=3.5)
 
 var GS
 var main
@@ -26,6 +26,8 @@ var nivel
 var seg := 14.0
 var max_starts := 40
 var com_pulo := true
+var com_rede := false      # --com-rede: deixa a RedeSeguranca (resgate automático) ligada
+var dir_dunas := true
 var epocas_sel: Array = [0, 1, 2, 3, 4, 5]
 var rng := RandomNumberGenerator.new()
 
@@ -50,6 +52,10 @@ func _rodar() -> void:
 			seg = float(a.substr(6))
 		elif a.begins_with("--max="):
 			max_starts = int(a.substr(6))
+		elif a.begins_with("--pulo="):
+			PULO_BAIXO = float(a.substr(7))
+		elif a == "--com-rede":
+			com_rede = true
 		elif a == "--sem-pulo":
 			com_pulo = false
 		elif a.begins_with("--epocas="):
@@ -105,6 +111,9 @@ func _carregar(caminho: String, visita: int, epoca: int) -> void:
 		await physics_frame
 	p = main.player
 	nivel = main.mundo.get_child(0)
+	var rede: Node = nivel.get_node_or_null("RedeSeguranca")
+	if rede and not com_rede:
+		rede.process_mode = Node.PROCESS_MODE_DISABLED
 	GS.trocar_epoca(epoca)
 	for i in 6:
 		await physics_frame
@@ -119,6 +128,8 @@ func _cenario(caminho: String, visita: int, epoca: int, nome: String) -> void:
 	_calcular_caixa()
 	var starts: Array = _pontos_partida()
 	print("  caixa %s  y_vazio %.1f  pontos de partida %d" % [str(caixa), y_vazio, starts.size()])
+	if OS.get_environment("FUGA_SPAWN") != "":      # só o Spawn (caminhada contínua longa, sem teleporte entre salas)
+		starts = starts.filter(func(e): return e["nome"] == "Spawn")
 	var usados := 0
 	for st in starts:
 		if usados >= max_starts:
@@ -144,7 +155,7 @@ func _calcular_caixa() -> void:
 		if m == null:
 			continue
 		var a: AABB = c.global_transform * m.get_aabb()
-		if a.size.x > 150.0 and a.size.z > 150.0:
+		if a.size.x > 150.0 and a.size.z > 150.0 and a.size.y > 2.0:
 			enormes.append("%s %s" % [str(par.name), str(a)])
 			continue
 		if primeiro:
@@ -194,16 +205,20 @@ func _pontos_partida() -> Array:
 	for e in lista:
 		y_max_ok = maxf(y_max_ok, e["pos"].y)
 	var grade: Array = []
-	var gx: float = caixa.position.x + 1.0
-	while gx < caixa.end.x:
-		var gz: float = caixa.position.z + 1.0
-		while gz < caixa.end.z:
+	var zona: AABB = caixa      # FUGA_ZONA="x0,z0,x1,z1": só essa região (o Castelinho tem chão de 600 m)
+	var zs: PackedStringArray = OS.get_environment("FUGA_ZONA").split(",")
+	if zs.size() == 4:
+		zona = AABB(Vector3(float(zs[0]), caixa.position.y, float(zs[1])), Vector3(float(zs[2]) - float(zs[0]), caixa.size.y, float(zs[3]) - float(zs[1])))
+	var gx: float = zona.position.x + 1.0
+	while gx < zona.end.x:
+		var gz: float = zona.position.z + 1.0
+		while gz < zona.end.z:
 			var y: float = _chao_em(Vector3(gx, caixa.end.y + 1.0, gz), 0.0)
 			if y > -900.0 and y <= y_max_ok + 0.5 and not p._sobrepoe_mundo(Vector3(gx, y + 0.05, gz)):
 				grade.append({"pos": Vector3(gx, y + 0.05, gz), "yaw": rng.randf() * TAU, "nome": "grade"})
 				min_y[0] = minf(min_y[0], y)
-			gz += 3.0
-		gx += 3.0
+			gz += 1.5
+		gx += 1.5
 	grade.shuffle()
 	lista = lista.slice(0, max_starts / 2) + grade
 	if lista.is_empty():
@@ -276,6 +291,10 @@ func _episodio(st: Dictionary, castelo: bool, epoca_base: int) -> void:
 		await physics_frame
 		t += DT
 		# --- nível trocou (porta/gatilho): recarrega depois
+		if is_instance_valid(p) and not p.is_physics_processing():
+			linhas_extra.append("%s: jogador congelado por script (cena) na partida %s: recarregando" % [rot, st["nome"]])
+			_recarregar = true
+			break
 		if not is_instance_valid(p) or main.mundo.get_child_count() == 0 or main.mundo.get_child(0) != nivel_ini or main._carregando:
 			linhas_extra.append("%s: troca de nível durante o episódio em t=%.1f (partida %s)" % [rot, t, st["nome"]])
 			_recarregar = true
@@ -305,12 +324,11 @@ func _episodio(st: Dictionary, castelo: bool, epoca_base: int) -> void:
 				hit_vazio = true
 				break
 		# --- B) fora dos limites
-		if caixa.size != Vector3.ZERO:
+		if caixa.size != Vector3.ZERO and not hit_oob:
 			var g := caixa.grow(1.0)
 			if pos.x < g.position.x or pos.x > g.end.x or pos.z < g.position.z or pos.z > g.end.z or pos.y > g.end.y + 3.0:
 				_achar("B-FORA", pos, st, "a %.1f m do Spawn" % Vector2(pos.x - spawn_pos.x, pos.z - spawn_pos.z).length())
-				hit_oob = true
-				break
+				hit_oob = true   # continua andando: se for borda, o vazio (A) aparece depois
 		# --- C) preso na parede
 		var enfiado: bool = p._sobrepoe_mundo(pos)
 		if enfiado:
@@ -362,63 +380,61 @@ func _achar(tipo: String, pos: Vector3, st: Dictionary, detalhe: String) -> void
 func _dunas() -> void:
 	print("== ato2 dunas")
 	await _carregar(ATO2, 3, GS.Epoca.E1950)
-	# extensão andável: raios para baixo numa grade perpendicular ao caminho
 	var res: Array = []
-	for z in [-30.0, -45.0, -60.0]:
+	# extensão andável: raios para baixo (de y 40) numa linha perpendicular ao caminho
+	for z in [-30.0, -60.0, -100.0]:
 		for lado in [-1.0, 1.0]:
 			var ult := 0.0
 			var x := 0.0
-			while x < 1200.0:
-				if _chao_em(Vector3(lado * x, 60.0, z), 0.0) < -900.0:
+			while x < 600.0:
+				var q := PhysicsRayQueryParameters3D.create(Vector3(lado * x, 40.0, z), Vector3(lado * x, -30.0, z), 1)
+				if p.get_world_3d().direct_space_state.intersect_ray(q).is_empty():
 					break
 				ult = x
-				x += 4.0
-			res.append("z %d lado %s: chão até |x| = %.0f m" % [int(z), "E" if lado > 0 else "O", ult])
-	for z_ in [-30.0, 0.0]:
-		pass
-	# caminhar reto para fora do caminho, correndo e andando
-	for lado in [-1.0, 1.0]:
-		await _carregar(ATO2, 3, GS.Epoca.E1950)
-		p.global_position = Vector3(0, 0.1, -40.0)
-		p.velocity = Vector3.ZERO
-		p.rotation.y = -PI / 2.0 * lado   # -90° olha +x? frente = -Z local; gira para o lado
-		for i in 5:
-			await physics_frame
-		var y0: float = _chao_em(p.global_position, 0.5)
-		var t := 0.0
-		var t_borda := -1.0
-		var x_borda := 0.0
-		var t_vazio := -1.0
-		var x_max := 0.0
-		Input.action_press("frente")
-		Input.action_press("correr")
-		var x_prev := 0.0
-		while t < 600.0:
-			root.get_node("/root/Guia").cancelar()
-			await physics_frame
-			t += DT
-			var pos: Vector3 = p.global_position
-			if p.get_parent() == null:
-				break
-			if t_borda < 0.0 and (not p.is_on_floor()) and pos.y < y0 - 3.0:
-				t_borda = t
-				x_borda = pos.x
-			if absf(pos.x) > x_max and p.is_on_floor():
-				x_max = absf(pos.x)
-			if pos.y < y0 - 60.0:
-				t_vazio = t
-				break
-			# parou (parede)
-			if int(t * 60) % 600 == 0:
-				if absf(pos.x - x_prev) < 0.3:
+				x += 2.0
+			res.append("z %d lado %s: chão contínuo até |x| = %.0f m" % [int(z), "E" if lado > 0 else "O", ult])
+	# andar reto em 8 direções a partir de 3 pontos do caminho, correndo, até 240 s (ou parar 10 s)
+	for ponto in [Vector3(0, 0.1, -30.0), Vector3(0, 0.1, -60.0)]:
+		for k in 8:
+			await _carregar(ATO2, 3, GS.Epoca.E1950)
+			var yaw: float = k * TAU / 8.0
+			p.global_position = ponto
+			p.velocity = Vector3.ZERO
+			p.rotation.y = yaw
+			for i in 5:
+				await physics_frame
+			var t := 0.0
+			var t_cai := -1.0
+			var t_60 := -1.0
+			var parado := 0.0
+			var ult_pos: Vector3 = p.global_position
+			var dmax := 0.0
+			Input.action_press("frente")
+			Input.action_press("correr")
+			while t < 240.0:
+				root.get_node("/root/Guia").cancelar()
+				p.rotation.y = yaw
+				p.stamina = 1.0
+				await physics_frame
+				t += DT
+				if not is_instance_valid(p):
 					break
-				x_prev = pos.x
-			if pos.y < -900:
-				break
-		Input.action_release("frente")
-		Input.action_release("correr")
-		res.append("andando reto para %s (correndo): borda em t=%.0f s (x %.0f), chegou a y-60 em t=%.0f s, x máx no chão %.0f m, pos final %s" % [
-			"E" if lado > 0 else "O", t_borda, x_borda, t_vazio, x_max, str(p.global_position.snapped(Vector3(0.1, 0.1, 0.1)))])
+				var pos: Vector3 = p.global_position
+				if p.is_on_floor():
+					dmax = maxf(dmax, Vector2(pos.x - ponto.x, pos.z - ponto.z).length())
+				if t_cai < 0.0 and not p.is_on_floor() and pos.y < ponto.y - 8.0:
+					t_cai = t
+				if pos.y < ponto.y - 60.0:
+					t_60 = t
+					break
+				parado = parado + DT if pos.distance_to(ult_pos) < 0.02 else 0.0
+				ult_pos = pos
+				if parado > 10.0:
+					break
+			Input.action_release("frente")
+			Input.action_release("correr")
+			res.append("de z %d rumo %3.0f graus: parou/terminou em t=%.0f s pos %s; chão até %.0f m do ponto; começou a cair (y-8) em t=%.0f; y-60 em t=%.0f (-1 = nunca)" % [
+				int(ponto.z), rad_to_deg(yaw), t, str(p.global_position.snapped(Vector3(0.1, 0.1, 0.1))), dmax, t_cai, t_60])
 	for r in res:
 		print("  ", r)
 		linhas_extra.append("dunas: " + r)
@@ -426,10 +442,10 @@ func _dunas() -> void:
 
 # ================================================================== relatório
 func _relatorio() -> void:
-	var f := FileAccess.open("res://tests/varredura/saida/fuga.md", FileAccess.WRITE)
+	var f := FileAccess.open(_arq_saida(), FileAccess.WRITE)
 	if f == null:
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://tests/varredura/saida"))
-		f = FileAccess.open("res://tests/varredura/saida/fuga.md", FileAccess.WRITE)
+		f = FileAccess.open(_arq_saida(), FileAccess.WRITE)
 	var s := "# fuga (caminhante caótico)\n\n"
 	var por_tipo := {}
 	var grupos := {}
@@ -474,3 +490,8 @@ func _relatorio() -> void:
 		var a0: Dictionary = g[0]
 		var pp: Vector3 = a0["pos"]
 		print("%s  %s  n=%d  (%.1f, %.1f, %.1f)  %s  partida %s" % [a0["tipo"], a0["rot"], g.size(), pp.x, pp.y, pp.z, a0["det"], a0["partida"]])
+
+
+func _arq_saida() -> String:
+	var suf := OS.get_environment("FUGA_SUFIXO")
+	return "res://tests/varredura/saida/fuga%s.md" % (("_" + suf) if suf != "" else "")
