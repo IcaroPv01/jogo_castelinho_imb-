@@ -2,6 +2,7 @@ extends SceneTree
 ## Rede de segurança do jogador (world/rede_seguranca.gd), bugs do playtest do Bernardo (14/10/2026):
 ##  B37 cair no void / sair do mapa: volta ao último ponto seguro (em todo nível)
 ##  B38 dunas do Ato II sem borda: andava ~100 m até cair no void; agora paredes invisíveis em x ±50
+##  B40 desligar o Visor no corredor de 1975 deixava o jogador no gramado fora do lote (andava ~300 m e caía)
 ##  B39 preso dentro de parede sem troca de época: a rede tira o jogador sozinha
 ## Uso: godot --headless -s res://tests/rede_seguranca_test.gd
 
@@ -31,6 +32,7 @@ func _rodar() -> void:
 		await _void_e_fora(cena)
 	await _parede()
 	await _dunas_borda()
+	await _corredor_1975()
 	await _sem_resgate_em_cena()
 	GS.novo_jogo()
 	print("RESULTADO: ", "OK" if falhas == 0 else "%d FALHA(S)" % falhas)
@@ -141,3 +143,18 @@ func _sem_resgate_em_cena() -> void:
 	_checar(rede.resgates == n0, "com pode_mover=false a rede não mexe no jogador")
 	p.pode_mover = true
 	await _frames(3)
+
+
+func _corredor_1975() -> void:
+	print("-- B40 Visor desligado dentro do corredor de 1975")
+	await _carregar(CASTELINHO)
+	var rede = _rede()
+	await _assentar()
+	GS.trocar_epoca(GS.Epoca.E1975)
+	await _frames(10)
+	p.global_position = Vector3(-10.2, 0.2, -50.0)
+	await _frames(30)
+	_checar(rede.resgates == 0 and p.global_position.z < -45.0, "em 1975 o corredor é área permitida (%s)" % str(p.global_position))
+	GS.trocar_epoca(GS.Epoca.E2020)
+	await _frames(10)
+	_checar(p.global_position.z > -38.0, "fora de 1975 a rede devolve ao lote (%s, %s)" % [str(p.global_position), rede.ultimo_motivo])

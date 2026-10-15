@@ -34,6 +34,8 @@ var resgates := 0               # para testes e para o log
 var ultimo_motivo := ""
 
 var _pontos: Array = []         # [{pos, t}]
+var _historico: Array = []      # um ponto a cada 2 s, último minuto (quando os recentes não servem, ex.: corredor de 1975)
+var _t_hist := 0.0
 var _t := 0.0
 var _t_ponto := 0.0
 var _t_medir := 0.0
@@ -66,7 +68,9 @@ func _physics_process(dt: float) -> void:
 		return
 	_t += dt
 	_t_medir -= dt
-	if _t_medir <= 0.0:
+	if nivel and nivel.has_method("limites_mapa"):
+		_medir_limites()             # barato e pode mudar com a época (corredor de 1975)
+	elif _t_medir <= 0.0:
 		_t_medir = REMEDIR
 		_medir_limites()
 	if not _ativa():
@@ -80,8 +84,7 @@ func _physics_process(dt: float) -> void:
 		if pos.y < limites.position.y - QUEDA_MAX:
 			resgatar("void")
 			return
-		var h := limites.grow(MARGEM)
-		if pos.x < h.position.x or pos.x > h.end.x or pos.z < h.position.z or pos.z > h.end.z:
+		if not _dentro(pos):
 			resgatar("fora_do_mapa")
 			return
 	if _t_caindo > TEMPO_QUEDA:
@@ -102,6 +105,11 @@ func _physics_process(dt: float) -> void:
 		_pontos.append({"pos": pos, "t": _t})
 		if _pontos.size() > MAX_PONTOS:
 			_pontos.pop_front()
+		if _t - _t_hist >= 2.0:
+			_t_hist = _t
+			_historico.append(pos)
+			if _historico.size() > 30:
+				_historico.pop_front()
 
 
 func _ativa() -> bool:
@@ -121,11 +129,18 @@ func resgatar(motivo := "destravar") -> bool:
 		var pt: Dictionary = _pontos[i]
 		if _t - float(pt["t"]) < IDADE_MIN and motivo != "destravar":
 			continue
-		if not _sobrepoe(pt["pos"]):
+		if not _sobrepoe(pt["pos"]) and _dentro(pt["pos"]):
 			destino = pt["pos"]
 			# os pontos mais novos que este levaram ao problema: descarta
 			_pontos = _pontos.slice(0, i + 1)
 			break
+	if destino == Vector3.INF:
+		_pontos.clear()
+		for i in range(_historico.size() - 1, -1, -1):
+			var hp: Vector3 = _historico[i]
+			if not _sobrepoe(hp) and _dentro(hp):
+				destino = hp
+				break
 	if destino == Vector3.INF:
 		destino = _ponto_do_nivel()
 	if destino == Vector3.INF:
@@ -148,6 +163,13 @@ func destravar() -> bool:
 	return resgatar("destravar")
 
 
+func _dentro(pos: Vector3) -> bool:
+	if not tem_limites:
+		return true
+	var h := limites.grow(MARGEM)
+	return pos.x >= h.position.x and pos.x <= h.end.x and pos.z >= h.position.z and pos.z <= h.end.z
+
+
 ## Mesma conta do Player (cápsula 0,3 x 1,75 um pouco encolhida): a cápsula está dentro da colisão do mundo?
 func _sobrepoe(pos: Vector3) -> bool:
 	if not player.is_inside_tree():
@@ -168,7 +190,7 @@ func _ponto_do_nivel() -> Vector3:
 		return Vector3.INF
 	for nome in ["Checkpoint_%d" % GameState.checkpoint_sala, "Spawn"]:
 		var m := nivel.find_child(nome, true, false) as Node3D
-		if m:
+		if m and _dentro(m.global_position):
 			return m.global_position
 	return Vector3.INF
 

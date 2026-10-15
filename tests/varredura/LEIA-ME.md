@@ -15,6 +15,7 @@ Rodar um: `timeout 300 godot --headless -s res://tests/varredura/<nome>.gd`
 | `braco.gd` | Braço Morto, finais, dedicatória, volta ao título |
 | `save.gd` | "Continuar" em todos os checkpoints, saves quebrados/antigos |
 | `estatico_console.gd` | carrega cada nível e procura erros no console |
+| `fuga.gd` | caminhante aleatório (anda, corre, pula, troca de época) em todos os níveis: void, fora do mapa, preso na parede, trava (rede de segurança desligada; `--com-rede` liga). Ver o cabeçalho do script |
 | `web_extra.sh` | build Web com câmera em cada shader e época (Chromium) |
 
 Vários godot em paralelo gravam o mesmo `user://save.json`: rode os que mexem em save um de cada vez.
