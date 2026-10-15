@@ -19,6 +19,7 @@ mudar uma medida e recarregar o nível basta. Fontes: `docs/pesquisa/geometria_e
 | `sombras.gd` | `SombrasChao`: sombras pintadas no chão, com uma imagem por época (sombra projetada pelo Sol da época, oclusão no pé dos volumes e copas), num quadrilátero em modo MULTIPLICAR. Custa 1 draw call. |
 | `obra.gd` | `ObraCastelinho`: a época **E1967** (o Castelinho em obra), ver "Licença criativa" abaixo. |
 | `tito.gd` | `TitoCastelinho`: o boneco do Tito (só E1967), desenhos, cartaz de PROCURA-SE, marcas de altura, balde e disco. Usa as texturas de `assets/ui/tito/` e, se faltarem, gera placeholders. |
+| `ruina2019.gd` | `RuinaCastelinho`: sinais de abandono de 2019 e a faixa "REABERTO" do presente (visitas 1 a 3; rasgada na 3; ausente na 4). |
 | `gatilho.gd` | `GatilhoCastelinho`: o `SalaTrigger` que entrega a sala BASE ao nível (que converte para a sala global da visita). |
 | `muros.gd` | `Muros`: parede reta com aberturas (arco abatido, ogival, retangular) gerada por código, sem CSG. |
 | `../world/niveis/castelinho.gd/.tscn` | O nível das 4 visitas: céu, luzes, marcadores, gatilhos, painéis, eventos, discos e o loop de visitas. |
@@ -64,7 +65,7 @@ Capturas de comparação (rodar `tests/captura_cam.gd`): `build/capturas/cmp2_dr
 | `Casa` | 1975, 2019, 2020 | Prédio inteiro: paredes, lajes, torres, interior. Em 2019 a parede troca para a textura com musgo. |
 | `Museu_2020` | 2020 | Vidros nos arcos 2 a 5, porta de vidro de entrada (`Castelinho.porta_entrada`), deck com pérgola, cerca de corda, hortênsias, letreiros, cavaletes, vitrines, lareira, tronos, mural, porta fechada da Sala Medieval. |
 | `Veraneio_1975` | 1975 | Sofá, poltronas, tapete, estante, redes: o mesmo cômodo da Sala Medieval mobiliado. |
-| `Ruina_2019` | 2019 | Chapas de fibrocimento soltas, mato, erva nas ameias, deck e pérgola. |
+| `Ruina_2019` | 2019 | Chapas de fibrocimento soltas, mato (alto na frente), erva nas ameias, deck e pérgola; tábuas nos arcos 2 a 5 (a porta fica livre, com fita zebrada), placa INTERDITADO, letreiro apagado CHOPERIA, mesas viradas, pilhas de cadeiras e garrafas, cartaz amarelado de PROCURA-SE e a pichação "CADÊ O TITO?" (`ruina2019.gd`, sem colisão). |
 | `Nucleo_1950` | 1950 | Casa de pedra de dois volumes (A alto ao norte, B baixo ao sul), telhados de duas águas, chaminé saliente, janela gradeada alta, porta arqueada aberta. **Posição: onde hoje é o corpo principal** (x -12,5..-5, z -20,5..-11, mesma fachada leste do letreiro, a da foto antiga: duas janelas, porta arqueada, janela alta). Oco e caminhável. |
 | `Cidade` | 1975, 2019, 2020 | Ruas, calçadas, casas vizinhas, postes, cercas, pinheiros. |
 | `Areia_1950` | 1950 | Chão de areia clara e dunas. Vento (partículas) e `Audio.ambiente("vento")`. |
@@ -86,8 +87,8 @@ documentado**: o que está em `obra.gd` é uma estimativa plausível, não um fa
 * Um muro baixo de blocos ao longo da Av. Garibaldi **com um buraco de criança** (pista que só existe em 1967): é por ele
   que o Tito entrava na obra.
 * **Tito** (fictício, 9 anos): boneco low-poly de caixas (estilo PS1), bermuda azul, camiseta clara, balde vermelho, rosto de
-  dois pontos. Brinca na areia ao lado de um castelinho de areia e acena para a câmera (`TitoCastelinho.animar`). Só existe
-  em E1967 (e, como "visão", dentro do Visor nas visitas 3 e 4). Nada de rosto realista, nada gráfico.
+  dois pontos. Brinca na areia ao lado de um castelinho de areia e acena para a câmera (`TitoCastelinho.animar`). Vivo só
+  em E1967; em 1975 e 2019 (visitas 3 e 4, só dentro do Visor) aparece como fantasma: `criar_tito(true)`, pálido, translúcido e molhado. Nada de rosto realista, nada gráfico.
 
 ## As quatro visitas (V2)
 

@@ -1146,13 +1146,14 @@ func _montar_visita() -> void:
 	_interagivel_pista("Olhar as marcas na parede", Vector3(-9.2, 1.25, -28.95), Vector3(0.7, 0.9, 0.4), "marcas_altura",
 		["Marcas de altura a lápis: \"TITO 6\", \"7\", \"8\", \"TITO 9\"...", "Depois do nove, nada. A parede não tem mais marcas."], [E1975])
 	_limitar_alcance(marcas, 9.0)
-	# Tito "no canto da sala", só dentro do Visor (visitas 3 e 4), cada vez mais perto
+	# Tito "no canto da sala", só dentro do Visor (visitas 3 e 4), cada vez mais perto. Vivo só em 1967: depois dela ele
+	# é um fantasma (pálido, molhado), então só aparece em 1975 e 2019.
 	if visita >= 3:
-		_tito_visor = TitoCastelinho.criar_tito()
+		_tito_visor = TitoCastelinho.criar_tito(true)
 		_tito_visor.name = "TitoNoVisor"
 		_tito_visor.visible = false
 		add_child(_tito_visor)
-		Epocas.marcar(_tito_visor, [E1950, E1967, E1975, E2019])
+		Epocas.marcar(_tito_visor, [E1975, E2019])
 		_tito_visor.position = _spot_tito_visor(7)
 
 

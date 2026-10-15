@@ -17,6 +17,7 @@ const U_Z := Vector3(0, 0, 1)
 
 static func construir(c: Castelinho) -> void:
 	_museu(c)
+	RuinaCastelinho.faixa_reaberto(c, clampi(GameState.visita, 1, 4))     # faixa "REABERTO" do presente (visitas 1 a 3)
 	_ruina(c)
 	_nucleo_1950(c)
 	MobiliaCastelinho.construir(c)
@@ -299,6 +300,8 @@ static func _ruina(c: Castelinho) -> void:
 		Malha.abrir("mato_ameia_torre_a_%d" % (i + 1))
 		_touceira(e, capim, Vector3(x, 7.8, -14.75), 0.35 + 0.1 * float(i % 3), rnd)
 	Malha.fechar(_et)
+	# sinais de abandono (tábuas, fita, letreiro CHOPERIA, mato alto, mesas viradas, cartaz do Tito): castelinho/ruina2019.gd
+	RuinaCastelinho.ruina_2019(c)
 
 
 ## Touceira de capim: ~9 lâminas inclinadas em leque (cor de vértice: verde-escuro no pé, palha na ponta).
