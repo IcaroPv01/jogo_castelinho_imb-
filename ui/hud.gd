@@ -17,7 +17,7 @@ var _lbl_pistas_n: Label
 var _lbl_pistas_aviso: Label
 var _n_pistas := 0
 var _tween_pista: Tween
-var lbl_passaporte: Label
+var lbl_passaporte: Label       # contador da caça do disco em curso (nome antigo: nasceu como o Passaporte)
 var faixa_discos: FaixaDiscos
 var olho: OlhoAtencao
 ## Só existem no celular (Celular.ativo): controles de toque e aviso "vire o celular". O HUD cria e libera.
@@ -219,14 +219,13 @@ func _process(dt: float) -> void:
 		lbl_sala.text = texto_sala(randi_range(1, 99))
 
 
-## "Passaporte 1/3": só na visita 1, depois do convite do Bentinho, até completar (ou ter o disco 1950).
+## Contador da caça do disco em curso (GameState.caca_ativa): "Passaporte 1/3", "Vestígios 2/3", "Marcas", "Medidas",
+## "Desenhos". Só aparece durante a caça (some ao completar ou ao ganhar o disco).
 func _atualizar_passaporte() -> void:
-	var n := GameState.passaporte_achados()
-	var ativo: bool = GameState.visita == 1 and GameState.flag("passaporte_lancado") \
-		and not GameState.discos.has(GameState.Epoca.E1950) and n < GameState.PASSAPORTE_IDS.size()
-	lbl_passaporte.visible = ativo
-	if ativo:
-		lbl_passaporte.text = "Passaporte %d/%d" % [n, GameState.PASSAPORTE_IDS.size()]
+	var d := GameState.caca_ativa()
+	lbl_passaporte.visible = d >= 0
+	if d >= 0:
+		lbl_passaporte.text = "%s %d/%d" % [GameState.CACAS[d]["rotulo"], GameState.caca_achados(d), GameState.caca_total(d)]
 
 
 func mostrar_pausa(v: bool) -> void:

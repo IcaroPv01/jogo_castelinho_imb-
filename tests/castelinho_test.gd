@@ -343,12 +343,13 @@ func _visitas() -> void:
 	_checar(nivel._telefone_tocando, "V2: o telefone toca")
 	await _ir_para(Vector3(-9.8, 0.1, -18.8))
 	_checar(GameState.sala_atual == 33, "V2: engasgo do Bentinho na sala 33 (sala %d)" % GameState.sala_atual)
-	# pegar o disco 1967
+	# caça do 1967 (vestígios de 1950) e só então pegar o disco
+	await _caca_1967()
 	var par: Array = nivel._discos_chao[GameState.Epoca.E1967]
 	par[1].interagir(p)
 	await _frames_f(5)
 	_checar(GameState.discos.has(GameState.Epoca.E1967) and GameState.disco_atual == GameState.Epoca.E1967, "V2: disco 1967 pego e selecionado (discos %s)" % str(GameState.discos))
-	_checar(GameState.discos == [GameState.Epoca.E1967], "V2 (jogo novo no teste): discos %s" % str(GameState.discos))
+	_checar(GameState.discos == [GameState.Epoca.E1950, GameState.Epoca.E1967], "V2 (jogo novo no teste): discos %s" % str(GameState.discos))
 	# o painel de P24: a visita 2 ainda tem o P23 e não tem os de 1975
 	_checar(nivel._paineis.has("p23") and not nivel._paineis.has("p24"), "V2: painéis p23 sim, p24 não")
 	await _epoca_1967()
@@ -375,7 +376,7 @@ func _visitas() -> void:
 	_checar(nivel.find_child("FitaZebrada", true, false) != null, "V3: saída com fita zebrada e placa EM REFORMA")
 	_checar(nivel._bloqueio_escada != null and _raio_h(Vector3(-14.0, 1.2, -19.55), Vector3(-11.5, 1.2, -19.55)), "V3: escada interditada até o Ato II")
 	_checar(nivel._porta_ato2 != null, "V3: porta nova para 1950 no Salão de Arte")
-	_checar(nivel._discos_chao.has(GameState.Epoca.E1975) and nivel.find_child("Pedestal1975", true, false) != null, "V3: disco 1975 no topo da Torre A")
+	_checar(not nivel._discos_chao.has(GameState.Epoca.E1975) and nivel.find_child("Pedestal1975", true, false) != null, "V3: pedestal da Torre A existe e o disco 1975 só aparece depois da caça")
 	_checar(not nivel._discos_chao.has(GameState.Epoca.E1967) or GameState.discos.has(GameState.Epoca.E1967) == false, "V3 (jogo novo): o disco 1967 segue na vitrine se não foi pego")
 	_checar(_luzes_ligadas() <= 4, "V3: no máximo 4 lâmpadas (%d)" % _luzes_ligadas())
 	_checar(1 + _luzes_ligadas() + _lanterna_conta() <= 6, "V3: no máximo 6 luzes com Sol/Lua e lanterna")
@@ -391,6 +392,7 @@ func _visitas() -> void:
 	_checar(GameState.flag("v3_ato2_feito"), "V3: flag v3_ato2_feito")
 	await _ir_para(Vector3(-19.3, 7.0, -12.2))
 	_checar(GameState.sala_atual == 61 and GameState.checkpoint_sala == 61, "V3: topo da Torre A = sala/checkpoint 61 (%d, %d)" % [GameState.sala_atual, GameState.checkpoint_sala])
+	await _caca_1975()
 	var par75: Array = nivel._discos_chao[GameState.Epoca.E1975]
 	par75[1].interagir(p)
 	await _frames_f(5)
@@ -452,6 +454,9 @@ func _visitas() -> void:
 	# disco 2019 atrás do painel solto
 	var psolto := find_interagivel(nivel, "PainelSoltoInterativo")
 	_checar(psolto != null, "V4: Interagivel do painel solto")
+	var smax: int = GameState.sala_maxima
+	await _caca_2019(psolto)
+	GameState.sala_maxima = smax        # (a caça passeia pela Sala Medieval: não vale como "já viu")
 	if psolto:
 		psolto.interagir(p)
 		await _frames_f(5)
@@ -769,6 +774,127 @@ func _fim_da_visita_2() -> void:
 	_checar(GameState.flag("evt_v2_apagao"), "V2: apagão marcado como feito")
 	await _frames_f(10)
 
+
+
+## Mira o jogador num Interagivel a `dist` m de distância, na direção `de` (XZ), e confere se o raio do jogador o pega.
+func _alcanca(it: Node3D, de: Vector3, dist := 1.5) -> bool:
+	var alvo: Vector3 = it.global_position
+	var d := Vector3(de.x, 0, de.z).normalized()
+	var pos := alvo + d * dist
+	p.global_position = Vector3(pos.x, 0.1, pos.z)
+	p.velocity = Vector3.ZERO
+	var hor := Vector2(alvo.x - pos.x, alvo.z - pos.z)
+	p.rotation.y = atan2(-hor.x, -hor.y)
+	p.cabeca.rotation.x = -atan2(1.6 - alvo.y, hor.length())
+	for i in 6:
+		await physics_frame
+		await process_frame
+	return p._alvo == it
+
+
+## Confere, para a caça do disco `d`: cada objeto novo existe, só aparece na época `ep` e o raio do jogador o alcança.
+## `itens` = {nome do Interagivel: direção de onde mirar}.
+func _caca_itens(rotulo: String, ep: int, itens: Dictionary) -> void:
+	for nome in itens:
+		var it: Node3D = nivel.find_child(nome, true, false)
+		_checar(it != null, "%s: objeto %s existe" % [rotulo, nome])
+		if it == null:
+			continue
+		GameState.trocar_epoca(GameState.Epoca.E2020)
+		await _frames_f(3)
+		_checar(not it.visible, "%s: %s some no presente" % [rotulo, nome])
+		GameState.trocar_epoca(ep)
+		await _frames_f(3)
+		_checar(it.visible, "%s: %s aparece com o Visor" % [rotulo, nome])
+		var ok: bool = await _alcanca(it, itens[nome])
+		_checar(ok, "%s: o raio do jogador alcança %s (alvo %s)" % [rotulo, nome, str(p._alvo)])
+	GameState.trocar_epoca(GameState.Epoca.E2020)
+	await _frames_f(3)
+
+
+## Caça do 1967 (visita 2, vê com o 1950): vitrine trancada até os 3 vestígios.
+func _caca_1967() -> void:
+	var E: Dictionary = GameState.Epoca
+	GameState.ganhar_disco(E.E1950)
+	await _frames_f(2)
+	_checar(main.hud.lbl_passaporte.visible and main.hud.lbl_passaporte.text == "Vestígios 0/3", "caça 1967: contador no HUD (%s)" % main.hud.lbl_passaporte.text)
+	await _caca_itens("caça 1967", E.E1950, {"InterCaca_4_pedra_gres": Vector3(1, 0, 0), "InterCaca_4_casa_miolo": Vector3(0, 0, -1), "InterCaca_4_areia_nua": Vector3(1, 0, 0.3)})
+	var par: Array = nivel._discos_chao[E.E1967]
+	par[1].interagir(p)
+	await _frames_f(5)
+	_checar(not GameState.discos.has(E.E1967), "caça 1967: vitrine trancada com 0 vestígios")
+	_guia().cancelar()
+	nivel._cacas.achar(E.E1967, "pedra_gres")
+	nivel._cacas.achar(E.E1967, "pedra_gres")       # duas vezes: não duplica
+	nivel._cacas.achar(E.E1967, "casa_miolo")
+	await _frames_f(3)
+	_guia().cancelar()
+	_checar(GameState.caca_achados(E.E1967) == 2 and main.hud.lbl_passaporte.text == "Vestígios 2/3", "caça 1967: 2 achados e contador (%s)" % main.hud.lbl_passaporte.text)
+	par[1].interagir(p)
+	await _frames_f(5)
+	_checar(not GameState.discos.has(E.E1967), "caça 1967: vitrine trancada com 2 vestígios")
+	_guia().cancelar()
+	nivel._cacas.achar(E.E1967, "areia_nua")
+	await _frames_f(3)
+	_guia().cancelar()
+	_checar(GameState.caca_completa(E.E1967) and not main.hud.lbl_passaporte.visible, "caça 1967: completa, contador some")
+	_checar(nivel.find_child("Caca_4_pedra_gres", true, false) == null, "caça 1967: objeto achado some do nível")
+
+
+## Caça do 1975 (visita 3, vê com o 1967): Tito, buraco e a pazinha; o disco do pedestal só aparece com os 3.
+func _caca_1975() -> void:
+	var E: Dictionary = GameState.Epoca
+	await _ir_para(Vector3(-23.0, 0.1, 1.5))
+	_checar(main.hud.lbl_passaporte.visible and main.hud.lbl_passaporte.text == "Marcas 0/3", "caça 1975: contador no HUD (%s)" % main.hud.lbl_passaporte.text)
+	await _caca_itens("caça 1975", E.E1967, {"InterCaca_1_balde": Vector3(1, 0, 0), "Pista_tito_1967": Vector3(1, 0, 0), "BuracoNoMuro": Vector3(0, 0, 1)})
+	_checar(not nivel._discos_chao.has(E.E1975), "caça 1975: sem disco no pedestal com 0 marcas")
+	GameState.trocar_epoca(E.E1967)
+	await _frames_f(3)
+	nivel.find_child("Pista_tito_1967", true, false).interagir(p)
+	await _frames_f(3)
+	_guia().cancelar()
+	await _frames_f(3)
+	_guia().cancelar()
+	nivel.find_child("BuracoNoMuro", true, false).interagir(p)
+	await _frames_f(3)
+	_guia().cancelar()
+	await _frames_f(3)
+	_guia().cancelar()
+	_checar(GameState.caca_achados(E.E1975) == 2 and GameState.flag("pista_buraco") and GameState.flag("pista_tito_1967"), "caça 1975: Tito e buraco contam (e seguem sendo pistas)")
+	_checar(not nivel._discos_chao.has(E.E1975), "caça 1975: sem disco com 2 marcas")
+	nivel._cacas.achar(E.E1975, "balde")
+	await _frames_f(3)
+	_guia().cancelar()
+	_checar(GameState.caca_completa(E.E1975) and nivel._discos_chao.has(E.E1975), "caça 1975: com 3 marcas o disco aparece no pedestal")
+	_checar(nivel.find_child("PegadasAteATorre1967", true, false) != null, "caça 1975: pegadas até a Torre A")
+	GameState.trocar_epoca(E.E2020)
+	await _frames_f(3)
+
+
+## Caça do 2019 (visita 4, vê com o 1975): 3 medidas; o painel solto só se abre com os 3.
+func _caca_2019(psolto: Node) -> void:
+	var E: Dictionary = GameState.Epoca
+	_checar(GameState.discos.has(E.E1975), "caça 2019: o jogador tem o disco 1975")
+	_checar(main.hud.lbl_passaporte.visible and main.hud.lbl_passaporte.text == "Medidas 0/3", "caça 2019: contador no HUD (%s)" % main.hud.lbl_passaporte.text)
+	await _caca_itens("caça 2019", E.E1975, {"InterCaca_2_tito_6": Vector3(0, 0, 1), "InterCaca_2_tito_7": Vector3(1, 0, 0), "InterCaca_2_tito_8": Vector3(1, 0, 0)})
+	if psolto:
+		psolto.interagir(p)
+		await _frames_f(5)
+	_checar(not GameState.discos.has(E.E2019), "caça 2019: painel solto não dá o disco com 0 medidas")
+	_guia().cancelar()
+	nivel._cacas.achar(E.E2019, "tito_6")
+	nivel._cacas.achar(E.E2019, "tito_7")
+	await _frames_f(3)
+	_guia().cancelar()
+	if psolto:
+		psolto.interagir(p)
+		await _frames_f(5)
+	_checar(not GameState.discos.has(E.E2019) and main.hud.lbl_passaporte.text == "Medidas 2/3", "caça 2019: com 2 medidas o painel não solta (%s)" % main.hud.lbl_passaporte.text)
+	_guia().cancelar()
+	nivel._cacas.achar(E.E2019, "tito_8")
+	await _frames_f(3)
+	_guia().cancelar()
+	_checar(GameState.caca_completa(E.E2019) and not main.hud.lbl_passaporte.visible, "caça 2019: completa, contador some")
 
 
 ## Passaporte do Museu (visita 1): sem os 3 objetos a sala 10 não dá o disco; com eles, dá; as flags guardam o progresso.

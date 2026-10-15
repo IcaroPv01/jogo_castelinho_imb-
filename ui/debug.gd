@@ -99,6 +99,7 @@ static func ganhar_tudo() -> void:
 	gs.set_flag("tem_lanterna", true)
 	gs.set_flag("tem_visor", true)
 	for ep in [gs.Epoca.E1950, gs.Epoca.E1967, gs.Epoca.E1975, gs.Epoca.E2019, gs.Epoca.ESEMDATA]:
+		gs.caca_concluir(ep)          # as caças dos discos ficam feitas (nada trava a entrega)
 		gs.ganhar_disco(ep)
 	var p: Variant = (Engine.get_main_loop() as SceneTree).get_first_node_in_group("player")
 	if p != null and p.get("lanterna") != null:
@@ -154,9 +155,22 @@ static func pular(lugar: int, sala: int) -> Dictionary:
 	var gs := _gs()
 	gs.checkpoint_sala = d["cp"]
 	gs.sala_maxima = maxi(gs.sala_maxima, d["cp"])
+	_dar_discos_anteriores(int(d["visita"]))
 	var alvo: Array = gs.preparar_continuar()
 	await _carregar(alvo[0], alvo[1])
 	return d
+
+
+## Pular de fase não pode travar na caça de um disco: quem cai na visita (ou no porão) `etapa` recebe os discos das
+## etapas anteriores já com as caças feitas (1950 = visita 1, 1967 = visita 2, 1975 = 3, 2019 = 4, sem data = porão = 5).
+## A caça da própria etapa fica por fazer. (GameState.CACAS tem a visita de cada disco.)
+static func _dar_discos_anteriores(etapa: int) -> void:
+	var gs := _gs()
+	for ep in gs.CACAS:
+		if int(gs.CACAS[ep]["visita"]) < etapa:
+			gs.caca_concluir(ep)
+			gs.ganhar_disco(ep)
+			gs.set_flag("tem_visor", true)
 
 
 ## Cai direto num dos três finais do Braço Morto: "encontrado", "visita_concluida" ou "sala_101".
