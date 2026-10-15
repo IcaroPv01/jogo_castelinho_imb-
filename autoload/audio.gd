@@ -165,6 +165,14 @@ func ambiente(nome: String, volume_db := -8.0, fade := 1.5) -> void:
 	_fade(_ambiente_player, volume_db + VOLUME_PADRAO.get(n, 0.0), fade, false)
 
 
+## Posição (s) dentro do loop de ambiente `nome` se ele é o que está tocando; senão -1. Efeitos visuais sincronizam com isso
+## (as gotas do porão caem no ritmo dos pingos de goteira.ogg: ver world/goteiras.gd).
+func posicao_ambiente(nome: String) -> float:
+	if _ambiente_nome != _normalizar(nome) or not _tocando(_ambiente_player):
+		return -1.0
+	return _ambiente_player.get_playback_position()
+
+
 func silenciar(fade := 0.5) -> void:
 	musica("", fade)
 	ambiente("", -8.0, fade)

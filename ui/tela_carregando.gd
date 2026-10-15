@@ -24,6 +24,7 @@ const DICAS := [
 	"Esc solta o mouse e pausa a visita.",
 	"Cada quiz que você acerta vale um selo!",
 	"Aperte Espaço para dar um pulinho.",
+	"Perdido? Aperte M para ver o mapa da visita.",
 ]
 
 static var ultima: TelaCarregando = null
