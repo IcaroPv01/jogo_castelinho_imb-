@@ -1,8 +1,8 @@
 extends SceneTree
 ## Rede de segurança do jogador (world/rede_seguranca.gd), bugs do playtest do Bernardo (14/10/2026):
-##  B26 cair no void / sair do mapa: volta ao último ponto seguro (em todo nível)
-##  B27 dunas do Ato II sem borda: andava ~100 m até cair no void; agora paredes invisíveis em x ±50
-##  B28 preso dentro de parede sem troca de época: a rede tira o jogador sozinha
+##  B37 cair no void / sair do mapa: volta ao último ponto seguro (em todo nível)
+##  B38 dunas do Ato II sem borda: andava ~100 m até cair no void; agora paredes invisíveis em x ±50
+##  B39 preso dentro de parede sem troca de época: a rede tira o jogador sozinha
 ## Uso: godot --headless -s res://tests/rede_seguranca_test.gd
 
 const CASTELINHO := "res://world/niveis/castelinho.tscn"
@@ -68,7 +68,7 @@ func _assentar() -> Vector3:
 
 
 func _void_e_fora(cena: String) -> void:
-	print("-- B26 void e fora do mapa: ", cena.get_file())
+	print("-- B37 void e fora do mapa: ", cena.get_file())
 	await _carregar(cena)
 	var rede = _rede()
 	_checar(rede != null and rede.tem_limites, "rede instalada e com limites medidos")
@@ -94,7 +94,7 @@ func _void_e_fora(cena: String) -> void:
 
 
 func _parede() -> void:
-	print("-- B28 preso dentro de parede (sem trocar de época)")
+	print("-- B39 preso dentro de parede (sem trocar de época)")
 	await _carregar(CASTELINHO)
 	var rede = _rede()
 	await _assentar()
@@ -109,7 +109,7 @@ func _parede() -> void:
 
 
 func _dunas_borda() -> void:
-	print("-- B27 dunas do Ato II têm borda")
+	print("-- B38 dunas do Ato II têm borda")
 	var nivel: Node = await _carregar(ATO2)
 	GS.trocar_epoca(GS.Epoca.E1950)
 	await _frames(5)
