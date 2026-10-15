@@ -7,7 +7,7 @@ extends CanvasLayer
 ##   - Analógico da câmera no resto da tela (direita): a base nasce onde o dedo pousa e a inclinação dá a VELOCIDADE de
 ##     giro (Player.girar_olhar a cada quadro). Tocar sem arrastar não gira nada (antes, arrastar direto na tela dava
 ##     trancos: um toque novo virava a câmera de uma vez).
-##   - Botões grandes embaixo à direita: Interagir, Correr (liga/desliga), Lanterna, Visor (segurar).
+##   - Botões grandes embaixo à direita: Interagir, Correr (liga/desliga), Lanterna, Visor (liga/desliga) e Pular.
 ##     Pausa e Tela cheia no canto de cima à direita.
 ##   - Tocar num disco da faixa seleciona o disco (Visor.selecionar_slot).
 ##   - Toque rápido (< 0,3 s e < 24 px) na área de olhar avança a fala da Guia; com um balão que TRAVA o jogador,
@@ -50,7 +50,6 @@ var _cam_idx := -1               # dedo do analógico da câmera
 var _cam_base := Vector2.ZERO
 var _cam_vec := Vector2.ZERO     # -1..1
 var _correr := false
-var _visor_idx := -1
 var _tem_alvo := false
 var _player: Player
 var _t := 0.0
@@ -151,6 +150,8 @@ func layout() -> Dictionary:
 		d["lanterna"] = {"c": inter + Vector2(-4.0, -122.0), "r": R_MEDIO}
 	if _tem_visor():
 		d["visor"] = {"c": inter + Vector2(-Celular.BOTOES_ESQ, -98.0), "r": R_MEDIO}
+	# Pular: na coluna do Visor (acima dele, ou no lugar dele enquanto não há Visor); dentro da largura do aglomerado
+	d["pular"] = {"c": inter + Vector2(-Celular.BOTOES_ESQ, -200.0 if d.has("visor") else -98.0), "r": R_MEDIO}
 	d["tela"] = {"c": pausa + Vector2(-76.0, 0.0), "r": 26.0}
 	return d
 
@@ -177,7 +178,7 @@ func processar_toque(idx: int, pos: Vector2, pressed: bool) -> bool:
 		if _dedos.has(idx):
 			return true
 		var lay := layout()
-		for id: String in ["pausa", "tela", "interagir", "correr", "lanterna", "visor"]:
+		for id: String in ["pausa", "tela", "interagir", "correr", "lanterna", "visor", "pular"]:
 			if lay.has(id) and _acertou(lay[id], pos):
 				_dedos[idx] = {"t": "botao", "id": id}
 				_acionar(id, idx)
@@ -223,10 +224,6 @@ func processar_toque(idx: int, pos: Vector2, pressed: bool) -> bool:
 		"olhar":
 			_soltar_cam()
 			_se_toque_rapido(dedo)
-		"botao":
-			if dedo.id == "visor":
-				_visor_idx = -1
-				Input.action_release("visor")
 	return true
 
 
@@ -319,7 +316,6 @@ func _soltar_tudo() -> void:
 	_dedos.clear()
 	_soltar_stick()
 	_soltar_cam()
-	_visor_idx = -1
 	Input.action_release("visor")
 
 
@@ -335,9 +331,16 @@ func _acionar(id: String, idx: int) -> void:
 				Input.action_press("correr")
 			else:
 				Input.action_release("correr")
-		"visor":
-			_visor_idx = idx
-			Input.action_press("visor")
+		"visor":   # um toque liga, outro desliga (como o Correr): o Visor guarda o estado
+			var visor := get_tree().get_first_node_in_group(Visor.GRUPO) as Visor
+			if visor:
+				visor.alternar()
+			elif Input.is_action_pressed("visor"):
+				Input.action_release("visor")
+			else:
+				Input.action_press("visor")
+		"pular":
+			pulsar_acao("pular")
 		"pausa":
 			Audio.sfx("clique", -8.0)
 			Celular.pausa_toque = true
@@ -420,7 +423,7 @@ func _desenhar(c: Control) -> void:
 				if _player and is_instance_valid(_player) and _player.lanterna.visible:
 					fundo = Color(Flash.AMARELO, 0.7)
 			"visor":
-				if pressionado:
+				if Input.is_action_pressed("visor"):
 					fundo = Color(Flash.AZUL_CLARO, 0.85)
 		if pressionado:
 			fundo = fundo.darkened(0.12)
@@ -440,7 +443,7 @@ func _desenhar(c: Control) -> void:
 
 
 func _rotulo(c: Control, centro: Vector2, raio: float, id: String) -> void:
-	var txt: String = {"interagir": "Interagir", "correr": "Correr", "lanterna": "Lanterna", "visor": "Visor"}.get(id, id)
+	var txt: String = {"interagir": "Interagir", "correr": "Correr", "lanterna": "Lanterna", "visor": "Visor", "pular": "Pular"}.get(id, id)
 	var fonte := Flash.fonte_titulo()
 	var tam := 22
 	var larg := raio * 1.7

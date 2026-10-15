@@ -29,6 +29,7 @@ func _rodar() -> void:
 	await _teste_fallback_paineis()
 	await _teste_discos()
 	await _teste_q_por_disco()
+	await _teste_q_alternar()
 	await _teste_sem_atencao_nas_visitas_1_e_2()
 	await _teste_atencao()
 	await _teste_susto_e_bloqueio()
@@ -239,6 +240,67 @@ func _teste_q_por_disco() -> void:
 	await _q(true)
 	_checar(not v.ativo, "com tela aberta o Q não liga")
 	GS.set_flag("ui_aberta", false)
+	await _q(false)
+
+
+func _toque_q() -> void:
+	v.alternar()
+	await create_timer(0.16).timeout
+	v._process(0.016)
+
+
+## Q liga/desliga: um toque liga, outro desliga; menu aberto, bloqueio e troca de nível soltam o Q ligado.
+func _teste_q_alternar() -> void:
+	print("-- Q liga e desliga com um toque")
+	_zerar(3)
+	GS.ganhar_disco(GS.Epoca.E1950)
+	GS.selecionar_disco(GS.Epoca.E1950)
+	GS.set_flag("tem_visor")
+	_checar(InputMap.has_action("visor_alternar") and InputMap.action_get_events("visor_alternar").size() > 0, "tecla Q está na ação visor_alternar")
+	_checar(InputMap.action_get_events("visor").is_empty(), "a ação visor não tem tecla própria (segurar não liga mais)")
+	await _toque_q()
+	_checar(v.ativo and GS.epoca == GS.Epoca.E1950, "um toque liga o Visor e ele fica ligado")
+	await create_timer(0.3).timeout
+	v._process(0.016)
+	_checar(v.ativo, "soltar a tecla não desliga")
+	await _toque_q()
+	_checar(not v.ativo and GS.epoca == GS.Epoca.E2020, "segundo toque desliga e volta a 2020")
+	# a atenção sobe só enquanto ligado
+	await _toque_q()
+	var a0: float = GS.atencao
+	_passo(2.0)
+	_checar(GS.atencao > a0, "ligado, a atenção sobe sem segurar nada")
+	# menu aberto solta o Q
+	GS.set_flag("ui_aberta", true)
+	v._process(0.016)
+	_checar(not Input.is_action_pressed("visor"), "tela aberta solta o Q ligado")
+	GS.set_flag("ui_aberta", false)
+	await create_timer(0.16).timeout
+	v._process(0.016)
+	_checar(not v.ativo, "e o Visor fica desligado depois")
+	# estouro (bloqueio) solta o Q: não fica "ligado" preso
+	_zerar(3)
+	GS.ganhar_disco(GS.Epoca.E1950)
+	GS.selecionar_disco(GS.Epoca.E1950)
+	GS.set_flag("tem_visor")
+	await _toque_q()
+	GS.definir_atencao(0.999)
+	_passo(0.3)
+	v._process(0.016)
+	_checar(VisorCls.bloqueado() and not Input.is_action_pressed("visor"), "o susto arranca o Visor da mão e solta o Q")
+	v.alternar()
+	_checar(not Input.is_action_pressed("visor"), "bloqueado, tocar no Q não liga")
+	VisorCls.resetar_estado()
+	# sair do nível com o Q ligado não deixa o próximo Visor ligado
+	await _toque_q()
+	_checar(Input.is_action_pressed("visor"), "ligou de novo")
+	var v2: Node = VisorCls.new()
+	v.queue_free()
+	await process_frame
+	_checar(not Input.is_action_pressed("visor"), "o Visor que sai da árvore solta o Q")
+	v2.free()
+	v = VisorCls.instalar(mundo)
+	v.set_process(false)
 	await _q(false)
 
 

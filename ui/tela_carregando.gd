@@ -23,6 +23,7 @@ const DICAS := [
 	"Segure Shift para correr, mas o fôlego acaba!",
 	"Esc solta o mouse e pausa a visita.",
 	"Cada quiz que você acerta vale um selo!",
+	"Aperte Espaço para dar um pulinho.",
 ]
 
 static var ultima: TelaCarregando = null

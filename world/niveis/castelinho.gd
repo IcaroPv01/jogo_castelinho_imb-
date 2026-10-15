@@ -1105,7 +1105,7 @@ func _montar_props() -> void:
 func _montar_visita() -> void:
 	# --- discos do Visor: ficam nos lugares do V2_ROTEIRO §4.1 até serem pegos
 	_disco_no_chao(E1967, POS_DISCO_1967, Color(0.85, 0.12, 0.1), "Pegar o disco da vitrine", 2,
-		["Um disco do Visor! A etiqueta, escrita à mão, diz: \"não catalogado\".", "Aperte 1 a 5 (ou a rolagem do mouse) para trocar de disco e segure Q para ver."], true)
+		["Um disco do Visor! A etiqueta, escrita à mão, diz: \"não catalogado\".", "Aperte 1 a 5 (ou a rolagem do mouse) para trocar de disco e aperte Q para ver. Aperte de novo para voltar."], true)
 	_disco_no_chao(E1975, POS_DISCO_1975, Color(0.95, 0.65, 0.12), "Pegar o disco", 3,
 		["Outro disco do Visor, caído no topo da torre.", "Este mostra o Castelinho pronto, como era em 1975."], false)
 	match visita:
@@ -2151,7 +2151,7 @@ func _evt_sala10() -> void:
 	Audio.sfx("fanfarra")
 	await Guia.falar("bentinho", ["Três carimbos! Passaporte completo, parabéns!"])
 	Audio.sfx("selo")
-	await Guia.falar("bentinho", ["Presente! O Visor do Tempo!", "Segure Q para ver como era em 1950!"])
+	await Guia.falar("bentinho", ["Presente! O Visor do Tempo!", "Aperte Q para ver como era em 1950! Aperte de novo para voltar."])
 	_passaporte_falando = false
 
 
@@ -2287,7 +2287,7 @@ func _evt_sala21() -> void:
 			await Guia.falar("bentinho", ["Esta sala está pronta. O resto da visita ficou no Salão de Arte.", "Aquela porta que não estava no mapa."])
 	elif visita == 4 and _uma_vez("sala21"):
 		if GameState.discos.has(E2019):
-			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Segure Q e escolha o disco de 2019: lá ela existe."])
+			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Aperte Q e escolha o disco de 2019: lá ela existe."])
 		else:
 			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Falta o disco de 2019.", "Ele ficou atrás de algo solto."])
 

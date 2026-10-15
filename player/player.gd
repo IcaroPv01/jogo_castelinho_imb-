@@ -11,6 +11,7 @@ signal stamina_mudou(valor: float)
 const VEL_ANDAR := 3.0
 const VEL_CORRER := 5.4
 const GRAVIDADE := 18.0
+const VEL_PULO := 3.5    # m/s para cima: pulo baixo (~0,37 m medido), um pulinho, não passa por cima de nada alto
 const ALTURA_OLHOS := 1.55
 const SENS_MOUSE := 0.0022
 const ALCANCE := 2.4
@@ -31,6 +32,7 @@ var _bob := 0.0
 var _checar_preso := 0           # quadros de física restantes para conferir se a época prendeu o jogador
 var _ultimo_seguro := Vector3.ZERO
 var _tem_seguro := false
+var _no_chao := true
 
 
 func _ready() -> void:
@@ -117,6 +119,9 @@ func _physics_process(dt: float) -> void:
 		velocity.y -= GRAVIDADE * dt
 	var dir := Vector3.ZERO
 	var correndo := false
+	if pode_mover and is_on_floor() and Input.is_action_just_pressed("pular") and _pode_pular():
+		velocity.y = VEL_PULO
+		Audio.sfx("clique", -14.0, 0.7)
 	if pode_mover:
 		var v := Input.get_vector("esquerda", "direita", "frente", "tras")
 		dir = (transform.basis * Vector3(v.x, 0, v.y)).normalized()
@@ -129,8 +134,16 @@ func _physics_process(dt: float) -> void:
 	if _checar_preso == 0 and is_on_floor():
 		_ultimo_seguro = global_position
 		_tem_seguro = true
+	if not _no_chao and is_on_floor():
+		Audio.passo()   # aterrissagem
+	_no_chao = is_on_floor()
 	_balanco(dt, dir.length() > 0.1 and is_on_floor(), vel)
 	_atualizar_alvo()
+
+
+## Sem pular em fala da Guia (o Espaço também avança o texto) nem com menu aberto.
+func _pode_pular() -> bool:
+	return not Guia.ocupado() and not GameState.flag("ui_aberta")
 
 
 func _atualizar_stamina(correndo: bool, dt: float) -> void:
