@@ -276,6 +276,7 @@ func _carregar_sala(i: int) -> void:
 			Epocas.marcar(mi, [GameState.Epoca.E2020, GameState.Epoca.E1950, GameState.Epoca.E1975, GameState.Epoca.E2019, GameState.Epoca.E1967])
 	_criar_extras(c)
 	_ajustar_agua_sala(c)
+	Goteiras.criar(c, self)          # gotas do teto no ritmo da goteira (world/goteiras.gd); nada no quarto do Tito
 	_atualizar_luzes(idx_atual)
 
 
@@ -436,6 +437,7 @@ func iniciar(p: Player) -> void:
 	GameState.set_flag("visor_travado", false)
 	_criar_figura()
 	_criar_costela()
+	AguaFerrugem.instalar(self)      # a água fica ferrugem quando a Figura está perto (world/agua_ferrugem.gd)
 	visor = Visor.instalar(self)
 	if visor.has_signal("figura_atravessou"):
 		visor.figura_atravessou.connect(_on_figura_atravessou)

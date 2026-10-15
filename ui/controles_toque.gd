@@ -8,7 +8,7 @@ extends CanvasLayer
 ##     giro (Player.girar_olhar a cada quadro). Tocar sem arrastar não gira nada (antes, arrastar direto na tela dava
 ##     trancos: um toque novo virava a câmera de uma vez).
 ##   - Botões grandes embaixo à direita: Interagir, Correr (liga/desliga), Lanterna, Visor (liga/desliga) e Pular.
-##     Pausa e Tela cheia no canto de cima à direita.
+##     Pausa, Tela cheia e Mapa (abre o Mapa da Visita) no canto de cima à direita.
 ##   - Tocar num disco da faixa seleciona o disco (Visor.selecionar_slot).
 ##   - Toque rápido (< 0,3 s e < 24 px) na área de olhar avança a fala da Guia; com um balão que TRAVA o jogador,
 ##     qualquer toque avança.
@@ -153,6 +153,7 @@ func layout() -> Dictionary:
 	# Pular: na coluna do Visor (acima dele, ou no lugar dele enquanto não há Visor); dentro da largura do aglomerado
 	d["pular"] = {"c": inter + Vector2(-Celular.BOTOES_ESQ, -200.0 if d.has("visor") else -98.0), "r": R_MEDIO}
 	d["tela"] = {"c": pausa + Vector2(-76.0, 0.0), "r": 26.0}
+	d["mapa"] = {"c": pausa + Vector2(-158.0, 0.0), "r": 30.0}
 	return d
 
 
@@ -178,7 +179,7 @@ func processar_toque(idx: int, pos: Vector2, pressed: bool) -> bool:
 		if _dedos.has(idx):
 			return true
 		var lay := layout()
-		for id: String in ["pausa", "tela", "interagir", "correr", "lanterna", "visor", "pular"]:
+		for id: String in ["pausa", "tela", "mapa", "interagir", "correr", "lanterna", "visor", "pular"]:
 			if lay.has(id) and _acertou(lay[id], pos):
 				_dedos[idx] = {"t": "botao", "id": id}
 				_acionar(id, idx)
@@ -346,6 +347,9 @@ func _acionar(id: String, idx: int) -> void:
 			Celular.pausa_toque = true
 		"tela":
 			_tela_cheia()
+		"mapa":
+			Audio.sfx("clique", -8.0)
+			Mapa.abrir()
 
 
 ## Aperta e solta uma ação (como uma tecla). A ação fica apertada por alguns quadros para o `is_action_just_pressed`
@@ -443,7 +447,7 @@ func _desenhar(c: Control) -> void:
 
 
 func _rotulo(c: Control, centro: Vector2, raio: float, id: String) -> void:
-	var txt: String = {"interagir": "Interagir", "correr": "Correr", "lanterna": "Lanterna", "visor": "Visor", "pular": "Pular"}.get(id, id)
+	var txt: String = {"interagir": "Interagir", "correr": "Correr", "lanterna": "Lanterna", "visor": "Visor", "pular": "Pular", "mapa": "Mapa"}.get(id, id)
 	var fonte := Flash.fonte_titulo()
 	var tam := 22
 	var larg := raio * 1.7

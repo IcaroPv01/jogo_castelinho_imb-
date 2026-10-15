@@ -10,6 +10,9 @@ uniform vec3 cor_ceu : source_color = vec3(0.30, 0.42, 0.42);
 uniform float opacidade : hint_range(0.0, 1.0) = 0.8;
 uniform float ondas : hint_range(0.0, 1.0) = 1.0;
 uniform float velocidade = 0.7;
+// Tingimento (world/agua_ferrugem.gd): quando a Figura está perto a água fica ferrugem escura e turva. 0 = água normal.
+uniform vec4 tint_cor : source_color = vec4(0.32, 0.08, 0.05, 1.0);
+uniform float tint_quantidade : hint_range(0.0, 1.0) = 0.0;
 
 varying vec3 p_mundo;
 
@@ -28,8 +31,9 @@ void fragment() {
 	vec3 v = normalize(VIEW);
 	float f = pow(1.0 - clamp(dot(normalize(NORMAL), v), 0.0, 1.0), 2.5);
 	vec3 cor = mix(cor_fundo, cor_ceu, clamp(f * 0.8 + a * 0.01 * ondas, 0.0, 1.0));
-	ALBEDO = cor;
-	ALPHA = mix(opacidade, 1.0, f * 0.5);
-	ROUGHNESS = 0.12;
+	vec3 turva = tint_cor.rgb * (0.55 + 0.4 * f);
+	ALBEDO = mix(cor, turva, tint_quantidade);
+	ALPHA = mix(mix(opacidade, 1.0, f * 0.5), 0.94, tint_quantidade);
+	ROUGHNESS = mix(0.12, 0.4, tint_quantidade);
 	SPECULAR = 0.9;
 }

@@ -36,6 +36,7 @@ var _tween_flash: Tween
 var _painel_legenda: PanelContainer
 var _lbl_ano: Label
 var _lbl_extra: Label
+var _lbl_epoca: Label          # subtítulo fixo sob o ano (uma frase por época: ajuda a não confundir 1967/1975/2019)
 var _lbl_aviso: Label            # aviso curto no alto da tela (Efeitos.aviso)
 var _tween_aviso: Tween
 var _psx: Array[ShaderMaterial] = []
@@ -228,6 +229,13 @@ func _montar_legenda() -> void:
 	_lbl_ano.add_theme_color_override("font_color", Color(0.15, 0.04, 0.04))
 	_lbl_ano.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	caixa.add_child(_lbl_ano)
+	_lbl_epoca = Label.new()
+	_lbl_epoca.name = "SubtituloEpoca"
+	_lbl_epoca.add_theme_font_size_override("font_size", 13)
+	_lbl_epoca.add_theme_color_override("font_color", Color(0.38, 0.12, 0.1))
+	_lbl_epoca.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_lbl_epoca.visible = false
+	caixa.add_child(_lbl_epoca)
 	_lbl_extra = Label.new()
 	_lbl_extra.add_theme_font_size_override("font_size", 14)
 	_lbl_extra.add_theme_color_override("font_color", Color(0.25, 0.08, 0.08))
@@ -237,8 +245,21 @@ func _montar_legenda() -> void:
 	add_child(_painel_legenda)
 
 
+const SUBTITULO_EPOCA := {
+	GameState.Epoca.E1950: "o núcleo de pedra na areia",
+	GameState.Epoca.E1967: "verão de 1967 · o Castelinho em obra\no Tito ainda brinca aqui",
+	GameState.Epoca.E1975: "a casa de veraneio pronta",
+	GameState.Epoca.E2019: "fechado e quase em ruína",
+	GameState.Epoca.E2020: "",
+	GameState.Epoca.ESEMDATA: "o último dia",
+}
+
+
 func _atualizar_legenda() -> void:
 	_lbl_ano.text = str(GameState.NOMES_EPOCA.get(int(GameState.epoca), "????"))
+	var sub: String = SUBTITULO_EPOCA.get(int(GameState.epoca), "")
+	_lbl_epoca.text = sub
+	_lbl_epoca.visible = sub != ""
 
 
 func _on_epoca(_e: int) -> void:

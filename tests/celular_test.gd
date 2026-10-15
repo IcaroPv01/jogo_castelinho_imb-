@@ -40,6 +40,7 @@ func _rodar() -> void:
 	await _teste_analogico()
 	await _teste_olhar()
 	await _teste_botoes()
+	await _teste_botao_mapa()
 	await _teste_visor_e_faixa()
 	await _teste_toque_avanca_fala()
 	await _teste_pausa_e_continuar()
@@ -226,6 +227,31 @@ func _teste_botoes() -> void:
 	main.player.lanterna.visible = luz_antes
 	GS.set_flag("lanterna_desligada", not luz_antes)
 	await create_timer(0.15).timeout
+
+
+# ---------------------------------------------------------------- botão "Mapa"
+func _teste_botao_mapa() -> void:
+	print("-- botão Mapa")
+	var c = hud.controles
+	var lay: Dictionary = c.layout()
+	_checar(lay.has("mapa"), "botão Mapa existe")
+	var vp: Vector2 = c.tamanho()
+	var m: Dictionary = lay.mapa
+	_checar(Vector2(m.c).x - float(m.r) >= 0.0 and Vector2(m.c).x + float(m.r) <= vp.x and Vector2(m.c).y - float(m.r) >= 0.0, "Mapa cabe na tela")
+	_checar(Vector2(m.c).distance_to(lay.tela.c) > float(m.r) + float(lay.tela.r) and Vector2(m.c).distance_to(lay.pausa.c) > float(m.r) + float(lay.pausa.r), "Mapa não encosta em Tela cheia nem em Pausa")
+	var Mapa = load("res://ui/mapa.gd")
+	c.processar_toque(5, m.c, true)
+	c.processar_toque(5, m.c, false)
+	await process_frame
+	await process_frame
+	_checar(Mapa.atual != null and GS.flag("ui_aberta"), "tocar em Mapa abre o mapa")
+	if Mapa.atual != null:
+		Mapa.atual.fechar()
+	await process_frame
+	await process_frame
+	_checar(Mapa.atual == null and not GS.flag("ui_aberta"), "fechar o mapa solta a tela")
+	for i in 4:
+		await process_frame
 
 
 # ---------------------------------------------------------------- visor e faixa de discos

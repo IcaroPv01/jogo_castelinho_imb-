@@ -23,6 +23,7 @@ Decisões do Icaro (07/10/2026):
 | 9 | Modo debug e Figura no Q | Q possível e tenso (sem perseguição cedo); painel de debug para testar sem morrer | `world/visor.gd`, `world/rastro.gd`, `creatures/figura_branca.gd`, `ui/debug.gd`, `ui/painel_debug.gd` | feito (PR #19): Figura do slide no mundo, perseguição "tipo Granny", olho mais lento, modo debug `?debug=1`; reabre quando o Icaro testar o Q |
 | 10 | Galeria 3D e colocação dos objetos | Varredura automática de colocação (flutuando, enfiado, fora da sala, z-fighting, frestas, continuidade); galeria `/galeria/` com fotos e glTF; design no Canva para comentários | `tests/varredura/colocacao*.gd`, `tests/colocacao_test.gd`, `castelinho/malha.gd` (registro), `castelinho/registro.gd`, `tools/galeria/`, `galeria/` | feito (PR #20): achados reais zerados (correções B26–B36 ou exceções com motivo), 166 objetos na galeria, dúvidas no Canva; reabre quando o Icaro comentar |
 | 11 | Q liga/desliga, pulo e relatório | Pedidos do playtest do Bernardo (14/10): Q como o Correr, pulo baixo, botão de enviar relatório | `world/visor.gd`, `player/player.gd`, `ui/controles_toque.gd`, `ui/relatorio.gd`, `ui/menu_pausa.gd` | feito (PR #22): Q/Visor liga e desliga com um toque, Espaço/botão Pular (pulo baixo), "Enviar relatório" na pausa; reabre quando o Icaro testar |
+| 12 | Épocas, caminho e história | Playtest do Bernardo, fase B2: épocas distintas, caminho claro, história fora dos painéis, sustos no caminho, ideias da água | `castelinho/ruina2019.gd`, `castelinho/tito.gd`, `autoload/efeitos.gd`, `ui/mapa.gd`, `world/objetivo.gd`, `ui/jornal.gd`, `world/flash_agua.gd`, `world/goteiras.gd`, `world/agua_ferrugem.gd`, `world/niveis/sustos_caminho.gd` | feito (PR a seguir): 2019 interditado, Tito fantasma depois de 1967, legenda das épocas, Mapa da Visita (M), jornal de 1967, lampejos de água, goteiras, água ferrugem, 3 sustos no caminho; reabre quando o Icaro jogar |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -65,11 +66,40 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
   faltar algum ao chegar no quarto, os que faltam reaparecem na parede dele (as salas fecham atrás).
 - **Buraco no muro** não virou passagem nova (a Torre A em 1967 está pela metade): virou ponteiro com pegadas e fala.
 - **Debug:** "ganhar tudo" conclui as caças; pular de fase conclui as anteriores e dá os discos delas.
-- **Para o módulo 12:** `objetivo_atual()` pode mostrar a caça ativa via `GameState.caca_ativa()`. Mover objetos de `CACAS`
+- **Mapa da Visita:** `Hud.objetivo_caca` está plugado em `Objetivo.extras` e mostra a caça ativa ("Vestígios 1/3: ligue o Q..."). Mover objetos de `CACAS`
   ou das entregas exige rever `castelinho_cacas.gd` e os testes.
 - **Testes:** `castelinho_test`, `porao_test`, `debug_test`; capturas `tests/captura_cacas.gd`. Os testes dividem saves em `user://`:
   nunca rode dois `testar.sh` ao mesmo tempo (dá falha falsa em `debug_test`/`figura_q_test`).
 - Pendente: o Icaro jogar e dizer se as caças ficaram divertidas e se alguma é difícil de achar; TITO 7 fica ao lado de um arco.
+### Módulo 12: épocas, caminho e história (15/10/2026)
+
+- **Origem:** fase B2 do playtest do Bernardo (`/mnt/project-files/castelinho/playtest-bernardo-plano.md`): ele se perdeu, achou
+  muitas salas vazias, não entendeu a história (achou que o Tito morreu em 2019 porque o via no Visor em 2019) e não entendeu a
+  fala "A água desce por aqui". Decisão do Icaro: o sumiço continua em **12/03/1967**. As caças dos discos são do Módulo 2.
+- **Épocas:** legenda fixa sob o ano no Visor (`Efeitos._lbl_epoca`, tabela `SUBTITULO_EPOCA`; o `_lbl_extra` continua livre).
+  **2019** (`castelinho/ruina2019.gd`, chamado no fim de `extras._ruina`): tábuas nos arcos (a porta fica livre), fita e placa
+  INTERDITADO, letreiro CHOPERIA apagado (fato: restaurante até 2019), mato, mesas viradas e cadeiras, cartaz PROCURA-SE
+  desbotado e pichação "CADÊ O TITO?" na fachada leste. Tudo **sem colisão**. **2026:** faixa "REABERTO · visitas guiadas aos
+  sábados" na pérgola (V1–V2 inteira, V3 rasgada, V4 some; fato: sábados desde 20/02/2026). **Tito:** vivo só em 1967;
+  `TitoNoVisor` agora é `criar_tito(true)` (fantasma azul-acinzentado, molhado, pingando) e só existe em 1975 e 2019.
+- **Mapa da Visita** (`ui/mapa.gd`, tecla M, botão "Mapa" no toque e na pausa): folheto da prefeitura fictícia com andares,
+  "você está aqui", próxima sala, salas vistas e a linha "Agora:". O nível dá os dados por `dados_mapa()` (só o Castelinho tem;
+  porão: "Este andar não consta na planta"; Ato II e Barra: "Esta área não consta no mapa!"). V3 rabiscado, V4 com giz do Tito.
+  **"Agora:"** vem de `Objetivo.atual()` (`world/objetivo.gd`); quem tiver objetivo próprio (as caças do Módulo 2) faz
+  `Objetivo.extras.append(callable)`: o primeiro texto não vazio vence. Porão e Braço Morto: genérico ("Siga em frente.").
+- **História fora dos painéis:** entre a visita 2 e a 3, o recorte da "Folha do Veraneio" (jornal fictício) de 14/03/1967
+  (`ui/jornal.gd`, uma vez por save, flag `jornal_1967_visto`; `tests/castelinho_test.gd` o fecha no loop de visitas).
+- **Água:** "Ouça. A água desce por aqui." (sala 80) dispara 3 lampejos da água subindo até 1,3 m (`world/flash_agua.gd`,
+  compara a linha por semelhança porque a V4 a corrompe). Porão: goteiras com respingo no ritmo de `goteira.ogg`
+  (`world/goteiras.gd`, menos no celular, nunca na sala 95). A água do porão fica cor de ferrugem com a Figura a menos de 6 m,
+  no J2 e nas perseguições 90/94 (`world/agua_ferrugem.gd`, uma constante `COR_AGUA_FERRUGEM`; escolha da cor com o Icaro).
+- **Sustos no caminho** (`world/niveis/sustos_caminho.gd`, cada um uma vez, adiam com fala, tela aberta, Visor ou perseguição):
+  V3 sala 54 o fantasma do Tito cruza o fundo do corredor; V3 sala 66 a armadura aparece ao olhar de volta se o susto antigo
+  não disparou; V4 sala 71 relâmpago com a Figura do lado de fora da janela do hall.
+- **Testes novos:** `epocas_visual_test`, `mapa_test`, `agua_sustos_test`; botão Mapa no `celular_test`; lampejo no
+  `tests/web_cenas.gd`. Capturas: `tests/captura_epocas.gd`, `captura_mapa.gd`, `captura_agua_sustos.gd`.
+- **Não conferido:** sons dos sustos (sem placa de som), o mapa no celular de verdade. `debug_test` falha se o `save.json` do
+  user dir estiver sujo de outra execução: rode com `XDG_DATA_HOME` limpo quando várias sessões testam ao mesmo tempo.
 
 ### Módulo 11: Q liga/desliga, pulo baixo e relatório (14/10/2026)
 
