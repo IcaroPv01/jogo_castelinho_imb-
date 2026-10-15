@@ -229,6 +229,13 @@ func _atualizar_passaporte() -> void:
 		lbl_passaporte.text = "Passaporte %d/%d" % [n, GameState.PASSAPORTE_IDS.size()]
 
 
+## M abre o Mapa da Visita (ui/mapa.gd); quem fecha é o próprio mapa.
+func _unhandled_input(e: InputEvent) -> void:
+	if e.is_action_pressed("mapa") and not e.is_echo() and not _cinema:
+		if Mapa.abrir() != null:
+			get_viewport().set_input_as_handled()
+
+
 func mostrar_pausa(v: bool) -> void:
 	menu_pausa.mostrar(v, GameState.contadores.get("pistas_tito", 0))
 

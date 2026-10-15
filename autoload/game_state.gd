@@ -328,7 +328,7 @@ func _registrar_inputs() -> void:
 		"esquerda": [KEY_A, KEY_LEFT], "direita": [KEY_D, KEY_RIGHT],
 		"correr": [KEY_SHIFT], "interagir": [KEY_E], "pular": [KEY_SPACE],
 		"visor": [], "visor_alternar": [KEY_Q],   # Q liga/desliga: o Visor mantém "visor" apertado (ver Visor.alternar)
-		"lanterna": [KEY_F], "pausa": [KEY_ESCAPE, KEY_P], "avancar_dialogo": [KEY_SPACE, KEY_ENTER],
+		"lanterna": [KEY_F], "mapa": [KEY_M], "pausa": [KEY_ESCAPE, KEY_P], "avancar_dialogo": [KEY_SPACE, KEY_ENTER],
 	}
 	for acao in teclas:
 		if not InputMap.has_action(acao):
