@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/niveis/cidade_ponte.gd" id="1"]
+
+[node name="CidadePonte" type="Node3D"]
+script = ExtResource("1")

@@ -39,6 +39,8 @@ func _rodar() -> void:
 	await _nivel("res://world/niveis/barra.tscn", "barra", 2, {})
 	await _nivel("res://world/niveis/porao.tscn", "porao", 5, {"porao_semente": 4242})
 	await _nivel("res://world/niveis/braco_morto.tscn", "braco", 5, {})
+	for lugar in ["casas", "barra", "ponte", "praia", "rodoviaria"]:      # Módulo 14: lugares da cidade (usam nome automático)
+		await _nivel("res://world/niveis/cidade_%s.tscn" % lugar, "cidade_" + lugar, 4, {}, 5)
 	Malha.desligar()
 	Malha.limpar()
 	print("  (achados intencionais/exceções ignorados: %d)" % total_intencionais)
@@ -46,7 +48,7 @@ func _rodar() -> void:
 	quit(1 if falhas else 0)
 
 
-func _nivel(caminho: String, nome: String, visita: int, flags: Dictionary) -> void:
+func _nivel(caminho: String, nome: String, visita: int, flags: Dictionary, minimo := 100) -> void:
 	GS.novo_jogo()
 	GS.visita = visita
 	GS.flags["tem_visor"] = true
@@ -66,7 +68,7 @@ func _nivel(caminho: String, nome: String, visita: int, flags: Dictionary) -> vo
 	Registro.varrer(nivel, nome)
 	var lib = lib_gd.new()
 	lib.preparar(Malha.registro, Malha.materiais, {"nivel": nome, "visita": visita, "sala_fn": Callable()})
-	_checar(Malha.registro.size() > 100, "%s v%d: registro com %d entradas" % [nome, visita, Malha.registro.size()])
+	_checar(Malha.registro.size() > minimo, "%s v%d: registro com %d entradas" % [nome, visita, Malha.registro.size()])
 	lib.checar_flutuando()
 	lib.checar_enfiado()
 	lib.checar_zfight()

@@ -12,6 +12,11 @@ const NIVEIS := [
 	["res://world/niveis/barra.tscn", 1],
 	["res://world/niveis/porao.tscn", 4],
 	["res://world/niveis/braco_morto.tscn", 4],
+	["res://world/niveis/cidade_casas.tscn", 2],
+	["res://world/niveis/cidade_barra.tscn", 3],
+	["res://world/niveis/cidade_ponte.tscn", 4],
+	["res://world/niveis/cidade_praia.tscn", 3],
+	["res://world/niveis/cidade_rodoviaria.tscn", 4],
 ]
 const FRAMES := 600
 

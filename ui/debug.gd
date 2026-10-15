@@ -9,6 +9,7 @@ extends RefCounted
 ##   - `Debug.figura_off`         → toda FiguraBranca fica escondida e parada; o Visor não mostra a Figura no slide.
 ##   - `Debug.atencao_congelada`  → o Visor não muda `GameState.atencao`.
 ##   - `Debug.info`               → HUD de debug com sala, época, visita e qps.
+##   - `Debug.pular_cidade(id)`   → vai direto a um lugar da cidade (Módulo 14), sem esperar a visita que o abre.
 
 static var ligado := false
 static var imortal := false
@@ -92,9 +93,11 @@ static func tecla_painel(e: InputEvent) -> bool:
 
 
 # ---------------------------------------------------------------- ganhar tudo
-## Os 5 discos do Visor, a lanterna e o Visor (as mesmas flags que o jogo normal grava).
+## Os 5 discos do Visor, a lanterna e o Visor (as mesmas flags que o jogo normal grava) e os 5 lugares da cidade
+## (Módulo 14) feitos, com as 6 pistas deles: o total de pistas do jogo chega a 21.
 static func ganhar_tudo() -> void:
 	var gs := _gs()
+	gs.cidade_concluir_tudo()
 	gs.flags.erase("lanterna_desligada")
 	gs.set_flag("tem_lanterna", true)
 	gs.set_flag("tem_visor", true)
@@ -173,6 +176,21 @@ static func _dar_discos_anteriores(etapa: int) -> void:
 			gs.set_flag("tem_visor", true)
 
 
+## Cai direto num dos lugares da cidade (Módulo 14: "casas", "barra", "ponte", "praia", "rodoviaria"), ignorando a abertura por
+## visita. Dá os 5 discos (o Visor precisa do de 1967 nas casas e na rodoviária). A volta ao
+## Castelinho cai na calçada da visita atual do save de debug. Só age com o debug ligado. Devolve o nó do nível (ou null).
+static func pular_cidade(id: String) -> Variant:
+	var gs := _gs()
+	if not ligado or not gs.CIDADE.has(id):
+		return null
+	_dar_discos_anteriores(6)      # os 5 discos (o Visor precisa do de 1967 nas casas e na rodoviária, mesmo antes de a visita que o dá)
+	gs.set_flag("tem_visor", true)
+	await _carregar(gs.CIDADE[id]["cena"], "Spawn")
+	var arv := Engine.get_main_loop() as SceneTree
+	var main: Variant = arv.get_first_node_in_group("main")
+	return main.mundo.get_child(0) if main != null and main.mundo.get_child_count() > 0 else null
+
+
 ## Cai direto num dos finais do Braço Morto: "encontrado", "visita_concluida", "sala_101" ou o secreto "tito_salvo"
 ## (este embarca no pedalinho e começa a cena final, a ~11 m do Tito de 1967).
 ## (Dá tudo ao jogador, põe as pistas do Tito e dispara a cena; o resto roda como no jogo.) Devolve o nó do nível.
@@ -181,7 +199,7 @@ static func pular_final(final: String) -> Variant:
 		return null
 	var gs := _gs()
 	ganhar_tudo()
-	gs.contadores["pistas_tito"] = 12 if final == "tito_salvo" else (8 if final == "encontrado" else 3)     # braco_morto.PISTAS_ENCONTRADO = 8, BracoSalvar.PISTAS_SALVAR = 12
+	gs.contadores["pistas_tito"] = 16 if final == "tito_salvo" else (8 if final == "encontrado" else 3)     # braco_morto.PISTAS_ENCONTRADO = 8, BracoSalvar.PISTAS_SALVAR = 16
 	gs.checkpoint_sala = gs.TOTAL_SALAS
 	gs.sala_maxima = gs.TOTAL_SALAS
 	var alvo: Array = gs.preparar_continuar()

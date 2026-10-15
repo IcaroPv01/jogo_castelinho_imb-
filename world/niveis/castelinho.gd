@@ -659,6 +659,7 @@ func _marcadores() -> void:
 		if g != base and find_child("Checkpoint_%d" % g, false, false) == null:
 			_marcar("Checkpoint_%d" % g, BASES_CHECKPOINT[base], yaws[base])
 	_marcar("Spawn_volta_barra", Vector3(-8.6, 0.1, -15.6), 0.0)
+	_marcar("Spawn_volta_cidade", Vector3(-22.7, 0.1, 2.0), -90.0)     # Módulo 14: volta dos lugares da cidade, de frente para a placa
 	_marcar("Spawn_volta_ato2", Vector3(-19.4, 6.9, -12.6), 0.0)
 	# câmeras de conferência (comparar com docs/pesquisa/refs/*.jpg)
 	_cam("Cam_drone", Vector3(8.0, 13.5, 6.0), Vector3(-13.0, 2.8, -15.0), 73.0)
@@ -1103,6 +1104,17 @@ func _montar_props() -> void:
 	add_child(no)
 	_props.construir_instancia(no, "Postes", 1)
 	Epocas.marcar(no, [E2020])
+	_montar_placa_cidade()
+
+
+## Módulo 14 (mais partes da cidade): a placa da prefeitura fictícia na calçada, ao lado do Spawn. Só existe se algum lugar da
+## cidade já abriu (`GameState.cidade_algum_aberto`); E abre o roteiro (`ui/placa_cidade.gd`). A volta dos lugares chega em
+## `Spawn_volta_cidade`, de frente para ela.
+func _montar_placa_cidade() -> void:
+	if not GameState.cidade_algum_aberto():
+		return
+	var it := PlacaCidade.montar_3d(self, Vector3(-20.6, 0.0, 2.0), -90.0)
+	Epocas.marcar(it.get_parent(), [E2020])
 
 
 # ================================================================== o estado de cada visita (objetos extras)
