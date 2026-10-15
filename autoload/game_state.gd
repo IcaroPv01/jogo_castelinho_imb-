@@ -170,16 +170,99 @@ func set_flag(nome: String, valor: Variant = true) -> void:
 	salvar()
 
 
-## Passaporte do Museu (visita 1): os 3 objetos achados ficam nas flags "passaporte_<id>".
+## Passaporte do Museu (visita 1): os 3 objetos achados ficam nas flags "passaporte_<id>" (= a caça do disco 1950).
 const PASSAPORTE_IDS := ["pedra", "foto", "chave"]
 
 
 func passaporte_achados() -> int:
+	return caca_achados(Epoca.E1950)
+
+
+## CAÇAS DOS DISCOS (módulo 2, parte 2): cada disco do Visor se ganha achando 3 coisas com o disco ANTERIOR ligado.
+## Chave = o disco ganho. visita = onde a caça vive (5 = porão); previo = disco que mostra os objetos (-1 = nenhum);
+## prefixo = prefixo das flags (a do 1950 mantém "passaporte_" por causa dos saves antigos); rotulo = contador do HUD.
+## Flag de achado: prefixo + id. O disco só vale com os 3 (ou se o jogador já o tem: save antigo).
+const CACAS := {
+	Epoca.E1950: {"visita": 1, "previo": -1, "prefixo": "passaporte_", "rotulo": "Passaporte", "ids": ["pedra", "foto", "chave"],
+		"lancada": "passaporte_lancado"},
+	Epoca.E1967: {"visita": 2, "previo": Epoca.E1950, "prefixo": "caca_1967_", "rotulo": "Vestígios",
+		"ids": ["pedra_gres", "casa_miolo", "areia_nua"]},
+	Epoca.E1975: {"visita": 3, "previo": Epoca.E1967, "prefixo": "caca_1975_", "rotulo": "Marcas",
+		"ids": ["tito", "buraco", "balde"]},
+	Epoca.E2019: {"visita": 4, "previo": Epoca.E1975, "prefixo": "caca_2019_", "rotulo": "Medidas",
+		"ids": ["tito_6", "tito_7", "tito_8"]},
+	Epoca.ESEMDATA: {"visita": 5, "previo": Epoca.E2019, "prefixo": "caca_semdata_", "rotulo": "Desenhos",
+		"ids": ["desenho_a", "desenho_b", "desenho_c"]},
+}
+
+
+func caca_total(disco: int) -> int:
+	return (CACAS[disco]["ids"] as Array).size() if CACAS.has(disco) else 0
+
+
+func caca_tem(disco: int, id: String) -> bool:
+	return CACAS.has(disco) and bool(flags.get(CACAS[disco]["prefixo"] + id, false))
+
+
+func caca_achados(disco: int) -> int:
 	var n := 0
-	for id in PASSAPORTE_IDS:
-		if flags.get("passaporte_" + id, false):
-			n += 1
+	if CACAS.has(disco):
+		for id in CACAS[disco]["ids"]:
+			if caca_tem(disco, id):
+				n += 1
 	return n
+
+
+## true = o disco já pode ser entregue (3 achados) ou já foi ganho. Disco sem caça: sempre true.
+func caca_completa(disco: int) -> bool:
+	return not CACAS.has(disco) or discos.has(disco) or caca_achados(disco) >= caca_total(disco)
+
+
+## Marca um achado. Devolve true se era novo.
+func caca_achar(disco: int, id: String) -> bool:
+	if not CACAS.has(disco) or caca_tem(disco, id):
+		return false
+	set_flag(CACAS[disco]["prefixo"] + id, true)
+	return true
+
+
+## Dá a caça por feita (modo debug, pular de fase): marca todos os achados.
+func caca_concluir(disco: int) -> void:
+	if not CACAS.has(disco):
+		return
+	for id in CACAS[disco]["ids"]:
+		flags[CACAS[disco]["prefixo"] + id] = true
+	salvar()
+
+
+## Os ids que ainda faltam, na ordem da tabela.
+func caca_faltam(disco: int) -> Array:
+	var r: Array = []
+	if CACAS.has(disco):
+		for id in CACAS[disco]["ids"]:
+			if not caca_tem(disco, id):
+				r.append(id)
+	return r
+
+
+## A caça que o HUD mostra agora (chave de CACAS) ou -1: a primeira ainda incompleta cujo disco anterior o jogador tem e
+## cuja visita já chegou (castelo: visita >= a da caça; porão: só a do porão). A do 1950 só depois do convite do Bentinho.
+func caca_ativa() -> int:
+	var no_porao: bool = sala_atual >= PRIMEIRA_SALA_PORAO
+	for d in CACAS:
+		var c: Dictionary = CACAS[d]
+		if (int(c["visita"]) == 5) != no_porao:
+			continue
+		if not no_porao and visita < int(c["visita"]):
+			continue
+		if caca_completa(d):
+			continue
+		if int(c["previo"]) >= 0 and not discos.has(int(c["previo"])):
+			continue
+		if c.has("lancada") and not bool(flags.get(c["lancada"], false)):
+			continue
+		return d
+	return -1
 
 
 func flag(nome: String, padrao: Variant = false) -> Variant:
@@ -328,7 +411,7 @@ func _registrar_inputs() -> void:
 		"esquerda": [KEY_A, KEY_LEFT], "direita": [KEY_D, KEY_RIGHT],
 		"correr": [KEY_SHIFT], "interagir": [KEY_E], "pular": [KEY_SPACE],
 		"visor": [], "visor_alternar": [KEY_Q],   # Q liga/desliga: o Visor mantém "visor" apertado (ver Visor.alternar)
-		"lanterna": [KEY_F], "pausa": [KEY_ESCAPE, KEY_P], "avancar_dialogo": [KEY_SPACE, KEY_ENTER],
+		"lanterna": [KEY_F], "mapa": [KEY_M], "pausa": [KEY_ESCAPE, KEY_P], "avancar_dialogo": [KEY_SPACE, KEY_ENTER],
 	}
 	for acao in teclas:
 		if not InputMap.has_action(acao):

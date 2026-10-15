@@ -48,7 +48,7 @@ func _titulos() -> void:
 	if tinha:
 		DirAccess.copy_absolute(cam, bak)
 	var Finais = load("res://ui/finais.gd")
-	for f in ["encontrado", "visita_concluida", "sala_101"]:
+	for f in ["encontrado", "visita_concluida", "sala_101", "tito_salvo"]:
 		if FileAccess.file_exists(cam):
 			DirAccess.remove_absolute(cam)
 		Finais.registrar(f)
@@ -62,7 +62,7 @@ func _titulos() -> void:
 	# os três vistos
 	if FileAccess.file_exists(cam):
 		DirAccess.remove_absolute(cam)
-	for f in ["encontrado", "visita_concluida", "sala_101"]:
+	for f in ["encontrado", "visita_concluida", "sala_101", "tito_salvo"]:
 		Finais.registrar(f)
 	var t2 = load("res://ui/tela_titulo.tscn").instantiate()
 	root.add_child(t2)

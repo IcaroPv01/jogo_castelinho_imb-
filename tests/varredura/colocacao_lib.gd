@@ -391,7 +391,7 @@ static func _epm_cluster(c: Array) -> int:
 
 
 const _PAL_INTENC := ["luz", "chama", "brilho", "halo", "raio", "sombra", "mancha", "fumaca", "poeira", "faisca", "particula", "brasa", "fogo", "vento", "agua", "onda", "espuma",
-	"passaporte", "disco_", "chuva", "montinho", "recolhida", "pegada", "rastro", "mosca", "estrela", "brilha", "lampada", "balao", "folha_costela"]
+	"passaporte", "caca_", "disco_", "chuva", "montinho", "recolhida", "pegada", "rastro", "mosca", "estrela", "brilha", "lampada", "balao", "folha_costela", "goteira"]
 const _PAL_VAO := ["vidro", "porta", "janela", "grade", "arco", "veneziana", "folha_e", "folha_d"]
 
 

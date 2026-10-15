@@ -41,6 +41,7 @@ func _rodar() -> void:
 	await _teste_masmorra()
 	await _teste_sustos()
 	await _teste_morte_e_checkpoint()
+	await _teste_caca_semdata()
 	await _teste_quarto_e_disco()
 	await _teste_slides()
 	await _teste_geometria_andando()
@@ -637,6 +638,72 @@ func _teste_morte_e_checkpoint() -> void:
 	_checar(absf(nivel.prof - nivel.PROF_AGUA[2]) < 0.01, "com a água do nível 2 (%.2f m)" % nivel.prof)
 	await _carregar_porao("Checkpoint_95")
 	_checar(GS.sala_atual == 95, "Continuar em Checkpoint_95 cai no quarto do Tito (sala %d)" % GS.sala_atual)
+
+
+## Caça do disco sem data: 3 desenhos de giz (salas 82, 85 e 88) vistos só com o disco de 2019; o disco do quarto só
+## aparece com os 3; os que faltam reaparecem no quarto (as salas fecham atrás do jogador).
+func _teste_caca_semdata() -> void:
+	print("-- caça do disco sem data (desenhos do Tito em 2019)")
+	var E = GS.Epoca
+	for id in ["desenho_a", "desenho_b", "desenho_c"]:
+		GS.flags.erase("caca_semdata_" + id)
+	GS.flags.erase("caca_semdata_dica")
+	GS.flags.erase("caca_semdata_reserva")
+	GS.discos.assign([E.E1950, E.E1967, E.E1975, E.E2019])
+	GS.disco_atual = E.E2019
+	await _carregar_porao()
+	nivel.ameacas_ligadas = false
+	var ids := {1: "desenho_a", 4: "desenho_b", 7: "desenho_c"}
+	var normais := {1: Vector3.RIGHT, 4: Vector3.LEFT, 7: Vector3.RIGHT}
+	for idx in ids:
+		nivel.ir_para_sala(idx)
+		await _frames(6)
+		var it: Node3D = nivel.salas[idx].raiz.find_child("InterCaca_" + ids[idx], true, false)
+		_checar(it != null, "sala %d: desenho %s existe" % [81 + idx, ids[idx]])
+		if it == null:
+			continue
+		GS.trocar_epoca(E.E2020)
+		await _frames(3)
+		_checar(not it.visible, "sala %d: o desenho some no presente" % (81 + idx))
+		GS.trocar_epoca(E.E1975)
+		await _frames(3)
+		_checar(not it.visible, "sala %d: e some com o disco de 1975" % (81 + idx))
+		GS.trocar_epoca(E.E2019)
+		await _frames(3)
+		_checar(it.visible, "sala %d: aparece com o disco de 2019" % (81 + idx))
+		var c = nivel.salas[idx]
+		var alvo: Vector3 = it.global_position
+		var n_mundo: Vector3 = c.raiz.global_transform.basis * normais[idx]
+		player.global_position = Vector3(alvo.x + n_mundo.x * 1.3, c.raiz.global_position.y + 0.1, alvo.z + n_mundo.z * 1.3)
+		player.velocity = Vector3.ZERO
+		player.rotation.y = atan2(n_mundo.x, n_mundo.z)
+		player.cabeca.rotation.x = -atan2(1.6 - (alvo.y - c.raiz.global_position.y), 1.3)
+		for k in 6:
+			await physics_frame
+			await process_frame
+		_checar(player._alvo == it, "sala %d: o raio do jogador alcança o desenho" % (81 + idx))
+		_checar(main.hud.lbl_passaporte.visible and main.hud.lbl_passaporte.text == "Desenhos %d/3" % GS.caca_achados(E.ESEMDATA), "sala %d: contador no HUD (%s)" % [81 + idx, main.hud.lbl_passaporte.text])
+		if idx == 7:
+			break
+		it.interagir(player)
+		await _frames(3)
+	_checar(GS.caca_achados(E.ESEMDATA) == 2, "2 desenhos achados (%d)" % GS.caca_achados(E.ESEMDATA))
+	# o quarto: com 2 desenhos não há disco e o que falta aparece na parede do quarto
+	nivel.ir_para_sala(14)
+	await _frames(8)
+	var q = nivel.salas[14]
+	_checar(q.raiz.find_child("InteragivelDisco", true, false) == null and not (q.raiz.get_node("Disco") as Node3D).visible, "quarto: sem disco com 2 desenhos")
+	_checar(q.raiz.find_child("InterCaca_desenho_c", true, false) != null and q.raiz.find_child("InterCaca_desenho_a", true, false) == null, "quarto: o desenho que falta reaparece na parede")
+	var ult: Node = q.raiz.find_child("InterCaca_desenho_c", true, false)
+	GS.trocar_epoca(E.E2019)
+	await _frames(3)
+	ult.interagir(player)
+	await _frames(4)
+	_checar(GS.caca_completa(E.ESEMDATA) and not main.hud.lbl_passaporte.visible, "3 desenhos: caça completa, contador some")
+	_checar(q.raiz.find_child("InteragivelDisco", true, false) != null and (q.raiz.get_node("Disco") as Node3D).visible, "com os 3 desenhos o disco aparece na cama")
+	GS.trocar_epoca(E.E2020)
+	GS.discos.clear()
+	GS.disco_atual = -1
 
 
 func _teste_quarto_e_disco() -> void:

@@ -13,6 +13,7 @@ var _pag_opcoes: VBoxContainer
 var _pag_confirma: VBoxContainer
 var _pag_relatorio: VBoxContainer
 var btn_relatorio: BotaoGel      # "Enviar relatório" (página principal)
+var btn_mapa: BotaoGel           # "Mapa" (página principal): abre o Mapa da Visita
 var caixa_relatorio: TextEdit    # texto do relatório (só leitura, selecionável)
 var btn_copiar: BotaoGel
 var btn_whatsapp: BotaoGel
@@ -63,6 +64,7 @@ func _ready() -> void:
 	btn_continuar = _botao(_pag_principal, "Continuar", Flash.VERDE, _continuar)
 	# preso num canto ou num vão sem saída (playtest do Bernardo): volta a um ponto seguro de alguns segundos atrás
 	_botao(_pag_principal, "Destravar", Flash.AZUL, _destravar)
+	btn_mapa = _botao(_pag_principal, "Mapa", Flash.AZUL, _abrir_mapa)
 	_botao(_pag_principal, "Opções", Flash.AZUL, func(): _ir("opcoes"))
 	btn_relatorio = _botao(_pag_principal, "Enviar relatório", Flash.AZUL, func(): _ir("relatorio"))
 	_botao(_pag_principal, "Voltar ao título", Flash.LARANJA, func(): _ir("confirma"))
@@ -268,6 +270,13 @@ func _destravar() -> void:
 	if RedeSeguranca.atual:
 		RedeSeguranca.atual.destravar()
 	_continuar()
+
+
+## "Mapa": o mapa liga a flag ui_aberta, o main.gd despausa e o menu se esconde; fechar o mapa recaptura o mouse.
+func _abrir_mapa() -> void:
+	Opcoes.salvar()
+	Celular.pausa_toque = false
+	Mapa.abrir(true)
 
 
 ## Mesmo caminho de volta ao título do Braço Morto: zera a UI, desliga o jogo e recarrega a cena principal.

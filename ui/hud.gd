@@ -17,7 +17,7 @@ var _lbl_pistas_n: Label
 var _lbl_pistas_aviso: Label
 var _n_pistas := 0
 var _tween_pista: Tween
-var lbl_passaporte: Label
+var lbl_passaporte: Label       # contador da caça do disco em curso (nome antigo: nasceu como o Passaporte)
 var faixa_discos: FaixaDiscos
 var olho: OlhoAtencao
 ## Só existem no celular (Celular.ativo): controles de toque e aviso "vire o celular". O HUD cria e libera.
@@ -28,6 +28,8 @@ var _t_glitch := 0.0
 
 func _ready() -> void:
 	layer = 10
+	if not Objetivo.extras.has(objetivo_caca):
+		Objetivo.extras.append(objetivo_caca)
 	lbl_sala = Label.new()
 	lbl_sala.name = "Sala"
 	lbl_sala.position = Vector2(24, 18)
@@ -219,14 +221,32 @@ func _process(dt: float) -> void:
 		lbl_sala.text = texto_sala(randi_range(1, 99))
 
 
-## "Passaporte 1/3": só na visita 1, depois do convite do Bentinho, até completar (ou ter o disco 1950).
+## Contador da caça do disco em curso (GameState.caca_ativa): "Passaporte 1/3", "Vestígios 2/3", "Marcas", "Medidas",
+## "Desenhos". Só aparece durante a caça (some ao completar ou ao ganhar o disco).
 func _atualizar_passaporte() -> void:
-	var n := GameState.passaporte_achados()
-	var ativo: bool = GameState.visita == 1 and GameState.flag("passaporte_lancado") \
-		and not GameState.discos.has(GameState.Epoca.E1950) and n < GameState.PASSAPORTE_IDS.size()
-	lbl_passaporte.visible = ativo
-	if ativo:
-		lbl_passaporte.text = "Passaporte %d/%d" % [n, GameState.PASSAPORTE_IDS.size()]
+	var d := GameState.caca_ativa()
+	lbl_passaporte.visible = d >= 0
+	if d >= 0:
+		lbl_passaporte.text = "%s %d/%d" % [GameState.CACAS[d]["rotulo"], GameState.caca_achados(d), GameState.caca_total(d)]
+
+
+## Frase do Mapa da Visita durante uma caça aos discos ("" quando não há caça: o Objetivo segue para a frase normal).
+static func objetivo_caca() -> String:
+	var d := GameState.caca_ativa()
+	if d < 0:
+		return ""
+	var c: Dictionary = GameState.CACAS[d]
+	var n := "%s %d/%d" % [c["rotulo"], GameState.caca_achados(d), GameState.caca_total(d)]
+	if int(c["previo"]) < 0:
+		return "%s: ache os objetos antigos que brilham pelo museu." % n
+	return "%s: ligue o Q com o disco anterior e procure o brilho." % n
+
+
+## M abre o Mapa da Visita (ui/mapa.gd); quem fecha é o próprio mapa.
+func _unhandled_input(e: InputEvent) -> void:
+	if e.is_action_pressed("mapa") and not e.is_echo() and not _cinema:
+		if Mapa.abrir() != null:
+			get_viewport().set_input_as_handled()
 
 
 func mostrar_pausa(v: bool) -> void:

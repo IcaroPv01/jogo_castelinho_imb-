@@ -13,7 +13,7 @@ Decisões do Icaro (07/10/2026):
 |---|---|---|---|---|
 | 0 | Fundação | `CLAUDE.md`, este mapa, instalador do Godot | `CLAUDE.md`, `docs/MODULOS.md`, `tools/instalar_godot.sh` | feito |
 | 1 | QA e bugs | Varredura das 100 salas, corrigir o que o Icaro e os testes acharem | `tests/`, `docs/BUGS.md` (correções pontuais em qualquer arquivo) | rodada 2 (playtest do Bernardo, PR #23): rede de segurança, Destravar, borda das dunas, corredor de 1975 (B37–B40); reabre quando alguém jogar |
-| 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | parte 1 feita (bugs, escada 2019, Figura na V4, caça do disco 1950); caça dos discos 1967–sem data espera o Icaro jogar a do 1950 |
+| 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | feito: caças dos 5 discos (1950 PR #10; 1967, 1975, 2019 e sem data PR desta parte 2); reabre quando o Icaro jogar |
 | 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | feito (PR #11): ritmo, quiz V2–V4, bugs, fontes; reabre quando o Icaro jogar |
 | 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | feito (PR #12): sequência fixa, masmorra, Figura nova, sustos (porão e V3/V4), bugs; reabre quando o Icaro jogar |
 | 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | feito (PR #14): três finais (Encontrado ≥8 pistas, Visita concluída, Sala 101), menu do Esc, contador de pistas, título muda após zerar; reabre quando o Icaro jogar |
@@ -23,6 +23,8 @@ Decisões do Icaro (07/10/2026):
 | 9 | Modo debug e Figura no Q | Q possível e tenso (sem perseguição cedo); painel de debug para testar sem morrer | `world/visor.gd`, `world/rastro.gd`, `creatures/figura_branca.gd`, `ui/debug.gd`, `ui/painel_debug.gd` | feito (PR #19): Figura do slide no mundo, perseguição "tipo Granny", olho mais lento, modo debug `?debug=1`; reabre quando o Icaro testar o Q |
 | 10 | Galeria 3D e colocação dos objetos | Varredura automática de colocação (flutuando, enfiado, fora da sala, z-fighting, frestas, continuidade); galeria `/galeria/` com fotos e glTF; design no Canva para comentários | `tests/varredura/colocacao*.gd`, `tests/colocacao_test.gd`, `castelinho/malha.gd` (registro), `castelinho/registro.gd`, `tools/galeria/`, `galeria/` | feito (PR #20): achados reais zerados (correções B26–B36 ou exceções com motivo), 166 objetos na galeria, dúvidas no Canva; reabre quando o Icaro comentar |
 | 11 | Q liga/desliga, pulo e relatório | Pedidos do playtest do Bernardo (14/10): Q como o Correr, pulo baixo, botão de enviar relatório | `world/visor.gd`, `player/player.gd`, `ui/controles_toque.gd`, `ui/relatorio.gd`, `ui/menu_pausa.gd` | feito (PR #22): Q/Visor liga e desliga com um toque, Espaço/botão Pular (pulo baixo), "Enviar relatório" na pausa; reabre quando o Icaro testar |
+| 12 | Épocas, caminho e história | Playtest do Bernardo, fase B2: épocas distintas, caminho claro, história fora dos painéis, sustos no caminho, ideias da água | `castelinho/ruina2019.gd`, `castelinho/tito.gd`, `autoload/efeitos.gd`, `ui/mapa.gd`, `world/objetivo.gd`, `ui/jornal.gd`, `world/flash_agua.gd`, `world/goteiras.gd`, `world/agua_ferrugem.gd`, `world/niveis/sustos_caminho.gd` | feito (PR a seguir): 2019 interditado, Tito fantasma depois de 1967, legenda das épocas, Mapa da Visita (M), jornal de 1967, lampejos de água, goteiras, água ferrugem, 3 sustos no caminho; reabre quando o Icaro jogar |
+| 13 | Pedalinho, final secreto e fundo da Sala 101 | Playtest do Bernardo, fase C: pedalinho no lago, final secreto "salvar o Tito", fundo da Sala 101 mais caprichado | `castelinho/pedalinho.gd`, `world/niveis/braco_salvar.gd`, `world/niveis/fundo_do_lago.gd`, `world/niveis/braco_morto.gd`, `ui/finais.gd`, `ui/tela_titulo.gd` | feito (PR a seguir): pedalinho amarelo no atracadouro, luz no lago com 12 pistas, olhar o Tito de 1967 com o Visor, 4º final "Tito voltou pra casa", fundo da Sala 101 com mais cenário; reabre quando o Icaro jogar |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -67,6 +69,96 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
   de jogo, mas o jogador não chega lá andando (a rede cobre se chegar).
 - Pendente: alguém jogar e dizer se a rede disparou sem motivo (aviso na tela) ou se ainda prendeu; o relatório da
   pausa (módulo 11) ajuda a achar o lugar.
+### Módulo 13: pedalinho, final secreto e fundo da Sala 101 (15/10/2026)
+
+- **Origem:** fase C do playtest do Bernardo (`/mnt/project-files/castelinho/playtest-bernardo-plano.md`). O Icaro disse "considere feito"
+  para o pedalinho, achou boa ideia o final "salvar o Tito" e aprovou o fundo da Sala 101 mais caprichado no formulário.
+- **Escolhas minhas (dá para trocar):** o que destrava o final secreto é `pistas_tito >= 12` (`BracoSalvar.PISTAS_SALVAR`; o Encontrado pede 8,
+  e há 15 no total). Sem as 12, o pedalinho amarelo está "preso com uma corrente de criança". "Buscar o Tito no fundo" virou **olhar para
+  ele**: o Tito de 1967 está sozinho num pedalinho no meio do lago e o jogador o protege olhando pelo Visor ("Ninguém olhou na água" vira
+  "alguém olhou"); ele nunca aparece na água nem em perigo. A mãe (fictícia, só voz, como no telefone do acervo) o chama da calçada.
+- **O que o jogador vê:** com 12 pistas, uma coluna de luz azul se acende no meio do lago (`legenda`: "uma luz se acendeu"). Na margem,
+  perto do atracadouro, o **pedalinho amarelo com balde vermelho** (E: embarcar). O jogador pedala (andar + mouse, 2,6 m/s, a proa segue
+  o movimento, não o olhar; limites do lago; bate nos 5 cisnes e nos pontilhões) até a luz. Perto dela, com o Visor no disco de 1967
+  (tecla 2) ou no sem data, aparece o pedalinho de 1967 com o Tito de costas, a Figura do outro lado da água e o céu de fim de tarde.
+  Olhar para ele soma 9 s (não precisam ser seguidos; a luz fica mais forte). **Atenção do Visor**: sobe como sempre (5 s no
+  porão/Braço); se encher, a Figura atravessa, o Visor sai da mão 10 s e a água puxa o barco 24 m para trás (o olhar já dado fica,
+  sem morte). Perto do atracadouro, E desce do pedalinho.
+- **Final "tito_salvo":** completo o olhar, o Tito se vira ("Você ficou olhando."), voz de mulher "— Titooo! Já pra casa!", "É a minha
+  mãe.", "Obrigado por olhar na água.", a Figura afunda e o lago aquieta, a luz se apaga, ele vai pedalando para a margem em 1967
+  (passa perto do barco do jogador). Título "TITO VOLTOU PRA CASA", cartão "Obrigado por olhar na água." e a dedicatória com o Disque 100.
+  Título do jogo: 4ª marquinha branca só depois de visto e frase "Ele chegou a tempo." (T da lápide fica certo, como no Encontrado).
+- **Código:** `castelinho/pedalinho.gd` (`Pedalinho.criar` = modelo, `pedalar`, `esteira`); `world/niveis/braco_salvar.gd` (`BracoSalvar`,
+  criado em `braco_morto._ready`, `braco_morto.salvar`; `jogador(p, visor)` em `iniciar`; sinais `embarcou`/`desembarcou`/`puxado`/`concluiu`;
+  `depurar_cena_final()`); em `braco_morto.gd` só ganchos (`_process`/`ao_morrer` ignoram quem está no barco, `_titulos_e_dedicatoria`
+  com o 4º final, colisão dos 5 cisnes). `world/visor.gd`: a flag `visor_calmo` zera a atenção (só durante a cena final).
+  `ui/finais.gd` (`TODOS` com `tito_salvo`, `SECRETO`), `ui/debug.gd` (`pular_final("tito_salvo")` embarca e começa a cena) e botão no painel.
+- **Testes:** `tests/braco_pedalinho_test.gd` (trava por pistas, luz, embarcar/pedalar/descer, limites, olhar só na época certa, puxão,
+  cena final até a dedicatória). Capturas (xvfb, fora do CI): `tests/captura_pedalinho.gd` (modos doca|barco|olhar|cena) e
+  `captura_final.gd titulos` com o 4º final.
+- **Fundo da Sala 101** (`world/niveis/fundo_do_lago.gd`, `FundoDoLago.chao_e_algas/pecas`, chamados por `_areia_e_algas` e `_pecas_do_fundo`):
+  areia com ondulações e lodo, mais algas; sapatinhos e balde (com areia derramada), pazinha, bolinha listrada, óculos de natação, um
+  chinelo, garrafas, pedras, âncora enferrujada com corrente e um pedalinho-cisne tombado ao longe; seis raios de luz que pulsam, a
+  superfície vista de baixo, 30 bolhas e poeira em suspensão, névoa azul-esverdeada. Só sugestão, nada de corpo. Custo: 2 Malhas,
+  8 quads aditivos, 2 emissores (≤40), 2 luzes, sem sombra. A câmera, o pitch e a mão da Figura não mudaram. Os óculos leem como duas
+  lentes azuis (pouco nítidos).
+- **Não conferido:** sons (nenhum som novo: pedalada usa `splash` baixo; a voz da mãe é só legenda + `crianca_ei`), o pedalinho no
+  celular de verdade (usa o joystick e o botão E), desempenho do barco na web.
+- **Para o próximo (módulo D, mais partes da cidade):** o lago continua sendo um retângulo de 200 x 36 m; se a cidade ganhar mais água
+  ou margens, ajuste `BracoSalvar.LIMITE_X/LIMITE_Z0/LIMITE_Z1`. O PR #23 (módulo 1, paredes/void/rede de segurança) mexe na
+  mesma região de `braco_morto._process`; conferir a rede de segurança (`y < -8`) ao integrar.
+- Pendente: o Icaro jogar o final secreto (12 pistas é muito? o barco é lento? a mãe chamando funciona?).
+
+### Módulo 2: Visor do Tempo, parte 2: caças dos discos (15/10/2026)
+
+- **Decisão do Icaro (14/10):** aprovou as caças dos 4 discos restantes no formato do Passaporte. Plano:
+  `/mnt/project-files/castelinho/cacas-discos-plano.md` (pasta do projeto, fora do git).
+- **Regra:** cada disco se ganha achando 3 coisas com o disco anterior ligado (Q). Sem os 3, a entrega fala quantos faltam e dá dica.
+- **Código:** `GameState.CACAS` (disco → visita, disco anterior, prefixo de flag, rótulo, ids) e `caca_achados/caca_completa/
+  caca_achar/caca_concluir/caca_ativa`. O Passaporte virou a entrada do 1950 com o prefixo `passaporte_` (saves antigos ok).
+  Objetos em `world/niveis/castelinho_cacas.gd` (`CacasCastelo`) e `world/niveis/porao_cacas.gd` (`PoraoCacas`); HUD genérico
+  ("Passaporte/Vestígios/Marcas/Medidas/Desenhos n/3").
+- **Caças:** 1967 (V2, com 1950): pedra grés, chaminé da casa original, estaca no lote de areia → vitrine do Acervo trancada até 3.
+  1975 (V3, com 1967): Tito brincando, buraco no muro (seguem valendo como pista), pazinha e baldinho ao pé da Torre A → pegadas
+  até a torre, pedestal só nasce com 3. 2019 (V4, com 1975): riscos "TITO 6/7/8" (Salão de Arte, Sala Medieval, Meio Ambiente)
+  → painel solto só com 3. Sem data (porão, com 2019): desenhos de giz nas salas 82, 85, 88 → disco do quarto só com 3; se
+  faltar algum ao chegar no quarto, os que faltam reaparecem na parede dele (as salas fecham atrás).
+- **Buraco no muro** não virou passagem nova (a Torre A em 1967 está pela metade): virou ponteiro com pegadas e fala.
+- **Debug:** "ganhar tudo" conclui as caças; pular de fase conclui as anteriores e dá os discos delas.
+- **Mapa da Visita:** `Hud.objetivo_caca` está plugado em `Objetivo.extras` e mostra a caça ativa ("Vestígios 1/3: ligue o Q..."). Mover objetos de `CACAS`
+  ou das entregas exige rever `castelinho_cacas.gd` e os testes.
+- **Testes:** `castelinho_test`, `porao_test`, `debug_test`; capturas `tests/captura_cacas.gd`. Os testes dividem saves em `user://`:
+  nunca rode dois `testar.sh` ao mesmo tempo (dá falha falsa em `debug_test`/`figura_q_test`).
+- Pendente: o Icaro jogar e dizer se as caças ficaram divertidas e se alguma é difícil de achar; TITO 7 fica ao lado de um arco.
+### Módulo 12: épocas, caminho e história (15/10/2026)
+
+- **Origem:** fase B2 do playtest do Bernardo (`/mnt/project-files/castelinho/playtest-bernardo-plano.md`): ele se perdeu, achou
+  muitas salas vazias, não entendeu a história (achou que o Tito morreu em 2019 porque o via no Visor em 2019) e não entendeu a
+  fala "A água desce por aqui". Decisão do Icaro: o sumiço continua em **12/03/1967**. As caças dos discos são do Módulo 2.
+- **Épocas:** legenda fixa sob o ano no Visor (`Efeitos._lbl_epoca`, tabela `SUBTITULO_EPOCA`; o `_lbl_extra` continua livre).
+  **2019** (`castelinho/ruina2019.gd`, chamado no fim de `extras._ruina`): tábuas nos arcos (a porta fica livre), fita e placa
+  INTERDITADO, letreiro CHOPERIA apagado (fato: restaurante até 2019), mato, mesas viradas e cadeiras, cartaz PROCURA-SE
+  desbotado e pichação "CADÊ O TITO?" na fachada leste. Tudo **sem colisão**. **2026:** faixa "REABERTO · visitas guiadas aos
+  sábados" na pérgola (V1–V2 inteira, V3 rasgada, V4 some; fato: sábados desde 20/02/2026). **Tito:** vivo só em 1967;
+  `TitoNoVisor` agora é `criar_tito(true)` (fantasma azul-acinzentado, molhado, pingando) e só existe em 1975 e 2019.
+- **Mapa da Visita** (`ui/mapa.gd`, tecla M, botão "Mapa" no toque e na pausa): folheto da prefeitura fictícia com andares,
+  "você está aqui", próxima sala, salas vistas e a linha "Agora:". O nível dá os dados por `dados_mapa()` (só o Castelinho tem;
+  porão: "Este andar não consta na planta"; Ato II e Barra: "Esta área não consta no mapa!"). V3 rabiscado, V4 com giz do Tito.
+  **"Agora:"** vem de `Objetivo.atual()` (`world/objetivo.gd`); quem tiver objetivo próprio (as caças do Módulo 2) faz
+  `Objetivo.extras.append(callable)`: o primeiro texto não vazio vence. Porão e Braço Morto: genérico ("Siga em frente.").
+- **História fora dos painéis:** entre a visita 2 e a 3, o recorte da "Folha do Veraneio" (jornal fictício) de 14/03/1967
+  (`ui/jornal.gd`, uma vez por save, flag `jornal_1967_visto`; `tests/castelinho_test.gd` o fecha no loop de visitas).
+- **Água:** "Ouça. A água desce por aqui." (sala 80) dispara 3 lampejos da água subindo até 1,3 m (`world/flash_agua.gd`,
+  compara a linha por semelhança porque a V4 a corrompe). Porão: goteiras com respingo no ritmo de `goteira.ogg`
+  (`world/goteiras.gd`, menos no celular, nunca na sala 95). A água do porão fica cor de ferrugem com a Figura a menos de 6 m,
+  no J2 e nas perseguições 90/94 (`world/agua_ferrugem.gd`, uma constante `COR_AGUA_FERRUGEM`; escolha da cor com o Icaro).
+- **Sustos no caminho** (`world/niveis/sustos_caminho.gd`, cada um uma vez, adiam com fala, tela aberta, Visor ou perseguição):
+  V3 sala 54 o fantasma do Tito cruza o fundo do corredor; V3 sala 66 a armadura aparece ao olhar de volta se o susto antigo
+  não disparou; V4 sala 71 relâmpago com a Figura do lado de fora da janela do hall.
+- **Testes novos:** `epocas_visual_test`, `mapa_test`, `agua_sustos_test`; botão Mapa no `celular_test`; lampejo no
+  `tests/web_cenas.gd`. Capturas: `tests/captura_epocas.gd`, `captura_mapa.gd`, `captura_agua_sustos.gd`.
+- **Não conferido:** sons dos sustos (sem placa de som), o mapa no celular de verdade. `debug_test` falha se o `save.json` do
+  user dir estiver sujo de outra execução: rode com `XDG_DATA_HOME` limpo quando várias sessões testam ao mesmo tempo.
 
 ### Módulo 11: Q liga/desliga, pulo baixo e relatório (14/10/2026)
 

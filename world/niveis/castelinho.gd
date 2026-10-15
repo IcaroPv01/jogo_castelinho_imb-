@@ -149,6 +149,8 @@ var _discos_chao := {}                # época -> [raiz, interagível]
 var _balde: Node3D
 var _passaporte_itens := {}           # id -> [raiz, interagível] dos objetos do Passaporte ainda não achados (visita 1)
 var _passaporte_falando := false
+var _cacas: CacasCastelo               # caças dos discos 1967, 1975 e 2019 (world/niveis/castelinho_cacas.gd)
+var _discos_ocultos := {}              # época -> argumentos de _disco_no_chao dos discos que só aparecem depois da caça
 var _desenhos := {}                   # nome -> nó
 var _tito: Node3D                     # Tito vivo (E1967)
 var _tito_visor: Node3D               # Tito "no canto da sala", só dentro do Visor (visitas 3 e 4)
@@ -211,6 +213,8 @@ func iniciar(p: Player) -> void:
 		visor.figura_atravessou.connect(_on_figura_atravessou)
 		_visor_v4 = visor
 	_ambiente_sonoro()
+	if visita >= 3:
+		SustosCaminho.instalar(self)      # sustos garantidos no caminho obrigatório (world/niveis/sustos_caminho.gd)
 	if GameState.flag("porta_entrada_aberta"):
 		_abrir_porta_entrada(true)
 	_atualizar_luzes()
@@ -1111,6 +1115,7 @@ func _montar_props() -> void:
 
 # ================================================================== o estado de cada visita (objetos extras)
 func _montar_visita() -> void:
+	_cacas = CacasCastelo.new(self, visita)
 	# --- discos do Visor: ficam nos lugares do V2_ROTEIRO §4.1 até serem pegos
 	_disco_no_chao(E1967, POS_DISCO_1967, Color(0.85, 0.12, 0.1), "Pegar o disco da vitrine", 2,
 		["Um disco do Visor! A etiqueta, escrita à mão, diz: \"não catalogado\".", "Aperte 1 a 5 (ou a rolagem do mouse) para trocar de disco e aperte Q para ver. Aperte de novo para voltar."], true)
@@ -1140,6 +1145,7 @@ func _montar_visita() -> void:
 			_montar_porta_porao()
 			_montar_escada_2019()
 			_montar_desenho_oculto_2019()
+	_cacas.montar()
 	if visita >= 3 and GameState.flag("evt_v2_apagao"):
 		_criar_balde_e_desenho3()      # o balde do fim da visita 2 não some (p21_v3 fala dele)
 	for d in _desenhos.values():
@@ -1154,13 +1160,14 @@ func _montar_visita() -> void:
 	_interagivel_pista("Olhar as marcas na parede", Vector3(-9.2, 1.25, -28.95), Vector3(0.7, 0.9, 0.4), "marcas_altura",
 		["Marcas de altura a lápis: \"TITO 6\", \"7\", \"8\", \"TITO 9\"...", "Depois do nove, nada. A parede não tem mais marcas."], [E1975])
 	_limitar_alcance(marcas, 9.0)
-	# Tito "no canto da sala", só dentro do Visor (visitas 3 e 4), cada vez mais perto
+	# Tito "no canto da sala", só dentro do Visor (visitas 3 e 4), cada vez mais perto. Vivo só em 1967: depois dela ele
+	# é um fantasma (pálido, molhado), então só aparece em 1975 e 2019.
 	if visita >= 3:
-		_tito_visor = TitoCastelinho.criar_tito()
+		_tito_visor = TitoCastelinho.criar_tito(true)
 		_tito_visor.name = "TitoNoVisor"
 		_tito_visor.visible = false
 		add_child(_tito_visor)
-		Epocas.marcar(_tito_visor, [E1950, E1967, E1975, E2019])
+		Epocas.marcar(_tito_visor, [E1975, E2019])
 		_tito_visor.position = _spot_tito_visor(7)
 
 
@@ -1186,7 +1193,8 @@ func _montar_epoca_1967() -> void:
 	add_child(_tito)
 	Epocas.marcar(_tito, [E1967])
 	_interagivel_pista("Acenar para o Tito", _tito.position + Vector3(0, 0.65, 0), Vector3(0.9, 1.4, 0.9), "tito_1967",
-		["Um menino de bermuda azul brinca de castelo na areia, com um balde vermelho.", "Ele acena para você. Ninguém mais parece vê-lo."], [E1967])
+		["Um menino de bermuda azul brinca de castelo na areia, com um balde vermelho.", "Ele acena para você. Ninguém mais parece vê-lo."], [E1967],
+		"sistema", [E1975, "tito"])
 	# o buraco no muro: pista que só existe em 1967 (Interagivel só nessa época)
 	var bp: Vector3 = info.get("buraco_pos", ObraCastelinho.BURACO_POS)
 	var it := Interagivel.new("Olhar o buraco no muro", Vector3(1.0, 1.0, 0.8), _olhar_buraco)
@@ -1208,13 +1216,16 @@ func _pista(id: String) -> void:
 
 
 ## Interagivel sobre um objeto de pista: olhar (E) fala a linha e conta a pista.
-func _interagivel_pista(texto: String, pos: Vector3, tam: Vector3, id: String, fala: Array, epocas: Array, quem := "sistema") -> Interagivel:
+## `caca` = [disco, id]: o objeto também é um achado da caça desse disco (conta depois da fala).
+func _interagivel_pista(texto: String, pos: Vector3, tam: Vector3, id: String, fala: Array, epocas: Array, quem := "sistema", caca := []) -> Interagivel:
 	var it := Interagivel.new(texto, tam, Callable())
 	it.position = pos
 	it.name = "Pista_" + id
 	it.acao = func(_p: Node) -> void:
 		_pista(id)
 		await Guia.falar(quem, fala)
+		if not caca.is_empty():
+			await _cacas.achar(caca[0], caca[1], false)
 	add_child(it)
 	Epocas.marcar(it, epocas)
 	return it
@@ -1223,12 +1234,17 @@ func _interagivel_pista(texto: String, pos: Vector3, tam: Vector3, id: String, f
 func _olhar_buraco(_p: Node) -> void:
 	await Guia.falar("sistema", ["Um buraco no muro, do tamanho de uma criança.", "Marcas de pezinhos na areia levam para dentro da obra."])
 	_pista("buraco")
+	await _cacas.achar(E1975, "buraco", false)
 
 
 # ---------------------------------------------------------------- discos
 ## Disco do Visor na vitrine/pedestal, até o jogador pegá-lo. `a_partir_da_visita`: só existe desta visita em diante.
 func _disco_no_chao(epoca: int, pos: Vector3, cor: Color, texto: String, a_partir_da_visita: int, fala: Array, etiqueta: bool) -> void:
 	if GameState.discos.has(epoca) or visita < a_partir_da_visita:
+		return
+	# o disco do pedestal (1975) só aparece quando a caça está completa; o da vitrine (1967) está lá, trancada, desde a visita 2
+	if epoca == E1975 and not GameState.caca_completa(epoca):
+		_discos_ocultos[epoca] = [pos, cor, texto, a_partir_da_visita, fala, etiqueta]
 		return
 	var raiz := Node3D.new()
 	raiz.name = "Disco_%s" % GameState.NOMES_EPOCA[epoca]
@@ -1274,6 +1290,16 @@ func _disco_no_chao(epoca: int, pos: Vector3, cor: Color, texto: String, a_parti
 	_discos_chao[epoca] = [raiz, it]
 
 
+## A caça do disco `d` terminou (3 achados): o disco escondido aparece e as pegadas da obra mostram o caminho.
+func _caca_completa(d: int) -> void:
+	if d == E1975:
+		if _discos_ocultos.has(d):
+			var a: Array = _discos_ocultos[d]
+			_discos_ocultos.erase(d)
+			_disco_no_chao(d, a[0], a[1], a[2], a[3], a[4], a[5])
+		_cacas.trilha_ate_torre()
+
+
 ## Brilho de 4 pontas, 16 px, pixelado (para o disco no chão).
 static func _tex_brilho() -> ImageTexture:
 	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
@@ -1310,6 +1336,9 @@ func _animar_discos(dt: float) -> void:
 func _pegar_disco(epoca: int, fala: Array) -> void:
 	var par: Array = _discos_chao.get(epoca, [])
 	if par.is_empty():
+		return
+	if not GameState.caca_completa(epoca):
+		await _cacas.falta_fala(epoca, "A vitrine está trancada.")
 		return
 	_discos_chao.erase(epoca)
 	for n in par:
@@ -1651,6 +1680,9 @@ func _olhar_painel_solto(_p: Node) -> void:
 	if GameState.discos.has(E2019):
 		await Guia.falar("sistema", ["Atrás do painel só ficou a marca da fita."])
 		return
+	if not GameState.caca_completa(E2019):
+		await _cacas.falta_fala(E2019, "O painel está torto, mas preso: não solta.")
+		return
 	if _painel_solto and is_instance_valid(_painel_solto):
 		var t := create_tween()
 		t.tween_property(_painel_solto, "rotation_degrees:z", -38.0, 0.7).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
@@ -1859,6 +1891,7 @@ func _exit_tree() -> void:
 func _process(dt: float) -> void:
 	_t += dt
 	_animar_passaporte(dt)
+	_cacas.animar(dt)
 	_t_luzes -= dt
 	if _t_luzes <= 0.0:
 		_t_luzes = 0.3
@@ -2064,10 +2097,13 @@ func _evt_sala1() -> void:
 			# o recorte de papelão virado para a parede não é comentado por ninguém
 		2:
 			await Guia.falar("bentinho", ["Bem-vindo de volta!", "Atualizamos as informações da visita. Agora com mais verdade!"])
+			await _cacas.lancar()
 		3:
 			await _quico_da_lanterna()
+			await _cacas.lancar()
 		4:
 			await Guia.falar("???", ["Ninguém mais visita.", "Ninguém mais."])
+			await _cacas.lancar()
 
 
 ## Visita 3: o Quico entrega a lanterna na calçada e some.
@@ -2181,13 +2217,17 @@ func _evt_sala12() -> void:
 		_tocar_telefone()
 		if not GameState.discos.has(E1967):
 			await get_tree().create_timer(1.0).timeout
-			Guia.falar("sistema", ["Tem um disco numa vitrine do Acervo, com uma etiqueta escrita à mão."])
+			await Guia.falar("sistema", ["Tem um disco numa vitrine do Acervo, com uma etiqueta escrita à mão."])
+			if not GameState.caca_completa(E1967):
+				await Guia.falar("sistema", ["A vitrine está trancada.", "O disco de 1950 (tecla 1, e Q) mostra o que sobrou da casa original: ache 3 vestígios."])
 	elif visita == 2 and not GameState.flag(_chave("telefone_atendido")) and not _telefone_tocando:
 		# não atendeu (ou o nível foi recriado pela Barra): volta a tocar ao reentrar na sala, até atender
 		_telefone_tocando = true
 		_tocar_telefone()
 	elif visita >= 3 and not GameState.discos.has(E1967) and _uma_vez("dica1967"):
 		await Guia.falar("sistema", ["Na vitrine do Acervo ainda há um disco \"não catalogado\"."])
+		if not GameState.caca_completa(E1967):
+			await _cacas.falta_fala(E1967, "A vitrine está trancada.")
 
 
 func _tocar_telefone() -> void:
@@ -2270,7 +2310,10 @@ func _evt_sala17() -> void:
 	if visita == 3:
 		_ato2_concluido()
 		if not GameState.discos.has(E1975) and _uma_vez("dica1975"):
-			await Guia.falar("sistema", ["Algo brilha num pedestal, aqui no topo da torre."])
+			if GameState.caca_completa(E1975):
+				await Guia.falar("sistema", ["Algo brilha num pedestal, aqui no topo da torre."])
+			else:
+				await Guia.falar("sistema", ["Um pedestal vazio, no topo da torre. Falta alguma coisa.", "As marcas do Tito na obra de 1967 (tecla 2, e Q) mostram o caminho."])
 
 
 func _evt_sala19() -> void:
@@ -2298,6 +2341,8 @@ func _evt_sala21() -> void:
 			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Aperte Q e escolha o disco de 2019: lá ela existe."])
 		else:
 			await Guia.falar("???", ["O chão desta sala tem uma escada. Só que não agora.", "Falta o disco de 2019.", "Ele ficou atrás de algo solto."])
+			if not GameState.caca_completa(E2019):
+				await Guia.falar("???", ["Mas o painel não solta sozinho.", "Aperte 3 e Q: o Tito media a altura dele nas paredes."])
 
 
 func _evt_sala22() -> void:
@@ -2388,6 +2433,7 @@ func _evt_sala25() -> void:
 ## Visita 4, sala 80: a porta zebrada do hall. Água escorrendo pelos degraus.
 func _evt_sala80() -> void:
 	if _uma_vez("sala80"):
+		FlashAgua.na_linha(self, "Ouça. A água desce por aqui.")      # 3 lampejos de água subindo no hall quando essa linha aparece
 		await Guia.falar("???", ["Essa porta nunca existiu.", "Ouça. A água desce por aqui."])
 
 
@@ -2578,6 +2624,8 @@ func _fim_de_visita() -> void:
 		await _beat_final_v3()
 	if n <= 2:
 		await _volte_sempre()
+	if n == 2:
+		await Jornal.exibir_uma_vez()      # recorte do jornal de 1967 entre as visitas 2 e 3 (ui/jornal.gd; uma vez por save)
 	if n >= 3:
 		GameState.trocar_epoca(GameState.Epoca.E2020)
 	await Transicao.ir_para(GameState.CENA_CASTELINHO, "Spawn")
@@ -2626,3 +2674,105 @@ func _volte_sempre() -> void:
 	t.tween_property(l, "modulate:a", 1.0, 0.7)
 	await t.finished
 	await get_tree().create_timer(1.8).timeout
+
+
+# ================================================================== Mapa da Visita (ui/mapa.gd)
+## Dados do mapa de papel da "prefeitura": contorno do prédio por andar, as salas (caixas dos gatilhos), a sala atual e a
+## próxima da rota. Coordenadas do Godot (x = leste, z = sul; no mapa o norte fica em cima). As salas 14 e 15 não têm
+## gatilho próprio: usam a caixa da 13 (`junto`). Andares: 0 térreo, 1 andar de cima (3,5 m), 2 torre (6,8 m).
+func dados_mapa() -> Dictionary:
+	var vol: Dictionary = Castelinho.carregar_medidas().get("volumes", {})
+	var predio := {0: [], 1: [], 2: []}
+	var por_andar := {0: ["galeria", "corpo_principal", "torre_a", "anexo", "pavilhao", "bloco_patio", "corredor", "ala_fundos", "torre_b"],
+		1: ["galeria", "bloco_patio", "corredor", "ala_fundos", "torre_a", "torre_b"], 2: ["torre_a"]}
+	for andar: int in por_andar:
+		for nome: String in por_andar[andar]:
+			var v: Dictionary = vol.get(nome, {})
+			if v.has("x") and v.has("z"):
+				predio[andar].append([float(v.x[0]), float(v.z[0]), float(v.x[1]), float(v.z[1])])
+	# [base, nome, x, y, z, largura, profundidade]
+	var tabela := [
+		[1, "Calçada", -23.0, 0.0, 1.2, 7.0, 3.0], [2, "Gramado", -24.5, 0.0, -4.6, 7.0, 3.0],
+		[3, "Lateral da Torre", -22.5, 0.0, -9.2, 7.0, 2.0], [4, "Deck", -10.7, 0.0, -5.6, 7.0, 5.0],
+		[5, "Arcada", -8.0, 0.0, -9.0, 5.0, 2.2], [6, "Porta de entrada", -6.55, 0.0, -10.3, 2.6, 1.2],
+		[7, "Hall", -10.4, 0.0, -12.6, 8.6, 2.0], [8, "Sala dos Povos", -22.0, 0.0, -13.0, 11.0, 3.0],
+		[9, "Meio Ambiente", -20.5, 0.0, -17.2, 8.0, 3.4], [10, "Corredor da Secretaria", -15.5, 0.0, -21.8, 16.0, 2.2],
+		[11, "Salão de Arte", -9.8, 0.0, -18.8, 4.8, 2.2], [12, "Acervo", -6.4, 0.0, -18.8, 2.2, 2.4],
+		[13, "Sala do Pescador", -8.7, 0.0, -15.8, 6.4, 2.6], [14, "Mural do Pescador", -8.7, 0.0, -15.8, 6.4, 2.6],
+		[15, "Sala do Pescador", -8.7, 0.0, -15.8, 6.4, 2.6], [16, "Escada da Torre", -13.6, 0.0, -19.55, 2.2, 1.1],
+		[17, "Topo da Torre A", -19.3, 6.8, -12.2, 4.0, 2.0], [18, "Terraço da Arcada", -10.4, 3.5, -12.6, 9.0, 2.4],
+		[19, "Torre B", -6.6, 3.5, -24.9, 2.2, 2.6], [20, "Descida", -22.7, 3.5, -19.6, 3.0, 2.6],
+		[21, "Sala Medieval", -12.6, 0.0, -25.5, 7.0, 3.6], [22, "Sala Medieval (fundo)", -15.4, 0.0, -28.0, 2.4, 2.6],
+		[23, "Porta de saída", -10.2, 0.0, -28.0, 3.0, 2.0],
+	]
+	if visita == 4 and GameState.sala_maxima >= _global(21):
+		tabela.append([SALA_V4_PORTA, "Porta do hall", POS_PORTA_PORAO.x, 0.0, -12.7, 3.0, 1.7])
+	var salas: Array = []
+	var visitada := {}
+	for t: Array in tabela:
+		var base: int = t[0]
+		var g: int = SALA_V4_PORTA if base == SALA_V4_PORTA else _global(base)
+		var y: float = t[3]
+		var vis: bool = g <= GameState.sala_maxima
+		visitada[base] = vis
+		var e := {"base": base, "global": g, "nome": t[1], "x": t[2], "z": t[4], "w": t[5], "d": t[6],
+			"andar": 0 if y < 2.0 else (1 if y < 5.2 else 2), "visitada": vis}
+		if base == 14 or base == 15:
+			e["junto"] = 13
+		elif base == 23:
+			e["rotulo"] = "SAÍDA"      # a porta de saída não tem número próprio (conta como a 22)
+		salas.append(e)
+	# rota principal desta visita (ordem das salas base) e a próxima sala
+	var ato2: bool = GameState.flag("v3_ato2_feito")
+	var rota: Array = []
+	match visita:
+		1, 2:
+			rota = range(1, 14) + ([14, 15] if visita == 2 else []) + range(16, 23)
+			if GameState.flag(_chave("diploma")):
+				rota.append(23)
+		3:
+			rota = [17, 18, 19, 20, 21, 22, 23] if ato2 else range(1, 12)
+		4:
+			rota = range(1, 14) + [21, 22]
+	var prox := -1
+	for b: int in rota:
+		if not visitada.get(b, false):
+			prox = b
+			break
+	if prox == -1 and not rota.is_empty():
+		prox = rota.back()
+	if visita == 1 and GameState.flag("passaporte_lancado") and not GameState.discos.has(E1950) \
+			and GameState.passaporte_achados() >= GameState.PASSAPORTE_IDS.size():
+		prox = 10
+	elif visita == 2 and not GameState.discos.has(E1967):
+		prox = 12
+	elif visita == 2 and not GameState.flag("viu_flashback_barra"):
+		prox = 13
+	elif visita == 3:
+		prox = 11 if not ato2 else (17 if not GameState.discos.has(E1975) else prox)
+	elif visita == 4:
+		prox = 21 if GameState.discos.has(E2019) else 8
+	if prox == 14 or prox == 15:
+		prox = 13
+	# jogador: posição, andar, direção e sala (a menor caixa onde ele está)
+	var jog := {}
+	var atual := -1
+	if player and is_instance_valid(player) and player.is_inside_tree():
+		var p := player.global_position
+		var yaw := player.rotation.y
+		jog = {"x": p.x, "z": p.z, "andar": 0 if p.y < 2.0 else (1 if p.y < 5.2 else 2), "dx": -sin(yaw), "dz": -cos(yaw)}
+		var melhor := INF
+		for t: Array in tabela:
+			var area: float = float(t[5]) * float(t[6])
+			if t[0] != 14 and t[0] != 15 and absf(p.y - float(t[3])) < 1.8 and absf(p.x - float(t[2])) <= float(t[5]) / 2.0 \
+					and absf(p.z - float(t[4])) <= float(t[6]) / 2.0 and area < melhor:
+				melhor = area
+				atual = t[0]
+	if atual == -1:
+		for t: Array in tabela:
+			if t[0] != 14 and t[0] != 15 and (SALA_V4_PORTA if t[0] == SALA_V4_PORTA else _global(t[0])) == GameState.sala_atual:
+				atual = t[0]
+				break
+	return {"tipo": "castelinho", "visita": visita, "lote": [-30.0, -34.0, 0.0, 0.0], "rua": "Av. Garibaldi",
+		"andares": ["Térreo", "Andar de cima", "Torre"], "predio": predio, "salas": salas, "rota": rota,
+		"jogador": jog, "sala_atual": GameState.sala_atual, "base_atual": atual, "base_proxima": prox}

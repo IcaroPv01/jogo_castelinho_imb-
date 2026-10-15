@@ -84,7 +84,7 @@ func _physics_process(dt: float) -> void:
 		if pos.y < limites.position.y - QUEDA_MAX:
 			resgatar("void")
 			return
-		if not _dentro(pos):
+		if not _dentro(pos) and not (_remedir_agora() and _dentro(pos)):
 			resgatar("fora_do_mapa")
 			return
 	if _t_caindo > TEMPO_QUEDA:
@@ -161,6 +161,15 @@ func destravar() -> bool:
 	if _pontos.size() > 4:
 		_pontos = _pontos.slice(0, _pontos.size() - 4)
 	return resgatar("destravar")
+
+
+## Antes de resgatar por "fora do mapa", mede de novo (o porão monta salas novas entre uma medida e outra).
+func _remedir_agora() -> bool:
+	if nivel and nivel.has_method("limites_mapa"):
+		return false
+	_medir_limites()
+	_t_medir = REMEDIR
+	return true
 
 
 func _dentro(pos: Vector3) -> bool:

@@ -25,7 +25,7 @@ const NOMES_LUGAR: Array[String] = ["Visita 1 (salas 1 a 22)", "Visita 2 (salas 
 	"Visita 4 (salas 67 a 80)", "Porão (salas 81 a 99)", "Braço Morto (sala 100)"]
 ## Sala 55 não está em SALAS_CHECKPOINT (é o trecho do Ato II, visita 3, salas 55 a 60), mas "Continuar" a entende.
 const CHECKPOINT_EXTRA: Array[int] = [55]
-const FINAIS: Array[String] = ["encontrado", "visita_concluida", "sala_101"]
+const FINAIS: Array[String] = ["encontrado", "visita_concluida", "sala_101", "tito_salvo"]
 
 
 # ---------------------------------------------------------------- ligar
@@ -99,6 +99,7 @@ static func ganhar_tudo() -> void:
 	gs.set_flag("tem_lanterna", true)
 	gs.set_flag("tem_visor", true)
 	for ep in [gs.Epoca.E1950, gs.Epoca.E1967, gs.Epoca.E1975, gs.Epoca.E2019, gs.Epoca.ESEMDATA]:
+		gs.caca_concluir(ep)          # as caças dos discos ficam feitas (nada trava a entrega)
 		gs.ganhar_disco(ep)
 	var p: Variant = (Engine.get_main_loop() as SceneTree).get_first_node_in_group("player")
 	if p != null and p.get("lanterna") != null:
@@ -154,19 +155,33 @@ static func pular(lugar: int, sala: int) -> Dictionary:
 	var gs := _gs()
 	gs.checkpoint_sala = d["cp"]
 	gs.sala_maxima = maxi(gs.sala_maxima, d["cp"])
+	_dar_discos_anteriores(int(d["visita"]))
 	var alvo: Array = gs.preparar_continuar()
 	await _carregar(alvo[0], alvo[1])
 	return d
 
 
-## Cai direto num dos três finais do Braço Morto: "encontrado", "visita_concluida" ou "sala_101".
+## Pular de fase não pode travar na caça de um disco: quem cai na visita (ou no porão) `etapa` recebe os discos das
+## etapas anteriores já com as caças feitas (1950 = visita 1, 1967 = visita 2, 1975 = 3, 2019 = 4, sem data = porão = 5).
+## A caça da própria etapa fica por fazer. (GameState.CACAS tem a visita de cada disco.)
+static func _dar_discos_anteriores(etapa: int) -> void:
+	var gs := _gs()
+	for ep in gs.CACAS:
+		if int(gs.CACAS[ep]["visita"]) < etapa:
+			gs.caca_concluir(ep)
+			gs.ganhar_disco(ep)
+			gs.set_flag("tem_visor", true)
+
+
+## Cai direto num dos finais do Braço Morto: "encontrado", "visita_concluida", "sala_101" ou o secreto "tito_salvo"
+## (este embarca no pedalinho e começa a cena final, a ~11 m do Tito de 1967).
 ## (Dá tudo ao jogador, põe as pistas do Tito e dispara a cena; o resto roda como no jogo.) Devolve o nó do nível.
 static func pular_final(final: String) -> Variant:
 	if not ligado or not FINAIS.has(final):
 		return null
 	var gs := _gs()
 	ganhar_tudo()
-	gs.contadores["pistas_tito"] = 8 if final == "encontrado" else 3     # braco_morto.PISTAS_ENCONTRADO = 8
+	gs.contadores["pistas_tito"] = 12 if final == "tito_salvo" else (8 if final == "encontrado" else 3)     # braco_morto.PISTAS_ENCONTRADO = 8, BracoSalvar.PISTAS_SALVAR = 12
 	gs.checkpoint_sala = gs.TOTAL_SALAS
 	gs.sala_maxima = gs.TOTAL_SALAS
 	var alvo: Array = gs.preparar_continuar()
@@ -176,7 +191,9 @@ static func pular_final(final: String) -> Variant:
 	var nivel: Variant = main.mundo.get_child(0)
 	await arv.process_frame
 	var jogador: Variant = main.player
-	if final == "sala_101":
+	if final == "tito_salvo":
+		nivel.salvar.depurar_cena_final()
+	elif final == "sala_101":
 		var rampa_x: float = (nivel.RAMPA_X0 + nivel.RAMPA_X1) * 0.5
 		jogador.global_position = Vector3(rampa_x, nivel.AGUA_Y - 0.2, nivel.LAGO_Z1 - nivel.DIST_AFUNDAR)
 		jogador.rotation.y = 0.0

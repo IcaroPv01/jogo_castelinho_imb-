@@ -146,6 +146,10 @@ func _teste_painel() -> void:
 	_checar(not p.aberto and not p._caixa.visible, "fechar esconde")
 	Debug.ganhar_tudo()
 	_checar(GS.discos.size() == 5 and GS.flag("tem_visor") and GS.flag("tem_lanterna"), "ganhar tudo: 5 discos, Visor e lanterna")
+	var todas := true
+	for ep in GS.CACAS:
+		todas = todas and GS.caca_achados(ep) == GS.caca_total(ep)
+	_checar(todas, "ganhar tudo: todas as caças dos discos ficam feitas")
 	p.queue_free()
 	await process_frame
 
@@ -178,18 +182,28 @@ func _novo_main() -> void:
 func _teste_pulos() -> void:
 	print("-- pulos de verdade")
 	await _novo_main()
+	GS.discos.clear()                      # (o "ganhar tudo" de antes deixou tudo feito)
+	for ep in GS.CACAS:
+		for id in GS.CACAS[ep]["ids"]:
+			GS.flags.erase(GS.CACAS[ep]["prefixo"] + id)
 	_checar(main.get_node_or_null("PainelDebug") != null, "com o debug ligado o main cria o painel")
 	await Debug.pular(1, 33)
 	_checar(main.nivel_atual == GS.CENA_CASTELINHO and GS.visita == 2 and GS.checkpoint_sala == 32, "visita 2 sala 33 -> castelinho, visita 2, checkpoint 32")
+	_checar(GS.discos.has(GS.Epoca.E1950) and GS.caca_completa(GS.Epoca.E1950) and not GS.discos.has(GS.Epoca.E1967), "pular para a visita 2: recebe o disco 1950 (caça feita), não o 1967")
 	_checar(GS.jogando and main.player != null, "jogo rodando com jogador")
 	for i in 20:
 		await physics_frame
 	await Debug.pular(2, 57)
 	_checar(main.nivel_atual == GS.CENA_ATO2 and GS.visita == 3 and GS.checkpoint_sala == 55, "visita 3 sala 57 -> Ato II, checkpoint 55")
+	_checar(GS.discos.has(GS.Epoca.E1967) and GS.caca_achados(GS.Epoca.E1967) == 3 and GS.caca_achados(GS.Epoca.E1975) == 0, "pular para a visita 3: caças de 1950 e 1967 feitas, a do 1975 não")
 	await Debug.pular(4, 90)
 	_checar(main.nivel_atual == GS.CENA_PORAO and GS.visita == 5 and GS.checkpoint_sala == 86, "porão sala 90 -> checkpoint 86")
+	_checar(GS.discos.has(GS.Epoca.E2019) and GS.caca_achados(GS.Epoca.ESEMDATA) == 0, "pular para o porão: discos até 2019 e a caça do sem data por fazer")
+	for id in GS.CACAS[GS.Epoca.E2019]["ids"]:
+		GS.flags.erase(GS.CACAS[GS.Epoca.E2019]["prefixo"] + id)      # (voltando de propósito: o pulo do porão deu a caça por feita)
 	await Debug.pular(3, 70)
 	_checar(main.nivel_atual == GS.CENA_CASTELINHO and GS.visita == 4 and GS.checkpoint_sala == 67, "visita 4 sala 70 -> checkpoint 67")
+	_checar(GS.discos.has(GS.Epoca.E1975) and GS.caca_achados(GS.Epoca.E2019) == 0, "pular para a visita 4: a caça do 2019 fica por fazer")
 	# finais
 	var nivel: Variant = await Debug.pular_final("encontrado")
 	_checar(main.nivel_atual == GS.CENA_BRACO and nivel != null and nivel.cena_feita, "final encontrado: Braço Morto e a cena do Tito começou")
@@ -198,6 +212,8 @@ func _teste_pulos() -> void:
 	_checar(nivel != null and nivel.cena_feita and GS.contadores.get("pistas_tito", 0) == 3, "final visita concluída: cena do Tito com 3 pistas")
 	nivel = await Debug.pular_final("sala_101")
 	_checar(nivel != null and nivel.encerrando and nivel.final == "sala_101", "final sala 101 dispara o afundar")
+	nivel = await Debug.pular_final("tito_salvo")
+	_checar(nivel != null and nivel.salvar.concluindo and nivel.final == "tito_salvo" and GS.contadores.get("pistas_tito", 0) == 12, "final secreto: embarca e a cena de salvar o Tito começou (12 pistas)")
 	main.queue_free()
 	await process_frame
 
