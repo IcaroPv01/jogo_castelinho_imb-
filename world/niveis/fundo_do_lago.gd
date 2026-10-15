@@ -482,7 +482,7 @@ static func _atmosfera(raiz: Node3D) -> void:
 		mi.mesh = q
 		var mt: ShaderMaterial = _shader_mat(SH_RAIO)
 		mt.set_shader_parameter("fase", rd.w)
-		mt.set_shader_parameter("forca", 0.7 if rd.y > -5.0 else 1.0)
+		mt.set_shader_parameter("forca", 1.2 if rd.y > -5.0 else 1.7)
 		mi.material_override = mt
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		raiz.add_child(mi)
