@@ -13,7 +13,7 @@ Decisões do Icaro (07/10/2026):
 |---|---|---|---|---|
 | 0 | Fundação | `CLAUDE.md`, este mapa, instalador do Godot | `CLAUDE.md`, `docs/MODULOS.md`, `tools/instalar_godot.sh` | feito |
 | 1 | QA e bugs | Varredura das 100 salas, corrigir o que o Icaro e os testes acharem | `tests/`, `docs/BUGS.md` (correções pontuais em qualquer arquivo) | varredura automática feita (B15–B24); reabre quando o Icaro jogar |
-| 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | parte 1 feita (bugs, escada 2019, Figura na V4, caça do disco 1950); caça dos discos 1967–sem data espera o Icaro jogar a do 1950 |
+| 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | feito: caças dos 5 discos (1950 PR #10; 1967, 1975, 2019 e sem data PR desta parte 2); reabre quando o Icaro jogar |
 | 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | feito (PR #11): ritmo, quiz V2–V4, bugs, fontes; reabre quando o Icaro jogar |
 | 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | feito (PR #12): sequência fixa, masmorra, Figura nova, sustos (porão e V3/V4), bugs; reabre quando o Icaro jogar |
 | 5 | Braço Morto e final | Sala 100, Tito, finais, dedicatória | `world/niveis/braco_morto.gd`, `castelinho/tito.gd`, `ui/dedicatoria.gd`, `ui/volte_sempre.gd`, `ui/telefone.gd` | feito (PR #14): três finais (Encontrado ≥8 pistas, Visita concluída, Sala 101), menu do Esc, contador de pistas, título muda após zerar; reabre quando o Icaro jogar |
@@ -48,6 +48,28 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 2: Visor do Tempo, parte 2: caças dos discos (15/10/2026)
+
+- **Decisão do Icaro (14/10):** aprovou as caças dos 4 discos restantes no formato do Passaporte. Plano:
+  `/mnt/project-files/castelinho/cacas-discos-plano.md` (pasta do projeto, fora do git).
+- **Regra:** cada disco se ganha achando 3 coisas com o disco anterior ligado (Q). Sem os 3, a entrega fala quantos faltam e dá dica.
+- **Código:** `GameState.CACAS` (disco → visita, disco anterior, prefixo de flag, rótulo, ids) e `caca_achados/caca_completa/
+  caca_achar/caca_concluir/caca_ativa`. O Passaporte virou a entrada do 1950 com o prefixo `passaporte_` (saves antigos ok).
+  Objetos em `world/niveis/castelinho_cacas.gd` (`CacasCastelo`) e `world/niveis/porao_cacas.gd` (`PoraoCacas`); HUD genérico
+  ("Passaporte/Vestígios/Marcas/Medidas/Desenhos n/3").
+- **Caças:** 1967 (V2, com 1950): pedra grés, chaminé da casa original, estaca no lote de areia → vitrine do Acervo trancada até 3.
+  1975 (V3, com 1967): Tito brincando, buraco no muro (seguem valendo como pista), pazinha e baldinho ao pé da Torre A → pegadas
+  até a torre, pedestal só nasce com 3. 2019 (V4, com 1975): riscos "TITO 6/7/8" (Salão de Arte, Sala Medieval, Meio Ambiente)
+  → painel solto só com 3. Sem data (porão, com 2019): desenhos de giz nas salas 82, 85, 88 → disco do quarto só com 3; se
+  faltar algum ao chegar no quarto, os que faltam reaparecem na parede dele (as salas fecham atrás).
+- **Buraco no muro** não virou passagem nova (a Torre A em 1967 está pela metade): virou ponteiro com pegadas e fala.
+- **Debug:** "ganhar tudo" conclui as caças; pular de fase conclui as anteriores e dá os discos delas.
+- **Para o módulo 12:** `objetivo_atual()` pode mostrar a caça ativa via `GameState.caca_ativa()`. Mover objetos de `CACAS`
+  ou das entregas exige rever `castelinho_cacas.gd` e os testes.
+- **Testes:** `castelinho_test`, `porao_test`, `debug_test`; capturas `tests/captura_cacas.gd`. Os testes dividem saves em `user://`:
+  nunca rode dois `testar.sh` ao mesmo tempo (dá falha falsa em `debug_test`/`figura_q_test`).
+- Pendente: o Icaro jogar e dizer se as caças ficaram divertidas e se alguma é difícil de achar; TITO 7 fica ao lado de um arco.
 
 ### Módulo 11: Q liga/desliga, pulo baixo e relatório (14/10/2026)
 
