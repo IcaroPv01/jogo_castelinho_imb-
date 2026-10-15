@@ -346,18 +346,21 @@ static func _dentro(p: Vector3) -> bool:
 
 # ------------------------------------------------------------------ objetos
 ## Balde vermelho de praia (tronco de cone aberto). Raiz com base em y = 0.
-static func criar_balde(escala := 1.0) -> Node3D:
+static func criar_balde(escala := 1.0, fantasma := false) -> Node3D:
 	var raiz := Node3D.new()
 	raiz.name = "BaldeVermelho"
 	var m := Malha.new()
 	var vermelho := Castelinho.mat_cor(Color(0.86, 0.1, 0.08), 0.5, true)
 	var escuro := Castelinho.mat_cor(Color(0.3, 0.03, 0.03), 0.8)
+	if fantasma:       # o balde do Tito-fantasma: vermelho apagado e translúcido (a única cor que sobrou dele)
+		vermelho = _mat_fantasma(Color(0.62, 0.22, 0.24, 0.6))
+		escuro = _mat_fantasma(Color(0.12, 0.05, 0.07, 0.6))
 	var h := 0.22 * escala
 	EntornoCastelinho.prisma(m, vermelho, Vector3.ZERO, h, 0.1 * escala, 0.13 * escala, 8)
 	_tampa(m, vermelho, Vector3(0, 0.002, 0), 0.1 * escala, 8, Vector3.DOWN)           # fundo
 	_tampa(m, escuro, Vector3(0, h * 0.9, 0), 0.12 * escala, 8, Vector3.UP)           # boca escura, um pouco abaixo da borda
 	# alça
-	m.caixa(Castelinho.mat_cor(Color(0.9, 0.9, 0.9), 0.5), Vector3(-0.135 * escala, 0.2 * escala, -0.01 * escala), Vector3(0.135 * escala, 0.215 * escala, 0.01 * escala), Malha.F_TODAS)
+	m.caixa(_mat_fantasma(Color(0.75, 0.8, 0.86, 0.6)) if fantasma else Castelinho.mat_cor(Color(0.9, 0.9, 0.9), 0.5), Vector3(-0.135 * escala, 0.2 * escala, -0.01 * escala), Vector3(0.135 * escala, 0.215 * escala, 0.01 * escala), Malha.F_TODAS)
 	m.construir_instancia(raiz, "Malha", 1)
 	return raiz
 
@@ -390,7 +393,10 @@ static func criar_disco(cor := Color(0.85, 0.12, 0.1)) -> Node3D:
 # ------------------------------------------------------------------ a figura do Tito (só em E1967)
 ## Boneco PS1 de caixas: bermuda azul, camiseta clara, balde vermelho na mão esquerda, braço direito que acena.
 ## ~1,25 m de altura, olha para +Z local. Nós úteis: "BracoD" (acenar) e "Tronco" (cavar).
-static func criar_tito() -> Node3D:
+## `fantasma`: o Tito depois de 1967 (só visto pelo Visor em 1975 e 2019): azul-acinzentado pálido e translúcido, cabelo
+## escuro e molhado, poucos pingos d'água caindo dele (CPUParticles3D, 6 partículas) e uma poça fraca sob os pés.
+## O nó ganha a meta "fantasma"; `animar` então só o vira para a câmera (não cava nem acena).
+static func criar_tito(fantasma := false) -> Node3D:
 	var raiz := Node3D.new()
 	raiz.name = "Tito"
 	var pele := Castelinho.mat_cor(Color(0.92, 0.72, 0.56), 0.9)
@@ -398,6 +404,13 @@ static func criar_tito() -> Node3D:
 	var camisa := Castelinho.mat_cor(Color(0.93, 0.91, 0.82), 0.9)
 	var bermuda := Castelinho.mat_cor(Color(0.14, 0.3, 0.72), 0.9)
 	var preto := Castelinho.mat_cor(Color(0.04, 0.04, 0.05), 0.5)
+	if fantasma:
+		raiz.set_meta("fantasma", true)
+		pele = _mat_fantasma(Color(0.38, 0.5, 0.64, 0.58))
+		cabelo = _mat_fantasma(Color(0.07, 0.1, 0.15, 0.78))
+		camisa = _mat_fantasma(Color(0.4, 0.5, 0.64, 0.55))
+		bermuda = _mat_fantasma(Color(0.2, 0.29, 0.42, 0.58))
+		preto = _mat_fantasma(Color(0.02, 0.03, 0.05, 0.85))
 	# pernas e bermuda
 	var pernas := Malha.new()
 	for lado in [-1.0, 1.0]:
@@ -422,7 +435,7 @@ static func criar_tito() -> Node3D:
 	tm.caixa(pele, Vector3(-0.2, 0.06, -0.035), Vector3(-0.14, 0.34, 0.035), Malha.F_TODAS)
 	tm.caixa(camisa, Vector3(-0.2, 0.26, -0.04), Vector3(-0.14, 0.38, 0.04), Malha.F_TODAS)
 	tm.construir_instancia(tronco, "Malha", 1)
-	var balde := criar_balde(1.0)
+	var balde := criar_balde(1.0, fantasma)
 	balde.position = Vector3(-0.24, -0.2, 0.0)      # na mão esquerda (relativo ao tronco: pendurado na altura do quadril)
 	tronco.add_child(balde)
 	# braço direito: pivô no ombro; em repouso pende, acenando levanta
@@ -434,7 +447,67 @@ static func criar_tito() -> Node3D:
 	bm.caixa(camisa, Vector3(-0.03, -0.1, -0.04), Vector3(0.03, 0.0, 0.04), Malha.F_TODAS)
 	bm.caixa(pele, Vector3(-0.03, -0.3, -0.035), Vector3(0.03, -0.1, 0.035), Malha.F_TODAS)
 	bm.construir_instancia(braco, "Malha", 1)
+	if fantasma:
+		_pingos_e_poca(raiz)
 	return raiz
+
+
+## Material do fantasma: translúcido, de cor de vértice, com um brilho fraco próprio (visível no escuro, sem luz extra).
+## Mesma convenção de Castelinho.mat_cor (variante com meta "vc_base"/"vc"): todas as cores viram uma só superfície.
+static var _fant_base: StandardMaterial3D
+
+
+static func _mat_fantasma(cor: Color) -> StandardMaterial3D:
+	if _fant_base == null:
+		_fant_base = StandardMaterial3D.new()
+		_fant_base.roughness = 0.6
+		_fant_base.vertex_color_use_as_albedo = true
+		_fant_base.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_fant_base.emission_enabled = true
+		_fant_base.emission = Color(0.05, 0.08, 0.13)
+		_fant_base.emission_energy_multiplier = 0.6
+	var mt := _fant_base.duplicate() as StandardMaterial3D
+	mt.albedo_color = cor
+	mt.set_meta("vc_base", _fant_base)
+	mt.set_meta("vc", cor)
+	return mt
+
+
+## Pingos lentos (6 partículas na CPU, nada de GPU) caindo da roupa e uma poça rala sob os pés.
+static func _pingos_e_poca(raiz: Node3D) -> void:
+	var gota := QuadMesh.new()
+	gota.size = Vector2(0.018, 0.06)
+	var mg := StandardMaterial3D.new()
+	mg.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mg.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mg.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	mg.albedo_color = Color(0.6, 0.75, 0.9, 0.7)
+	gota.material = mg
+	var p := CPUParticles3D.new()
+	p.name = "Pingos"
+	p.amount = 6
+	p.lifetime = 1.1
+	p.preprocess = 1.1
+	p.explosiveness = 0.0
+	p.randomness = 0.4
+	p.local_coords = false
+	p.mesh = gota
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = Vector3(0.14, 0.02, 0.07)
+	p.position = Vector3(0, 0.62, 0)          # na altura da barra da camiseta/bermuda
+	p.direction = Vector3.DOWN
+	p.spread = 4.0
+	p.initial_velocity_min = 0.0
+	p.initial_velocity_max = 0.05
+	p.gravity = Vector3(0, -1.0, 0)
+	p.layers = 3
+	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	raiz.add_child(p)
+	# poça: octógono achatado no chão, azul-acinzentado, quase transparente
+	var m := Malha.new()
+	var agua := Castelinho.mat_cor(Color(0.35, 0.5, 0.62, 0.35), 0.1, true)
+	_tampa(m, agua, Vector3(0, 0.02, 0), 0.34, 8, Vector3.UP)
+	m.construir_instancia(raiz, "Poca", 3)
 
 
 ## Animação do Tito (só roda quando visível): cava a areia por alguns segundos e depois acena para a câmera.
@@ -446,6 +519,13 @@ static func animar(tito: Node3D, t: float, cam: Vector3) -> void:
 		return
 	var d := cam - tito.global_position
 	var alvo_yaw := atan2(d.x, d.z)
+	if tito.has_meta("fantasma"):
+		# o fantasma não brinca: fica parado, de braços caídos, só virando devagar para quem olha
+		tito.rotation.y = lerp_angle(tito.rotation.y, alvo_yaw, 0.03)
+		tronco.rotation.x = lerpf(tronco.rotation.x, 0.0, 0.1)
+		braco.rotation.x = lerpf(braco.rotation.x, 0.0, 0.1)
+		braco.rotation.z = lerpf(braco.rotation.z, 0.0, 0.1)
+		return
 	tito.rotation.y = lerp_angle(tito.rotation.y, alvo_yaw, 0.08)
 	var ciclo := fmod(t, 7.0)
 	if ciclo < 3.5:
