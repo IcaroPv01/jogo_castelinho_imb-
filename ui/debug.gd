@@ -25,7 +25,7 @@ const NOMES_LUGAR: Array[String] = ["Visita 1 (salas 1 a 22)", "Visita 2 (salas 
 	"Visita 4 (salas 67 a 80)", "Porão (salas 81 a 99)", "Braço Morto (sala 100)"]
 ## Sala 55 não está em SALAS_CHECKPOINT (é o trecho do Ato II, visita 3, salas 55 a 60), mas "Continuar" a entende.
 const CHECKPOINT_EXTRA: Array[int] = [55]
-const FINAIS: Array[String] = ["encontrado", "visita_concluida", "sala_101"]
+const FINAIS: Array[String] = ["encontrado", "visita_concluida", "sala_101", "tito_salvo"]
 
 
 # ---------------------------------------------------------------- ligar
@@ -173,14 +173,15 @@ static func _dar_discos_anteriores(etapa: int) -> void:
 			gs.set_flag("tem_visor", true)
 
 
-## Cai direto num dos três finais do Braço Morto: "encontrado", "visita_concluida" ou "sala_101".
+## Cai direto num dos finais do Braço Morto: "encontrado", "visita_concluida", "sala_101" ou o secreto "tito_salvo"
+## (este embarca no pedalinho e começa a cena final, a ~11 m do Tito de 1967).
 ## (Dá tudo ao jogador, põe as pistas do Tito e dispara a cena; o resto roda como no jogo.) Devolve o nó do nível.
 static func pular_final(final: String) -> Variant:
 	if not ligado or not FINAIS.has(final):
 		return null
 	var gs := _gs()
 	ganhar_tudo()
-	gs.contadores["pistas_tito"] = 8 if final == "encontrado" else 3     # braco_morto.PISTAS_ENCONTRADO = 8
+	gs.contadores["pistas_tito"] = 12 if final == "tito_salvo" else (8 if final == "encontrado" else 3)     # braco_morto.PISTAS_ENCONTRADO = 8, BracoSalvar.PISTAS_SALVAR = 12
 	gs.checkpoint_sala = gs.TOTAL_SALAS
 	gs.sala_maxima = gs.TOTAL_SALAS
 	var alvo: Array = gs.preparar_continuar()
@@ -190,7 +191,9 @@ static func pular_final(final: String) -> Variant:
 	var nivel: Variant = main.mundo.get_child(0)
 	await arv.process_frame
 	var jogador: Variant = main.player
-	if final == "sala_101":
+	if final == "tito_salvo":
+		nivel.salvar.depurar_cena_final()
+	elif final == "sala_101":
 		var rampa_x: float = (nivel.RAMPA_X0 + nivel.RAMPA_X1) * 0.5
 		jogador.global_position = Vector3(rampa_x, nivel.AGUA_Y - 0.2, nivel.LAGO_Z1 - nivel.DIST_AFUNDAR)
 		jogador.rotation.y = 0.0

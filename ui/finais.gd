@@ -1,11 +1,12 @@
 class_name Finais
 extends RefCounted
 ## Memória dos finais já vistos (muda a tela de título). Arquivo user://finais.cfg.
-## Finais: "encontrado", "visita_concluida", "sala_101".
+## Finais: "encontrado", "visita_concluida", "sala_101" e o secreto "tito_salvo" (Módulo 13).
 
 const CAMINHO := "user://finais.cfg"
 const CAMINHO_DEBUG := "user://finais_debug.cfg"   # modo debug: à parte, o título normal não muda
-const TODOS: Array[String] = ["encontrado", "visita_concluida", "sala_101"]
+const TODOS: Array[String] = ["encontrado", "visita_concluida", "sala_101", "tito_salvo"]
+const SECRETO := "tito_salvo"   # o 4º final não aparece como marquinha vazia no título: só depois de visto
 
 
 static func registrar(final: String) -> void:
