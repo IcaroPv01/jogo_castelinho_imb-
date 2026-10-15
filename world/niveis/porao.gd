@@ -286,7 +286,8 @@ func _criar_extras(c) -> void:
 		tel.position = c.pontos["telefone"]
 		c.raiz.add_child(tel)
 		c.interativos.append(tel)
-	if c.pontos.has("disco") and not _tem_disco():
+	PoraoCacas.criar(self, c)
+	if c.pontos.has("disco") and not _tem_disco() and GameState.caca_completa(GameState.Epoca.ESEMDATA):
 		var di := Interagivel.new("Pegar o disco", Vector3(0.5, 0.4, 0.5), _pegar_disco.bind(c))
 		di.position = c.pontos["disco"]
 		di.name = "InteragivelDisco"
@@ -646,6 +647,7 @@ func _ao_entrar_sala(i: int, imediato := false) -> void:
 		prof = PROF_AGUA[novo]
 	_preparar_ameacas(i)
 	_dica_visor(i)
+	PoraoCacas.ao_entrar(self, i)
 	_falar_do_sistema(i)
 	_voz_t = minf(_voz_t, 3.0)
 	_tel_t = 1.0
