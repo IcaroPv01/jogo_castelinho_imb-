@@ -7,8 +7,8 @@ extends Node
 ## aquele disco, nada acontece) e a rolagem do mouse passa entre os discos que o jogador tem. As ações de input
 ## ("disco_1".."disco_5", "disco_prox", "disco_ant") são criadas aqui, em código (`Visor.registrar_inputs()`).
 ##
-## SEGURAR Q mostra a época do disco selecionado (moldura com o ano: "1967", "????" para o disco sem data);
-## soltar volta para E2020, a não ser que a flag `visor_travado` esteja ligada (o Visor "mente"). Sem disco, o Q
+## APERTAR Q liga o Visor e apertar de novo desliga (como o Correr; no celular, o botão Visor faz o mesmo): mostra a
+## época do disco selecionado (moldura com o ano: "1967", "????" para o disco sem data); desligar volta para E2020, a não ser que a flag `visor_travado` esteja ligada (o Visor "mente"). Sem disco, o Q
 ## não faz nada. Compatibilidade com os níveis do MVP: sem NENHUM disco, mas com a flag `epoca_visor` definida, o
 ## Q usa essa época (a flag só vale enquanto não há discos). `tem_visor` (flag) ou ter algum disco libera o Visor.
 ## Trocar de disco com o Q apertado troca a época na hora (clarão e "slide").
@@ -70,6 +70,7 @@ static var _bloqueio := 0.0   # s restantes (estático: atravessa a troca de ní
 static var _graca := 0.0      # s de graça que restam (a atenção não sobe)
 
 var ativo := false
+var _latch := false   # o Visor mesmo apertou a ação "visor" (Q ligado): só nesse caso ele a solta sozinho
 var figura_visivel := false   # a Figura está sendo mostrada no slide agora (para testes)
 var _ultima_troca := -10.0
 var _epoca_mostrada := -1
@@ -148,6 +149,10 @@ func _ready() -> void:
 func _input(e: InputEvent) -> void:
 	if GameState.flag("ui_aberta") or not _tem_visor():
 		return
+	if e.is_action_pressed("visor_alternar", false):
+		alternar()
+		get_viewport().set_input_as_handled()
+		return
 	if e is InputEventKey or e is InputEventMouseButton:
 		for i in 5:
 			if e.is_action_pressed("disco_%d" % (i + 1), false):
@@ -160,6 +165,8 @@ func _input(e: InputEvent) -> void:
 
 
 func _process(dt: float) -> void:
+	if _latch and (GameState.flag("ui_aberta") or not _tem_visor() or _bloqueio > 0.0):
+		_soltar_q()   # menu aberto, ou o Visor foi arrancado da mão: o Q ligado cai
 	var quer := _quer_ligar()
 	var agora := Time.get_ticks_msec() / 1000.0
 	if quer != ativo and agora - _ultima_troca >= INTERVALO_MIN:
@@ -187,6 +194,8 @@ func _process(dt: float) -> void:
 
 
 func _exit_tree() -> void:
+	if _latch:
+		_soltar_q()   # senão o Visor do nível seguinte já nasceria ligado
 	# O nível acabou com o Visor ligado (ex.: transição): desliga a moldura e devolve a época de hoje. Sem isso o
 	# nível seguinte nascia em 1950 e o novo Visor, achando que já estava desligado, nunca a corrigia (bug B06).
 	if ativo:
@@ -277,6 +286,26 @@ func _acompanhar_disco() -> void:
 
 
 # ---------------------------------------------------------------- Q
+## Q (teclado) ou botão Visor (celular): um toque liga, outro desliga. O Visor segura a ação "visor" apertada
+## enquanto está ligado (o resto do código só pergunta `Input.is_action_pressed("visor")`).
+func alternar() -> void:
+	if Input.is_action_pressed("visor"):
+		_soltar_q()
+		return
+	if not _tem_visor() or GameState.flag("ui_aberta"):
+		return
+	if _bloqueio > 0.0 or epoca_alvo() < 0:   # arrancado da mão, ou sem disco: um tique surdo e nada
+		Audio.sfx("erro", -12.0, 0.8)
+		return
+	_latch = true
+	Input.action_press("visor")
+
+
+func _soltar_q() -> void:
+	_latch = false
+	Input.action_release("visor")
+
+
 func _quer_ligar() -> bool:
 	if not _tem_visor() or GameState.flag("ui_aberta"):
 		return false

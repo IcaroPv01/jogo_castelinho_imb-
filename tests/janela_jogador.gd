@@ -311,19 +311,19 @@ func _centro_continuar() -> Vector2:
 
 # ---------------------------------------------------------------- D: Visor dentro das paredes
 func _d_visor_em_paredes() -> void:
-	print("-- D. segurar Q, entrar nas paredes e soltar")
+	print("-- D. ligar Q, entrar nas paredes e desligar")
 	GS.set_flag("tem_visor")
 	GS.ganhar_disco(GS.Epoca.E1950)           # quem manda é o disco selecionado (Visor 2.0)
 	GS.set_flag("visor_travado", false)
 	var presos := 0
 	for pos in [Vector3(-27, 0.1, -12), Vector3(-24, 0.1, -14), Vector3(-20, 0.1, -20), Vector3(-14, 0.1, -26), Vector3(-6, 0.1, -20)]:
-		await _tecla(KEY_Q, true)
+		await _toque(KEY_Q)
 		await _frames(8)
-		_checar(GS.epoca == GS.Epoca.E1950, "Q apertado: 1950")
+		_checar(GS.epoca == GS.Epoca.E1950, "Q ligado: 1950")
 		await _ir(pos)
-		await _tecla(KEY_Q, false)
+		await _toque(KEY_Q)
 		await _frames(10)
-		_checar(GS.epoca == GS.Epoca.E2020, "Q solto: de volta a hoje")
+		_checar(GS.epoca == GS.Epoca.E2020, "Q desligado: de volta a hoje")
 		var p0: Vector3 = p.global_position
 		var melhor := 0.0
 		for ang in [0.0, 90.0, 180.0, 270.0]:
@@ -336,10 +336,9 @@ func _d_visor_em_paredes() -> void:
 		if melhor < 0.5:
 			presos += 1
 	_checar(presos == 0, "soltar Q dentro de paredes nunca prende o jogador (presos: %d de 5)" % presos)
-	# Q muito rápido (apertar e soltar várias vezes)
+	# Q muito rápido (tocar 6 vezes seguidas: termina desligado)
 	for i in 6:
-		await _tecla(KEY_Q, true)
-		await _tecla(KEY_Q, false)
+		await _toque(KEY_Q)
 	await _frames(12)
 	_checar(GS.epoca == GS.Epoca.E2020 and not nivel.get_node("Visor").ativo, "Q metralhado: termina em 2020 com o Visor desligado (época %d)" % GS.epoca)
 

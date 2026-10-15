@@ -11,6 +11,12 @@ var _lbl_pistas: Label
 var _pag_principal: VBoxContainer
 var _pag_opcoes: VBoxContainer
 var _pag_confirma: VBoxContainer
+var _pag_relatorio: VBoxContainer
+var btn_relatorio: BotaoGel      # "Enviar relatório" (página principal)
+var caixa_relatorio: TextEdit    # texto do relatório (só leitura, selecionável)
+var btn_copiar: BotaoGel
+var btn_whatsapp: BotaoGel
+var _copiado_id := 0
 var _rot_sens: Label
 var _botoes_toque := {}         # modo ("auto"/"sempre"/"nunca") -> BotaoGel
 
@@ -56,6 +62,7 @@ func _ready() -> void:
 	_pag_principal = _pagina(col)
 	btn_continuar = _botao(_pag_principal, "Continuar", Flash.VERDE, _continuar)
 	_botao(_pag_principal, "Opções", Flash.AZUL, func(): _ir("opcoes"))
+	btn_relatorio = _botao(_pag_principal, "Enviar relatório", Flash.AZUL, func(): _ir("relatorio"))
 	_botao(_pag_principal, "Voltar ao título", Flash.LARANJA, func(): _ir("confirma"))
 
 	_pag_opcoes = _pagina(col)
@@ -78,6 +85,7 @@ func _ready() -> void:
 	_pag_confirma.add_child(aviso)
 	_botao(_pag_confirma, "Sim, voltar ao título", Flash.VERMELHO, voltar_ao_titulo)
 	_botao(_pag_confirma, "Não, continuar aqui", Flash.VERDE, func(): _ir("principal"))
+	_construir_relatorio(col)
 	_ir("principal")
 
 
@@ -172,10 +180,69 @@ func _marcar_controles_toque() -> void:
 		_rot_sens.text = Celular.dica("Sensibilidade do mouse", "Sensibilidade do olhar")
 
 
+## Página "Enviar relatório": texto curto para copiar ou mandar pelo WhatsApp (o jogador escolhe o contato).
+func _construir_relatorio(col: VBoxContainer) -> void:
+	_pag_relatorio = _pagina(col)
+	var aviso := _rotulo("Travou ou deu bug? Copie e mande para o Icaro.", 22)
+	aviso.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	aviso.custom_minimum_size = Vector2(380, 0)
+	_pag_relatorio.add_child(aviso)
+	caixa_relatorio = TextEdit.new()
+	caixa_relatorio.editable = false                   # só leitura, mas dá para selecionar e copiar na mão
+	caixa_relatorio.virtual_keyboard_enabled = false   # no celular o teclado não abre à toa
+	caixa_relatorio.context_menu_enabled = false
+	caixa_relatorio.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	caixa_relatorio.custom_minimum_size = Vector2(0, 140)
+	caixa_relatorio.add_theme_font_size_override("font_size", 14)
+	caixa_relatorio.add_theme_color_override("font_readonly_color", Flash.NAVY)
+	caixa_relatorio.add_theme_color_override("font_color", Flash.NAVY)
+	caixa_relatorio.add_theme_color_override("selection_color", Flash.AMARELO)
+	caixa_relatorio.add_theme_stylebox_override("normal", Flash.caixa(Color.WHITE, Flash.NAVY, 8, 3, false))
+	caixa_relatorio.add_theme_stylebox_override("focus", Flash.caixa(Color.WHITE, Flash.AZUL, 8, 3, false))
+	caixa_relatorio.add_theme_stylebox_override("read_only", Flash.caixa(Color.WHITE, Flash.NAVY, 8, 3, false))
+	_pag_relatorio.add_child(caixa_relatorio)
+	var linha := HBoxContainer.new()
+	linha.add_theme_constant_override("separation", 8)
+	_pag_relatorio.add_child(linha)
+	btn_copiar = BotaoGel.new("Copiar relatório", Flash.VERDE, 22)
+	btn_whatsapp = BotaoGel.new("Mandar pelo WhatsApp", Flash.VERDE, 22)
+	for b: BotaoGel in [btn_copiar, btn_whatsapp]:
+		b.custom_minimum_size = Vector2(0, 54)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.som_hover = false
+		b.margem_h = 8
+		linha.add_child(b)
+	btn_copiar.pressed.connect(_copiar_relatorio)
+	btn_whatsapp.pressed.connect(_whatsapp_relatorio)
+	var voltar := _botao(_pag_relatorio, "Voltar", Flash.AZUL, func(): _ir("principal"))
+	voltar.custom_minimum_size = Vector2(0, 54)
+
+
+func _copiar_relatorio() -> void:
+	DisplayServer.clipboard_set(caixa_relatorio.text)
+	btn_copiar.text = "Copiado!"
+	_copiado_id += 1
+	var id := _copiado_id
+	# o menu roda com a árvore pausada: o timer precisa ignorar a pausa
+	get_tree().create_timer(2.0, true).timeout.connect(func():
+		if id == _copiado_id and is_instance_valid(btn_copiar):
+			btn_copiar.text = "Copiar relatório")
+
+
+func _whatsapp_relatorio() -> void:
+	OS.shell_open(Relatorio.link_whatsapp(caixa_relatorio.text))
+
+
 func _ir(pagina: String) -> void:
 	_pag_principal.visible = pagina == "principal"
 	_pag_opcoes.visible = pagina == "opcoes"
 	_pag_confirma.visible = pagina == "confirma"
+	_pag_relatorio.visible = pagina == "relatorio"
+	if pagina == "relatorio":
+		caixa_relatorio.text = Relatorio.gerar()   # gerado ao abrir a página
+		caixa_relatorio.scroll_vertical = 0
+		btn_copiar.text = "Copiar relatório"
+		_copiado_id += 1
 
 
 ## Mostra/esconde o menu; `pistas` = quantas pistas do Tito já foram achadas (0 = linha escondida).

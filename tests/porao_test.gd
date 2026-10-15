@@ -366,9 +366,9 @@ func _teste_voz_e_afogamento() -> void:
 		ant = nivel._voz_ult
 	_checar(not repetiu, "o sussurro nunca repete a mesma linha em seguida")
 	# prioridade: o sussurro não apaga uma legenda importante que ainda aparece
-	nivel._mostrar_legenda("Um disco sem data. Segure Q.", 4.0)
+	nivel._mostrar_legenda("Um disco sem data. Aperte Q.", 4.0)
 	nivel._chamar_voz()
-	_checar(nivel._legenda.text == "Um disco sem data. Segure Q.", "sussurro não sobrescreve legenda importante")
+	_checar(nivel._legenda.text == "Um disco sem data. Aperte Q.", "sussurro não sobrescreve legenda importante")
 	# afogamento: entra na água funda
 	var mortes0: int = GS.contadores.get("mortes", 0)
 	player.global_position = c2.raiz.to_global(c2.pontos["armadilha"] + Vector3(0, 0.2, 0))

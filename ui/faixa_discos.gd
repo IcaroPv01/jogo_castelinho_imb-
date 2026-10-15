@@ -136,8 +136,8 @@ func _draw() -> void:
 		draw_string_outline(fonte_n, ponta, txt, HORIZONTAL_ALIGNMENT_CENTER, 68.0, 20, 6, Flash.NAVY)
 		draw_string(fonte_n, ponta, txt, HORIZONTAL_ALIGNMENT_CENTER, 68.0, 20, Color.WHITE if not bloq else Color("C8CCD4"))
 	# dica discreta de teclas, logo acima da plaquinha (não ocupa espaço de outra UI)
-	var dica := Celular.dica("1–5 ou rodinha: trocar · segure Q: ver", "toque no disco: trocar · segure Visor: ver") \
-		if _meus.size() >= 2 else Celular.dica("segure Q: ver", "segure Visor: ver")
+	var dica := Celular.dica("1–5 ou rodinha: trocar · aperte Q: ver", "toque no disco: trocar · aperte Visor: ver") \
+		if _meus.size() >= 2 else Celular.dica("aperte Q: ver", "aperte Visor: ver")
 	var fd := Flash.fonte_titulo()
 	var tam_dica := 22 if Celular.ativo else 15   # no celular: pelo menos do tamanho do ano dos discos (20)
 	var borda_dica := 7 if Celular.ativo else 5
