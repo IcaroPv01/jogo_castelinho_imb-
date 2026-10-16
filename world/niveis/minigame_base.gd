@@ -42,7 +42,8 @@ var env: Environment
 
 
 func _init() -> void:
-	var mk := Marker3D.new()      # o Main procura "Spawn"; iniciar() move o jogador para `ponto_jogador()`
+	# o Main procura "Spawn"; iniciar() move o jogador para `ponto_jogador()`. Filha que declara `_init` chama `super()`.
+	var mk := Marker3D.new()
 	mk.name = "Spawn"
 	add_child(mk)
 
@@ -78,6 +79,9 @@ func _montar() -> void:
 
 
 func _rodar() -> bool:
+	# (precisa conter um await: sem isso o GDScript trata `_rodar` como função comum e o `await _rodar()` de
+	# `_rodar_tudo` não retoma quando a coroutine da filha termina)
+	await get_tree().process_frame
 	return true
 
 
