@@ -421,6 +421,7 @@ func carregar() -> void:
 	checkpoint_sala = clampi(int(_campo(dados, "checkpoint_sala", 1)), 1, TOTAL_SALAS)
 	flags = _campo(dados, "flags", {})
 	flags.erase("ui_aberta")
+	flags.erase("visor_calmo")      # só vale dentro de uma cena (final "Tito salvo", Rodoviária): nunca volta de um save
 	selos.assign(_campo(dados, "selos", []).map(func(x): return str(x)))
 	contadores.merge(_campo(dados, "contadores", {}), true)
 	sensibilidade = float(_campo(dados, "sensibilidade", 1.0))
