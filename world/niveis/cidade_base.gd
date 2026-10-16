@@ -397,6 +397,8 @@ func _atualizar_hud_se_mudou() -> void:
 	var h := _hud()
 	if h and player != null and h.lbl_sala.text != _hud_texto:
 		h.lbl_sala.text = _hud_texto
+	if h and h.lbl_passaporte.visible:
+		h.lbl_passaporte.visible = false      # o contador da caça dos discos (Castelinho) não vale na cidade
 
 
 func _restaurar_hud() -> void:
@@ -405,6 +407,8 @@ func _restaurar_hud() -> void:
 	var h := _hud()
 	if h and h.has_method("texto_sala"):
 		h.lbl_sala.text = h.texto_sala(GameState.sala_atual)
+	if h and h.has_method("_atualizar_passaporte"):
+		h._atualizar_passaporte()
 
 
 # ============================================================================ ajudantes para os lugares

@@ -271,8 +271,8 @@ func _mar_nao_afoga(nivel: Node) -> void:
 	_checar(mortes == m0 and nivel.quedas == q0, "continua sem morte e sem queda")
 	# a rede de segurança ainda cobre quem passa da borda
 	p.global_position = Vector3(0.0, 0.5, -40.0)
-	var voltou: bool = await _ate(func() -> bool: return p.global_position.distance_to(nivel.ponto_spawn("Spawn").global_position) < 1.5, 120)
-	_checar(voltou and nivel.quedas == q0 + 1, "se passar da borda, volta ao Spawn")
+	var voltou: bool = await _ate(func() -> bool: return nivel.quedas == q0 + 1 and nivel.area.grow(1.0).has_point(Vector2(p.global_position.x, p.global_position.z)), 120)
+	_checar(voltou, "se passar da borda, a rede de segurança o devolve para dentro da AREA")
 	await _frames(5)
 
 
