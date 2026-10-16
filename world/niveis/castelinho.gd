@@ -1921,9 +1921,11 @@ func _process(dt: float) -> void:
 		TitoCastelinho.animar(_tito_visor, _t + 2.0, player.camera.global_position)
 	_t_apito -= dt
 	if GameState.sala_atual == _global(16) and _t_apito <= 0.0 and player.velocity.length() > 4.2 and not Guia.ocupado() and visita <= 2:
-		_t_apito = 6.0
+		_t_apito = 10.0
 		Audio.sfx("apito")
-		Guia.falar("quico", ["PIII! Sem correr na escada, hein!"])
+		# a bronca sai uma vez por visita; depois, correndo na escada, só o apito (a frase repetida cansava)
+		if _uma_vez("quico_escada"):
+			Guia.falar("quico", ["PIII! Sem correr na escada, hein!"])
 	if _quico19_pendente and player.global_position.distance_to(Vector3(-6.6, 3.5, -24.9)) < 1.2:
 		_quico19_pendente = false
 		_surgir_quico19()

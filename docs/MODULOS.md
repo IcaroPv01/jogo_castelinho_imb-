@@ -25,6 +25,7 @@ Decisões do Icaro (07/10/2026):
 | 11 | Q liga/desliga, pulo e relatório | Pedidos do playtest do Bernardo (14/10): Q como o Correr, pulo baixo, botão de enviar relatório | `world/visor.gd`, `player/player.gd`, `ui/controles_toque.gd`, `ui/relatorio.gd`, `ui/menu_pausa.gd` | feito (PR #22): Q/Visor liga e desliga com um toque, Espaço/botão Pular (pulo baixo), "Enviar relatório" na pausa; reabre quando o Icaro testar |
 | 12 | Épocas, caminho e história | Playtest do Bernardo, fase B2: épocas distintas, caminho claro, história fora dos painéis, sustos no caminho, ideias da água | `castelinho/ruina2019.gd`, `castelinho/tito.gd`, `autoload/efeitos.gd`, `ui/mapa.gd`, `world/objetivo.gd`, `ui/jornal.gd`, `world/flash_agua.gd`, `world/goteiras.gd`, `world/agua_ferrugem.gd`, `world/niveis/sustos_caminho.gd` | feito (PR a seguir): 2019 interditado, Tito fantasma depois de 1967, legenda das épocas, Mapa da Visita (M), jornal de 1967, lampejos de água, goteiras, água ferrugem, 3 sustos no caminho; reabre quando o Icaro jogar |
 | 13 | Pedalinho, final secreto e fundo da Sala 101 | Playtest do Bernardo, fase C: pedalinho no lago, final secreto "salvar o Tito", fundo da Sala 101 mais caprichado | `castelinho/pedalinho.gd`, `world/niveis/braco_salvar.gd`, `world/niveis/fundo_do_lago.gd`, `world/niveis/braco_morto.gd`, `ui/finais.gd`, `ui/tela_titulo.gd` | feito (PR a seguir): pedalinho amarelo no atracadouro, luz no lago com 12 pistas, olhar o Tito de 1967 com o Visor, 4º final "Tito voltou pra casa", fundo da Sala 101 com mais cenário; reabre quando o Icaro jogar |
+| 15 | Falas dos monitores | Pedido do Icaro (16/10): falas somem sozinhas, sem repetir no mesmo lugar, e úteis (ligadas à história e ao objetivo da visita) | `autoload/guia.gd`, `world/niveis/castelinho.gd` (e as falas em `ato2.gd`, `barra.gd`, `porao.gd`) | parte 1 feita (PR a seguir): avanço automático em toda fala, fala idêntica descartada, bronca da escada só 1 vez; parte 2 (reescrever falas) espera o Icaro escolher a direção |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -73,6 +74,21 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
   `rede_seguranca_ativa()` false (ex.: Barra a partir do PUXADO). Fechar bordas com paredes invisíveis, como as dunas.
 - Pendente: alguém jogar e dizer se a rede disparou sem motivo (aviso na tela) ou se ainda prendeu; o relatório da
   pausa (módulo 11) ajuda a achar o lugar.
+### Módulo 15: falas dos monitores (16/10/2026)
+
+- **Pedido do Icaro:** (1) a fala deve passar sozinha, sem tocar na tela (difícil correndo); (2) falas se repetem em alguns lugares
+  (ex.: correndo na escada); (3) as falas parecem jogadas e dá para ignorar.
+- **Parte 1 (feita):** `autoload/guia.gd`: toda fala agora avança sozinha, também a que trava o jogador (antes esperava 40 s). Tempo
+  parado depois de digitar: `Guia.tempo_leitura(n_letras, bloqueante, tem_fila)` (não travando 1,6 a 5,5 s; travando 3 a 9 s; com outra
+  fala esperando na fila, a atual sai ~40% mais depressa, para quem corre pelas salas não acumular balões atrasados). Clique/espaço
+  continuam adiantando. Fala idêntica (mesmo personagem e linhas, não travando) que já está na tela, na fila ou terminou há menos de
+  `REPETICAO_S` (6 s) é descartada; `cancelar()` zera essa memória. `castelinho.gd`: o Quico da escada (sala 16) xinga **uma vez por
+  visita** (`_uma_vez("quico_escada")`) e depois só apita (a cada 10 s, antes 6 s com a frase repetida).
+  Teste novo em `tests/ui_test.gd` (avança sozinha sem clique, teto de tempo, repetição descartada).
+- **Parte 2 (pendente):** reescrever as falas para ligá-las à história e ao objetivo. Levantamento: ~90 chamadas de `Guia.falar` em
+  `castelinho.gd` (a maioria por sala, com `_uma_vez`), `castelinho_cacas.gd` (convites/avisos das caças), `ato2.gd`, `barra.gd`,
+  `porao.gd`. Só depois de o Icaro escolher a direção (a proposta está na thread "Módulo 15"). Não reescrever sem isso.
+
 ### Módulo 13: pedalinho, final secreto e fundo da Sala 101 (15/10/2026)
 
 - **Origem:** fase C do playtest do Bernardo (`/mnt/project-files/castelinho/playtest-bernardo-plano.md`). O Icaro disse "considere feito"

@@ -13,7 +13,11 @@ extends CanvasLayer
 ## Personagens: "bentinho" (boto), "taina" (tainha), "quico" (quero-quero),
 ##   "sistema" (caixa cinza institucional, sem retrato), "???" (texto vermelho em VT323, sem retrato).
 ##
-## Avanço: espaço, Enter ou clique. Com bloquear=false a fala também some sozinha depois de um tempo.
+## Avanço: espaço, Enter ou clique. Toda fala (travando ou não) também avança sozinha depois de um tempo de leitura
+## (tempo_leitura()), então quem está correndo nunca precisa tocar na tela. Se já há outra fala esperando na fila, a atual
+## sai mais depressa.
+## Repetição: uma fala travando=false idêntica (mesmo personagem e mesmas linhas) que já está na tela, na fila ou terminou
+## há menos de REPETICAO_S segundos é descartada (evita a mesma frase a cada passo num gatilho que dispara de novo).
 ## Várias chamadas seguidas entram numa fila e são mostradas em ordem.
 ##
 ## Corrupção (GameState.corruption): acima de ~0.3 aparecem letras trocadas (o→0, a→4), o retrato
@@ -30,11 +34,13 @@ class Fala extends RefCounted:
 	var bloquear := false
 	var engasgar := false
 	var concluida := false
+	var chave := ""
 
 const LARGURA := 1000.0
 const ALTURA := 156.0
 const CPS := 38.0   # letras por segundo
 const CARENCIA := 0.25   # ignora "avançar" logo que a linha aparece (evita pular sem querer)
+const REPETICAO_S := 6.0   # a mesma fala (não travando) dentro desse tempo é descartada
 
 const PERSONAGENS := {
 	"bentinho": {"nome": "Bentinho", "retrato": "bentinho", "blip": "blip_bentinho", "cor": Color("2D8CFF"),
@@ -58,6 +64,8 @@ var _digitando := false
 var _esperando := false
 var _pular := false
 var _pedido_avanco := false
+var _vistas := {}            # chave da fala -> instante (ms) em que terminou (Time.get_ticks_msec), para descartar repetição
+var _chaves_ativas := {}     # chave da fala -> quantas estão na fila ou na tela
 var _t_linha := 0.0          # segundos desde que a linha atual apareceu
 var _personagem := ""
 var _bloqueante := false     # a fala atual trava o jogador?
@@ -108,13 +116,18 @@ func _ready() -> void:
 
 # ================================================================ API pública
 func falar(personagem: String, linhas: Array, bloquear := false, engasgar := false) -> void:
+	var chave := _chave(personagem, linhas)
+	if not bloquear and _repetida(chave):
+		return
 	var f := Fala.new()
+	f.chave = chave
 	f.personagem = personagem
 	f.linhas = linhas.duplicate()
 	f.bloquear = bloquear
 	f.engasgar = engasgar
 	_fila.append(f)
 	_pendentes += 1
+	_chaves_ativas[chave] = int(_chaves_ativas.get(chave, 0)) + 1
 	_processar_fila()
 	if not f.concluida:
 		await f.terminou
@@ -126,6 +139,31 @@ func falar_engasgado(personagem: String, linhas: Array, bloquear := false) -> vo
 
 func ocupado() -> bool:
 	return _pendentes > 0
+
+
+func _chave(personagem: String, linhas: Array) -> String:
+	return personagem + "|" + "|".join(PackedStringArray(linhas.map(func(l): return str(l))))
+
+
+## Esta fala já está na fila, na tela ou acabou de terminar?
+func _repetida(chave: String) -> bool:
+	if int(_chaves_ativas.get(chave, 0)) > 0:
+		return true
+	return _vistas.has(chave) and (Time.get_ticks_msec() - int(_vistas[chave])) / 1000.0 < REPETICAO_S
+
+
+## Quanto tempo (s) a linha fica parada na tela, depois de digitada, antes de avançar sozinha.
+## Já conta que o texto foi "datilografado" (parte da leitura já aconteceu). Falas que travam o jogador ficam um pouco mais.
+## Há outra fala esperando: sai mais depressa (quem corre pelas salas não acumula balões atrasados).
+static func tempo_leitura(n_letras: int, bloqueante: bool, tem_fila := false) -> float:
+	var t: float
+	if bloqueante:
+		t = clampf(1.8 + 0.06 * n_letras, 3.0, 9.0)
+	else:
+		t = clampf(0.9 + 0.045 * n_letras, 1.6, 5.5)
+		if tem_fila:
+			t = maxf(1.2, t * 0.6)
+	return t
 
 
 ## Há um balão na tela? / ele trava o jogador? (o celular usa para decidir o que um toque faz)
@@ -151,6 +189,7 @@ func cancelar() -> void:
 	for f in _fila:
 		_concluir(f)
 	_fila.clear()
+	_vistas.clear()      # cancelada não é "já vista": a mesma fala pode voltar logo depois
 	if not _processando:
 		_cancelar = false
 		_ocultar()
@@ -175,6 +214,12 @@ func _concluir(f: Fala) -> void:
 	if not f.concluida:
 		f.concluida = true
 		_pendentes = maxi(0, _pendentes - 1)
+		var n := int(_chaves_ativas.get(f.chave, 0)) - 1
+		if n > 0:
+			_chaves_ativas[f.chave] = n
+		else:
+			_chaves_ativas.erase(f.chave)
+		_vistas[f.chave] = Time.get_ticks_msec()
 		f.terminou.emit()
 
 
@@ -208,7 +253,7 @@ func _mostrar_linha(f: Fala, cfg: Dictionary, linha: String) -> void:
 	await _digitar(f, cfg, info, corr)
 	_esperando = true
 	_pedido_avanco = false
-	var limite := 40.0 if f.bloquear else clampf(1.5 + 0.05 * str(info.texto).length(), 2.2, 8.0)
+	var limite := tempo_leitura(str(info.texto).length(), f.bloquear, not _fila.is_empty())
 	var t := 0.0
 	while not _pedido_avanco and not _cancelar and t < limite:
 		await get_tree().process_frame
