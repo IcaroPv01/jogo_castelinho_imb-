@@ -8,12 +8,24 @@ shader_type canvas_item;
 //  pulso      0..1  glitch forte momentâneo (sustos)
 //  visor      0..1  moldura do Visor do Tempo (plástico vermelho, dois olhos redondos, sépia)
 //  atencao    0..1  V2: "algo percebe você" (só dentro do Visor): lentes avermelhadas que pulsam, bordas escuras, tremor
+//  medo       0..1  módulo 2 parte 3: a Figura (do slide ou de verdade) está perto: vinheta VERMELHA nas bordas da tela, que
+//                   pulsa no ritmo do coração e cresce com `medo` (vale com ou sem Visor)
+//
+// O Visor (parte 3) cobre ~91% da tela: duas lentes de cantos arredondados, quase encostadas no centro (divisória fina) e com
+// uma moldura de plástico vermelho fina em volta; cada olho vê a tela inteira (estéreo falso de 0,4%).
 
 uniform sampler2D tela : hint_screen_texture, repeat_disable, filter_linear;
 uniform float corrupcao : hint_range(0.0, 1.0) = 0.0;
 uniform float pulso : hint_range(0.0, 1.5) = 0.0;
 uniform float visor : hint_range(0.0, 1.0) = 0.0;
 uniform float atencao : hint_range(0.0, 1.0) = 0.0;
+uniform float medo : hint_range(0.0, 1.0) = 0.0;
+
+// Caixa de cantos arredondados (SDF): negativo dentro. `meio` = meia-largura/altura, `r` = raio do canto.
+float caixa_arred(vec2 p, vec2 meio, float r) {
+	vec2 d = abs(p) - meio + vec2(r);
+	return length(max(d, vec2(0.0))) + min(max(d.x, d.y), 0.0) - r;
+}
 
 const float BAYER[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
 
@@ -43,13 +55,15 @@ void fragment() {
 	float dcirc = 0.0;
 	float dentro = 1.0;
 	if (visor > 0.001) {
-		float raio_base = min(0.42, (0.5 * aspect - 0.05) * 0.5);
-		float raio = raio_base * (0.25 + 0.75 * visor);
+		// duas lentes que ocupam quase a tela toda (a janela se abre de 25% a 100% no clarão de ligar)
 		float lado = q.x < 0.0 ? -1.0 : 1.0;
-		centro = vec2(lado * (raio_base + 0.02), 0.0);
-		dcirc = length(q - centro) - raio;
+		float abre = 0.25 + 0.75 * visor;
+		float meia_l = (aspect * 0.25 - 0.014) * abre;
+		float meia_a = (0.5 - 0.02) * abre;
+		centro = vec2(lado * aspect * 0.25, 0.0);
+		dcirc = caixa_arred(q - centro, vec2(meia_l, meia_a), 0.075 * abre);
 		dentro = step(dcirc, 0.0);
-		uv = vec2(0.5) + (q - centro) / vec2(aspect, 1.0) * 1.15;
+		uv = vec2(0.5) + (SCREEN_UV - vec2(0.5)) * 0.97;
 		uv.x += lado * 0.004; // estéreo falso
 	}
 
@@ -136,6 +150,16 @@ void fragment() {
 		plastico *= 0.85 - 0.3 * q.y;
 		plastico += (hash21(FRAGCOORD.xy * 0.5) - 0.5) * 0.03;
 		col = mix(plastico, col, dentro);
+	}
+
+	// ---------------------------------------------------------- medo: vinheta vermelha que pulsa
+	if (medo > 0.001) {
+		vec2 vm = (SCREEN_UV - 0.5) * vec2(aspect * 0.7, 1.0);
+		float borda = smoothstep(0.18, 0.78, length(vm) * 1.2);
+		float bat = 0.5 + 0.5 * sin(TIME * (5.0 + 8.0 * medo));
+		float forca = clamp(borda * medo * (0.7 + 0.5 * bat) * 1.15, 0.0, 0.92);
+		col = mix(col, vec3(0.62, 0.0, 0.02), forca);
+		col *= 1.0 - 0.18 * medo * borda;
 	}
 
 	COLOR = vec4(col, 1.0);

@@ -237,8 +237,14 @@ static func objetivo_caca() -> String:
 		return ""
 	var c: Dictionary = GameState.CACAS[d]
 	var n := "%s %d/%d" % [c["rotulo"], GameState.caca_achados(d), GameState.caca_total(d)]
+	var onde := Objetivo.salas_da_caca(d)       # "sala 26" / "salas 26 e 30" (do nível); "" se não souber
+	var falta := ": falta na%s %s." % ["s" if onde.begins_with("salas") else "", onde] if onde != "" else ""
 	if int(c["previo"]) < 0:
+		if onde != "":
+			return "%s%s Ache os objetos antigos que brilham." % [n, falta]
 		return "%s: ache os objetos antigos que brilham pelo museu." % n
+	if onde != "":
+		return "%s%s Ligue o Q com o disco anterior e siga o brilho." % [n, falta]
 	return "%s: ligue o Q com o disco anterior e procure o brilho." % n
 
 

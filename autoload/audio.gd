@@ -18,6 +18,10 @@ extends Node
 ## abafado sem palavras), "afundar", "figura_sobe", "figura_afunda", "pista" (nova pista no HUD) e o loop "subaquatico"
 ## (já sai abafado do arquivo, porque o filtro de bus não funciona na web).
 ##
+## Módulo 2, parte 3: "ping" (sininho da pista de caça: o jogo o repete mais depressa perto do item, ver world/caca_proximidade.gd)
+## e o loop "respiracao" (respiração ofegante), tocado por `Audio.medo(v)`: Efeitos o chama todo quadro com o medo (0..1)
+## de world/medo.gd; o volume e o tom sobem com v e some com v = 0.
+##
 ## Música "jingle": a versão tocada acompanha GameState.corruption (o modo Sample da web não aceita
 ## efeitos de bus, então as três versões foram pré-renderizadas):
 ##   corruption < 0.2   jingle_0  normal
@@ -41,6 +45,7 @@ const VOLUME_PADRAO := {
 	"trovao": -3.0, "apito": -4.0, "selo": -3.0,
 	"susto_agua": -2.0, "susto_perto": -2.0, "susto_queda": -2.0, "voz_tito": -2.0, "afundar": -3.0,
 	"subaquatico": -6.0, "figura_sobe": -2.0, "figura_afunda": -2.0, "pista": -3.0,
+	"ping": -6.0, "respiracao": 0.0,
 }
 
 var volume_musica_db := -9.0
@@ -56,6 +61,8 @@ var _ambiente_player: AudioStreamPlayer
 var _ambiente_nome := ""
 var _tweens := {}            # AudioStreamPlayer -> Tween (um por player)
 var _ultimo_passo := -1
+var _resp_player: AudioStreamPlayer   # respiração ofegante do medo (loop)
+var _resp_v := 0.0
 
 
 func _ready() -> void:
@@ -75,6 +82,10 @@ func _ready() -> void:
 	_ambiente_player.name = "Ambiente"
 	_ambiente_player.volume_db = SILENCIO_DB
 	add_child(_ambiente_player)
+	_resp_player = AudioStreamPlayer.new()
+	_resp_player.name = "Respiracao"
+	_resp_player.volume_db = SILENCIO_DB
+	add_child(_resp_player)
 	GameState.corruption_mudou.connect(_ao_mudar_corruption)
 
 
@@ -126,6 +137,37 @@ func passo() -> void:
 	p.volume_db = VOLUME_PADRAO.get("passo_%d" % i, 0.0) + randf_range(-2.0, 0.5)
 	p.pitch_scale = randf_range(0.92, 1.08)
 	p.play()
+
+
+# ---------------------------------------------------------------- medo: respiração ofegante
+const RESP_DB_MIN := -30.0    # volume com v ~ 0 (quase inaudível)
+const RESP_DB_MAX := -3.0     # volume com v = 1 (a Figura em cima)
+
+## Respiração ofegante em loop, mais alta e mais rápida quanto maior `v` (0..1). v < 0,02 a para (sem custo).
+func medo(v: float) -> void:
+	_resp_v = clampf(v, 0.0, 1.0)
+	if _resp_v < 0.02:
+		if _resp_player.playing:
+			_resp_player.stop()
+		_resp_player.volume_db = SILENCIO_DB
+		return
+	if not _resp_player.playing:
+		var s := _carregar_loop("respiracao")
+		if s == null:
+			return
+		_resp_player.stream = s
+		_resp_player.play(randf() * s.get_length())
+	_resp_player.volume_db = lerpf(RESP_DB_MIN, RESP_DB_MAX, _resp_v) + VOLUME_PADRAO.get("respiracao", 0.0)
+	_resp_player.pitch_scale = lerpf(0.9, 1.3, _resp_v)
+
+
+## Volume atual da respiração em dB (SILENCIO_DB = parada): para testes.
+func respiracao_db() -> float:
+	return _resp_player.volume_db if _resp_player.playing else SILENCIO_DB
+
+
+func respiracao_tocando() -> bool:
+	return _resp_player.playing
 
 
 # ---------------------------------------------------------------- música e ambiente

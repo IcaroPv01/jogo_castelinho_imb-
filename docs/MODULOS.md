@@ -52,6 +52,32 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
 
+### Módulo 2, parte 3: Visor justo e caças mais visíveis (16/10/2026)
+
+- **Origem:** playtest do Icaro: coisas escondidas demais; Visor "meio injusto"; quer sustos e perseguição só em certas partes; Visor
+  cobrindo quase a tela; medo de verdade (borda vermelha, respiração); um momento preso no Visor.
+- **Zonas de perigo** (`world/zonas_perigo.gd`, tabela `SALAS`, números globais): V3 = 57 e 58 (Ato II: núcleo de 1950 e arcada);
+  V4 = 74 (corredor), 77 (trecho longo escada/terraço/Pescador), 80 (hall da porta zebrada); porão = todas (como antes). Só ali
+  a atenção sobe e a Figura aparece no slide/persegue pelo Visor (`Visor.zona_de_perigo()`); fora, Q livre e atenção só cai.
+  Entrar numa zona com Q ligado: batimento baixinho 3 s (`_alerta`). Salas das caças da V4 (73, 75, 78) e a 72 ficam de fora.
+  Testes que enchem a atenção precisam pôr `GameState.sala_atual` numa zona (ver `_zerar` em `visor_test`/`figura_q_test`).
+- **Medo** (`world/medo.gd`): max(atenção suavizada, proximidade da `FiguraBranca` real ativa a até 16 m). `Efeitos.medo` alimenta o
+  uniform `medo` do shader (vinheta vermelha que pulsa, com ou sem Visor) e `Audio.medo(v)` (loop novo `respiracao.wav`, volume
+  -30..-3 dB e tom sobem com v; some em 0). Batimento "atencao" intacto. Sons novos: `respiracao`, `ping` (tools/gerar_audio.py).
+- **Visor grande** (`shaders/pos_processamento.gdshader`): duas lentes de cantos arredondados quase coladas, ~91% da tela (era ~62%), moldura
+  vermelha fina; cada olho vê a tela inteira. O celular não tem máscara própria: só o botão Visor (nada mudou em `celular.gd` além de
+  "ligue o Q" -> "toque no botão Visor"). Não conferido: aparência no celular de verdade.
+- **Caças mais visíveis:** `world/feixe_caca.gd` (feixe de luz vertical aditivo, 6,5 m fora / 2,7 m dentro, visível até 24 m, só na época do
+  item) + brilho 60% maior e sempre aceso, em todos os achados (Passaporte, 1967, 1975 incl. Tito e buraco, 2019, porão).
+  `world/caca_proximidade.gd`: a menos de 10 m de achado visível, "ping" que acelera (1,8 s a 0,35 s); em outra época, dica única por item
+  ("Algo brilha em outra época: ligue o Q." ou "aperte N para trocar de disco"). Objetivo/mapa M: "Vestígios 1/3: falta nas salas 26 e 30."
+  (`Objetivo.salas_caca`, o nível registra; castelo usa `sala_do_ponto` = gatilho mais perto; porão usa `PoraoCacas.salas_faltando`).
+- **Preso no Visor** (V4, logo depois de pegar o disco de 2019 na sala 72, uma vez, flag `evt_v4_preso_visor`): `Visor.preso_iniciar(15)`: liga
+  sozinho, Q não desliga ("O Visor não desliga!"), tremores, atenção forçada 0,45 a 0,92 (nunca estoura: sem perseguição nem morte), Figura
+  no slide; no fim susto rente e solta. Sair do nível zera. Não é salvo.
+- **Testes:** novo `tests/visor_justo_test.gd`; ajustes em `visor_test`, `figura_q_test`, `castelinho_test`. Captura: `tests/captura_visor_justo.gd`.
+- Pendente: o Icaro jogar e dizer se as zonas e o ping estão bons; sons novos só conferidos por teste, nunca ouvidos.
+
 ### Módulo 1, rodada 2: playtest do Bernardo (15/10/2026)
 
 - **Relato:** "fiquei preso numa parede", "buguei no void", "tive que resetar porque tava preso numa fase", "o deserto é giga,
