@@ -8,6 +8,7 @@ extends CanvasLayer
 ##
 ## API estável:
 ##   Efeitos.pulso(intensidade, dur)   glitch forte momentâneo (susto). 1.0 = forte.
+##   Efeitos.medo (variável, 0..1)     medo suavizado: vinheta vermelha nas bordas + Audio.medo (world/medo.gd)
 ##   Efeitos.visor(ativo)              moldura do Visor (plástico vermelho, sépia, legenda, clique)
 ##                                     V2: a legenda mostra o ano do disco ("1967", "????" para o sem data) e,
 ##                                     com GameState.atencao > 0 (visita 3+), as lentes avermelham e pulsam
@@ -28,6 +29,9 @@ var _pulso := 0.0
 var _visor := 0.0
 var _visor_alvo := 0.0
 var _atencao := 0.0              # GameState.atencao suavizada (o que o shader usa)
+var medo := 0.0                  # medo suavizado 0..1 (world/medo.gd): vinheta vermelha + respiração ofegante
+var _medo_alvo := 0.0
+var _medo_t := 0.0               # s até recalcular o medo (varre as Figuras a cada 0,1 s)
 var _rect: ColorRect
 var _mat: ShaderMaterial
 var _flash: ColorRect
@@ -78,7 +82,8 @@ func _process(dt: float) -> void:
 	corrupcao_visual = move_toward(corrupcao_visual, _alvo_c, maxf(absf(_alvo_c - corrupcao_visual) * 3.0, 0.08) * dt)
 	_visor = move_toward(_visor, _visor_alvo, dt * (7.0 if _visor_alvo > _visor else 9.0))
 	_atencao = move_toward(_atencao, GameState.atencao if _visor_alvo > 0.5 else 0.0, dt * 2.5)
-	var ligado := corrupcao_visual > 0.003 or _pulso > 0.002 or _visor > 0.002 or _aquecendo > 0
+	_atualizar_medo(dt)
+	var ligado := corrupcao_visual > 0.003 or _pulso > 0.002 or _visor > 0.002 or _aquecendo > 0 or medo > 0.002
 	if _aquecendo > 0:
 		_aquecendo -= 1
 	if ligado != _rect.visible:
@@ -88,6 +93,18 @@ func _process(dt: float) -> void:
 		_mat.set_shader_parameter("pulso", _pulso)
 		_mat.set_shader_parameter("visor", _visor)
 		_mat.set_shader_parameter("atencao", _atencao)
+		_mat.set_shader_parameter("medo", medo)
+
+
+## Medo (a Figura do slide ou a de verdade chegando): sobe em ~1,2 s, desce em ~1,7 s; em pausa vai a zero.
+## Alimenta a vinheta vermelha do shader e a respiração ofegante (Audio.medo).
+func _atualizar_medo(dt: float) -> void:
+	_medo_t -= dt
+	if _medo_t <= 0.0:
+		_medo_t = 0.1
+		_medo_alvo = 0.0 if get_tree().paused else Medo.nivel(get_tree())
+	medo = move_toward(medo, _medo_alvo, dt * (0.85 if _medo_alvo > medo else 0.6))
+	Audio.medo(medo)
 
 
 ## Liga o pós-processamento por alguns quadros (com a tela de carregamento por cima) para o shader ser compilado

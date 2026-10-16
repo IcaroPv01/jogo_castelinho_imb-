@@ -213,6 +213,9 @@ func iniciar(p: Player) -> void:
 		visor.figura_atravessou.connect(_on_figura_atravessou)
 		_visor_v4 = visor
 	_ambiente_sonoro()
+	CacaProximidade.instalar(self)                  # ping e dica perto dos achados da caça (módulo 2, parte 3)
+	Objetivo.salas_caca = Callable(self, "_salas_da_caca")
+	DicaAoTravar.instalar(self)      # parado muito tempo no mesmo objetivo: um monitor lembra o caminho (world/dica_ao_travar.gd)
 	if visita >= 3:
 		SustosCaminho.instalar(self)      # sustos garantidos no caminho obrigatório (world/niveis/sustos_caminho.gd)
 	if GameState.flag("porta_entrada_aberta"):
@@ -262,6 +265,31 @@ func _global(base: int) -> int:
 	if visita == 4:
 		return V4_SALAS.get(base, 79)
 	return GameState.sala_global(mini(base, GameState.SALAS_POR_VISITA))
+
+
+## Sala GLOBAL (a que o HUD mostra) do gatilho mais perto do ponto `p` (retângulo no chão; gatilho de outro andar custa mais).
+## Serve para dizer "falta nas salas 26 e 30" na caça dos discos: o objeto está "na sala" cujo gatilho é o mais próximo.
+func sala_do_ponto(p: Vector3) -> int:
+	var melhor := 1
+	var md := INF
+	for b in _triggers:
+		if b >= 23 or b == SALA_V4_PORTA:
+			continue
+		var t: SalaTrigger = _triggers[b]
+		var dx := maxf(absf(p.x - t.position.x) - t.tamanho.x * 0.5, 0.0)
+		var dz := maxf(absf(p.z - t.position.z) - t.tamanho.z * 0.5, 0.0)
+		var d := Vector2(dx, dz).length()
+		if absf(p.y - (t.position.y + 1.5)) > 2.6:
+			d += 20.0
+		if d < md:
+			md = d
+			melhor = b
+	return _global(melhor)
+
+
+## Para o Objetivo (mapa M): onde ainda falta achar algo da caça `d` (números globais de sala).
+func _salas_da_caca(d: int) -> Array:
+	return _cacas.salas_faltando(d) if _cacas != null else []
 
 
 func _chave(nome: String) -> String:
@@ -1398,10 +1426,12 @@ func _montar_passaporte() -> void:
 		brilho.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		brilho.shaded = false
 		brilho.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-		brilho.pixel_size = 0.014
+		brilho.pixel_size = 0.022
 		brilho.position = Vector3(0.14, 0.16, 0.05)
 		brilho.modulate = Color(1.0, 0.9, 0.35)
 		raiz.add_child(brilho)
+		raiz.add_child(FeixeCaca.criar(2.7 if d["interno"] else 6.5, Color(1.0, 0.9, 0.35)))     # feixe de luz (módulo 2, parte 3)
+		FeixeCaca.registrar(raiz, E1950, id)
 		add_child(raiz)
 		if d["interno"]:
 			_camada_interna(raiz)
@@ -1490,8 +1520,9 @@ func _animar_passaporte(dt: float) -> void:
 		var b := raiz.get_node_or_null("Brilho") as Sprite3D
 		if b:
 			var f := pow(maxf(0.0, sin(_t * 2.2 + float(id.length()))), 4.0)
-			b.scale = Vector3.ONE * (0.5 + 0.9 * f)
+			b.scale = Vector3.ONE * (0.8 + 1.0 * f)
 			b.rotation.z = _t * 1.5
+		FeixeCaca.pulsar(raiz, _t)
 
 
 ## O Bentinho lança o Passaporte (sala 1 da visita 1). Sem caça se o jogador já tem o disco 1950.
@@ -1631,7 +1662,7 @@ func _escada_interditada(_p: Node) -> void:
 	if visita == 3:
 		await Guia.falar("quico", ["PIII! Escada interditada! Obra!", "Primeiro resolva essa porta nova aí no Salão."])
 	else:
-		await Guia.falar("sistema", ["A escada está interditada. Não há mais nada lá em cima."])
+		await Guia.falar("sistema", ["A escada está interditada. Não há mais nada lá em cima.", Objetivo.atual()])
 
 
 func _ato2_concluido() -> void:
@@ -1703,6 +1734,17 @@ func _olhar_painel_solto(_p: Node) -> void:
 	Audio.sfx("selo")
 	Efeitos.flash(0.25, Color(1, 1, 1), 0.35)
 	await Guia.falar("sistema", ["Atrás do painel solto havia um disco do Visor.", "Este mostra o Castelinho em 2019, já em ruínas."])
+	_preso_no_visor()
+
+
+## "PRESO NO VISOR" (módulo 2, parte 3), uma vez, visita 4, logo depois de pegar o disco de 2019: o Visor liga sozinho e não
+## desliga por 15 s; a tela treme e a Figura vem pelo slide. Não mata e não persegue: no fim ela chega rente, some e o Visor solta.
+## Fica aqui (e não na escada do porão) porque é um momento que o jogador sempre passa, de pé e parado de propósito, e ainda
+## tem rastro andado para a Figura do slide aparecer. Sala 72: fora das zonas de perigo, então nada acumula antes.
+func _preso_no_visor() -> void:
+	if visita != 4 or _visor == null or not is_instance_valid(_visor) or not _uma_vez("preso_visor"):
+		return
+	_visor.preso_iniciar(15.0)
 
 
 ## O desenho atrás do painel (pista que só existe em 2019) e a estante rasa onde o disco ficava.
@@ -1812,7 +1854,7 @@ func _descer_porao() -> void:
 	if _saindo_porao:
 		return
 	if GameState.sala_maxima < _global(21):
-		await Guia.falar("sistema", ["Ainda tem coisa para ver na visita. Siga o caminho até o fim."])
+		await Guia.falar("sistema", ["Ainda tem coisa para ver na visita.", Objetivo.atual()])
 		return
 	var destino := GameState.CENA_PORAO
 	if not ResourceLoader.exists(destino):
@@ -1933,9 +1975,11 @@ func _process(dt: float) -> void:
 		TitoCastelinho.animar(_tito_visor, _t + 2.0, player.camera.global_position)
 	_t_apito -= dt
 	if GameState.sala_atual == _global(16) and _t_apito <= 0.0 and player.velocity.length() > 4.2 and not Guia.ocupado() and visita <= 2:
-		_t_apito = 6.0
+		_t_apito = 10.0
 		Audio.sfx("apito")
-		Guia.falar("quico", ["PIII! Sem correr na escada, hein!"])
+		# a bronca sai uma vez por visita; depois, correndo na escada, só o apito (a frase repetida cansava)
+		if _uma_vez("quico_escada"):
+			Guia.falar("quico", ["PIII! Sem correr na escada, hein!"])
 	if _quico19_pendente and player.global_position.distance_to(Vector3(-6.6, 3.5, -24.9)) < 1.2:
 		_quico19_pendente = false
 		_surgir_quico19()
@@ -2140,20 +2184,19 @@ func _quico_da_lanterna() -> void:
 func _evt_sala2() -> void:
 	if visita != 1 or not _uma_vez("sala2"):
 		return
-	await Guia.falar("taina", ["Eu sou a Tainá, a tainha!", "Vou fazer umas perguntinhas!"])
+	await Guia.falar("taina", ["Eu sou a Tainá, a tainha! Vou fazer perguntinhas sobre os painéis.", "Leia o painel antes de responder: a resposta está nele!"])
 
 
 func _evt_sala4() -> void:
 	if visita != 1 or not _uma_vez("sala4"):
 		return
-	await Guia.falar("quico", ["Eu sou o Quico! Fiscal da visita!", "Não sai do caminho, hein! PIII!"])
 	Audio.sfx("apito")
-	await Guia.falar("quico", ["Cada quiz que você acerta vale um selo. Eu guardo todos!"])
+	await Guia.falar("quico", ["PIII! Eu sou o Quico, fiscal da visita!", "Cada quiz que você acerta vale um selo, e eu guardo todos. Não sai do caminho, hein!"])
 
 
 func _evt_sala7() -> void:
 	if visita == 4 and _uma_vez("sala7"):
-		await Guia.falar("???", ["O prédio está errado. Você também sente?"])
+		await Guia.falar("???", ["O prédio está errado. Você também sente?", "Trocaram os painéis. Leia os desenhos."])
 	elif visita == 3 and _uma_vez("sala7"):
 		await Guia.falar("bentinho", ["Eu não devia estar aqui à noite.", "Ninguém me disse quando a visita termina."])
 
@@ -2216,9 +2259,9 @@ func _evt_sala11() -> void:
 		return
 	match visita:
 		1:
-			await Guia.falar("bentinho", ["Este é o Salão de Arte da nossa cidade!", "Quanta cor, quanta cor!"])
+			await Guia.falar("bentinho", ["Este é o Salão de Arte da nossa cidade!", "Os artistas de Imbé pintaram o que viam: o rio, a barra, os barcos."])
 		2:
-			await Guia.falar_engasgado("bentinho", ["Este é o Salão de Arte da nossa cidade!", "Quanta cor, quanta cor!"])
+			await Guia.falar_engasgado("bentinho", ["Este é o Salão de Arte da nossa cidade!", "Os artistas de Imbé pintaram o que viam: o rio, a barra, os barcos."])
 		3:
 			await Guia.falar("bentinho", ["Hum... essa porta na parede aqui não estava no mapa.", "Será que eu... posso abrir?"])
 
@@ -2279,7 +2322,7 @@ func _evt_sala13() -> void:
 		return
 	if visita != 2 or not _uma_vez("sala13"):
 		return
-	await Guia.falar("taina", ["Ainda bem que eu não sou pescada... né?", "Aquele mural é bonito. Dá vontade de entrar nele."])
+	await Guia.falar("taina", ["Ainda bem que eu não sou pescada... né?", "Aquele mural é bonito. Chega perto e aperta E: dá vontade de entrar nele."])
 
 
 func _usar_mural(_p: Node) -> void:
@@ -2290,7 +2333,7 @@ func _usar_mural(_p: Node) -> void:
 			4:
 				Guia.falar("???", ["Tem uma criança na margem. Você viu?"])
 			_:
-				Guia.falar("bentinho", ["Já vimos esse mural! Vamos continuar a visita!"])
+				Guia.falar("bentinho", ["Já vimos esse mural!", Objetivo.atual()])
 		return
 	if _saindo_barra:
 		return
@@ -2606,7 +2649,7 @@ func _apagao_e_balde() -> void:
 
 func _usar_porta_saida(_p: Node) -> void:
 	if visita >= 3:
-		Guia.falar("sistema", ["A porta está lacrada com fitas zebradas: EM REFORMA."])
+		Guia.falar("sistema", ["A porta está lacrada com fitas zebradas: EM REFORMA.", Objetivo.atual()])
 		return
 	if not GameState.flag(_chave("diploma")):
 		Guia.falar("bentinho", ["Ainda falta o quiz final!", "Leia o painel do quiz para ganhar o diploma."])
@@ -2619,7 +2662,7 @@ func _usar_porta_saida(_p: Node) -> void:
 func _abrir_porta_final(_p: Node) -> void:
 	# só a visita 3 sai por aqui; na 4 (o disco de 1975 continua com o jogador) ela pulava o porão e virava "visita 5"
 	if visita != 3:
-		Guia.falar("sistema", ["A porta está trancada."])
+		Guia.falar("sistema", ["A porta está trancada.", Objetivo.atual()])
 		return
 	_fim_de_visita()
 

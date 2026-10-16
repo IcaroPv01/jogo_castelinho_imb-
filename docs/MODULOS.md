@@ -26,6 +26,7 @@ Decisões do Icaro (07/10/2026):
 | 12 | Épocas, caminho e história | Playtest do Bernardo, fase B2: épocas distintas, caminho claro, história fora dos painéis, sustos no caminho, ideias da água | `castelinho/ruina2019.gd`, `castelinho/tito.gd`, `autoload/efeitos.gd`, `ui/mapa.gd`, `world/objetivo.gd`, `ui/jornal.gd`, `world/flash_agua.gd`, `world/goteiras.gd`, `world/agua_ferrugem.gd`, `world/niveis/sustos_caminho.gd` | feito (PR a seguir): 2019 interditado, Tito fantasma depois de 1967, legenda das épocas, Mapa da Visita (M), jornal de 1967, lampejos de água, goteiras, água ferrugem, 3 sustos no caminho; reabre quando o Icaro jogar |
 | 13 | Pedalinho, final secreto e fundo da Sala 101 | Playtest do Bernardo, fase C: pedalinho no lago, final secreto "salvar o Tito", fundo da Sala 101 mais caprichado | `castelinho/pedalinho.gd`, `world/niveis/braco_salvar.gd`, `world/niveis/fundo_do_lago.gd`, `world/niveis/braco_morto.gd`, `ui/finais.gd`, `ui/tela_titulo.gd` | feito (PR a seguir): pedalinho amarelo no atracadouro, luz no lago com 12 pistas, olhar o Tito de 1967 com o Visor, 4º final "Tito voltou pra casa", fundo da Sala 101 com mais cenário; reabre quando o Icaro jogar |
 | 14 | Mais partes da cidade | Playtest do Bernardo, fase D: 5 lugares opcionais da cidade, cada um com tarefa e pistas do Tito | `world/niveis/cidade_base.gd`, `world/niveis/cidade_{casas,barra,ponte,praia,rodoviaria}.gd`, `ui/placa_cidade.gd`, `GameState.CIDADE`, `castelinho/*` (placa 3D) | feito (PR a seguir): Rua das casas, Calçadão da Barra, Ponte à noite, Praia de Imbé e Rodoviária 1967, abertos pela placa da prefeitura na calçada e pelo Mapa (M); +6 pistas (21 no total); reabre quando o Icaro jogar |
+| 15 | Falas dos monitores | Pedido do Icaro (16/10): falas somem sozinhas, sem repetir no mesmo lugar, e úteis (ligadas à história e ao objetivo da visita) | `autoload/guia.gd`, `world/niveis/castelinho.gd` (e as falas em `ato2.gd`, `barra.gd`, `porao.gd`) | feito (PR #27 + PR a seguir): avanço automático, sem repetição, bronca da escada 1 vez; falas enxutas, ligadas ao Objetivo e dica quando o jogador trava; reabre quando o Icaro jogar |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -52,6 +53,32 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
 
+### Módulo 2, parte 3: Visor justo e caças mais visíveis (16/10/2026)
+
+- **Origem:** playtest do Icaro: coisas escondidas demais; Visor "meio injusto"; quer sustos e perseguição só em certas partes; Visor
+  cobrindo quase a tela; medo de verdade (borda vermelha, respiração); um momento preso no Visor.
+- **Zonas de perigo** (`world/zonas_perigo.gd`, tabela `SALAS`, números globais): V3 = 57 e 58 (Ato II: núcleo de 1950 e arcada);
+  V4 = 74 (corredor), 77 (trecho longo escada/terraço/Pescador), 80 (hall da porta zebrada); porão = todas (como antes). Só ali
+  a atenção sobe e a Figura aparece no slide/persegue pelo Visor (`Visor.zona_de_perigo()`); fora, Q livre e atenção só cai.
+  Entrar numa zona com Q ligado: batimento baixinho 3 s (`_alerta`). Salas das caças da V4 (73, 75, 78) e a 72 ficam de fora.
+  Testes que enchem a atenção precisam pôr `GameState.sala_atual` numa zona (ver `_zerar` em `visor_test`/`figura_q_test`).
+- **Medo** (`world/medo.gd`): max(atenção suavizada, proximidade da `FiguraBranca` real ativa a até 16 m). `Efeitos.medo` alimenta o
+  uniform `medo` do shader (vinheta vermelha que pulsa, com ou sem Visor) e `Audio.medo(v)` (loop novo `respiracao.wav`, volume
+  -30..-3 dB e tom sobem com v; some em 0). Batimento "atencao" intacto. Sons novos: `respiracao`, `ping` (tools/gerar_audio.py).
+- **Visor grande** (`shaders/pos_processamento.gdshader`): duas lentes de cantos arredondados quase coladas, ~91% da tela (era ~62%), moldura
+  vermelha fina; cada olho vê a tela inteira. O celular não tem máscara própria: só o botão Visor (nada mudou em `celular.gd` além de
+  "ligue o Q" -> "toque no botão Visor"). Não conferido: aparência no celular de verdade.
+- **Caças mais visíveis:** `world/feixe_caca.gd` (feixe de luz vertical aditivo, 6,5 m fora / 2,7 m dentro, visível até 24 m, só na época do
+  item) + brilho 60% maior e sempre aceso, em todos os achados (Passaporte, 1967, 1975 incl. Tito e buraco, 2019, porão).
+  `world/caca_proximidade.gd`: a menos de 10 m de achado visível, "ping" que acelera (1,8 s a 0,35 s); em outra época, dica única por item
+  ("Algo brilha em outra época: ligue o Q." ou "aperte N para trocar de disco"). Objetivo/mapa M: "Vestígios 1/3: falta nas salas 26 e 30."
+  (`Objetivo.salas_caca`, o nível registra; castelo usa `sala_do_ponto` = gatilho mais perto; porão usa `PoraoCacas.salas_faltando`).
+- **Preso no Visor** (V4, logo depois de pegar o disco de 2019 na sala 72, uma vez, flag `evt_v4_preso_visor`): `Visor.preso_iniciar(15)`: liga
+  sozinho, Q não desliga ("O Visor não desliga!"), tremores, atenção forçada 0,45 a 0,92 (nunca estoura: sem perseguição nem morte), Figura
+  no slide; no fim susto rente e solta. Sair do nível zera. Não é salvo.
+- **Testes:** novo `tests/visor_justo_test.gd`; ajustes em `visor_test`, `figura_q_test`, `castelinho_test`. Captura: `tests/captura_visor_justo.gd`.
+- Pendente: o Icaro jogar e dizer se as zonas e o ping estão bons; sons novos só conferidos por teste, nunca ouvidos.
+
 ### Módulo 1, rodada 2: playtest do Bernardo (15/10/2026)
 
 - **Relato:** "fiquei preso numa parede", "buguei no void", "tive que resetar porque tava preso numa fase", "o deserto é giga,
@@ -74,6 +101,36 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
   `rede_seguranca_ativa()` false (ex.: Barra a partir do PUXADO). Fechar bordas com paredes invisíveis, como as dunas.
 - Pendente: alguém jogar e dizer se a rede disparou sem motivo (aviso na tela) ou se ainda prendeu; o relatório da
   pausa (módulo 11) ajuda a achar o lugar.
+### Módulo 15: falas dos monitores (16/10/2026)
+
+- **Pedido do Icaro:** (1) a fala deve passar sozinha, sem tocar na tela (difícil correndo); (2) falas se repetem em alguns lugares
+  (ex.: correndo na escada); (3) as falas parecem jogadas e dá para ignorar.
+- **Parte 1 (feita):** `autoload/guia.gd`: toda fala agora avança sozinha, também a que trava o jogador (antes esperava 40 s). Tempo
+  parado depois de digitar: `Guia.tempo_leitura(n_letras, bloqueante, tem_fila)` (não travando 1,6 a 5,5 s; travando 3 a 9 s; com outra
+  fala esperando na fila, a atual sai ~40% mais depressa, para quem corre pelas salas não acumular balões atrasados). Clique/espaço
+  continuam adiantando. Fala idêntica (mesmo personagem e linhas, não travando) que já está na tela, na fila ou terminou há menos de
+  `REPETICAO_S` (6 s) é descartada; `cancelar()` zera essa memória. `castelinho.gd`: o Quico da escada (sala 16) xinga **uma vez por
+  visita** (`_uma_vez("quico_escada")`) e depois só apita (a cada 10 s, antes 6 s com a frase repetida).
+  Teste novo em `tests/ui_test.gd` (avança sozinha sem clique, teto de tempo, repetição descartada).
+- **Parte 2 (feita, direção escolhida pelo Icaro: "os três juntos"):**
+  - **Papéis fixos:** *Bentinho* = o guia que vai rachando (V1 animado, V2 engasga e "mais verdade", V3 não devia estar ali à noite,
+    V4 vira a voz "???" que pede desculpas); *Tainá* = quiz e Barra (pergunta, sabe mais do que diz); *Quico* = fiscal das regras
+    (some na V3 depois da lanterna); *sistema* = aviso institucional frio (cresce nas visitas 3 e 4 e no porão); *???* = o Tito / quem
+    o procurou (só pistas e sugestão). Regra de escrita: toda fala ou **diz o que fazer agora**, ou **conta um pedaço da história do
+    Tito**, ou é um arrepio curto; nunca só enche tempo.
+  - **Roteiro enxuto:** as duas falas do Quico na sala 4 viraram uma; Tainá (sala 2) passa a mandar ler o painel antes do quiz; Salão
+    de Arte (sala 11) deixa de dizer só "quanta cor" e ensina algo; Tainá (sala 13) manda apertar E no mural; V4 sala 7 liga ao
+    fato de os painéis agora serem desenhos do Tito.
+  - **Fala que repete o caminho:** as falas de porta/escada/mural travados (`_escada_interditada`, `_descer_porao`, `_usar_porta_saida`,
+    `_abrir_porta_final`, `_usar_mural`) terminam com `Objetivo.atual()`, a mesma frase do Mapa da Visita (M); assim o objetivo vive
+    num lugar só e mudar o `world/objetivo.gd` muda a fala.
+  - **Dica quando trava:** `world/dica_ao_travar.gd` (`DicaAoTravar.instalar(self)` no `iniciar()` do castelinho.gd). Se o objetivo e a
+    sala mais distante não mudam por 90 s (livre: sem fala, tela, Figura nem trava), o monitor da visita lembra o objetivo; depois de
+    150 s e 210 s, no máximo 3 por objetivo. Voz: V1/V2 Bentinho, V3 sistema ("Lembrete da visita:"), V4 "???" ("Por aqui."). Não fala
+    no porão/Braço. Teste: `tests/dica_ao_travar_test.gd`.
+  - **Pendente:** o Icaro jogar e dizer se ainda há fala jogada. As falas do porão, da Barra, do Ato II e das caças não foram
+    reescritas (já estavam ligadas ao objetivo/história); `ui/telefone.gd` idem.
+
 ### Módulo 14: mais partes da cidade (16/10/2026)
 
 - **Origem:** fase D do playtest do Bernardo ("muito lugar pra ir que não tem nada"). O Icaro escolheu **os 5 lugares** da proposta

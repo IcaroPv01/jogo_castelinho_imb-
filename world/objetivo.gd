@@ -9,6 +9,33 @@ extends RefCounted
 ##                                     Quem plugar deve tirar o Callable da lista quando a caça acabar.
 
 static var extras: Array[Callable] = []
+## Quem conhece o mapa de salas (o nível com caça) põe aqui um Callable `func(disco: int) -> Array` com os números GLOBAIS das
+## salas onde ainda falta achar algo da caça `disco`; o HUD/mapa mostram "falta nas salas 26 e 30". Vazio/inválido = sem salas.
+static var salas_caca: Callable = Callable()
+
+
+## "salas 26 e 30" / "sala 26" / "salas 26, 30 e 31" ("" se a lista é vazia).
+static func texto_salas(salas: Array) -> String:
+	var nums: Array = []
+	for x in salas:
+		nums.append(str(int(x)))
+	match nums.size():
+		0:
+			return ""
+		1:
+			return "sala %s" % nums[0]
+		2:
+			return "salas %s e %s" % [nums[0], nums[1]]
+	return "salas %s e %s" % [", ".join(nums.slice(0, nums.size() - 1)), nums[nums.size() - 1]]
+
+
+## As salas (texto) onde ainda falta algo da caça `disco`, ou "" se o nível não sabe.
+static func salas_da_caca(disco: int) -> String:
+	if salas_caca.is_valid():
+		var r: Variant = salas_caca.call(disco)
+		if r is Array:
+			return texto_salas(r)
+	return ""
 
 
 static func atual() -> String:

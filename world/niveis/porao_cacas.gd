@@ -57,10 +57,14 @@ static func _item(nivel: Node, c, id: String, pos: Vector3, normal: Vector3, n: 
 	brilho.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	brilho.shaded = false
 	brilho.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	brilho.pixel_size = 0.014
+	brilho.pixel_size = 0.022
 	brilho.modulate = Color(0.8, 0.9, 1.0)
 	brilho.position = pos + normal * 0.12 + Vector3(0, 0.38, 0)
 	raiz.add_child(brilho)
+	var feixe := FeixeCaca.criar(1.5, Color(0.8, 0.9, 1.0), 0.7)       # sala baixa: o feixe sobe do desenho até o teto
+	feixe.position = pos + normal * 0.25 + Vector3(0, 0.3, 0)
+	raiz.add_child(feixe)
+	FeixeCaca.registrar(raiz, SEMDATA, id)
 	var it := Interagivel.new("Olhar o desenho", Vector3(0.9, 0.9, 0.9) + Vector3(absf(normal.x), 0, absf(normal.z)) * -0.4, Callable())
 	it.name = "InterCaca_%s" % id
 	it.position = pos + normal * 0.3
@@ -70,8 +74,12 @@ static func _item(nivel: Node, c, id: String, pos: Vector3, normal: Vector3, n: 
 	Epocas.marcar(raiz, [E2019])
 	Epocas.marcar(it, [E2019])
 	var tw := brilho.create_tween().set_loops()       # o tween morre junto com o brilho
-	tw.tween_property(brilho, "scale", Vector3.ONE * 1.5, 0.9)
-	tw.tween_property(brilho, "scale", Vector3.ONE * 0.4, 0.9)
+	tw.tween_property(brilho, "scale", Vector3.ONE * 1.8, 0.9)
+	tw.tween_property(brilho, "scale", Vector3.ONE * 0.8, 0.9)
+	var mat := feixe.material_override as StandardMaterial3D
+	var tf := feixe.create_tween().set_loops()
+	tf.tween_method(func(a: float) -> void: mat.albedo_color.a = a, 0.55, 0.95, 1.1)
+	tf.tween_method(func(a: float) -> void: mat.albedo_color.a = a, 0.95, 0.55, 1.1)
 
 
 static func achar(nivel: Node, c, id: String, fala: String) -> void:
@@ -105,6 +113,25 @@ static func revelar_disco(nivel: Node) -> void:
 	di.name = "InteragivelDisco"
 	c.raiz.add_child(di)
 	c.interativos.append(di)
+
+
+## Números GLOBAIS das salas do porão onde ainda falta um desenho (para o mapa/objetivo). Quem já chegou ao quarto (as salas
+## fecham atrás): os que faltam estão na parede do quarto (sala 81 + IDX_QUARTO).
+static func salas_faltando(d: int) -> Array:
+	var r: Array = []
+	if d != SEMDATA:
+		return r
+	var quarto: int = GameState.PRIMEIRA_SALA_PORAO + IDX_QUARTO
+	for k in ITENS:
+		if GameState.caca_tem(SEMDATA, ITENS[k]["id"]):
+			continue
+		var sala: int = GameState.PRIMEIRA_SALA_PORAO + int(k)
+		if GameState.sala_atual >= quarto or GameState.sala_atual > sala:
+			sala = quarto
+		if not r.has(sala):
+			r.append(sala)
+	r.sort()
+	return r
 
 
 ## Chamado por `porao._ao_entrar_sala(i)`: a dica do Visor na sala 82 e o aviso dos desenhos do quarto.
