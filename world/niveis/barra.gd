@@ -557,6 +557,11 @@ func _rodada(n: int) -> bool:
 	return await _aguardar_lance(n)
 
 
+## RedeSeguranca: o rio puxa o jogador para a água de propósito (fases PUXADO e FIM): a rede não o devolve à margem.
+func rede_seguranca_ativa() -> bool:
+	return fase < Fase.PUXADO
+
+
 func _entrar_fase(f: Fase) -> void:
 	fase = f
 	_desde_fase = 0.0
