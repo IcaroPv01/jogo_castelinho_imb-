@@ -25,6 +25,7 @@ Decisões do Icaro (07/10/2026):
 | 11 | Q liga/desliga, pulo e relatório | Pedidos do playtest do Bernardo (14/10): Q como o Correr, pulo baixo, botão de enviar relatório | `world/visor.gd`, `player/player.gd`, `ui/controles_toque.gd`, `ui/relatorio.gd`, `ui/menu_pausa.gd` | feito (PR #22): Q/Visor liga e desliga com um toque, Espaço/botão Pular (pulo baixo), "Enviar relatório" na pausa; reabre quando o Icaro testar |
 | 12 | Épocas, caminho e história | Playtest do Bernardo, fase B2: épocas distintas, caminho claro, história fora dos painéis, sustos no caminho, ideias da água | `castelinho/ruina2019.gd`, `castelinho/tito.gd`, `autoload/efeitos.gd`, `ui/mapa.gd`, `world/objetivo.gd`, `ui/jornal.gd`, `world/flash_agua.gd`, `world/goteiras.gd`, `world/agua_ferrugem.gd`, `world/niveis/sustos_caminho.gd` | feito (PR a seguir): 2019 interditado, Tito fantasma depois de 1967, legenda das épocas, Mapa da Visita (M), jornal de 1967, lampejos de água, goteiras, água ferrugem, 3 sustos no caminho; reabre quando o Icaro jogar |
 | 13 | Pedalinho, final secreto e fundo da Sala 101 | Playtest do Bernardo, fase C: pedalinho no lago, final secreto "salvar o Tito", fundo da Sala 101 mais caprichado | `castelinho/pedalinho.gd`, `world/niveis/braco_salvar.gd`, `world/niveis/fundo_do_lago.gd`, `world/niveis/braco_morto.gd`, `ui/finais.gd`, `ui/tela_titulo.gd` | feito (PR a seguir): pedalinho amarelo no atracadouro, luz no lago com 12 pistas, olhar o Tito de 1967 com o Visor, 4º final "Tito voltou pra casa", fundo da Sala 101 com mais cenário; reabre quando o Icaro jogar |
+| 14 | Mais partes da cidade | Playtest do Bernardo, fase D: 5 lugares opcionais da cidade, cada um com tarefa e pistas do Tito | `world/niveis/cidade_base.gd`, `world/niveis/cidade_{casas,barra,ponte,praia,rodoviaria}.gd`, `ui/placa_cidade.gd`, `GameState.CIDADE`, `castelinho/*` (placa 3D) | feito (PR a seguir): Rua das casas, Calçadão da Barra, Ponte à noite, Praia de Imbé e Rodoviária 1967, abertos pela placa da prefeitura na calçada e pelo Mapa (M); +6 pistas (21 no total); reabre quando o Icaro jogar |
 | 15 | Falas dos monitores | Pedido do Icaro (16/10): falas somem sozinhas, sem repetir no mesmo lugar, e úteis (ligadas à história e ao objetivo da visita) | `autoload/guia.gd`, `world/niveis/castelinho.gd` (e as falas em `ato2.gd`, `barra.gd`, `porao.gd`) | feito (PR #27 + PR a seguir): avanço automático, sem repetição, bronca da escada 1 vez; falas enxutas, ligadas ao Objetivo e dica quando o jogador trava; reabre quando o Icaro jogar |
 | 16 | Minigames | Pedido do Icaro (16/10): mais minigames como o da Tainha (o Icaro aprovou as 5 ideias, todas no caminho, com botão Pular) | `world/niveis/minigame_base.gd`, `mini_lanchao.gd`, `mini_quico.gd`, `mini_lotes.gd`, `castelinho_minigames.gd`, `tests/mini_*_test.gd` | em andamento (PR #28): lanchão Seival (V2), Quico Diz (V1) e lotes de 1939 (V3) feitos; Ponte e caderno do Tito esperam o merge do Módulo 14 |
 
@@ -153,6 +154,39 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
     no porão/Braço. Teste: `tests/dica_ao_travar_test.gd`.
   - **Pendente:** o Icaro jogar e dizer se ainda há fala jogada. As falas do porão, da Barra, do Ato II e das caças não foram
     reescritas (já estavam ligadas ao objetivo/história); `ui/telefone.gd` idem.
+
+### Módulo 14: mais partes da cidade (16/10/2026)
+
+- **Origem:** fase D do playtest do Bernardo ("muito lugar pra ir que não tem nada"). O Icaro escolheu **os 5 lugares** da proposta
+  (`/mnt/project-files/castelinho/modulo14-cidade-proposta.md`). Retorno dele sobre as caças do Módulo 2 ("escondidas demais, quero
+  senso de exploração sem perder conteúdo"): em todos os lugares as pistas têm luz, brilho ou som direcional e dica automática em ~60 s.
+- **Base** (`world/niveis/cidade_base.gd`, `CidadeBase`): ambiente por hora/clima, chão, borda invisível (AREA), HUD "CIDADE · lugar",
+  `pista(id, fala)` (uma vez; flag `pista_<id>` + `pistas_tito`), `concluir()` (flag `cidade_<id>_feito`, volta à calçada em
+  `Spawn_volta_cidade`), `sair()` (portão "Voltar ao Castelinho"), objetivo no Mapa (M). A **rede de segurança do Módulo 1** vale
+  (`limites_mapa()` = AREA); a vigia da base só age sem ela. Ganchos por lugar: `_configurar/_construir/_tarefa`.
+- **Acesso:** placa 3D da prefeitura fictícia na calçada da Garibaldi (só em 2020, só se algum lugar abriu) → `ui/placa_cidade.gd`
+  (folheto, teclas 1–5, clique/toque). Abertura (`GameState.CIDADE`, "depois da visita N" = `visita > N`; a V4 conta ao chegar à
+  Sala Medieval, `sala_maxima >= 78`): casas V2+, barra e praia V3+, ponte V4+, rodoviária V4 depois da Sala Medieval.
+  Debug: `Debug.pular_cidade(id)` e 5 botões no painel; "ganhar tudo" conclui a cidade.
+- **Pistas:** casas 2 (`casas_caderno`, `casas_mala`), barra 1 (`barra_pescador`), ponte 1 (`ponte_figura`), praia 1 (`praia_balde`),
+  rodoviária 1 (`rodoviaria_cartaz`) = 6; total do jogo **21**. Escolha minha: `BracoSalvar.PISTAS_SALVAR` sobe de 12 para **16**;
+  Encontrado continua 8.
+- **Lugares:** *Rua das casas* (fim de tarde; achar a casa 7 da Travessa das Conchas pelo cartaz PROCURA-SE, abrir o portão; caderno em
+  2020, mala do quarto de 1967 só com o Visor no disco de 1967). *Calçadão da Barra* (entardecer que escurece; tarrafa com o boto, 2 lances,
+  sem o puxão do flashback, rejogável; o pescador mais velho dá a pista; reaproveita `barra.gd` sem alterá-lo). *Ponte à noite* (7
+  postes, um morto, pescadores parados que se viram, Figura Branca que some se cercada, T de giz e sandália no guarda-corpo; sem
+  morte). *Praia de Imbé* (ressaca, maré que avança e recua sem afogar, 4 objetos de criança, sino direcional, placa com fatos de
+  `historia_imbe.md` §7.1). *Rodoviária* (2020 vazia; com o Visor em 1967, 3 plaquinhas de destino abrem o guichê e o cartaz da mãe, só voz;
+  `visor_calmo` zera a atenção; `Efeitos.subtitulo_lugar`).
+- **Arquivos fora dos lugares:** `autoload/efeitos.gd` (`subtitulo_lugar`), `autoload/game_state.gd` (tabela da cidade, `carregar()`
+  apaga `visor_calmo`), `castelinho.gd` (placa 3D e `Spawn_volta_cidade`), `ui/debug.gd`, `ui/painel_debug.gd`, `world/objetivo.gd`,
+  `tests/varredura/colocacao_lib.gd` (2 exceções: `FiguraBranca/Modelo` e `Relogio`).
+- **Testes:** `tests/cidade_test.gd` (contrato da base) e `cidade_<id>_test.gd` por lugar (entram sozinhos no `testar.sh` por glob);
+  capturas `tests/captura_cidade*.gd` (xvfb). Nunca rode dois `testar.sh` ao mesmo tempo (save compartilhado: `debug_test` falha em falso).
+- **Não conferido:** nenhum som novo foi ouvido (sino da praia = `pista.wav` grave; plim/chiado/voz usam sons existentes), toque no celular
+  real, desempenho na web da rodoviária com a moldura do Visor (~140 draw calls de 150).
+- Pendente: o Icaro jogar e dizer se as pistas estão fáceis o bastante, se 16 pistas para o final secreto é muito, e se o tom das falas
+  (pescador, mãe, Tainá) serve; o balde do fundo da Sala 101 não tem o T pintado (o da praia tem).
 
 ### Módulo 13: pedalinho, final secreto e fundo da Sala 101 (15/10/2026)
 

@@ -49,7 +49,7 @@ func _rodar() -> void:
 	gs.set_flag("tem_visor", true)
 	for ep in [4, 5]:
 		gs.ganhar_disco(ep)
-	gs.contadores["pistas_tito"] = 12
+	gs.contadores["pistas_tito"] = 16
 	for i in 20:
 		await process_frame
 	var q: Vector3 = salvar.POS_Q

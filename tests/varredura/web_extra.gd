@@ -16,6 +16,11 @@ const NIVEIS := [
 	["res://world/niveis/braco_morto.tscn", 5, []],
 	["res://world/niveis/ato2.tscn", 3, []],
 	["res://world/niveis/barra.tscn", 2, []],
+	["res://world/niveis/cidade_casas.tscn", 2, ["tem_visor"]],
+	["res://world/niveis/cidade_barra.tscn", 3, []],
+	["res://world/niveis/cidade_ponte.tscn", 4, []],
+	["res://world/niveis/cidade_praia.tscn", 3, []],
+	["res://world/niveis/cidade_rodoviaria.tscn", 4, ["tem_visor"]],
 ]
 const EPOCAS := [0, 1, 2, 3, 4]
 const MAX_POR_SHADER := 2

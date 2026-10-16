@@ -150,6 +150,15 @@ func _teste_painel() -> void:
 	for ep in GS.CACAS:
 		todas = todas and GS.caca_achados(ep) == GS.caca_total(ep)
 	_checar(todas, "ganhar tudo: todas as caças dos discos ficam feitas")
+	var cidade_ok: bool = GS.cidade_pistas_achadas() == GS.cidade_pistas_total()
+	for cid in GS.CIDADE_ORDEM:
+		cidade_ok = cidade_ok and GS.cidade_feita(cid)
+	_checar(cidade_ok, "ganhar tudo: os 5 lugares da cidade ficam feitos e as 6 pistas achadas (Módulo 14)")
+	var contados: int = GS.contadores.get("pistas_tito", 0)
+	Debug.ganhar_tudo()
+	_checar(GS.contadores.get("pistas_tito", 0) == contados, "ganhar tudo de novo não conta as pistas da cidade duas vezes")
+	for cid in GS.CIDADE_ORDEM:
+		_checar(p._checks.size() > 0 and p.find_child("Cidade_" + cid, true, false) != null, "o painel tem o botão do lugar '%s'" % cid)
 	p.queue_free()
 	await process_frame
 
@@ -213,7 +222,14 @@ func _teste_pulos() -> void:
 	nivel = await Debug.pular_final("sala_101")
 	_checar(nivel != null and nivel.encerrando and nivel.final == "sala_101", "final sala 101 dispara o afundar")
 	nivel = await Debug.pular_final("tito_salvo")
-	_checar(nivel != null and nivel.salvar.concluindo and nivel.final == "tito_salvo" and GS.contadores.get("pistas_tito", 0) == 12, "final secreto: embarca e a cena de salvar o Tito começou (12 pistas)")
+	_checar(nivel != null and nivel.salvar.concluindo and nivel.final == "tito_salvo" and GS.contadores.get("pistas_tito", 0) == 16, "final secreto: embarca e a cena de salvar o Tito começou (16 pistas)")
+	print("-- pular direto para um lugar da cidade (Módulo 14)")
+	for cid in GS.CIDADE_ORDEM:
+		GS.novo_jogo()
+		_checar(not GS.cidade_aberta(cid), "%s: fechado no começo do save de debug" % cid)
+		var lugar: Variant = await Debug.pular_cidade(cid)
+		_checar(main.nivel_atual == GS.CIDADE[cid]["cena"] and lugar != null and lugar.id == cid and GS.jogando, "pular_cidade('%s') cai na cena do lugar, ignorando a abertura" % cid)
+		_checar(GS.discos.has(GS.Epoca.E1967), "%s: o Visor chega com o disco de 1967" % cid)
 	main.queue_free()
 	await process_frame
 

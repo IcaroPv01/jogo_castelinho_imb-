@@ -26,7 +26,9 @@ const NOMES_EPOCA := ["1950", "1975", "2019", "2020", "1967", "sem_data"]
 const EXCECOES := [
 	{"tipo": "flutuando", "padrao": "painel_p", "motivo": "painel de parede/poste: a base fica acima do piso por desenho (preso pela lateral)"},
 	{"tipo": "flutuando", "padrao": "buraco_muro_dentes", "motivo": "dentes de bloco quebrado presos às bordas do buraco do muro (1967)"},
+	{"tipo": "flutuando", "padrao": "FiguraBranca/Modelo", "motivo": "a barra do vestido da Figura fica ~6 cm acima dos pés por desenho (ela paira, sem pés); cidade_ponte a põe no chão"},
 	{"tipo": "flutuando", "padrao": "PainelSolto", "motivo": "o painel P08 se solta da parede de propósito (evento da Sala dos Povos)"},
+	{"tipo": "flutuando", "padrao": "Relogio", "motivo": "relógio de parede da Rodoviária (Módulo 14): preso na fachada, a base fica acima do piso por desenho"},
 	{"tipo": "enfiado", "padrao": "painel_p", "motivo": "a moldura do painel afunda ~8 cm na parede (montagem rente); o texto fica na frente"},
 	{"tipo": "enfiado", "padrao": "Arcada/MeshInstance3D", "motivo": "colar do pilar 0 da arcada, rente à parede dos fundos da casa (junção)"},
 	{"tipo": "enfiado", "padrao": "TitoNaMargem", "motivo": "as canelas do Tito sentado pendem para fora do meio-fio e cruzam a barreira INVISÍVEL que impede de cair no lago"},
