@@ -213,6 +213,7 @@ func iniciar(p: Player) -> void:
 		visor.figura_atravessou.connect(_on_figura_atravessou)
 		_visor_v4 = visor
 	_ambiente_sonoro()
+	DicaAoTravar.instalar(self)      # parado muito tempo no mesmo objetivo: um monitor lembra o caminho (world/dica_ao_travar.gd)
 	if visita >= 3:
 		SustosCaminho.instalar(self)      # sustos garantidos no caminho obrigatório (world/niveis/sustos_caminho.gd)
 	if GameState.flag("porta_entrada_aberta"):
