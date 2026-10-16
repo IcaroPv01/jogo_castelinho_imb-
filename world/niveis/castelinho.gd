@@ -1620,7 +1620,7 @@ func _escada_interditada(_p: Node) -> void:
 	if visita == 3:
 		await Guia.falar("quico", ["PIII! Escada interditada! Obra!", "Primeiro resolva essa porta nova aí no Salão."])
 	else:
-		await Guia.falar("sistema", ["A escada está interditada. Não há mais nada lá em cima."])
+		await Guia.falar("sistema", ["A escada está interditada. Não há mais nada lá em cima.", Objetivo.atual()])
 
 
 func _ato2_concluido() -> void:
@@ -1801,7 +1801,7 @@ func _descer_porao() -> void:
 	if _saindo_porao:
 		return
 	if GameState.sala_maxima < _global(21):
-		await Guia.falar("sistema", ["Ainda tem coisa para ver na visita. Siga o caminho até o fim."])
+		await Guia.falar("sistema", ["Ainda tem coisa para ver na visita.", Objetivo.atual()])
 		return
 	var destino := GameState.CENA_PORAO
 	if not ResourceLoader.exists(destino):
@@ -2131,20 +2131,19 @@ func _quico_da_lanterna() -> void:
 func _evt_sala2() -> void:
 	if visita != 1 or not _uma_vez("sala2"):
 		return
-	await Guia.falar("taina", ["Eu sou a Tainá, a tainha!", "Vou fazer umas perguntinhas!"])
+	await Guia.falar("taina", ["Eu sou a Tainá, a tainha! Vou fazer perguntinhas sobre os painéis.", "Leia o painel antes de responder: a resposta está nele!"])
 
 
 func _evt_sala4() -> void:
 	if visita != 1 or not _uma_vez("sala4"):
 		return
-	await Guia.falar("quico", ["Eu sou o Quico! Fiscal da visita!", "Não sai do caminho, hein! PIII!"])
 	Audio.sfx("apito")
-	await Guia.falar("quico", ["Cada quiz que você acerta vale um selo. Eu guardo todos!"])
+	await Guia.falar("quico", ["PIII! Eu sou o Quico, fiscal da visita!", "Cada quiz que você acerta vale um selo, e eu guardo todos. Não sai do caminho, hein!"])
 
 
 func _evt_sala7() -> void:
 	if visita == 4 and _uma_vez("sala7"):
-		await Guia.falar("???", ["O prédio está errado. Você também sente?"])
+		await Guia.falar("???", ["O prédio está errado. Você também sente?", "Trocaram os painéis. Leia os desenhos."])
 	elif visita == 3 and _uma_vez("sala7"):
 		await Guia.falar("bentinho", ["Eu não devia estar aqui à noite.", "Ninguém me disse quando a visita termina."])
 
@@ -2207,9 +2206,9 @@ func _evt_sala11() -> void:
 		return
 	match visita:
 		1:
-			await Guia.falar("bentinho", ["Este é o Salão de Arte da nossa cidade!", "Quanta cor, quanta cor!"])
+			await Guia.falar("bentinho", ["Este é o Salão de Arte da nossa cidade!", "Os artistas de Imbé pintaram o que viam: o rio, a barra, os barcos."])
 		2:
-			await Guia.falar_engasgado("bentinho", ["Este é o Salão de Arte da nossa cidade!", "Quanta cor, quanta cor!"])
+			await Guia.falar_engasgado("bentinho", ["Este é o Salão de Arte da nossa cidade!", "Os artistas de Imbé pintaram o que viam: o rio, a barra, os barcos."])
 		3:
 			await Guia.falar("bentinho", ["Hum... essa porta na parede aqui não estava no mapa.", "Será que eu... posso abrir?"])
 
@@ -2270,7 +2269,7 @@ func _evt_sala13() -> void:
 		return
 	if visita != 2 or not _uma_vez("sala13"):
 		return
-	await Guia.falar("taina", ["Ainda bem que eu não sou pescada... né?", "Aquele mural é bonito. Dá vontade de entrar nele."])
+	await Guia.falar("taina", ["Ainda bem que eu não sou pescada... né?", "Aquele mural é bonito. Chega perto e aperta E: dá vontade de entrar nele."])
 
 
 func _usar_mural(_p: Node) -> void:
@@ -2281,7 +2280,7 @@ func _usar_mural(_p: Node) -> void:
 			4:
 				Guia.falar("???", ["Tem uma criança na margem. Você viu?"])
 			_:
-				Guia.falar("bentinho", ["Já vimos esse mural! Vamos continuar a visita!"])
+				Guia.falar("bentinho", ["Já vimos esse mural!", Objetivo.atual()])
 		return
 	if _saindo_barra:
 		return
@@ -2597,7 +2596,7 @@ func _apagao_e_balde() -> void:
 
 func _usar_porta_saida(_p: Node) -> void:
 	if visita >= 3:
-		Guia.falar("sistema", ["A porta está lacrada com fitas zebradas: EM REFORMA."])
+		Guia.falar("sistema", ["A porta está lacrada com fitas zebradas: EM REFORMA.", Objetivo.atual()])
 		return
 	if not GameState.flag(_chave("diploma")):
 		Guia.falar("bentinho", ["Ainda falta o quiz final!", "Leia o painel do quiz para ganhar o diploma."])
@@ -2610,7 +2609,7 @@ func _usar_porta_saida(_p: Node) -> void:
 func _abrir_porta_final(_p: Node) -> void:
 	# só a visita 3 sai por aqui; na 4 (o disco de 1975 continua com o jogador) ela pulava o porão e virava "visita 5"
 	if visita != 3:
-		Guia.falar("sistema", ["A porta está trancada."])
+		Guia.falar("sistema", ["A porta está trancada.", Objetivo.atual()])
 		return
 	_fim_de_visita()
 

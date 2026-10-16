@@ -25,7 +25,7 @@ Decisões do Icaro (07/10/2026):
 | 11 | Q liga/desliga, pulo e relatório | Pedidos do playtest do Bernardo (14/10): Q como o Correr, pulo baixo, botão de enviar relatório | `world/visor.gd`, `player/player.gd`, `ui/controles_toque.gd`, `ui/relatorio.gd`, `ui/menu_pausa.gd` | feito (PR #22): Q/Visor liga e desliga com um toque, Espaço/botão Pular (pulo baixo), "Enviar relatório" na pausa; reabre quando o Icaro testar |
 | 12 | Épocas, caminho e história | Playtest do Bernardo, fase B2: épocas distintas, caminho claro, história fora dos painéis, sustos no caminho, ideias da água | `castelinho/ruina2019.gd`, `castelinho/tito.gd`, `autoload/efeitos.gd`, `ui/mapa.gd`, `world/objetivo.gd`, `ui/jornal.gd`, `world/flash_agua.gd`, `world/goteiras.gd`, `world/agua_ferrugem.gd`, `world/niveis/sustos_caminho.gd` | feito (PR a seguir): 2019 interditado, Tito fantasma depois de 1967, legenda das épocas, Mapa da Visita (M), jornal de 1967, lampejos de água, goteiras, água ferrugem, 3 sustos no caminho; reabre quando o Icaro jogar |
 | 13 | Pedalinho, final secreto e fundo da Sala 101 | Playtest do Bernardo, fase C: pedalinho no lago, final secreto "salvar o Tito", fundo da Sala 101 mais caprichado | `castelinho/pedalinho.gd`, `world/niveis/braco_salvar.gd`, `world/niveis/fundo_do_lago.gd`, `world/niveis/braco_morto.gd`, `ui/finais.gd`, `ui/tela_titulo.gd` | feito (PR a seguir): pedalinho amarelo no atracadouro, luz no lago com 12 pistas, olhar o Tito de 1967 com o Visor, 4º final "Tito voltou pra casa", fundo da Sala 101 com mais cenário; reabre quando o Icaro jogar |
-| 15 | Falas dos monitores | Pedido do Icaro (16/10): falas somem sozinhas, sem repetir no mesmo lugar, e úteis (ligadas à história e ao objetivo da visita) | `autoload/guia.gd`, `world/niveis/castelinho.gd` (e as falas em `ato2.gd`, `barra.gd`, `porao.gd`) | parte 1 feita (PR a seguir): avanço automático em toda fala, fala idêntica descartada, bronca da escada só 1 vez; parte 2 (reescrever falas) espera o Icaro escolher a direção |
+| 15 | Falas dos monitores | Pedido do Icaro (16/10): falas somem sozinhas, sem repetir no mesmo lugar, e úteis (ligadas à história e ao objetivo da visita) | `autoload/guia.gd`, `world/niveis/castelinho.gd` (e as falas em `ato2.gd`, `barra.gd`, `porao.gd`) | feito (PR #27 + PR a seguir): avanço automático, sem repetição, bronca da escada 1 vez; falas enxutas, ligadas ao Objetivo e dica quando o jogador trava; reabre quando o Icaro jogar |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -85,9 +85,24 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
   `REPETICAO_S` (6 s) é descartada; `cancelar()` zera essa memória. `castelinho.gd`: o Quico da escada (sala 16) xinga **uma vez por
   visita** (`_uma_vez("quico_escada")`) e depois só apita (a cada 10 s, antes 6 s com a frase repetida).
   Teste novo em `tests/ui_test.gd` (avança sozinha sem clique, teto de tempo, repetição descartada).
-- **Parte 2 (pendente):** reescrever as falas para ligá-las à história e ao objetivo. Levantamento: ~90 chamadas de `Guia.falar` em
-  `castelinho.gd` (a maioria por sala, com `_uma_vez`), `castelinho_cacas.gd` (convites/avisos das caças), `ato2.gd`, `barra.gd`,
-  `porao.gd`. Só depois de o Icaro escolher a direção (a proposta está na thread "Módulo 15"). Não reescrever sem isso.
+- **Parte 2 (feita, direção escolhida pelo Icaro: "os três juntos"):**
+  - **Papéis fixos:** *Bentinho* = o guia que vai rachando (V1 animado, V2 engasga e "mais verdade", V3 não devia estar ali à noite,
+    V4 vira a voz "???" que pede desculpas); *Tainá* = quiz e Barra (pergunta, sabe mais do que diz); *Quico* = fiscal das regras
+    (some na V3 depois da lanterna); *sistema* = aviso institucional frio (cresce nas visitas 3 e 4 e no porão); *???* = o Tito / quem
+    o procurou (só pistas e sugestão). Regra de escrita: toda fala ou **diz o que fazer agora**, ou **conta um pedaço da história do
+    Tito**, ou é um arrepio curto; nunca só enche tempo.
+  - **Roteiro enxuto:** as duas falas do Quico na sala 4 viraram uma; Tainá (sala 2) passa a mandar ler o painel antes do quiz; Salão
+    de Arte (sala 11) deixa de dizer só "quanta cor" e ensina algo; Tainá (sala 13) manda apertar E no mural; V4 sala 7 liga ao
+    fato de os painéis agora serem desenhos do Tito.
+  - **Fala que repete o caminho:** as falas de porta/escada/mural travados (`_escada_interditada`, `_descer_porao`, `_usar_porta_saida`,
+    `_abrir_porta_final`, `_usar_mural`) terminam com `Objetivo.atual()`, a mesma frase do Mapa da Visita (M); assim o objetivo vive
+    num lugar só e mudar o `world/objetivo.gd` muda a fala.
+  - **Dica quando trava:** `world/dica_ao_travar.gd` (`DicaAoTravar.instalar(self)` no `iniciar()` do castelinho.gd). Se o objetivo e a
+    sala mais distante não mudam por 90 s (livre: sem fala, tela, Figura nem trava), o monitor da visita lembra o objetivo; depois de
+    150 s e 210 s, no máximo 3 por objetivo. Voz: V1/V2 Bentinho, V3 sistema ("Lembrete da visita:"), V4 "???" ("Por aqui."). Não fala
+    no porão/Braço. Teste: `tests/dica_ao_travar_test.gd`.
+  - **Pendente:** o Icaro jogar e dizer se ainda há fala jogada. As falas do porão, da Barra, do Ato II e das caças não foram
+    reescritas (já estavam ligadas ao objetivo/história); `ui/telefone.gd` idem.
 
 ### Módulo 13: pedalinho, final secreto e fundo da Sala 101 (15/10/2026)
 
