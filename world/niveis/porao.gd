@@ -439,6 +439,8 @@ func iniciar(p: Player) -> void:
 	_criar_costela()
 	AguaFerrugem.instalar(self)      # a água fica ferrugem quando a Figura está perto (world/agua_ferrugem.gd)
 	visor = Visor.instalar(self)
+	CacaProximidade.instalar(self)                       # ping e dica perto dos desenhos (módulo 2, parte 3)
+	Objetivo.salas_caca = Callable(PoraoCacas, "salas_faltando")
 	if visor.has_signal("figura_atravessou"):
 		visor.figura_atravessou.connect(_on_figura_atravessou)
 	GameState.jogador_morreu.connect(func(causa: String): _causa = causa)

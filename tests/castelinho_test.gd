@@ -461,6 +461,19 @@ func _visitas() -> void:
 		psolto.interagir(p)
 		await _frames_f(5)
 	_checar(GameState.discos.has(GameState.Epoca.E2019) and GameState.disco_atual == GameState.Epoca.E2019, "V4: disco 2019 pego atrás do painel (discos %s)" % str(GameState.discos))
+	# módulo 2, parte 3: depois da fala, o Visor liga sozinho e fica preso por 15 s (uma vez), sem matar nem estourar
+	_guia().cancelar()
+	await _frames_f(6)
+	_checar(nivel._visor.preso_restante() > 13.0 and GameState.flag("evt_v4_preso_visor"), "V4: 'Preso no Visor' começou depois do disco 2019 (%.1f s)" % nivel._visor.preso_restante())
+	GameState.flags["ui_aberta"] = false      # (a tela de fala do teste pode ter ficado marcada: aí o Q cai e volta quando ela fecha)
+	nivel._visor.alternar()
+	await _frames_f(3)
+	_checar(Input.is_action_pressed("visor") and nivel._visor.preso_restante() > 0.0, "V4: preso, tocar no Q não desliga (ui_aberta=%s latch=%s)" % [str(GameState.flag("ui_aberta")), str(nivel._visor._latch)])
+	nivel._visor._preso = 0.05
+	await _frames_f(15)
+	_checar(nivel._visor.preso_restante() == 0.0 and not Input.is_action_pressed("visor") and not nivel._visor.bloqueado(), "V4: o aperto termina e solta o Visor, sem bloqueio nem morte")
+	nivel._preso_no_visor()
+	_checar(nivel._visor.preso_restante() == 0.0, "V4: o momento só acontece uma vez")
 	# a escada de 2019 só existe em 2019
 	GameState.trocar_epoca(GameState.Epoca.E2019)
 	await _frames_f(3)
@@ -823,6 +836,15 @@ func _caca_1967() -> void:
 	_checar(main.hud.lbl_passaporte.visible and main.hud.lbl_passaporte.text == "Vestígios 0/3", "caça 1967: contador no HUD (%s)" % main.hud.lbl_passaporte.text)
 	await _caca_itens("caça 1967", E.E1950, {"InterCaca_4_pedra_gres": Vector3(1, 0, 0), "InterCaca_4_casa_miolo": Vector3(0, 0, -1), "InterCaca_4_areia_nua": Vector3(1, 0, 0.3)})
 	var par: Array = nivel._discos_chao[E.E1967]
+	# módulo 2, parte 3: o objetivo/mapa diz em quais salas (números do HUD) ainda falta achar algo
+	var salas: Array = nivel._cacas.salas_faltando(E.E1967)
+	var todas_v2: bool = true
+	for x in salas:
+		todas_v2 = todas_v2 and int(x) >= 23 and int(x) <= 44
+	_checar(not salas.is_empty() and salas.size() <= 3 and todas_v2, "caça 1967: salas que faltam %s (visita 2: 23 a 44)" % str(salas))
+	_checar(main.hud.objetivo_caca().begins_with("Vestígios 0/3: falta na") and load("res://world/objetivo.gd").atual().contains(str(salas[0])), "caça 1967: objetivo/mapa nomeia as salas ('%s')" % main.hud.objetivo_caca())
+	_checar(nivel.find_child("Caca_4_pedra_gres", true, false).get_node_or_null("Feixe") != null and nivel.find_child("Caca_4_pedra_gres", true, false).is_in_group("caca_item"), "caça 1967: o achado tem feixe de luz e está no grupo da pista de proximidade")
+	_checar(nivel.get_node_or_null("CacaProximidade") != null, "caça: o nível instala a pista de proximidade")
 	par[1].interagir(p)
 	await _frames_f(5)
 	_checar(not GameState.discos.has(E.E1967), "caça 1967: vitrine trancada com 0 vestígios")

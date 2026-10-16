@@ -94,9 +94,12 @@ func montar() -> void:
 			continue
 		for id in ITENS[d]:
 			var info: Dictionary = ITENS[d][id]
-			if info.get("existente", false) or GameState.caca_tem(d, id):
+			if GameState.caca_tem(d, id):
 				continue
-			_criar(d, id, info)
+			if info.get("existente", false):
+				_criar_existente(d, id)     # só a luz e o brilho: o objeto em si (Tito, buraco) é do castelinho.gd
+			else:
+				_criar(d, id, info)
 	if visita >= 3 and GameState.caca_completa(E1975) and not GameState.discos.has(E1975):
 		trilha_ate_torre()
 
@@ -115,10 +118,12 @@ func _criar(d: int, id: String, info: Dictionary) -> void:
 	brilho.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	brilho.shaded = false
 	brilho.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	brilho.pixel_size = 0.02 if id == "casa_miolo" else 0.014
+	brilho.pixel_size = 0.03 if id == "casa_miolo" else 0.022
 	brilho.position = _pos_brilho(id)
-	brilho.modulate = Color(1.0, 0.9, 0.35) if d != E2019 else Color(0.8, 0.9, 1.0)
+	brilho.modulate = _cor(d)
 	raiz.add_child(brilho)
+	raiz.add_child(FeixeCaca.criar(_altura_feixe(info), _cor(d)))
+	FeixeCaca.registrar(raiz, d, id)
 	n.add_child(raiz)
 	if info.get("interno", false):
 		n._camada_interna(raiz)
@@ -131,6 +136,71 @@ func _criar(d: int, id: String, info: Dictionary) -> void:
 	n.add_child(it)
 	Epocas.marcar(it, [ep])
 	itens["%d:%s" % [d, id]] = [raiz, it]
+
+
+## Cor da luz do achado: dourada (1967 e 1975, de dia/obra) e azulada (2019, ruína).
+static func _cor(d: int) -> Color:
+	return Color(1.0, 0.9, 0.35) if d != E2019 else Color(0.8, 0.9, 1.0)
+
+
+## Altura do feixe de luz: lá fora sobe alto (se vê do outro lado do terreno); dentro do prédio, até perto do teto.
+static func _altura_feixe(info: Dictionary) -> float:
+	return 2.7 if info.get("interno", false) else 6.5
+
+
+## Onde está o objeto do achado `id` da caça `d` (as pistas já existentes vêm do cenário de 1967).
+func pos_item(d: int, id: String) -> Vector3:
+	var info: Dictionary = ITENS[d][id]
+	if info.has("pos"):
+		return info["pos"]
+	var obra: Dictionary = n.castelo.obra
+	if id == "tito":
+		return obra.get("tito_pos", ObraCastelinho.TITO_POS)
+	return obra.get("buraco_pos", ObraCastelinho.BURACO_POS)
+
+
+## O Tito brincando e o buraco no muro já existem (castelinho.gd): aqui só nasce a luz e o brilho, na época deles (1967).
+func _criar_existente(d: int, id: String) -> void:
+	var raiz := Node3D.new()
+	raiz.name = "Caca_%d_%s" % [d, id]
+	raiz.position = pos_item(d, id)
+	var brilho := Sprite3D.new()
+	brilho.name = "Brilho"
+	brilho.texture = n._tex_brilho()
+	brilho.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	brilho.shaded = false
+	brilho.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	brilho.pixel_size = 0.022
+	brilho.position = Vector3(0.0, 1.5 if id == "tito" else 1.0, 0.0)
+	brilho.modulate = _cor(d)
+	raiz.add_child(brilho)
+	raiz.add_child(FeixeCaca.criar(6.5, _cor(d)))
+	FeixeCaca.registrar(raiz, d, id)
+	n.add_child(raiz)
+	Epocas.marcar(raiz, [_epoca_que_mostra(d)])
+	itens["%d:%s" % [d, id]] = [raiz]
+
+
+## Números GLOBAIS das salas (os do HUD) onde ainda falta achar algo da caça `d`, em ordem e sem repetir.
+## O objeto fica na sala do gatilho mais perto dele (`castelinho.gd: sala_do_ponto`).
+func salas_faltando(d: int) -> Array:
+	var r: Array = []
+	if d == E1950:
+		for id in n.PASSAPORTE:
+			if not GameState.flag("passaporte_" + id):
+				r.append(n.sala_do_ponto(n.PASSAPORTE[id]["pos"]))
+	elif GameState.CACAS.has(d) and ITENS.has(d):
+		for id in GameState.caca_faltam(d):
+			if ITENS[d].has(id):
+				var sala: int = n.sala_do_ponto(pos_item(d, id))
+				if not r.has(sala):
+					r.append(sala)
+	r.sort()
+	var unico: Array = []
+	for x in r:
+		if not unico.has(x):
+			unico.append(x)
+	return unico
 
 
 ## A época em que o objeto aparece = a do disco anterior da caça.
@@ -231,14 +301,17 @@ func lancar() -> void:
 func animar(dt: float) -> void:
 	_t += dt
 	for k in itens:
+		if itens[k].is_empty():
+			continue
 		var raiz: Node3D = itens[k][0]
 		if not is_instance_valid(raiz) or not raiz.visible:
 			continue
 		var b := raiz.get_node_or_null("Brilho") as Sprite3D
 		if b:
 			var f := pow(maxf(0.0, sin(_t * 2.2 + float(k.length()))), 4.0)
-			b.scale = Vector3.ONE * (0.5 + 0.9 * f)
+			b.scale = Vector3.ONE * (0.8 + 1.0 * f)       # nunca some de todo: sempre há um brilho aceso (parte 3)
 			b.rotation.z = _t * 1.5
+		FeixeCaca.pulsar(raiz, _t)
 
 
 # ---------------------------------------------------------------- modelos

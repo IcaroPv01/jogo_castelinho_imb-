@@ -87,6 +87,7 @@ func _desmontar_visor() -> void:
 func _zerar(visita: int) -> void:
 	Input.action_release("visor")
 	GS.visita = visita
+	GS.sala_atual = {3: 57, 4: 74, 5: 90}.get(visita, 1)   # zona de perigo da visita (módulo 2, parte 3)
 	GS.discos.clear()
 	GS.disco_atual = -1
 	GS.definir_atencao(0.0)

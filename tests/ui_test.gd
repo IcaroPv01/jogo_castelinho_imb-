@@ -224,6 +224,41 @@ func _teste_guia() -> void:
 	await process_frame
 	_checar(jog.pode_mover == true and estados == [true], "e libera no fim")
 
+	# avanço automático: nem a fala que trava o jogador espera clique (sem chamar Guia.avancar())
+	await create_timer(4.2).timeout      # deixa o _acelerar() anterior acabar: aqui ninguém aperta nada
+	var t_auto := Time.get_ticks_msec()
+	var terminou_auto := []
+	var e1 := func():
+		await Guia.falar("sistema", ["Sem clique nenhum."], true)
+		terminou_auto.append(true)
+	e1.call()
+	var guarda := 0.0
+	while terminou_auto.is_empty() and guarda < 14.0:
+		await create_timer(0.2).timeout
+		guarda += 0.2
+	var dur_auto := (Time.get_ticks_msec() - t_auto) / 1000.0
+	_checar(not terminou_auto.is_empty() and dur_auto < 10.0, "fala que trava avança sozinha (%.1fs)" % dur_auto)
+	_checar(jog.pode_mover == true, "e devolve o movimento sem clique")
+	var g := load("res://autoload/guia.gd")
+	_checar(g.tempo_leitura(60, true) <= 9.0 and g.tempo_leitura(60, false) <= 5.5 and g.tempo_leitura(2000, true) <= 9.0,
+		"tempo de leitura tem teto")
+	_checar(g.tempo_leitura(60, false, true) < g.tempo_leitura(60, false), "com fala esperando, a atual sai mais depressa")
+
+	# repetição: a mesma fala (não travando) logo em seguida não volta
+	var mostradas := []
+	var ligacao := func(pers, txt): mostradas.append(txt)
+	Guia.linha_mostrada.connect(ligacao)
+	_acelerar(3.0)
+	await Guia.falar("quico", ["PIII! Sem correr na escada, hein!"])
+	var pos_primeira := mostradas.size()
+	await Guia.falar("quico", ["PIII! Sem correr na escada, hein!"])
+	_checar(pos_primeira == 1 and mostradas.size() == 1, "a mesma fala logo depois é descartada")
+	await Guia.falar("quico", ["Outra frase."])
+	_checar(mostradas.size() == 2, "outra fala passa normalmente")
+	Guia.linha_mostrada.disconnect(ligacao)
+	while Guia.ocupado():
+		await process_frame
+
 	# corrupção e engasgo
 	GameState.definir_corruption_manual(0.7)
 	_checar(Flash.corromper("Bem-vindo a visita guiada, tudo bem?", 0.7) != "Bem-vindo a visita guiada, tudo bem?" \

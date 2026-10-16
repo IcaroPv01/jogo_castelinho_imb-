@@ -159,7 +159,7 @@ static func dica(teclado: String, toque: String) -> String:
 
 const _TROCAS: Array = [
 	["aperte Q", "toque no botão Visor"], ["Aperte Q", "Toque no botão Visor"],
-	["(Q)", "(botão Visor)"],
+	["(Q)", "(botão Visor)"], ["ligue o Q", "toque no botão Visor"],
 	["Aperta F para ligar e desligar", "Toque em Lanterna para ligar e desligar"],
 	["Aperte 1 a 5 (ou a rolagem do mouse) para trocar de disco", "Toque nos discos, no canto, para trocar"],
 	["Esc solta o mouse e pausa a visita.", "O botão de pausa, no canto, para a visita."],
