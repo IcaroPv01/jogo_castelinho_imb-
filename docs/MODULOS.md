@@ -26,6 +26,7 @@ Decisões do Icaro (07/10/2026):
 | 12 | Épocas, caminho e história | Playtest do Bernardo, fase B2: épocas distintas, caminho claro, história fora dos painéis, sustos no caminho, ideias da água | `castelinho/ruina2019.gd`, `castelinho/tito.gd`, `autoload/efeitos.gd`, `ui/mapa.gd`, `world/objetivo.gd`, `ui/jornal.gd`, `world/flash_agua.gd`, `world/goteiras.gd`, `world/agua_ferrugem.gd`, `world/niveis/sustos_caminho.gd` | feito (PR a seguir): 2019 interditado, Tito fantasma depois de 1967, legenda das épocas, Mapa da Visita (M), jornal de 1967, lampejos de água, goteiras, água ferrugem, 3 sustos no caminho; reabre quando o Icaro jogar |
 | 13 | Pedalinho, final secreto e fundo da Sala 101 | Playtest do Bernardo, fase C: pedalinho no lago, final secreto "salvar o Tito", fundo da Sala 101 mais caprichado | `castelinho/pedalinho.gd`, `world/niveis/braco_salvar.gd`, `world/niveis/fundo_do_lago.gd`, `world/niveis/braco_morto.gd`, `ui/finais.gd`, `ui/tela_titulo.gd` | feito (PR a seguir): pedalinho amarelo no atracadouro, luz no lago com 12 pistas, olhar o Tito de 1967 com o Visor, 4º final "Tito voltou pra casa", fundo da Sala 101 com mais cenário; reabre quando o Icaro jogar |
 | 15 | Falas dos monitores | Pedido do Icaro (16/10): falas somem sozinhas, sem repetir no mesmo lugar, e úteis (ligadas à história e ao objetivo da visita) | `autoload/guia.gd`, `world/niveis/castelinho.gd` (e as falas em `ato2.gd`, `barra.gd`, `porao.gd`) | feito (PR #27 + PR a seguir): avanço automático, sem repetição, bronca da escada 1 vez; falas enxutas, ligadas ao Objetivo e dica quando o jogador trava; reabre quando o Icaro jogar |
+| 16 | Minigames | Pedido do Icaro (16/10): mais minigames como o da Tainha (o Icaro aprovou as 5 ideias, todas no caminho, com botão Pular) | `world/niveis/minigame_base.gd`, `mini_lanchao.gd`, `mini_quico.gd`, `mini_lotes.gd`, `castelinho_minigames.gd`, `tests/mini_*_test.gd` | em andamento (PR #28): lanchão Seival (V2), Quico Diz (V1) e lotes de 1939 (V3) feitos; Ponte e caderno do Tito esperam o merge do Módulo 14 |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -51,6 +52,29 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 ## Passagem de bastão
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
+
+### Módulo 16: minigames (16/10/2026)
+
+- **Pedido:** "mais minigames, tipo o da Tainha". Receita da Tainha (`barra.gd`): uma ação só (clique/E/Interagir), sinal visual claro, 3 a 8 rodadas
+  curtas, mascote comentando e uma virada estranha. O Icaro aprovou as 5 ideias, "todas no caminho, igual à Tainha".
+- **Base** `world/niveis/minigame_base.gd` (`MiniGameBase`): cena própria, câmera parada, HUD (placar, dica, botão **Pular**; no PC
+  Backspace). Filha: `_init` com `super()` + `id`/`quem_fala`/`fala_fim`, `_montar()` (cenário), `_rodar() -> bool` (todo `await` passa por
+  `falar()`/`esperar()`/`esperar_acao()`; `false` = pulou, `return false`), `acionar()` (a ação; público para testes).
+  Vencer = flag `mini_<id>_feito`, pista `pista_mini_<id>` (+1 em `pistas_tito`) e selo `mini_<id>`. Pular não ganha nada e a porta continua.
+  Armadilha achada: `_rodar` da base precisa de um `await` (senão o `await _rodar()` não retoma a coroutine da filha).
+- **Portas** `world/niveis/castelinho_minigames.gd` (`MinigamesCastelo`, plugada em `castelinho.gd`: 4 linhas): tabela `ENTRADAS`, um
+  Interagivel com "!" amarelo (some ao vencer), aviso do mascote ao entrar na sala (uma vez), frase no Mapa (M) só dentro da sala da porta,
+  e `Spawn_volta_mini_<id>` para o retorno. Entrada nova = uma linha da tabela + um `_visual_<id>`.
+- **Feitos:** `lanchao` (V2, Sala do Pescador, gravura na parede leste: puxar o Lanchão Seival de 1839 no ritmo dos bois; no fim todos param
+  e os bois seguem puxando; uma pegada de criança na lama), `quico` (V1, sala 5, Quico Diz: repetir o ritmo dos apitos; no fim algo responde
+  do outro lado do muro e o Quico diz "Não fui eu."), `lotes` (V3, Acervo/sala 12, "Planejar a cidade" de 1939: carimbar 6 lotes; o tom cai,
+  os ranchos somem, sobra o carrinho de madeira). Fatos só do que está em `docs/pesquisa/historia_imbe.md`. Todas as portas só existem em 2020.
+- **Pendente (Módulo 14):** `ponte` (um, dois, três, pescador; Ponte à noite) e `caderno` (desenhos do Tito; Rua das casas). Esperam o
+  merge do Módulo 14. Ao construir, ajustar `PISTAS_SALVAR` (os minigames somam pistas: o Módulo 14 sobe 12 para 16 com total 21; com
+  +5 minigames o total vira 26, proposta: 20) e o aviso do contador, se houver.
+- **Limitações:** a Tainá "bipa" mesmo nas falas pesadas dos lotes (o `Guia` não tem modo silencioso); áudio só conferido por testes e
+  espectrograma; a pegada do lanchão é maior que um pé real, só para ler.
+- Pendente: o Icaro jogar as 3 e dizer se o ritmo, a dificuldade e o lugar das portas estão bons.
 
 ### Módulo 2, parte 3: Visor justo e caças mais visíveis (16/10/2026)
 
