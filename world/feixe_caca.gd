@@ -31,7 +31,7 @@ static func _textura() -> ImageTexture:
 
 
 ## Feixe de luz de `altura` m a partir da origem do nó pai. `cor` tinge a luz.
-static func criar(altura: float, cor: Color, largura := 0.9) -> MeshInstance3D:
+static func criar(altura: float, cor: Color, largura := 1.2) -> MeshInstance3D:
 	var m := MeshInstance3D.new()
 	m.name = "Feixe"
 	var q := QuadMesh.new()
@@ -45,7 +45,7 @@ static func criar(altura: float, cor: Color, largura := 0.9) -> MeshInstance3D:
 	mat.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.albedo_texture = _textura()
-	mat.albedo_color = Color(cor.r, cor.g, cor.b, 0.85)
+	mat.albedo_color = Color(cor.r, cor.g, cor.b, 0.95)
 	mat.disable_receive_shadows = true
 	m.material_override = mat
 	m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

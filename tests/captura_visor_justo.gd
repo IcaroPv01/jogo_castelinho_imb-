@@ -80,12 +80,12 @@ func _rodar() -> void:
 	var p := raiz.global_position
 	visor = nivel.get_node_or_null("Visor")
 	visor.alternar()
-	_olhar(p + Vector3(2.0, 0, 11.5), p + Vector3(0, 3.0, 0))
+	_olhar(p + Vector3(-1.0, 0, 9.0), p + Vector3(3.5, 3.0, 0))
 	await create_timer(0.5).timeout
 	await _quadros(40)
 	root.get_texture().get_image().save_png("%s/visor_feixe.png" % pasta)
 	print("captura: visor_feixe")
-	_olhar(p + Vector3(6.0, 0, 18.0), p + Vector3(0, 3.0, 0))
+	_olhar(p + Vector3(1.0, 0, 18.0), p + Vector3(4.5, 3.0, 0))
 	await _quadros(20)
 	root.get_texture().get_image().save_png("%s/visor_feixe_longe.png" % pasta)
 	print("captura: visor_feixe_longe")
