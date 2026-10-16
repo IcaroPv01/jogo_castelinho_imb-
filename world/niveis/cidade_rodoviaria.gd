@@ -67,7 +67,8 @@ const TEXTO_PROCURA := {
 	"assina": "— a mãe do Tito",
 	"rodape": "cartaz fictício · Castelinho: Visita Guiada",
 }
-const DICA_ATRASO := 50.0          # s sem progresso até a Guia dar uma dica
+const DICA_ATRASO := 60.0          # s sem progresso até a Guia dar uma dica (e aponta a direção)
+const PING_S := 5.0                # s entre os "plins" direcionais da plaquinha mais perto (só em 1967)
 const MAX_DICAS := 6
 
 # --- estado
@@ -93,6 +94,8 @@ var _t := 0.0
 var _t_dica := 0.0
 var _dicas := 0
 var _t_voz := 6.0
+var _t_ping := 3.0
+var _mat_farol: StandardMaterial3D   # coluna de luz sobre cada plaquinha (visível de longe)
 var _epoca_vista := -1
 var visor_1967_visto := false
 var _mae_falou := false
@@ -440,7 +443,7 @@ func _relogio(pai: Node3D, pos: Vector3, h: int, mi: int, cor_face: Color) -> vo
 	face.radial_segments = 20
 	Ato2Pecas.malha(r, face, Vector3(0, 0, 0.012), Ato2Pecas.mat_cor(cor_face), Vector3(90, 0, 0))
 	var tinta := Ato2Pecas.mat_cor(Color(0.1, 0.1, 0.1))
-	for i in 4:
+	for i in 1:      # só a marca das 12 (menos peças desenhadas na web)
 		var t := Node3D.new()
 		t.position = Vector3(0, 0, 0.05)
 		t.rotation_degrees.z = i * 90.0
@@ -514,6 +517,17 @@ func _plaquinhas() -> void:
 		var mat := Ato2Pecas.mat_cor(Color(1.0, 0.96, 0.7), true)
 		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 		_mat_placas[pid] = mat
+		if _mat_farol == null:
+			_mat_farol = Ato2Pecas.mat_cor(Color(1.0, 0.95, 0.45, 0.6), true)
+		var farol := MeshInstance3D.new()      # coluna de luz: chama o olho de longe, sem ficar escondida atrás de nada
+		var fm := BoxMesh.new()
+		fm.size = Vector3(0.3, 3.0, 0.3)
+		farol.mesh = fm
+		farol.material_override = _mat_farol
+		farol.name = "Farol"
+		farol.top_level = true
+		farol.position = (d["pos"] as Vector3) + Vector3(0, 1.5, 0)
+		no.add_child(farol)
 		var q := MeshInstance3D.new()
 		var qm := QuadMesh.new()
 		qm.size = Vector2(0.96, 0.27)
@@ -785,6 +799,16 @@ func _process(dt: float) -> void:
 		_epoca_vista = e
 		_ao_mudar_epoca(e)
 	if e in E67:
+		_t_ping -= dt
+		if _t_ping <= 0.0 and not _no_placas.is_empty() and player != null:
+			_t_ping = PING_S
+			var perto: Node3D = null
+			for pid: String in _no_placas:
+				var no: Node3D = _no_placas[pid]
+				if is_instance_valid(no) and (perto == null or no.global_position.distance_to(player.global_position) < perto.global_position.distance_to(player.global_position)):
+					perto = no
+			if perto != null:
+				Audio.sfx_3d("pista", perto.global_position, -4.0)      # som direcional: o "plim" vem da plaquinha mais perto
 		_t_voz -= dt
 		if _t_voz <= 0.0:
 			_t_voz = randf_range(7.0, 12.0)
@@ -801,6 +825,8 @@ func _animar(_dt: float) -> void:
 			var s: float = sin(_t * float(d["vel"]) + float(d["fase"]))
 			no.position = (d["base"] as Vector3) + (d["eixo"] as Vector3) * s * float(d["amp"]) + Vector3(0, absf(s) * 0.03, 0)
 		var k := 0.5 + 0.5 * sin(_t * 3.0)
+		if _mat_farol != null:
+			_mat_farol.albedo_color.a = 0.4 + 0.3 * k
 		for pid: String in _mat_placas:
 			(_mat_placas[pid] as StandardMaterial3D).albedo_color = Color(1.0, 0.95, 0.62).lerp(Color(1.0, 1.0, 1.0), k)
 
