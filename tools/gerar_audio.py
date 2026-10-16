@@ -799,6 +799,44 @@ def s_pista():
     return y
 
 
+# ------------------------------------------------------------------ módulo 2, parte 3: medo e pista de caça
+def s_respiracao():
+    """Respiração ofegante (loop de 4,2 s, 4 ciclos inspira/expira, ruído filtrado, grave por baixo). O Audio toca em loop e
+    sobe o volume (e o tom) conforme a Figura chega perto. Gerador próprio (não desloca a sequência aleatória dos outros)."""
+    rng = np.random.default_rng(71013)
+    dur = 4.2
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    ciclo = dur / 4.0
+    y = np.zeros(n)
+    for k in range(4):
+        t0 = k * ciclo
+        # inspira (curta, mais aguda) e expira (mais longa, mais grave e rouca)
+        for ini, d, fc1, fc2, g in ((t0, 0.42, 500, 3200, 0.8), (t0 + 0.5, 0.52, 260, 1900, 1.0)):
+            td = tt(d)
+            env = np.sin(np.pi * td / d) ** 1.6
+            r = filtro(rng.uniform(-1, 1, len(td)), "banda", fc1, fc2)
+            r *= 0.7 + 0.3 * np.sin(2 * np.pi * 38 * td)  # aspereza (garganta)
+            i0 = int(ini * SR)
+            y[i0:i0 + len(td)] += r * env * g * (0.9 + 0.2 * rng.random())
+    y += 0.12 * filtro(rng.uniform(-1, 1, n), "baixa", 160) * (0.6 + 0.4 * np.sin(2 * np.pi * (4 / dur) * t))
+    return y
+
+
+def s_ping():
+    """Pista de caça (0,7 s): um sininho suave de duas notas (Mi e Si, quinta), eco curto. Toca cada vez mais depressa perto do item."""
+    dur = 0.7
+    y = np.zeros(int(dur * SR))
+    for ini, nota, g in ((0.0, 88, 1.0), (0.06, 95, 0.55)):
+        f = float(midi(nota))
+        tn = tt(0.6)
+        nt = (np.sin(2 * np.pi * f * tn) * np.exp(-tn / 0.16)
+              + 0.35 * np.sin(2 * np.pi * f * 2.76 * tn) * np.exp(-tn / 0.05)
+              + 0.2 * np.sin(2 * np.pi * f * 5.4 * tn) * np.exp(-tn / 0.02))
+        colocar(y, fade(nt, 0.001, 0.03), ini, g)
+    colocar(y, y[:int(0.35 * SR)].copy(), 0.13, 0.25)   # eco
+    return y
+
 
 # ------------------------------------------------------------------ jingle (3 versões)
 # Melodia (beat, nota MIDI, duração em beats): 8 compassos em Dó maior (C - Am - F - G - C - Am - F - G).
@@ -957,6 +995,9 @@ CATALOGO = {
     "figura_sobe": (s_figura_sobe, "wav"),
     "figura_afunda": (s_figura_afunda, "wav"),
     "pista": (s_pista, "wav"),
+    # módulo 2, parte 3
+    "respiracao": (s_respiracao, "wav"),
+    "ping": (s_ping, "wav"),
 }
 
 
@@ -977,7 +1018,7 @@ def main():
         for nome in nomes:
             fn, fmt = CATALOGO[nome]
             x = fn()
-            if nome.startswith("jingle") or nome in ("vento", "mar", "rio", "chuva", "goteira", "subaquatico"):
+            if nome.startswith("jingle") or nome in ("vento", "mar", "rio", "chuva", "goteira", "subaquatico", "respiracao"):
                 x = normalizar(x, 0.8)  # loops: sem fade nas pontas (emenda sem corte)
             else:
                 if nome in COMPRIMIR:  # sustos: saturação suave sobe o volume percebido sem passar do pico

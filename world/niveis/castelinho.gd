@@ -213,6 +213,8 @@ func iniciar(p: Player) -> void:
 		visor.figura_atravessou.connect(_on_figura_atravessou)
 		_visor_v4 = visor
 	_ambiente_sonoro()
+	CacaProximidade.instalar(self)                  # ping e dica perto dos achados da caça (módulo 2, parte 3)
+	Objetivo.salas_caca = Callable(self, "_salas_da_caca")
 	if visita >= 3:
 		SustosCaminho.instalar(self)      # sustos garantidos no caminho obrigatório (world/niveis/sustos_caminho.gd)
 	if GameState.flag("porta_entrada_aberta"):
@@ -262,6 +264,31 @@ func _global(base: int) -> int:
 	if visita == 4:
 		return V4_SALAS.get(base, 79)
 	return GameState.sala_global(mini(base, GameState.SALAS_POR_VISITA))
+
+
+## Sala GLOBAL (a que o HUD mostra) do gatilho mais perto do ponto `p` (retângulo no chão; gatilho de outro andar custa mais).
+## Serve para dizer "falta nas salas 26 e 30" na caça dos discos: o objeto está "na sala" cujo gatilho é o mais próximo.
+func sala_do_ponto(p: Vector3) -> int:
+	var melhor := 1
+	var md := INF
+	for b in _triggers:
+		if b >= 23 or b == SALA_V4_PORTA:
+			continue
+		var t: SalaTrigger = _triggers[b]
+		var dx := maxf(absf(p.x - t.position.x) - t.tamanho.x * 0.5, 0.0)
+		var dz := maxf(absf(p.z - t.position.z) - t.tamanho.z * 0.5, 0.0)
+		var d := Vector2(dx, dz).length()
+		if absf(p.y - (t.position.y + 1.5)) > 2.6:
+			d += 20.0
+		if d < md:
+			md = d
+			melhor = b
+	return _global(melhor)
+
+
+## Para o Objetivo (mapa M): onde ainda falta achar algo da caça `d` (números globais de sala).
+func _salas_da_caca(d: int) -> Array:
+	return _cacas.salas_faltando(d) if _cacas != null else []
 
 
 func _chave(nome: String) -> String:
@@ -1386,10 +1413,12 @@ func _montar_passaporte() -> void:
 		brilho.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		brilho.shaded = false
 		brilho.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-		brilho.pixel_size = 0.014
+		brilho.pixel_size = 0.022
 		brilho.position = Vector3(0.14, 0.16, 0.05)
 		brilho.modulate = Color(1.0, 0.9, 0.35)
 		raiz.add_child(brilho)
+		raiz.add_child(FeixeCaca.criar(2.7 if d["interno"] else 6.5, Color(1.0, 0.9, 0.35)))     # feixe de luz (módulo 2, parte 3)
+		FeixeCaca.registrar(raiz, E1950, id)
 		add_child(raiz)
 		if d["interno"]:
 			_camada_interna(raiz)
@@ -1478,8 +1507,9 @@ func _animar_passaporte(dt: float) -> void:
 		var b := raiz.get_node_or_null("Brilho") as Sprite3D
 		if b:
 			var f := pow(maxf(0.0, sin(_t * 2.2 + float(id.length()))), 4.0)
-			b.scale = Vector3.ONE * (0.5 + 0.9 * f)
+			b.scale = Vector3.ONE * (0.8 + 1.0 * f)
 			b.rotation.z = _t * 1.5
+		FeixeCaca.pulsar(raiz, _t)
 
 
 ## O Bentinho lança o Passaporte (sala 1 da visita 1). Sem caça se o jogador já tem o disco 1950.
@@ -1691,6 +1721,17 @@ func _olhar_painel_solto(_p: Node) -> void:
 	Audio.sfx("selo")
 	Efeitos.flash(0.25, Color(1, 1, 1), 0.35)
 	await Guia.falar("sistema", ["Atrás do painel solto havia um disco do Visor.", "Este mostra o Castelinho em 2019, já em ruínas."])
+	_preso_no_visor()
+
+
+## "PRESO NO VISOR" (módulo 2, parte 3), uma vez, visita 4, logo depois de pegar o disco de 2019: o Visor liga sozinho e não
+## desliga por 15 s; a tela treme e a Figura vem pelo slide. Não mata e não persegue: no fim ela chega rente, some e o Visor solta.
+## Fica aqui (e não na escada do porão) porque é um momento que o jogador sempre passa, de pé e parado de propósito, e ainda
+## tem rastro andado para a Figura do slide aparecer. Sala 72: fora das zonas de perigo, então nada acumula antes.
+func _preso_no_visor() -> void:
+	if visita != 4 or _visor == null or not is_instance_valid(_visor) or not _uma_vez("preso_visor"):
+		return
+	_visor.preso_iniciar(15.0)
 
 
 ## O desenho atrás do painel (pista que só existe em 2019) e a estante rasa onde o disco ficava.

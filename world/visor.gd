@@ -33,6 +33,12 @@ extends Node
 ##     nunca atrás do jogador por mágica). Uso no nível:
 ##         Visor.instalar(self).figura_atravessou.connect(func(_v): _soltar_figura())
 ##     (na visita 3 o susto não solta nada: só pulso, som e bloqueio; é só susto). `atencao_cheia(visita)` sai em todas.
+##   - ZONAS DE PERIGO (módulo 2, parte 3, `world/zonas_perigo.gd`): a atenção e a Figura do slide SÓ agem em certas salas
+##     (visita 3: 57 e 58; visita 4: 74, 77 e 80; porão: todas). Fora delas o Q é livre: a atenção só cai, nunca sobe, e
+##     nenhuma Figura aparece. Entrar numa zona com o Q ligado dá um aviso discreto: o batimento começa baixinho (3 s).
+##   - "PRESO NO VISOR" (módulo 2, parte 3, visita 4, depois do disco de 2019): `Visor.preso_iniciar(15)` liga o Visor sozinho e
+##     não deixa desligar por 15 s (`Visor.preso()`); a tela treme, a atenção sobe de 0,45 a 0,92 (nunca estoura: sem perseguição,
+##     sem morte) e a Figura vem pelo slide. No fim ela some num susto rente (pulso, som) e o Visor é solto.
 ##   - A flag `visor_calmo` (cena final "Tito salvo", Módulo 13) mantém a atenção em zero.
 ##   - Debug (ui/debug.gd): `figura_off` = a Figura do slide nunca aparece; `atencao_congelada` = o Visor não mexe na atenção.
 ##
@@ -48,6 +54,7 @@ signal disco_trocado(epoca: int)
 signal atencao_cheia(visita: int)
 signal figura_atravessou(visita: int)
 signal bloqueio_mudou(bloqueado: bool)
+signal preso_terminou
 
 const GRUPO := "visor_tempo"
 const INTERVALO_MIN := 0.12   # s entre trocas (evita metralhar o clique)
@@ -64,11 +71,16 @@ const ATENCAO_MIN_FIGURA := 0.35   # abaixo disso a Figura ainda não aparece no
 const DIST_FIGURA_LONGE := 14.0    # m de rastro atrás do jogador quando ela surge
 const DIST_FIGURA_PERTO_V3 := 2.5  # m onde ela para na visita 3 (só susto)
 const DIST_FIGURA_PERTO := 5.0     # m onde ela para nas visitas 4 e 5 (vai atravessar e perseguir: dá folga para fugir)
+const PRESO_ATENCAO_INI := 0.45    # atenção (forçada) no começo do "preso no Visor"
+const PRESO_ATENCAO_FIM := 0.92    # e no fim: perto, mas nunca chega a 1 (não estoura, não persegue)
+const ALERTA_ZONA_S := 3.0         # s de batimento baixinho ao entrar numa zona de perigo com o Q ligado
 const RASTRO_MIN := 5.0            # m de rastro mínimos para a Figura aparecer
 const VEL_FIGURA_SLIDE := 2.5      # m/s: o quanto ela anda pelo rastro no slide
 
 static var _bloqueio := 0.0   # s restantes (estático: atravessa a troca de nível)
 static var _graca := 0.0      # s de graça que restam (a atenção não sobe)
+static var _preso := 0.0      # s restantes do "preso no Visor" (0 = livre)
+static var _preso_total := 15.0
 
 var ativo := false
 var _latch := false   # o Visor mesmo apertou a ação "visor" (Q ligado): só nesse caso ele a solta sozinho
@@ -85,6 +97,11 @@ var _pos_fig := Vector3.ZERO
 var _tem_pos_fig := false
 var _bat_t := 0.0
 var _aviso_t := 0.0
+var _em_zona := false         # estava numa zona de perigo no quadro anterior
+var _alerta := 0.0            # s restantes do batimento de aviso (entrou numa zona com o Q ligado)
+var _glitch_t := 0.0          # s até o próximo tremor do "preso no Visor"
+var _aviso_preso_t := 0.0
+var _preso_dica := false
 
 
 # ---------------------------------------------------------------- API estática
@@ -130,10 +147,24 @@ static func bloqueio_restante() -> float:
 static func resetar_estado() -> void:
 	_bloqueio = 0.0
 	_graca = 0.0
+	_preso = 0.0
+
+
+static func preso() -> bool:
+	return _preso > 0.0
+
+
+static func preso_restante() -> float:
+	return _preso
 
 
 static func atencao_ligada() -> bool:
 	return TEMPO_ENCHER.has(GameState.visita)
+
+
+## A atenção e a Figura do slide valem AGORA (visita 3 em diante E numa zona de perigo, ou preso no Visor).
+static func zona_de_perigo() -> bool:
+	return atencao_ligada() and ZonasPerigo.ativa()
 
 
 # ---------------------------------------------------------------- ciclo de vida
@@ -144,6 +175,7 @@ func _ready() -> void:
 	if GameState.sala_atual <= 0:   # nova partida (ainda sem sala): nada de bloqueio herdado
 		_bloqueio = 0.0
 		_graca = 0.0
+		_preso = 0.0
 	_rastro = Rastro.garantir(self)
 
 
@@ -168,6 +200,7 @@ func _input(e: InputEvent) -> void:
 func _process(dt: float) -> void:
 	if _latch and (GameState.flag("ui_aberta") or not _tem_visor() or _bloqueio > 0.0):
 		_soltar_q()   # menu aberto, ou o Visor foi arrancado da mão: o Q ligado cai
+	_atualizar_preso(dt)
 	var quer := _quer_ligar()
 	var agora := Time.get_ticks_msec() / 1000.0
 	if quer != ativo and agora - _ultima_troca >= INTERVALO_MIN:
@@ -189,12 +222,14 @@ func _process(dt: float) -> void:
 			bloqueio_mudou.emit(false)
 	elif _graca > 0.0:
 		_graca = maxf(0.0, _graca - dt)
+	_atualizar_zona(dt)
 	_atualizar_atencao(dt)
 	_atualizar_batimento(dt)
 	_atualizar_figura(dt)
 
 
 func _exit_tree() -> void:
+	_preso = 0.0      # sair do nível (menu, morte) nunca deixa o Visor preso para sempre
 	if _latch:
 		_soltar_q()   # senão o Visor do nível seguinte já nasceria ligado
 	# O nível acabou com o Visor ligado (ex.: transição): desliga a moldura e devolve a época de hoje. Sem isso o
@@ -290,6 +325,13 @@ func _acompanhar_disco() -> void:
 ## Q (teclado) ou botão Visor (celular): um toque liga, outro desliga. O Visor segura a ação "visor" apertada
 ## enquanto está ligado (o resto do código só pergunta `Input.is_action_pressed("visor")`).
 func alternar() -> void:
+	if _preso > 0.0:   # "preso no Visor": ele não desliga
+		Audio.sfx("erro", -10.0, 0.7)
+		if _aviso_preso_t <= 0.0:
+			_aviso_preso_t = 1.0
+			Efeitos.aviso("O Visor não desliga!", 1.6)
+		Efeitos.pulso(0.5, 0.25)
+		return
 	if Input.is_action_pressed("visor"):
 		_soltar_q()
 		return
@@ -351,8 +393,11 @@ func _atualizar_atencao(dt: float) -> void:
 		if GameState.atencao > 0.0:
 			GameState.definir_atencao(0.0)
 		return
+	if _preso > 0.0:   # "preso no Visor": a atenção é roteirizada (sobe até perto do máximo, nunca estoura)
+		GameState.definir_atencao(lerpf(PRESO_ATENCAO_INI, PRESO_ATENCAO_FIM, clampf(1.0 - _preso / _preso_total, 0.0, 1.0)))
+		return
 	var a := GameState.atencao
-	if ativo and _graca <= 0.0:
+	if ativo and _graca <= 0.0 and ZonasPerigo.ativa():
 		a += dt / enche
 	else:
 		a -= dt / TEMPO_ESVAZIAR
@@ -379,7 +424,7 @@ func _estourar() -> void:
 
 
 func _atualizar_batimento(dt: float) -> void:
-	var a := GameState.atencao
+	var a := maxf(GameState.atencao, 0.2 if _alerta > 0.0 else 0.0)
 	if a < 0.06:
 		_bat_t = 0.0
 		return
@@ -387,6 +432,72 @@ func _atualizar_batimento(dt: float) -> void:
 	if _bat_t <= 0.0:
 		_bat_t = lerpf(1.15, 0.30, a)
 		Audio.sfx("atencao", lerpf(-16.0, -1.0, a), lerpf(0.92, 1.12, a))
+
+
+# ---------------------------------------------------------------- zonas de perigo e "preso no Visor"
+## Entrar numa zona de perigo com o Q ligado: o batimento começa baixinho por ALERTA_ZONA_S (aviso discreto).
+func _atualizar_zona(dt: float) -> void:
+	var em := zona_de_perigo()
+	if em and not _em_zona and ativo and _preso <= 0.0 and not Debug.atencao_congelada:
+		_alerta = ALERTA_ZONA_S
+		_bat_t = 0.0
+	elif not em:
+		_alerta = 0.0
+	_em_zona = em
+	_alerta = maxf(0.0, _alerta - dt)
+
+
+## O momento "Preso no Visor" (visita 4): liga o Visor sozinho e o segura ligado por `dur` s. Ver o cabeçalho.
+## Devolve false se não há Visor utilizável (sem disco). Tocar o Q durante o aperto só dá o tique de erro e o aviso.
+func preso_iniciar(dur := 15.0) -> bool:
+	if not _tem_visor() or epoca_alvo() < 0:
+		return false
+	_preso_total = maxf(dur, 1.0)
+	_preso = _preso_total
+	_preso_dica = false
+	_glitch_t = 0.3
+	_bloqueio = 0.0
+	_graca = 0.0
+	_latch = true
+	Input.action_press("visor")
+	_ultima_troca = -10.0
+	Efeitos.pulso(1.0, 0.7)
+	Audio.sfx("glitch")
+	Efeitos.aviso("O Visor não desliga!", 3.0)
+	return true
+
+
+func _atualizar_preso(dt: float) -> void:
+	_aviso_preso_t = maxf(0.0, _aviso_preso_t - dt)
+	if _preso <= 0.0:
+		return
+	if not _latch and not GameState.flag("ui_aberta"):   # segura o Q ligado (ele "gruda")
+		_latch = true
+		Input.action_press("visor")
+	_preso = maxf(0.0, _preso - dt)
+	_glitch_t -= dt
+	if _glitch_t <= 0.0:   # a tela treme de tempos em tempos, mais seguido no fim
+		_glitch_t = randf_range(0.7, 1.6) * lerpf(1.0, 0.45, 1.0 - _preso / _preso_total)
+		Efeitos.pulso(randf_range(0.3, 0.6), 0.3)
+		Audio.sfx("glitch", -12.0, randf_range(0.8, 1.2))
+	if not _preso_dica and _preso < _preso_total * 0.65:
+		_preso_dica = true
+		Efeitos.aviso("Ela está vindo. Fuja!", 2.5)
+	if _preso <= 0.0:
+		_preso_terminar()
+
+
+## Fim do aperto: um susto rente (a Figura chega perto e some), o Visor volta para a mão do jogador. Não mata, não persegue.
+func _preso_terminar() -> void:
+	_preso = 0.0
+	GameState.definir_atencao(0.0)
+	_graca = GRACA_S
+	_soltar_q()
+	Efeitos.pulso(1.4, 0.8)
+	Efeitos.flash(0.5, Color(1, 1, 1), 0.9)
+	Audio.sfx("susto")
+	GameState.somar("sustos")
+	preso_terminou.emit()
 
 
 # ---------------------------------------------------------------- a Figura dentro do slide
@@ -408,7 +519,7 @@ func _atualizar_figura(dt: float) -> void:
 	var a := GameState.atencao
 	if _rastro == null or not is_instance_valid(_rastro):
 		_rastro = Rastro.garantir(self)
-	var mostrar := ativo and a > ATENCAO_MIN_FIGURA and atencao_ligada() and not Debug.figura_off \
+	var mostrar := ativo and a > ATENCAO_MIN_FIGURA and zona_de_perigo() and not Debug.figura_off \
 		and _rastro.comprimento() >= RASTRO_MIN
 	figura_visivel = mostrar
 	if not mostrar:
