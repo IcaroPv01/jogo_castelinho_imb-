@@ -237,6 +237,14 @@ func iniciar(p: Player) -> void:
 
 ## Pontos de vista para o "aquecimento" feito pelo main.gd atrás da tela de carregamento (o 1º quadro de cada
 ## material compila o shader): interiores, torre, e uma vista em cada época (1950, 1967, 1975, 2019).
+## Área onde o jogador pode estar (RedeSeguranca): o lote + calçadas; em 1975 também o corredor até z -83.
+## Playtest do Bernardo: desligar o Visor dentro do corredor de 1975 deixava o jogador no gramado fora do lote, livre
+## para andar ~300 m até a borda do chão e cair no void. Fora desta caixa (+3 m) a rede o devolve ao lote.
+func limites_mapa() -> AABB:
+	var z0 := -83.5 if GameState.epoca == GameState.Epoca.E1975 else -35.0
+	return AABB(Vector3(-31.5, -3.0, z0), Vector3(35.0, 40.0, 3.6 - z0))
+
+
 func pontos_aquecer() -> Array:
 	var lista: Array = []
 	for par in [["Cam_hall", E2020], ["Cam_corredor", E2020], ["Cam_salaarte", E2020], ["Cam_medieval", E2020],

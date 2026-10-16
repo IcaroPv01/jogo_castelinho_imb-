@@ -12,7 +12,7 @@ Decisões do Icaro (07/10/2026):
 | # | Módulo | Objetivo | Arquivos principais | Situação |
 |---|---|---|---|---|
 | 0 | Fundação | `CLAUDE.md`, este mapa, instalador do Godot | `CLAUDE.md`, `docs/MODULOS.md`, `tools/instalar_godot.sh` | feito |
-| 1 | QA e bugs | Varredura das 100 salas, corrigir o que o Icaro e os testes acharem | `tests/`, `docs/BUGS.md` (correções pontuais em qualquer arquivo) | varredura automática feita (B15–B24); reabre quando o Icaro jogar |
+| 1 | QA e bugs | Varredura das 100 salas, corrigir o que o Icaro e os testes acharem | `tests/`, `docs/BUGS.md` (correções pontuais em qualquer arquivo) | rodada 2 (playtest do Bernardo, PR #23): rede de segurança, Destravar, borda das dunas, corredor de 1975 (B37–B40); reabre quando alguém jogar |
 | 2 | Visor do Tempo | Acertar a mecânica do Q e dos discos conforme o retorno de quem jogou | `world/visor.gd`, `world/epocas.gd`, `ui/faixa_discos.gd`, `ui/olho_atencao.gd` | feito: caças dos 5 discos (1950 PR #10; 1967, 1975, 2019 e sem data PR desta parte 2); reabre quando o Icaro jogar |
 | 3 | Visitas 1 a 4 | Ritmo ("mais lento até ficar bizarro"), sustos, painéis, flashback da Barra | `world/niveis/castelinho.gd`, `ato2.gd`, `barra.gd`, `data/paineis.json` | feito (PR #11): ritmo, quiz V2–V4, bugs, fontes; reabre quando o Icaro jogar |
 | 4 | Porão | A masmorra (salas 81 a 99) | `world/niveis/porao*.gd`, `shaders/porao_*` | feito (PR #12): sequência fixa, masmorra, Figura nova, sustos (porão e V3/V4), bugs; reabre quando o Icaro jogar |
@@ -51,6 +51,28 @@ Cole numa sessão nova do Claude Code (no repositório `IcaroPv01/jogo_castelinh
 
 O que cada sessão deixou para a próxima. A mais recente fica em cima.
 
+### Módulo 1, rodada 2: playtest do Bernardo (15/10/2026)
+
+- **Relato:** "fiquei preso numa parede", "buguei no void", "tive que resetar porque tava preso numa fase", "o deserto é giga,
+  demora muito pra cair no void".
+- **Rede de segurança** (`world/rede_seguranca.gd`, `RedeSeguranca`): um nó por nível, instalado por `main.carregar_mundo`
+  (1 linha). Guarda pontos seguros a cada 0,25 s (no chão, fora de parede) e um a cada 2 s do último minuto. Resgata em:
+  void (chão mais baixo −6 m), fora dos limites (+3 m), 4 s caindo, 0,6 s dentro de parede (tenta `desprender()` antes).
+  Só usa a API pública do Player; supõe o pulo do módulo 11 (~0,37 m). Desligada com `pode_mover = false`, fora do jogo
+  ou com `rede_seguranca_ativa() == false` no nível. Limites: `limites_mapa()` do nível (Castelinho: lote, e o corredor
+  só em 1975) ou a colisão estática medida a cada 2 s (o porão só cresce). Aviso "(você se perdeu da visita...)".
+- **Pausa → Destravar:** `RedeSeguranca.atual.destravar()` volta a um ponto de alguns segundos atrás (preso num canto).
+- **Dunas:** paredes invisíveis (x ±50, z +25..−135) e terreno menor.
+- **Varredura** `tests/varredura/fuga.gd` (fora do CI; ver LEIA-ME): caminhante aleatório com pulo e troca de época em
+  todos os níveis. Achou só o corredor de 1975 (B40). Não reproduziu "preso na parede" nem "trava de fase" em colisão
+  estática: devem vir de eventos de script (portas, cenas). Barra e Braço Morto têm chão largo sem parede além da área
+  de jogo, mas o jogador não chega lá andando (a rede cobre se chegar).
+- **Para áreas novas (módulo 14 em diante):** área andável fora do lote do Castelinho precisa entrar em
+  `castelinho.gd` `limites_mapa()` (senão a rede devolve o jogador ao lote); nível novo pode dar o seu `limites_mapa()`
+  ou deixar a rede medir a colisão. Cena em que o jogador deve cair/afundar: `pode_mover = false`, física desligada ou
+  `rede_seguranca_ativa()` false (ex.: Barra a partir do PUXADO). Fechar bordas com paredes invisíveis, como as dunas.
+- Pendente: alguém jogar e dizer se a rede disparou sem motivo (aviso na tela) ou se ainda prendeu; o relatório da
+  pausa (módulo 11) ajuda a achar o lugar.
 ### Módulo 13: pedalinho, final secreto e fundo da Sala 101 (15/10/2026)
 
 - **Origem:** fase C do playtest do Bernardo (`/mnt/project-files/castelinho/playtest-bernardo-plano.md`). O Icaro disse "considere feito"

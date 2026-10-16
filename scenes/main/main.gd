@@ -143,6 +143,7 @@ func carregar_mundo(caminho: String, spawn := "Spawn") -> void:
 		player.global_transform = destino
 		player.velocity = Vector3.ZERO
 		player.set_physics_process(true)
+	RedeSeguranca.instalar(nivel, player)   # void, fora do mapa e preso na parede: volta ao último ponto seguro
 	if nivel.has_method("iniciar"):
 		nivel.iniciar(player)
 	if tela:

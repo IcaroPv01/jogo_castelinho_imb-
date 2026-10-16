@@ -1,6 +1,6 @@
 class_name MenuPausa
 extends Control
-## Menu de pausa (Esc): Continuar, Opções (volume e sensibilidade) e Voltar ao título (com confirmação).
+## Menu de pausa (Esc): Continuar, Destravar, Opções (volume e sensibilidade) e Voltar ao título (com confirmação).
 ## Estilo "Flash educativo" (BotaoGel). Vive dentro do HUD, que roda mesmo com a árvore pausada.
 ## Quem pausa/despausa é o main.gd (mouse solto = pausa); aqui só mostramos o menu e recapturamos o mouse
 ## DENTRO do clique em "Continuar" (o navegador exige um gesto do usuário para o pointer lock).
@@ -62,6 +62,8 @@ func _ready() -> void:
 
 	_pag_principal = _pagina(col)
 	btn_continuar = _botao(_pag_principal, "Continuar", Flash.VERDE, _continuar)
+	# preso num canto ou num vão sem saída (playtest do Bernardo): volta a um ponto seguro de alguns segundos atrás
+	_botao(_pag_principal, "Destravar", Flash.AZUL, _destravar)
 	btn_mapa = _botao(_pag_principal, "Mapa", Flash.AZUL, _abrir_mapa)
 	_botao(_pag_principal, "Opções", Flash.AZUL, func(): _ir("opcoes"))
 	btn_relatorio = _botao(_pag_principal, "Enviar relatório", Flash.AZUL, func(): _ir("relatorio"))
@@ -262,6 +264,12 @@ func _continuar() -> void:
 	Opcoes.salvar()
 	Celular.pausa_toque = false
 	Celular.capturar_mouse()
+
+
+func _destravar() -> void:
+	if RedeSeguranca.atual:
+		RedeSeguranca.atual.destravar()
+	_continuar()
 
 
 ## "Mapa": o mapa liga a flag ui_aberta, o main.gd despausa e o menu se esconde; fechar o mapa recaptura o mouse.
