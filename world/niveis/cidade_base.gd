@@ -68,7 +68,12 @@ var usa_visor := false                        # instala o Visor do Tempo (época
 var player: Player
 var env: Environment
 var sol_luz: DirectionalLight3D
-var quedas := 0                               # quantas vezes a rede de segurança agiu (testes)
+var _quedas_fallback := 0
+## Quantas vezes uma rede de segurança agiu neste lugar (a do Módulo 1, `RedeSeguranca`, ou a reserva abaixo). Para testes.
+var quedas: int:
+	get:
+		var r: RedeSeguranca = RedeSeguranca.atual
+		return _quedas_fallback + (r.resgates if r != null and r.nivel == self else 0)
 var _saindo := false
 var _objetivo := ""
 var _cb_objetivo: Callable
@@ -227,9 +232,18 @@ class Vigia extends Node:
 			dono._vigiar()
 
 
+## Limites para a `RedeSeguranca` do Módulo 1 (instalada por `main.carregar_mundo` em todo nível): a AREA do lugar.
+func limites_mapa() -> AABB:
+	return AABB(Vector3(area.position.x, QUEDA_Y + 5.0, area.position.y), Vector3(area.size.x, 40.0, area.size.y))
+
+
 func _vigiar() -> void:
 	_atualizar_hud_se_mudou()
 	if player == null or not is_instance_valid(player) or not player.is_inside_tree() or _saindo:
+		return
+	# a rede do Módulo 1 cuida de queda, fora do mapa e parede; a reserva abaixo só vale sem ela (nível montado à mão)
+	var r: RedeSeguranca = RedeSeguranca.atual
+	if r != null and r.nivel == self:
 		return
 	var p := player.global_position
 	if p.y < QUEDA_Y or not area.grow(FOLGA_AREA).has_point(Vector2(p.x, p.z)):
@@ -241,7 +255,7 @@ func voltar_ao_spawn() -> void:
 	var mk := ponto_spawn("Spawn")
 	if player == null or mk == null:
 		return
-	quedas += 1
+	_quedas_fallback += 1
 	player.global_transform = mk.global_transform
 	player.velocity = Vector3.ZERO
 	Efeitos.pulso(0.3, 0.25)
