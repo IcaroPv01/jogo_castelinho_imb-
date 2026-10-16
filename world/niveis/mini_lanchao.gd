@@ -600,12 +600,12 @@ func _homens_param() -> void:
 
 func _ir_para_pegada() -> void:
 	var xf := _com.position.x
-	var alvo := Vector3(xf + 3.6, 0.1, -3.3)
+	var alvo := Vector3(xf + 3.7, 0.1, -4.7)
 	var yaw := atan2(-((xf + 4.0) - alvo.x), -(-7.0 - alvo.z))
 	var tw := create_tween().set_parallel()
 	tw.tween_property(player, "global_position", alvo, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(player, "rotation:y", yaw, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.tween_property(player.cabeca, "rotation:x", -0.3, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(player.cabeca, "rotation:x", -0.52, 2.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 ## O silêncio: a corda cai frouxa e os bois param, de uma vez, no meio de um passo.
@@ -630,7 +630,7 @@ func _mostrar_pegada() -> void:
 	cil.rings = 1
 	_lama = Ato2Pecas.malha(self, cil, Vector3(centro.x, 0.02, centro.z), lama_mat, Vector3.ZERO, Vector3(1.0, 1.0, 1.5))
 	_lama.name = "Lama"
-	_pegada = Pegada.criar(Vector3(centro.x, 0.035, centro.z), Vector3(0, 0, 1), true, 0.3, 1.6)
+	_pegada = Pegada.criar(Vector3(centro.x, 0.035, centro.z), Vector3(0, 0, 1), true, 0.55, 1.8)
 	_pegada.name = "PegadaTito"
 	add_child(_pegada)
 	Audio.sfx("sussurro", -14.0)
