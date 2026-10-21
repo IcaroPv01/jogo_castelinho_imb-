@@ -289,9 +289,11 @@ const CIDADE := {
 		"pistas": ["rodoviaria_cartaz"],
 		"texto": "A rodoviária no fim da temporada. Só se vê direito pelo Visor."},
 }
-## Pistas do Tito do jogo ANTES da cidade (Castelinho 8 + porão + Braço Morto). Com a cidade o total sobe de 15 para 21;
-## o final secreto pede 16 (BracoSalvar.PISTAS_SALVAR) e o "Encontrado" continua pedindo 8.
+## Pistas do Tito do jogo ANTES da cidade (Castelinho 8 + porão + Braço Morto). Com a cidade o total sobe de 15 para 21 e com os
+## 5 minigames do Módulo 16 (1 pista cada: `pista_mini_<id>`) para 26; o final secreto pede 20 (BracoSalvar.PISTAS_SALVAR) e o
+## "Encontrado" continua pedindo 8.
 const PISTAS_BASE := 15
+const PISTAS_MINIGAMES := 5
 ## Visita 4 não "acaba" voltando à calçada (ela termina descendo ao porão, visita 5): conta como concluída quando o jogador
 ## já chegou à Sala Medieval (sala global 78 = base 21 da visita 4), onde a porta do porão passa a existir no hall.
 const CIDADE_V4_SALA_FIM := 78

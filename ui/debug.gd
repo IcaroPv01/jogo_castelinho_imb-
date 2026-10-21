@@ -199,7 +199,7 @@ static func pular_final(final: String) -> Variant:
 		return null
 	var gs := _gs()
 	ganhar_tudo()
-	gs.contadores["pistas_tito"] = 16 if final == "tito_salvo" else (8 if final == "encontrado" else 3)     # braco_morto.PISTAS_ENCONTRADO = 8, BracoSalvar.PISTAS_SALVAR = 16
+	gs.contadores["pistas_tito"] = 20 if final == "tito_salvo" else (8 if final == "encontrado" else 3)     # braco_morto.PISTAS_ENCONTRADO = 8, BracoSalvar.PISTAS_SALVAR = 20
 	gs.checkpoint_sala = gs.TOTAL_SALAS
 	gs.sala_maxima = gs.TOTAL_SALAS
 	var alvo: Array = gs.preparar_continuar()

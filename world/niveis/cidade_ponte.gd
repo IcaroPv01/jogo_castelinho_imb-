@@ -104,6 +104,7 @@ func _construir() -> void:
 	_cercas()
 	_luzes_ao_longe()
 	_boia()
+	MinigamesCastelo.porta_em(self, "ponte")     # a porta do minigame "Um, dois, três, pescador!" (Módulo 16)
 
 
 ## Neblina leve: começa perto e some devagar (o resto do ambiente é o da base: noite, Lua fraca).
