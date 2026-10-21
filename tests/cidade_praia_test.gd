@@ -335,7 +335,7 @@ func _portao_antes_e_depois() -> void:
 	var vc: Node3D = castelo.find_child("Spawn_volta_cidade", true, false)
 	_checar(vc != null and main.player.global_position.distance_to(vc.global_position) < 1.5, "chegou na calçada (Spawn_volta_cidade)")
 	_checar(GS.visita == 2 and GS.sala_atual == 23, "visita e sala intactas")
-	_checar(Obj.extras.size() == extras0 and int(GS.corruption_manual) == -1, "limpou o objetivo e a corrupção manual")
+	_checar(Obj.extras.size() == extras0 and int(GS.corruption_manual) == -1, "limpou o objetivo e a corrupção manual (extras %d, antes %d; corrupção manual %s)" % [Obj.extras.size(), extras0, str(GS.corruption_manual)])
 	_checar(mortes == 0, "nenhuma morte em toda a praia")
 
 
