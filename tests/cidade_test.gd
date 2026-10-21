@@ -183,7 +183,7 @@ func _esqueletos() -> void:
 		# HUD, objetivo, Mapa
 		_checar(main.hud.lbl_sala.text == "CIDADE · " + str(GS.CIDADE[id]["rotulo"]).to_upper(), "HUD: '%s'" % main.hud.lbl_sala.text)
 		_checar(GS.sala_atual == 23 and GS.visita == 2, "o contador de salas e a visita não mudam")
-		_checar(Obj.extras.size() == extras0 + 1 and Obj.atual() == nivel._texto_objetivo() and Obj.atual() != "", "objetivo do lugar no Mapa: '%s' (extras %d, antes %d, texto do lugar '%s')" % [Obj.atual(), Obj.extras.size(), extras0, nivel._texto_objetivo()])
+		_checar(Obj.extras.size() == extras0 + 1 and Obj.atual() == nivel._texto_objetivo() and Obj.atual() != "", "objetivo do lugar no Mapa: '%s' (extras %d, antes %d, texto do lugar '%s'; %s)" % [Obj.atual(), Obj.extras.size(), extras0, nivel._texto_objetivo(), _desc_extras()])
 		var dm: Dictionary = MapaC.obter_dados()
 		_checar(dm.get("msg") == "Cidade · " + str(GS.CIDADE[id]["rotulo"]), "Mapa: '%s'" % str(dm.get("msg")))
 		if primeiro:
@@ -226,10 +226,18 @@ func _esqueletos() -> void:
 		_checar(vc != null and main.player.global_position.distance_to(vc.global_position) < 1.5, "chega na calçada (Spawn_volta_cidade)")
 		_checar(GS.visita == 2 and GS.epoca == GS.Epoca.E2020 and GS.sala_atual == 23, "visita, época e sala intactas")
 		_checar(main.hud.lbl_sala.text == "VISITA 2 · SALA 23", "HUD volta a 'VISITA 2 · SALA 23' (%s)" % main.hud.lbl_sala.text)
-		_checar(Obj.extras.size() == extras0 and int(GS.corruption_manual) == -1, "limpou o objetivo e a corrupção manual ao sair (extras %d, antes %d; corrupção manual %s)" % [Obj.extras.size(), extras0, str(GS.corruption_manual)])
+		_checar(Obj.extras.size() == extras0 and int(GS.corruption_manual) == -1, "limpou o objetivo e a corrupção manual ao sair (extras %d, antes %d; corrupção manual %s; %s; nivel válido %s)" % [Obj.extras.size(), extras0, str(GS.corruption_manual), _desc_extras(), str(is_instance_valid(nivel))])
 		primeiro = false
 	_checar(GS.cidade_pistas_achadas() == 6, "os 5 lugares deram 6 pistas")
 	_checar(int(GS.contadores.get("pistas_tito", 0)) == 6, "contador pistas_tito = 6")
+
+
+func _desc_extras() -> String:
+	var l: Array = []
+	for c in Obj.extras:
+		var o: Object = c.get_object()
+		l.append("%s@%s%s" % [c.get_method(), o.get_class() if is_instance_valid(o) else "livre", ("/" + str(o.name)) if o is Node else ""])
+	return str(l)
 
 
 func Transicao_ocupado() -> bool:
