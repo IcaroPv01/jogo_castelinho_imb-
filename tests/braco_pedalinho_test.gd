@@ -1,6 +1,6 @@
 extends SceneTree
 ## Teste automático do pedalinho e do final secreto "salvar o Tito" (Módulo 13, headless): montagem, travado sem pistas
-## suficientes, luz que acende com 16 pistas, embarcar e pedalar (limites do lago, bater nos cisnes), descer, o olhar no
+## suficientes, luz que acende com 20 pistas, embarcar e pedalar (limites do lago, bater nos cisnes), descer, o olhar no
 ## Tito de 1967 (só com o Visor na época dele), o puxão quando a Figura atravessa, e a cena final até a dedicatória.
 ## Uso: godot --headless -s res://tests/braco_pedalinho_test.gd
 ## (não referencie classes do jogo por nome aqui: o script de teste compila antes dos autoloads; use load())
@@ -87,9 +87,9 @@ func _teste_montagem_e_trava() -> void:
 	_checar(not salvar.ativo and nivel._legenda.text.begins_with("(preso"), "com 3 pistas o pedalinho está preso (legenda), sem embarcar")
 	await _frames(5)
 	_checar(not salvar.ativo, "e continua preso")
-	GS.contadores["pistas_tito"] = 16
+	GS.contadores["pistas_tito"] = 20
 	await _frames(5)
-	_checar(salvar.liberado and salvar._luz.visible, "com 16 pistas a luz se acende no lago")
+	_checar(salvar.liberado and salvar._luz.visible, "com 20 pistas a luz se acende no lago")
 	_checar(salvar.POS_DOCA.distance_to(salvar.barco.position) < 0.01, "o pedalinho amarelo está no atracadouro")
 
 
@@ -100,7 +100,7 @@ func _teste_embarcar_pedalar_descer() -> void:
 	await _frames(3)
 	salvar.interagivel.interagir(player)
 	var ok: bool = await _ate(func(): return salvar.ativo and not salvar._ocupado, 300)
-	_checar(ok, "com 16 pistas, E embarca")
+	_checar(ok, "com 20 pistas, E embarca")
 	_checar(not player.is_physics_processing(), "a física do jogador cede o corpo ao pedalinho")
 	_checar(absf(player.global_position.y - (salvar.AGUA_Y + 0.52)) < 0.06, "o jogador fica no convés (y=%.2f)" % player.global_position.y)
 	_checar(absf(player.cabeca.position.y - salvar.ALTURA_OLHOS_BARCO) < 0.01, "olhos mais baixos, sentado")
@@ -182,7 +182,7 @@ func _teste_cena_final() -> void:
 	print("-- pedalinho: cena final 'tito_salvo'")
 	var fim := [""]
 	nivel.fim.connect(func(f): fim[0] = f)
-	GS.contadores["pistas_tito"] = 16
+	GS.contadores["pistas_tito"] = 20
 	var q: Vector3 = salvar.POS_Q
 	salvar._colocar_no_barco(Vector3(q.x + 12.0, 0.0, q.z), PI * 0.5)
 	GS.trocar_epoca(GS.Epoca.E1967)

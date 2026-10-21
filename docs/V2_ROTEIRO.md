@@ -220,7 +220,7 @@ Ordem de aparição. Todos são assinados "TITO" com o "T" ao contrário:
 **Finais** (contagem invisível; detalhar depois):
 - **"Visita concluída":** padrão.
 - **"Encontrado":** o jogador viu todas as pistas do Tito com o Visor. Na última cena, Tito sorri e some.
-- **"Tito voltou pra casa" (secreto, Módulo 13):** com 16 das 21 pistas (15 do prédio, porão e Braço Morto + 6 da cidade, Módulo 14) uma luz se acende no lago; o jogador pedala o pedalinho amarelo até ela e, pelo Visor (1967), segura o olhar no Tito vivo, sozinho num pedalinho ao entardecer, enquanto a Figura tenta atravessar. Completo o olhar, a mãe o chama da calçada, a Figura afunda e ele volta para a margem em 1967. Sem violência, sem nunca mostrar o Tito na água.
+- **"Tito voltou pra casa" (secreto, Módulo 13):** com 20 das 26 pistas (15 do prédio, porão e Braço Morto + 6 da cidade, Módulo 14 + 5 dos minigames, Módulo 16) uma luz se acende no lago; o jogador pedala o pedalinho amarelo até ela e, pelo Visor (1967), segura o olhar no Tito vivo, sozinho num pedalinho ao entardecer, enquanto a Figura tenta atravessar. Completo o olhar, a mãe o chama da calçada, a Figura afunda e ele volta para a margem em 1967. Sem violência, sem nunca mostrar o Tito na água.
 
 ## 7. Divisão do trabalho
 

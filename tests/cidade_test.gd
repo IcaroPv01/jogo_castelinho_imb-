@@ -89,9 +89,9 @@ func _tabela() -> void:
 	_checar(GS.PISTAS_BASE + GS.cidade_pistas_total() == 21, "total do jogo: 15 + 6 = 21")
 	var salvar: GDScript = load("res://world/niveis/braco_salvar.gd")
 	var braco: GDScript = load("res://world/niveis/braco_morto.gd")
-	_checar(salvar.PISTAS_SALVAR == 16, "final secreto pede 16 pistas (de 21)")
+	_checar(salvar.PISTAS_SALVAR == 20, "final secreto pede 20 pistas (de 26)")
 	_checar(braco.PISTAS_ENCONTRADO == 8, "o 'Encontrado' continua pedindo 8")
-	_checar(salvar.PISTAS_SALVAR <= GS.PISTAS_BASE + GS.cidade_pistas_total(), "o secreto é alcançável")
+	_checar(salvar.PISTAS_SALVAR <= GS.PISTAS_BASE + GS.cidade_pistas_total() + GS.PISTAS_MINIGAMES, "o secreto é alcançável")
 
 
 # ============================================================================ abertura por visita

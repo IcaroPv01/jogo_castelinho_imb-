@@ -222,7 +222,7 @@ func _teste_pulos() -> void:
 	nivel = await Debug.pular_final("sala_101")
 	_checar(nivel != null and nivel.encerrando and nivel.final == "sala_101", "final sala 101 dispara o afundar")
 	nivel = await Debug.pular_final("tito_salvo")
-	_checar(nivel != null and nivel.salvar.concluindo and nivel.final == "tito_salvo" and GS.contadores.get("pistas_tito", 0) == 16, "final secreto: embarca e a cena de salvar o Tito começou (16 pistas)")
+	_checar(nivel != null and nivel.salvar.concluindo and nivel.final == "tito_salvo" and GS.contadores.get("pistas_tito", 0) == 20, "final secreto: embarca e a cena de salvar o Tito começou (20 pistas)")
 	print("-- pular direto para um lugar da cidade (Módulo 14)")
 	for cid in GS.CIDADE_ORDEM:
 		GS.novo_jogo()
