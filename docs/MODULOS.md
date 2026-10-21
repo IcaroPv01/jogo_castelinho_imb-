@@ -27,7 +27,7 @@ Decisões do Icaro (07/10/2026):
 | 13 | Pedalinho, final secreto e fundo da Sala 101 | Playtest do Bernardo, fase C: pedalinho no lago, final secreto "salvar o Tito", fundo da Sala 101 mais caprichado | `castelinho/pedalinho.gd`, `world/niveis/braco_salvar.gd`, `world/niveis/fundo_do_lago.gd`, `world/niveis/braco_morto.gd`, `ui/finais.gd`, `ui/tela_titulo.gd` | feito (PR a seguir): pedalinho amarelo no atracadouro, luz no lago com 12 pistas, olhar o Tito de 1967 com o Visor, 4º final "Tito voltou pra casa", fundo da Sala 101 com mais cenário; reabre quando o Icaro jogar |
 | 14 | Mais partes da cidade | Playtest do Bernardo, fase D: 5 lugares opcionais da cidade, cada um com tarefa e pistas do Tito | `world/niveis/cidade_base.gd`, `world/niveis/cidade_{casas,barra,ponte,praia,rodoviaria}.gd`, `ui/placa_cidade.gd`, `GameState.CIDADE`, `castelinho/*` (placa 3D) | feito (PR a seguir): Rua das casas, Calçadão da Barra, Ponte à noite, Praia de Imbé e Rodoviária 1967, abertos pela placa da prefeitura na calçada e pelo Mapa (M); +6 pistas (21 no total); reabre quando o Icaro jogar |
 | 15 | Falas dos monitores | Pedido do Icaro (16/10): falas somem sozinhas, sem repetir no mesmo lugar, e úteis (ligadas à história e ao objetivo da visita) | `autoload/guia.gd`, `world/niveis/castelinho.gd` (e as falas em `ato2.gd`, `barra.gd`, `porao.gd`) | feito (PR #27 + PR a seguir): avanço automático, sem repetição, bronca da escada 1 vez; falas enxutas, ligadas ao Objetivo e dica quando o jogador trava; reabre quando o Icaro jogar |
-| 16 | Minigames | Pedido do Icaro (16/10): mais minigames como o da Tainha (o Icaro aprovou as 5 ideias, todas no caminho, com botão Pular) | `world/niveis/minigame_base.gd`, `mini_lanchao.gd`, `mini_quico.gd`, `mini_lotes.gd`, `castelinho_minigames.gd`, `tests/mini_*_test.gd` | em andamento (PR #28): lanchão Seival (V2), Quico Diz (V1) e lotes de 1939 (V3) feitos; Ponte e caderno do Tito esperam o merge do Módulo 14 |
+| 16 | Minigames | Pedido do Icaro (16/10): mais minigames como o da Tainha (aprovou as 5 ideias, todas no caminho, com botão Pular) | `world/niveis/minigame_base.gd`, `mini_*.gd`, `castelinho_minigames.gd`, `tests/mini_*_test.gd` | feito (PR #28 e PR desta parte 2): lanchão Seival (V2), Quico Diz (V1), lotes de 1939 (V3), Ponte "um, dois, três, pescador" e caderno do Tito (cidade); final secreto pede 20 de 26 pistas; reabre quando o Icaro jogar |
 
 `autoload/game_state.gd` e `scenes/main/main.gd` são de todos: mude só o necessário e descreva a mudança no PR.
 
@@ -70,9 +70,16 @@ O que cada sessão deixou para a próxima. A mais recente fica em cima.
   e os bois seguem puxando; uma pegada de criança na lama), `quico` (V1, sala 5, Quico Diz: repetir o ritmo dos apitos; no fim algo responde
   do outro lado do muro e o Quico diz "Não fui eu."), `lotes` (V3, Acervo/sala 12, "Planejar a cidade" de 1939: carimbar 6 lotes; o tom cai,
   os ranchos somem, sobra o carrinho de madeira). Fatos só do que está em `docs/pesquisa/historia_imbe.md`. Todas as portas só existem em 2020.
-- **Pendente (Módulo 14):** `ponte` (um, dois, três, pescador; Ponte à noite) e `caderno` (desenhos do Tito; Rua das casas). Esperam o
-  merge do Módulo 14. Ao construir, ajustar `PISTAS_SALVAR` (os minigames somam pistas: o Módulo 14 sobe 12 para 16 com total 21; com
-  +5 minigames o total vira 26, proposta: 20) e o aviso do contador, se houver.
+- **Parte 2 (21/10, depois do Módulo 14):** `ponte` (Ponte à noite: segure a ação para andar e solte quando os 7 pescadores se virarem;
+  no fim todos olham para onde o jogador começou, uma figura branca ao longe e uma sandália no guarda-corpo) e `caderno` (Rua das casas:
+  o lápis anda sozinho por um caminho pontilhado, segure para riscar o traço e solte nos vazios; no desenho 3 o lápis termina sozinho
+  uma casinha longe e escreve "TITO", com o T invertido como no caderno da casa 7: constante `T_INVERTIDO`). Portas novas na cidade:
+  `MinigamesCastelo.porta_em(self, "<id>")` no fim do `_construir` do lugar (tabela ENTRADAS com `visita` 0; a filha usa `destino` =
+  cena do lugar e volta em `Spawn_volta_mini_<id>`). As duas portas ficam perto do Spawn e à vista. A Ponte e o caderno só aparecem
+  nos lugares do Módulo 14, que abrem depois da V3 e da V1/V2 (ver Módulo 14).
+- **Pistas:** cada minigame vencido soma 1 (`pista_mini_<id>`): 21 + 5 = 26 no jogo. `BracoSalvar.PISTAS_SALVAR` passou de 16 para **20**
+  (escolha minha, mesma proporção de antes, ~77%; `GameState.PISTAS_MINIGAMES = 5`); o "Encontrado" continua 8. Testes e `ui/debug.gd`
+  ajustados.
 - **Limitações:** a Tainá "bipa" mesmo nas falas pesadas dos lotes (o `Guia` não tem modo silencioso); áudio só conferido por testes e
   espectrograma; a pegada do lanchão é maior que um pé real, só para ler.
 - Pendente: o Icaro jogar as 3 e dizer se o ritmo, a dificuldade e o lugar das portas estão bons.

@@ -263,6 +263,7 @@ func _construir() -> void:
 	_fechar_malhas()
 	_montar_legenda()
 	GameState.epoca_mudou.connect(_ao_mudar_epoca)
+	MinigamesCastelo.porta_em(self, "caderno")      # minigame "Os desenhos do Tito": caderno aberto num degrau perto do Spawn
 
 
 func _tarefa() -> void:
