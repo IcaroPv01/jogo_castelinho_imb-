@@ -192,6 +192,7 @@ func _esqueletos() -> void:
 			_checar(MapaC.atual != null and MapaC.atual.objetivo == nivel._texto_objetivo(), "o Mapa abre e mostra o objetivo do lugar")
 			MapaC.atual.fechar()
 			await _frames(3)
+		print("   [extras após mapa] ", _desc_extras())
 		# pistas: uma vez só
 		var antes: int = int(GS.contadores.get("pistas_tito", 0))
 		var pistas: Array = nivel.pistas_do_lugar()
@@ -203,6 +204,7 @@ func _esqueletos() -> void:
 		var x: bool = await nivel.pista("pista_que_nao_existe", [])
 		_checar(not x and int(GS.contadores.get("pistas_tito", 0)) == antes + pistas.size(), "pista fora da tabela não conta")
 		await _frames(3)
+		print("   [extras após pistas] ", _desc_extras())
 		# rede de segurança
 		var q0: int = nivel.quedas
 		main.player.global_position = Vector3(mk.global_position.x, -20.0, mk.global_position.z)
@@ -211,6 +213,7 @@ func _esqueletos() -> void:
 		main.player.global_position = Vector3(area.end.x + 8.0, 0.5, area.end.y + 8.0)
 		voltou = await _ate(func() -> bool: return main.player.global_position.distance_to(mk.global_position) < 1.5, 120)
 		_checar(voltou and nivel.quedas == q0 + 2, "sair da AREA devolve ao Spawn")
+		print("   [extras após rede] ", _desc_extras())
 		# concluir (praia: sair pelo portão, sem concluir)
 		var sai_pelo_portao: bool = id == "praia"
 		if sai_pelo_portao:
@@ -219,7 +222,9 @@ func _esqueletos() -> void:
 			nivel.concluir()
 		var voltou_castelo: bool = await _ate(func() -> bool: return main.nivel_atual == GS.CENA_CASTELINHO and not Transicao_ocupado(), 600)
 		_checar(voltou_castelo, "%s: volta ao Castelinho" % ("sair" if sai_pelo_portao else "concluir"))
+		print("   [extras após volta] ", _desc_extras())
 		await _frames(10)
+		print("   [extras +10 quadros] ", _desc_extras())
 		_checar(GS.cidade_feita(id) == (not sai_pelo_portao), "flag cidade_%s_feito %s" % [id, "NÃO gravada ao sair" if sai_pelo_portao else "gravada"])
 		var castelo: Node = main.mundo.get_child(0)
 		var vc: Node3D = castelo.find_child("Spawn_volta_cidade", true, false)
@@ -236,7 +241,8 @@ func _desc_extras() -> String:
 	var l: Array = []
 	for c in Obj.extras:
 		var o: Object = c.get_object()
-		l.append("%s@%s%s" % [c.get_method(), o.get_class() if is_instance_valid(o) else "livre", ("/" + str(o.name)) if o is Node else ""])
+		var sc: Variant = o.get_script() if is_instance_valid(o) else null
+		l.append("%s@%s%s%s" % [c.get_method(), o.get_class() if is_instance_valid(o) else "livre", ("/" + str(o.name)) if o is Node else "", (" " + str(sc.resource_path)) if sc is Script else ""])
 	return str(l)
 
 
