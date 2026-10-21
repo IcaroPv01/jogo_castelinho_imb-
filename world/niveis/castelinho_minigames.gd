@@ -46,35 +46,7 @@ func montar() -> void:
 		var e: Dictionary = ENTRADAS[id]
 		if not bool(e["ativo"]) or int(e["visita"]) != _visita:
 			continue
-		var it := Interagivel.new(e["texto"], e["tam"], func(_p: Node) -> void: entrar(id))
-		it.name = "Mini_" + id
-		it.position = e["pos"]
-		_c.add_child(it)
-		var marca := Construtor.rotulo(it, "!", Vector3(0, 0.9, 0), 90, Color(1.0, 0.85, 0.2))
-		marca.pixel_size = 0.008
-		marca.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		marca.no_depth_test = true
-		marca.outline_size = 16
-		marca.outline_modulate = Color(0.2, 0.05, 0.0)
-		marca.name = "Marca"
-		if id == "quico":
-			_visual_quico(it, Vector3.ZERO, float(e["yaw"]))
-		if id == "lanchao":
-			_visual_lanchao(it, Vector3.ZERO)
-		if id == "lotes":
-			_visual_lotes(it, Vector3.ZERO)
-		var tw := it.create_tween().set_loops()
-		tw.tween_property(marca, "position:y", 1.05, 0.5).set_trans(Tween.TRANS_SINE)
-		tw.tween_property(marca, "position:y", 0.85, 0.5).set_trans(Tween.TRANS_SINE)
-		var mk := Marker3D.new()
-		mk.name = SPAWN_PREFIXO + id
-		mk.position = e["volta"]
-		mk.rotation_degrees.y = float(e["yaw"])
-		_c.add_child(mk)
-		if (e["epocas"] as Array).size() > 0:
-			Epocas.marcar(it, e["epocas"])
-		_portas[id] = it
-		_atualizar_marca(id)
+		_portas[id] = porta_em(_c, id)
 	if not _portas.is_empty():
 		# tira os Callables de níveis já destruídos antes de plugar o novo
 		for i in range(Objetivo.extras.size() - 1, -1, -1):
@@ -83,23 +55,49 @@ func montar() -> void:
 		Objetivo.extras.append(objetivo)
 
 
+## Cria a porta de UM minigame em qualquer nível (o Castelinho usa `montar()`; os lugares da cidade chamam isto no seu
+## `_construir`, com `visita` 0 na tabela): Interagivel + "!" amarelo (some ao vencer) + visual + `Spawn_volta_mini_<id>`.
+## A cena do minigame volta ao nível de onde saiu (`MiniGameBase.destino` na filha) nesse marcador.
+static func porta_em(pai: Node3D, id: String) -> Interagivel:
+	var e: Dictionary = ENTRADAS[id]
+	var it := Interagivel.new(e["texto"], e["tam"], func(_p: Node) -> void: entrar(id))
+	it.name = "Mini_" + id
+	it.position = e["pos"]
+	pai.add_child(it)
+	var marca := Construtor.rotulo(it, "!", Vector3(0, 0.9, 0), 90, Color(1.0, 0.85, 0.2))
+	marca.pixel_size = 0.008
+	marca.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	marca.no_depth_test = true
+	marca.outline_size = 16
+	marca.outline_modulate = Color(0.2, 0.05, 0.0)
+	marca.name = "Marca"
+	match id:
+		"quico": _visual_quico(it, Vector3.ZERO, float(e["yaw"]))
+		"lanchao": _visual_lanchao(it, Vector3.ZERO)
+		"lotes": _visual_lotes(it, Vector3.ZERO)
+	var tw := it.create_tween().set_loops()
+	tw.tween_property(marca, "position:y", 1.05, 0.5).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(marca, "position:y", 0.85, 0.5).set_trans(Tween.TRANS_SINE)
+	var mk := Marker3D.new()
+	mk.name = SPAWN_PREFIXO + id
+	mk.position = e["volta"]
+	mk.rotation_degrees.y = float(e["yaw"])
+	pai.add_child(mk)
+	if (e["epocas"] as Array).size() > 0:
+		Epocas.marcar(it, e["epocas"])
+	marca.visible = not feito(id)
+	it.texto_interacao = str(e["texto"]) + (" (de novo)" if feito(id) else "")
+	return it
+
+
 const SPAWN_PREFIXO := "Spawn_volta_mini_"
 
 
-func feito(id: String) -> bool:
+static func feito(id: String) -> bool:
 	return GameState.flag("mini_%s_feito" % id)
 
 
-func _atualizar_marca(id: String) -> void:
-	var it: Interagivel = _portas.get(id)
-	if it and is_instance_valid(it):
-		var m := it.get_node_or_null("Marca")
-		if m:
-			m.visible = not feito(id)
-		it.texto_interacao = ENTRADAS[id]["texto"] + (" (de novo)" if feito(id) else "")
-
-
-func entrar(id: String) -> void:
+static func entrar(id: String) -> void:
 	if Transicao.ocupado:
 		return
 	GameState.set_flag("mini_visitou_" + id, true)
