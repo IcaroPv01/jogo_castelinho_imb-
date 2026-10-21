@@ -272,9 +272,14 @@ const SUBTITULO_EPOCA := {
 }
 
 
+## Um lugar com outra história para as épocas (ex.: a Rodoviária da cidade, Módulo 14) troca aqui o subtítulo de cada época
+## ({Epoca: "texto"}); {} = o do Castelinho. O lugar limpa ao sair.
+var subtitulo_lugar: Dictionary = {}
+
+
 func _atualizar_legenda() -> void:
 	_lbl_ano.text = str(GameState.NOMES_EPOCA.get(int(GameState.epoca), "????"))
-	var sub: String = SUBTITULO_EPOCA.get(int(GameState.epoca), "")
+	var sub: String = subtitulo_lugar.get(int(GameState.epoca), SUBTITULO_EPOCA.get(int(GameState.epoca), ""))
 	_lbl_epoca.text = sub
 	_lbl_epoca.visible = sub != ""
 

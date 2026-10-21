@@ -20,7 +20,7 @@ extends Node3D
 ##                       pedalinhos (convite do Tito + aviso "(a água está gelada.)" no primeiro passo; ~3,5 m adentro o
 ##                       controle trava e a câmera afunda). No fundo, só sugestão: sapatinhos e um balde vermelho; os dedos
 ##                       longos da Figura fecham sobre a lente; preto. "VOCÊ FICOU." e o cartão "Sala 101 - Visitante registrado."
-##   "Tito salvo"        SECRETO (Módulo 13, `braco_salvar.gd`): com `pistas_tito >= 12` uma luz se acende no lago; o jogador pedala o
+##   "Tito salvo"        SECRETO (Módulo 13, `braco_salvar.gd`): com `pistas_tito >= 16` (BracoSalvar.PISTAS_SALVAR; 21 pistas no jogo com a cidade) uma luz se acende no lago; o jogador pedala o
 ##                       pedalinho amarelo do atracadouro até ela e, com o Visor, segura o olhar no Tito de 1967 (sozinho num
 ##                       pedalinho, fim de tarde) enquanto a Figura tenta atravessar. Completo: a mãe chama, ele agradece, a Figura
 ##                       afunda e ele volta para a margem em 1967. Título "TITO VOLTOU PRA CASA" + cartão + dedicatória.

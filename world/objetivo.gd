@@ -48,6 +48,18 @@ static func atual() -> String:
 
 
 static func _base() -> String:
+	var r := _base_visita()
+	# Módulo 14: na calçada, se há lugar da cidade aberto e ainda não feito e a visita não tem outro objetivo, aponta a placa
+	if r == GENERICO and not GameState.cidade_pendentes().is_empty() and GameState.visita <= 4 \
+			and GameState.sala_atual == GameState.sala_global(1):
+		return "Cidade: placa na calçada."
+	return r
+
+
+const GENERICO := "Siga a visita guiada: leia os painéis."
+
+
+static func _base_visita() -> String:
 	var v: int = GameState.visita
 	var sala: int = GameState.sala_atual
 	if sala >= 100:
@@ -59,7 +71,7 @@ static func _base() -> String:
 		2: return _visita2()
 		3: return _visita3()
 		4: return _visita4()
-	return "Siga a visita guiada: leia os painéis."
+	return GENERICO
 
 
 ## Até que sala BASE (1..22) o jogador já chegou nesta visita (0 = nenhuma).
@@ -76,7 +88,7 @@ static func _caminho_ate_o_quiz(v: int) -> String:
 		return "Suba pela escada, passe pelo terraço e desça até a Sala Medieval."
 	if b >= 11:
 		return "Procure a escada da torre, pela porta do Salão de Arte."
-	return "Siga a visita guiada: leia os painéis."
+	return GENERICO
 
 
 static func _diploma(v: int) -> bool:

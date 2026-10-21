@@ -51,6 +51,8 @@ func _rodar() -> void:
 		await _cenario_porao()
 	if "braco" in quais:
 		await _cenario_braco()
+	if "cidade" in quais:
+		await _cenario_cidade()
 	_continuidade()
 	_escrever()
 	print("TOTAL %.1f s" % ((Time.get_ticks_msec() - t_ini) / 1000.0))
@@ -115,6 +117,17 @@ func _cenario_porao() -> void:
 	Registro.varrer(nivel, "porao")
 	_analisar("porao", 5, Callable())
 	tempos["porao"] = (Time.get_ticks_msec() - t0) / 1000.0
+
+
+## Módulo 14: os 5 lugares da cidade (só com `-- cidade`; nome automático dos nós).
+func _cenario_cidade() -> void:
+	for lugar in ["casas", "barra", "ponte", "praia", "rodoviaria"]:
+		var t0 := Time.get_ticks_msec()
+		_preparar_estado(4)
+		var nivel: Node = await _carregar("res://world/niveis/cidade_%s.tscn" % lugar, "cidade_" + lugar)
+		Registro.varrer(nivel, "cidade_" + lugar)
+		_analisar("cidade_" + lugar, 4, Callable())
+		tempos["cidade_" + lugar] = (Time.get_ticks_msec() - t0) / 1000.0
 
 
 func _cenario_braco() -> void:

@@ -3,7 +3,7 @@ extends Node
 ## FINAL SECRETO "SALVAR O TITO" (Módulo 13, plano do playtest do Bernardo, fase C). Mora no Braço Morto
 ## (world/niveis/braco_morto.gd), que cria este nó em `_ready` e o chama em `iniciar`.
 ##
-## COMO SE DESTRAVA: `pistas_tito >= PISTAS_SALVAR` (12 de 15; o "Encontrado" pede 8). Nesse instante uma coluna de luz
+## COMO SE DESTRAVA: `pistas_tito >= PISTAS_SALVAR` (16 de 21, contando as 6 pistas da cidade do Módulo 14; o "Encontrado" pede 8). Nesse instante uma coluna de luz
 ## se acende no meio do lago e o pedalinho amarelo do atracadouro (o do balde vermelho) deixa de estar preso.
 ##
 ## O QUE O JOGADOR FAZ:
@@ -29,7 +29,7 @@ signal concluiu
 const PedalinhoGd := preload("res://castelinho/pedalinho.gd")
 const QuartoGd := preload("res://world/niveis/porao_quarto.gd")
 
-const PISTAS_SALVAR := 12
+const PISTAS_SALVAR := 16      # era 12 de 15; o Módulo 14 (cidade) somou 6 pistas: 21 no total
 const AGUA_Y := -0.3
 const POS_DOCA := Vector3(35.0, AGUA_Y, -11.4)      # o pedalinho amarelo atracado (entre o último cisne e a rampa)
 const POS_Q := Vector3(-10.0, AGUA_Y, -28.0)        # onde a luz se acende e onde o Tito de 1967 está

@@ -86,7 +86,7 @@ func _montar_painel() -> void:
 	_check(esq, "figura_off", "Figura Branca desligada")
 	_check(esq, "atencao_congelada", "Atenção do Visor congelada")
 	_check(esq, "info", "Mostrar informações na tela")
-	esq.add_child(_botao("Ganhar tudo (5 discos, lanterna, Visor)", func(): Debug.ganhar_tudo()))
+	esq.add_child(_botao("Ganhar tudo (discos, lanterna, Visor, cidade)", func(): Debug.ganhar_tudo()))
 	esq.add_child(_rotulo("Ver um final (vai para o Braço Morto)", FONTE))
 	esq.add_child(_botao("Final: Encontrado", func(): _final("encontrado")))
 	esq.add_child(_botao("Final: Visita concluída", func(): _final("visita_concluida")))
@@ -122,6 +122,17 @@ func _montar_painel() -> void:
 	_destino.custom_minimum_size = Vector2(380, 84)
 	dir.add_child(_destino)
 	dir.add_child(_botao("Ir para lá", _pular))
+	dir.add_child(_rotulo("Cidade (Módulo 14): ir direto ao lugar", FONTE))
+	var grade := GridContainer.new()
+	grade.columns = 2
+	grade.add_theme_constant_override("h_separation", 8)
+	grade.add_theme_constant_override("v_separation", 6)
+	dir.add_child(grade)
+	for cid: String in GameState.CIDADE_ORDEM:
+		var b := _botao(str(GameState.CIDADE[cid]["rotulo"]), func(): _cidade(cid))
+		b.name = "Cidade_" + cid
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		grade.add_child(b)
 
 	raiz.add_child(_botao("Fechar", fechar))
 	_ao_escolher_lugar(0)
@@ -252,6 +263,11 @@ func _pular() -> void:
 	var sala := int(_sala.value)
 	fechar()
 	Debug.pular(lugar, sala)
+
+
+func _cidade(id: String) -> void:
+	fechar()
+	Debug.pular_cidade(id)
 
 
 func _final(qual: String) -> void:

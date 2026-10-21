@@ -265,6 +265,99 @@ func caca_ativa() -> int:
 	return -1
 
 
+## MAIS PARTES DA CIDADE (módulo 14): 5 lugares jogáveis, pequenos e opcionais, entrados pela placa da prefeitura fictícia na
+## calçada do Castelinho (`ui/placa_cidade.gd`). Cada lugar é uma cena `world/niveis/cidade_<id>.tscn` (base: `cidade_base.gd`).
+## cena = caminho; rotulo = nome curto (HUD "CIDADE · <rótulo>", Mapa); depois_da_visita = N: abre quando o jogador JÁ CONCLUIU a
+## visita N, isto é, quando está na calçada para a N+1 (ver `visita_concluida`); pistas = ids das pistas do Tito do lugar
+## (flag "pista_<id>" + contador "pistas_tito", como no resto do jogo); texto = uma linha para a placa.
+## Flag de lugar feito: "cidade_<id>_feito". Ordem de exibição: CIDADE_ORDEM (as teclas 1 a 5 da placa).
+const CIDADE_ORDEM: Array[String] = ["casas", "barra", "ponte", "praia", "rodoviaria"]
+const CIDADE := {
+	"casas": {"cena": "res://world/niveis/cidade_casas.tscn", "rotulo": "Rua das casas", "depois_da_visita": 1,
+		"pistas": ["casas_caderno", "casas_mala"],
+		"texto": "Um quarteirão de casas de veraneio fechadas. Só uma tem a luz acesa."},
+	"barra": {"cena": "res://world/niveis/cidade_barra.tscn", "rotulo": "Calçadão da Barra", "depois_da_visita": 2,
+		"pistas": ["barra_pescador"],
+		"texto": "A Barra, de dia e de noite: molhe, quiosques fechados e pescadores."},
+	"ponte": {"cena": "res://world/niveis/cidade_ponte.tscn", "rotulo": "A Ponte", "depois_da_visita": 3,
+		"pistas": ["ponte_figura"],
+		"texto": "A ponte de três pistas à noite. Os pescadores não saem do lugar."},
+	"praia": {"cena": "res://world/niveis/cidade_praia.tscn", "rotulo": "Praia de Imbé", "depois_da_visita": 2,
+		"pistas": ["praia_balde"],
+		"texto": "A praia vazia, de noite, com ressaca. Um sino toca ao longe."},
+	"rodoviaria": {"cena": "res://world/niveis/cidade_rodoviaria.tscn", "rotulo": "Rodoviária", "depois_da_visita": 4,
+		"pistas": ["rodoviaria_cartaz"],
+		"texto": "A rodoviária no fim da temporada. Só se vê direito pelo Visor."},
+}
+## Pistas do Tito do jogo ANTES da cidade (Castelinho 8 + porão + Braço Morto). Com a cidade o total sobe de 15 para 21;
+## o final secreto pede 16 (BracoSalvar.PISTAS_SALVAR) e o "Encontrado" continua pedindo 8.
+const PISTAS_BASE := 15
+## Visita 4 não "acaba" voltando à calçada (ela termina descendo ao porão, visita 5): conta como concluída quando o jogador
+## já chegou à Sala Medieval (sala global 78 = base 21 da visita 4), onde a porta do porão passa a existir no hall.
+const CIDADE_V4_SALA_FIM := 78
+
+
+## O jogador já concluiu a visita `n` (está na calçada para a n+1 ou além)? Visitas 1 a 3: a `visita` já passou de n.
+## Visita 4: ou já desceu ao porão (visita 5) ou já chegou à Sala Medieval (porta do porão aberta no hall).
+func visita_concluida(n: int) -> bool:
+	if visita > n:
+		return true
+	return n == 4 and visita == 4 and sala_maxima >= CIDADE_V4_SALA_FIM
+
+
+func cidade_aberta(id: String) -> bool:
+	return CIDADE.has(id) and visita_concluida(int(CIDADE[id]["depois_da_visita"]))
+
+
+func cidade_feita(id: String) -> bool:
+	return CIDADE.has(id) and bool(flags.get("cidade_%s_feito" % id, false))
+
+
+## Quantas pistas do Tito a cidade oferece no total (6).
+func cidade_pistas_total() -> int:
+	var n := 0
+	for id: String in CIDADE:
+		n += (CIDADE[id]["pistas"] as Array).size()
+	return n
+
+
+## Quantas das pistas da cidade o jogador já achou.
+func cidade_pistas_achadas() -> int:
+	var n := 0
+	for id: String in CIDADE:
+		for p: String in CIDADE[id]["pistas"]:
+			if bool(flags.get("pista_" + p, false)):
+				n += 1
+	return n
+
+
+## Lugares abertos e ainda não feitos (ids, na ordem da placa).
+func cidade_pendentes() -> Array[String]:
+	var r: Array[String] = []
+	for id in CIDADE_ORDEM:
+		if cidade_aberta(id) and not cidade_feita(id):
+			r.append(id)
+	return r
+
+
+func cidade_algum_aberto() -> bool:
+	for id in CIDADE_ORDEM:
+		if cidade_aberta(id):
+			return true
+	return false
+
+
+## Modo debug ("ganhar tudo"): dá por feitos todos os lugares da cidade e por achadas as 6 pistas (cada uma conta uma vez).
+func cidade_concluir_tudo() -> void:
+	for id in CIDADE_ORDEM:
+		flags["cidade_%s_feito" % id] = true
+		for p: String in CIDADE[id]["pistas"]:
+			if not bool(flags.get("pista_" + p, false)):
+				flags["pista_" + p] = true
+				somar("pistas_tito")
+	salvar()
+
+
 func flag(nome: String, padrao: Variant = false) -> Variant:
 	return flags.get(nome, padrao)
 
@@ -328,6 +421,7 @@ func carregar() -> void:
 	checkpoint_sala = clampi(int(_campo(dados, "checkpoint_sala", 1)), 1, TOTAL_SALAS)
 	flags = _campo(dados, "flags", {})
 	flags.erase("ui_aberta")
+	flags.erase("visor_calmo")      # só vale dentro de uma cena (final "Tito salvo", Rodoviária): nunca volta de um save
 	selos.assign(_campo(dados, "selos", []).map(func(x): return str(x)))
 	contadores.merge(_campo(dados, "contadores", {}), true)
 	sensibilidade = float(_campo(dados, "sensibilidade", 1.0))

@@ -12,6 +12,12 @@ const CENAS := [
 	["res://world/niveis/braco_morto.tscn", 5, 3, [], ["Cam_margem", "Cam_lapide", "Cam_tito"]],
 	["res://world/niveis/ato2.tscn", 3, 3, [], ["Cam_56", "Cam_58"]],
 	["res://world/niveis/barra.tscn", 2, 3, [], []],
+	# Módulo 14: lugares da cidade (a rodoviária em 1967 pelo Visor)
+	["res://world/niveis/cidade_casas.tscn", 2, 3, ["tem_visor"], ["Cam_spawn"]],
+	["res://world/niveis/cidade_barra.tscn", 3, 3, [], ["Cam_spawn"]],
+	["res://world/niveis/cidade_ponte.tscn", 4, 3, [], ["Cam_spawn"]],
+	["res://world/niveis/cidade_praia.tscn", 3, 3, [], ["Cam_spawn"]],
+	["res://world/niveis/cidade_rodoviaria.tscn", 4, 4, ["tem_visor"], ["Cam_spawn"]],
 ]
 
 

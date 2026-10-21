@@ -5,6 +5,7 @@ set -uo pipefail
 GODOT="${1:-godot}"
 cd "$(dirname "$0")/.."
 status=0
+# (o glob pega também todo tests/cidade_*_test.gd: os lugares da cidade, Módulo 14, só precisam acrescentar o arquivo)
 for t in tests/*_test.gd; do
   echo "== $t"
   out=$(timeout 180 "$GODOT" --headless -s "res://$t" 2>&1)
