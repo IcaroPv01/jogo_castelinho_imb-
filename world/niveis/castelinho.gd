@@ -149,6 +149,7 @@ var _discos_chao := {}                # época -> [raiz, interagível]
 var _balde: Node3D
 var _passaporte_itens := {}           # id -> [raiz, interagível] dos objetos do Passaporte ainda não achados (visita 1)
 var _passaporte_falando := false
+var _minis: MinigamesCastelo           # portas dos minigames do Módulo 16 (world/niveis/castelinho_minigames.gd)
 var _cacas: CacasCastelo               # caças dos discos 1967, 1975 e 2019 (world/niveis/castelinho_cacas.gd)
 var _discos_ocultos := {}              # época -> argumentos de _disco_no_chao dos discos que só aparecem depois da caça
 var _desenhos := {}                   # nome -> nó
@@ -1156,6 +1157,7 @@ func _montar_placa_cidade() -> void:
 # ================================================================== o estado de cada visita (objetos extras)
 func _montar_visita() -> void:
 	_cacas = CacasCastelo.new(self, visita)
+	_minis = MinigamesCastelo.new(self, visita)
 	# --- discos do Visor: ficam nos lugares do V2_ROTEIRO §4.1 até serem pegos
 	_disco_no_chao(E1967, POS_DISCO_1967, Color(0.85, 0.12, 0.1), "Pegar o disco da vitrine", 2,
 		["Um disco do Visor! A etiqueta, escrita à mão, diz: \"não catalogado\".", "Aperte 1 a 5 (ou a rolagem do mouse) para trocar de disco e aperte Q para ver. Aperte de novo para voltar."], true)
@@ -1186,6 +1188,7 @@ func _montar_visita() -> void:
 			_montar_escada_2019()
 			_montar_desenho_oculto_2019()
 	_cacas.montar()
+	_minis.montar()
 	if visita >= 3 and GameState.flag("evt_v2_apagao"):
 		_criar_balde_e_desenho3()      # o balde do fim da visita 2 não some (p21_v3 fala dele)
 	for d in _desenhos.values():
@@ -2059,6 +2062,7 @@ func _entrou(base: int) -> void:
 
 
 func _evento(base: int) -> void:
+	_minis.ao_entrar(base)
 	match base:
 		1: _evt_sala1()
 		2: _evt_sala2()
