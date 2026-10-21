@@ -11,7 +11,6 @@ var GS: Node
 var main: Node
 var Obj: GDScript
 var mortes := 0
-var extras0 := 0
 
 const IDS := ["chinelo", "bola", "pazinha", "balde"]
 
@@ -55,7 +54,6 @@ func _rodar() -> void:
 	GS.novo_jogo()
 	GS.jogando = true
 	main.hud.visible = true
-	extras0 = Obj.extras.size()
 	await _carregar()
 	var nivel: Node = main.mundo.get_child(0)
 	await _cenario(nivel)
@@ -335,7 +333,7 @@ func _portao_antes_e_depois() -> void:
 	var vc: Node3D = castelo.find_child("Spawn_volta_cidade", true, false)
 	_checar(vc != null and main.player.global_position.distance_to(vc.global_position) < 1.5, "chegou na calçada (Spawn_volta_cidade)")
 	_checar(GS.visita == 2 and GS.sala_atual == 23, "visita e sala intactas")
-	_checar(Obj.extras.size() == extras0 and int(GS.corruption_manual) == -1, "limpou o objetivo e a corrupção manual (extras %d, antes %d; corrupção manual %s)" % [Obj.extras.size(), extras0, str(GS.corruption_manual)])
+	_checar(_n_lugar() == 0 and int(GS.corruption_manual) == -1, "limpou o objetivo e a corrupção manual (extras %d; corrupção manual %s)" % [Obj.extras.size(), str(GS.corruption_manual)])
 	_checar(mortes == 0, "nenhuma morte em toda a praia")
 
 
@@ -366,3 +364,11 @@ func _reentrada() -> void:
 	nivel.find_child("PortaoVolta", true, false).interagir(main.player)
 	voltou = await _ate(func() -> bool: return main.nivel_atual == GS.CENA_CASTELINHO and not root.get_node("/root/Transicao").ocupado, 900)
 	_checar(voltou and not GS.cidade_feita("praia"), "com 2/4 o portão continua só saindo")
+
+
+func _n_lugar() -> int:
+	var n := 0
+	for c in Obj.extras:
+		if c.get_method() == "_texto_objetivo":
+			n += 1
+	return n

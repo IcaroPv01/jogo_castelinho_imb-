@@ -138,7 +138,6 @@ func _esqueletos() -> void:
 	GS.jogando = true
 	main.hud.visible = true
 	GS.set_flag("tem_visor", true)
-	var extras0: int = Obj.extras.size()
 	var primeiro := true
 	for id in GS.CIDADE_ORDEM:
 		print("-- lugar: %s" % id)
@@ -183,7 +182,7 @@ func _esqueletos() -> void:
 		# HUD, objetivo, Mapa
 		_checar(main.hud.lbl_sala.text == "CIDADE · " + str(GS.CIDADE[id]["rotulo"]).to_upper(), "HUD: '%s'" % main.hud.lbl_sala.text)
 		_checar(GS.sala_atual == 23 and GS.visita == 2, "o contador de salas e a visita não mudam")
-		_checar(Obj.extras.size() == extras0 + 1 and Obj.atual() == nivel._texto_objetivo() and Obj.atual() != "", "objetivo do lugar no Mapa: '%s' (extras %d, antes %d, texto do lugar '%s'; %s)" % [Obj.atual(), Obj.extras.size(), extras0, nivel._texto_objetivo(), _desc_extras()])
+		_checar(_n_lugar() == 1 and Obj.extras[0].get_method() == "_texto_objetivo" and Obj.atual() == nivel._texto_objetivo() and Obj.atual() != "", "objetivo do lugar no Mapa: '%s' (extras %d, texto do lugar '%s'; %s)" % [Obj.atual(), Obj.extras.size(), nivel._texto_objetivo(), _desc_extras()])
 		var dm: Dictionary = MapaC.obter_dados()
 		_checar(dm.get("msg") == "Cidade · " + str(GS.CIDADE[id]["rotulo"]), "Mapa: '%s'" % str(dm.get("msg")))
 		if primeiro:
@@ -192,7 +191,6 @@ func _esqueletos() -> void:
 			_checar(MapaC.atual != null and MapaC.atual.objetivo == nivel._texto_objetivo(), "o Mapa abre e mostra o objetivo do lugar")
 			MapaC.atual.fechar()
 			await _frames(3)
-		print("   [extras após mapa] ", _desc_extras())
 		# pistas: uma vez só
 		var antes: int = int(GS.contadores.get("pistas_tito", 0))
 		var pistas: Array = nivel.pistas_do_lugar()
@@ -204,7 +202,6 @@ func _esqueletos() -> void:
 		var x: bool = await nivel.pista("pista_que_nao_existe", [])
 		_checar(not x and int(GS.contadores.get("pistas_tito", 0)) == antes + pistas.size(), "pista fora da tabela não conta")
 		await _frames(3)
-		print("   [extras após pistas] ", _desc_extras())
 		# rede de segurança
 		var q0: int = nivel.quedas
 		main.player.global_position = Vector3(mk.global_position.x, -20.0, mk.global_position.z)
@@ -213,7 +210,6 @@ func _esqueletos() -> void:
 		main.player.global_position = Vector3(area.end.x + 8.0, 0.5, area.end.y + 8.0)
 		voltou = await _ate(func() -> bool: return main.player.global_position.distance_to(mk.global_position) < 1.5, 120)
 		_checar(voltou and nivel.quedas == q0 + 2, "sair da AREA devolve ao Spawn")
-		print("   [extras após rede] ", _desc_extras())
 		# concluir (praia: sair pelo portão, sem concluir)
 		var sai_pelo_portao: bool = id == "praia"
 		if sai_pelo_portao:
@@ -222,19 +218,27 @@ func _esqueletos() -> void:
 			nivel.concluir()
 		var voltou_castelo: bool = await _ate(func() -> bool: return main.nivel_atual == GS.CENA_CASTELINHO and not Transicao_ocupado(), 600)
 		_checar(voltou_castelo, "%s: volta ao Castelinho" % ("sair" if sai_pelo_portao else "concluir"))
-		print("   [extras após volta] ", _desc_extras())
 		await _frames(10)
-		print("   [extras +10 quadros] ", _desc_extras())
 		_checar(GS.cidade_feita(id) == (not sai_pelo_portao), "flag cidade_%s_feito %s" % [id, "NÃO gravada ao sair" if sai_pelo_portao else "gravada"])
 		var castelo: Node = main.mundo.get_child(0)
 		var vc: Node3D = castelo.find_child("Spawn_volta_cidade", true, false)
 		_checar(vc != null and main.player.global_position.distance_to(vc.global_position) < 1.5, "chega na calçada (Spawn_volta_cidade)")
 		_checar(GS.visita == 2 and GS.epoca == GS.Epoca.E2020 and GS.sala_atual == 23, "visita, época e sala intactas")
 		_checar(main.hud.lbl_sala.text == "VISITA 2 · SALA 23", "HUD volta a 'VISITA 2 · SALA 23' (%s)" % main.hud.lbl_sala.text)
-		_checar(Obj.extras.size() == extras0 and int(GS.corruption_manual) == -1, "limpou o objetivo e a corrupção manual ao sair (extras %d, antes %d; corrupção manual %s; %s; nivel válido %s)" % [Obj.extras.size(), extras0, str(GS.corruption_manual), _desc_extras(), str(is_instance_valid(nivel))])
+		_checar(_n_lugar() == 0 and int(GS.corruption_manual) == -1, "limpou o objetivo e a corrupção manual ao sair (extras %d; corrupção manual %s; %s; nivel válido %s)" % [Obj.extras.size(), str(GS.corruption_manual), _desc_extras(), str(is_instance_valid(nivel))])
 		primeiro = false
 	_checar(GS.cidade_pistas_achadas() == 6, "os 5 lugares deram 6 pistas")
 	_checar(int(GS.contadores.get("pistas_tito", 0)) == 6, "contador pistas_tito = 6")
+
+
+## Quantos Callables do objetivo de um lugar da cidade estão na lista. O Castelinho também pluga os dele (a caça, os
+## minigames): o total de extras muda de uma carga para outra, então só o do lugar interessa.
+func _n_lugar() -> int:
+	var n := 0
+	for c in Obj.extras:
+		if c.get_method() == "_texto_objetivo":
+			n += 1
+	return n
 
 
 func _desc_extras() -> String:
